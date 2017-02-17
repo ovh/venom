@@ -14,15 +14,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	// DetailsLow prints only summary results
-	DetailsLow = "low"
-	// DetailsMedium prints progress bar and summary
-	DetailsMedium = "medium"
-	// DetailsHigh prints progress bar and details
-	DetailsHigh = "high"
-)
-
 var aliases map[string]string
 var bars map[string]*pb.ProgressBar
 var mutex = &sync.Mutex{}
@@ -233,24 +224,13 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 	l.Infof("start")
 	for _, step := range tc.TestSteps {
 
-		t, err := getExecutor(step)
+		e, err := getExecutorWrap(step)
 		if err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: err.Error()})
 			break
 		}
 
-		result, err := t.Run(l, aliases, step)
-		if err != nil {
-			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
-		}
-
-		log.Debugf("result:%+v", result)
-
-		if h, ok := t.(executorWithDefaultAssertions); ok {
-			applyChecks(result, tc, step, h.GetDefaultAssertions(), l)
-		} else {
-			applyChecks(result, tc, step, nil, l)
-		}
+		runTestStep(e, tc, step, l, detailsLevel)
 
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
@@ -260,4 +240,45 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 		}
 	}
 	l.Infof("end")
+}
+
+func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string) {
+
+	var isOK bool
+	var errors []Failure
+	var failures []Failure
+
+	for retry := 0; retry <= e.retry; retry++ {
+		if retry > 1 && !isOK {
+			log.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
+			time.Sleep(time.Duration(e.delay) * time.Second)
+		}
+
+		result, err := e.executor.Run(l, aliases, step)
+		if err != nil {
+			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
+			continue
+		}
+
+		log.Debugf("result:%+v", result)
+
+		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
+			isOK, errors, failures = applyChecks(result, step, h.GetDefaultAssertions(), l)
+		} else {
+			isOK, errors, failures = applyChecks(result, step, nil, l)
+		}
+		if isOK {
+			break
+		}
+		// add errors / failures, only for last retry
+		if retry == e.retry {
+			tc.Errors = append(tc.Errors, errors...)
+			tc.Failures = append(tc.Failures, failures...)
+			if retry > 0 {
+				tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry+1)})
+			}
+		}
+
+	}
+
 }
