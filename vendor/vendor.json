@@ -1,0 +1,85 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "dGXnnR7ZhsrZNnEqFimk6q7YCqs=",
+			"path": "github.com/Sirupsen/logrus",
+			"revision": "61e43dc76f7ee59a82bdf3d71033dc12bea4c77d",
+			"revisionTime": "2017-01-13T01:19:11Z"
+		},
+		{
+			"checksumSHA1": "JB2isLKsToinFNz+VwtLNVAE9mI=",
+			"path": "github.com/fsamin/go-dump",
+			"revision": "94b5ad5f675eaed023794ef65dd884cda5cb98cf",
+			"revisionTime": "2017-02-16T20:47:41Z"
+		},
+		{
+			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
+			"path": "github.com/inconshreveable/mousetrap",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
+			"checksumSHA1": "yf185lmVPcvXjLZuPT1s4JzxI18=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "737072b4e32b7a5018b4a7125da8d12de90e8045",
+			"revisionTime": "2016-10-12T01:35:12Z"
+		},
+		{
+			"checksumSHA1": "0lYe+0oPjhUOecK2xxOsDJuxbK4=",
+			"path": "github.com/mitchellh/mapstructure",
+			"revision": "ed105d635dfa9ea7133f7c79f1eb36203fc3a156",
+			"revisionTime": "2017-01-18T00:13:03Z"
+		},
+		{
+			"checksumSHA1": "RPVh5/wbvFG0q0CWHXifXpkYTDg=",
+			"path": "github.com/smartystreets/assertions",
+			"revision": "26acb9229f421449ac63d014995b282d59261a8b",
+			"revisionTime": "2016-12-13T22:48:10Z"
+		},
+		{
+			"checksumSHA1": "Vzb+dEH/LTYbvr8RXHmt6xJHz04=",
+			"path": "github.com/smartystreets/assertions/internal/go-render/render",
+			"revision": "26acb9229f421449ac63d014995b282d59261a8b",
+			"revisionTime": "2016-12-13T22:48:10Z"
+		},
+		{
+			"checksumSHA1": "dSZQzhiGN0tEILHxUZcrFFNW2Xw=",
+			"path": "github.com/smartystreets/assertions/internal/oglematchers",
+			"revision": "26acb9229f421449ac63d014995b282d59261a8b",
+			"revisionTime": "2016-12-13T22:48:10Z"
+		},
+		{
+			"checksumSHA1": "s/qchlUIU/4Ilo5BjPnb4M+bSU0=",
+			"path": "github.com/spf13/cobra",
+			"revision": "dc208f4211e7f6df7ec8cb62640f57d3e154910d",
+			"revisionTime": "2017-01-18T18:55:16Z"
+		},
+		{
+			"checksumSHA1": "azL5LwQ46tyRFejgGTvMmiE6vjA=",
+			"path": "github.com/spf13/pflag",
+			"revision": "51268031d79952516489a9f8aa34e9709b98d946",
+			"revisionTime": "2017-01-16T16:32:51Z"
+		},
+		{
+			"checksumSHA1": "uTQtOqR0ePMMcvuvAIksiIZxhqU=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+			"revisionTime": "2016-12-14T18:38:57Z"
+		},
+		{
+			"checksumSHA1": "mj71zOfqkkSk7YwAQHY1AiiEUmU=",
+			"path": "gopkg.in/cheggaaa/pb.v1",
+			"revision": "d7e6ca3010b6f084d8056847f55d7f572f180678",
+			"revisionTime": "2016-11-21T09:29:06Z"
+		},
+		{
+			"checksumSHA1": "12GqsW8PiRPnezDDy0v4brZrndM=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "a5b47d31c556af34a302ce5d659e6fea44d90de0",
+			"revisionTime": "2016-09-28T15:37:09Z"
+		}
+	],
+	"rootPath": "github.com/runabove/venom"
+}
