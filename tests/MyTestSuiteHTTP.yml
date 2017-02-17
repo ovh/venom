@@ -5,6 +5,8 @@ testcases:
   - type: http
     method: GET
     url: https://eu.api.ovh.com/1.0/
+    retry: 3
+    delay: 2
     assertions:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing

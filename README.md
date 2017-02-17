@@ -5,7 +5,6 @@ It can also output xUnit results files.
 
 <img src="./venom.gif" alt="Venom Demonstration" width="80%">
 
-
 ## Commmand Line
 
 Install with:
@@ -68,6 +67,16 @@ testcases:
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
     - result.timeseconds ShouldBeLessThan 1
+
+- name: Test with retries and delay in seconds between each try
+  steps:
+  - type: http
+    method: GET
+    url: https://eu.api.ovh.com/1.0/
+    retry: 3
+    delay: 2
+    assertions:
+    - result.statuscode ShouldEqual 200
 
 ```
 

@@ -2,7 +2,50 @@ package venom
 
 import (
 	"encoding/xml"
+
+	log "github.com/Sirupsen/logrus"
 )
+
+const (
+	// DetailsLow prints only summary results
+	DetailsLow = "low"
+	// DetailsMedium prints progress bar and summary
+	DetailsMedium = "medium"
+	// DetailsHigh prints progress bar and details
+	DetailsHigh = "high"
+)
+
+type (
+	// Aliases contains list of aliases
+	Aliases map[string]string
+
+	// ExecutorResult represents an executor result on a test step
+	ExecutorResult map[string]string
+)
+
+// StepAssertions contains step assertions
+type StepAssertions struct {
+	Assertions []string `json:"assertions,omitempty" yaml:"assertions,omitempty"`
+}
+
+// Executor execute a testStep.
+type Executor interface {
+	// Run run a Test Step
+	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+}
+
+// executorWrap contains an executor implementation and some attributes
+type executorWrap struct {
+	executor Executor
+	retry    int // nb retry a test case if it is in failure.
+	delay    int // delay between two retries
+}
+
+// executorWithDefaultAssertions execute a testStep.
+type executorWithDefaultAssertions interface {
+	// GetDefaultAssertion returns default assertions
+	GetDefaultAssertions() *StepAssertions
+}
 
 // Tests contains all informations about tests in a pipeline build
 type Tests struct {
