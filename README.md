@@ -190,6 +190,7 @@ testcases:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
+    - result.bodyjson.apis.apis0.path ShouldEqual /allDom
 
 ```
 
