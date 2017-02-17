@@ -1,10 +1,12 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -36,13 +38,14 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
-	TimeSeconds float64  `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
-	StatusCode  int      `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
-	Body        string   `json:"body,omitempty" yaml:"body,omitempty"`
-	Headers     Headers  `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Err         error    `json:"error,omitempty" yaml:"error,omitempty"`
+	Executor    Executor    `json:"executor,omitempty" yaml:"executor,omitempty"`
+	TimeSeconds float64     `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	TimeHuman   string      `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
+	StatusCode  int         `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
+	Body        string      `json:"body,omitempty" yaml:"body,omitempty"`
+	BodyJSON    interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
+	Headers     Headers     `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Err         error       `json:"error,omitempty" yaml:"error,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for this executor
@@ -95,6 +98,16 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 			return nil, errr
 		}
 		r.Body = string(bb)
+
+		bodyJSONArray := []interface{}{}
+		if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
+			bodyJSONMap := map[string]interface{}{}
+			if err2 := json.Unmarshal(bb, &bodyJSONMap); err2 == nil {
+				r.BodyJSON = bodyJSONMap
+			}
+		} else {
+			r.BodyJSON = bodyJSONArray
+		}
 	}
 
 	r.Headers = make(map[string]string)
@@ -104,6 +117,9 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	}
 
 	r.StatusCode = resp.StatusCode
+
+	log.Errorf("-----> %v", reflect.ValueOf(r.BodyJSON).Type())
+	log.Errorf("-----> %v", reflect.ValueOf(r.BodyJSON).Kind())
 
 	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
 }
