@@ -203,8 +203,6 @@ An executor have to implement this interface
 type Executor interface {
 	// Run run a Test Step
 	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
-	// GetDefaultAssertion returns default assertions
-	GetDefaultAssertions() StepAssertions
 }
 ```
 
