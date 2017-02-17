@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -117,9 +116,5 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	}
 
 	r.StatusCode = resp.StatusCode
-
-	log.Errorf("-----> %v", reflect.ValueOf(r.BodyJSON).Type())
-	log.Errorf("-----> %v", reflect.ValueOf(r.BodyJSON).Kind())
-
 	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
 }
