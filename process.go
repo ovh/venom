@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -255,7 +256,7 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
-		result, err := e.executor.Run(l, aliases, step)
+		result, err := runTestStepExecutor(e, step, l)
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
 			continue
@@ -275,7 +276,29 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 	tc.Errors = append(tc.Errors, errors...)
 	tc.Failures = append(tc.Failures, failures...)
 	if retry > 0 && (len(failures) > 0 || len(errors) > 0) {
-		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry+1)})
+		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry)})
+	}
+}
+
+func runTestStepExecutor(e *executorWrap, step TestStep, l *log.Entry) (ExecutorResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
+	defer cancel()
+
+	ch := make(chan ExecutorResult)
+	cherr := make(chan error)
+	go func(e *executorWrap, step TestStep, l *log.Entry) {
+		result, err := e.executor.Run(l, aliases, step)
+		cherr <- err
+		ch <- result
+	}(e, step, l)
+
+	select {
+	case err := <-cherr:
+		return nil, err
+	case result := <-ch:
+		return result, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("Timeout after %d second(s)", e.timeout)
 	}
 
 }
