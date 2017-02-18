@@ -40,9 +40,6 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 	if errTimeout != nil {
 		return nil, errTimeout
 	}
-	if timeout <= 0 {
-		timeout = 60 // 60 seconds default
-	}
 
 	if e, ok := executors[name]; ok {
 		ew := &executorWrap{
@@ -65,6 +62,9 @@ func getAttrInt(t map[string]interface{}, name string) (int, error) {
 		if !ok {
 			return -1, fmt.Errorf("attribute %s '%s' is not an integer", name, i)
 		}
+	}
+	if out < 0 {
+		out = 0
 	}
 	return out, nil
 }

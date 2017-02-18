@@ -281,6 +281,10 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 }
 
 func runTestStepExecutor(e *executorWrap, step TestStep, l *log.Entry) (ExecutorResult, error) {
+	if e.timeout == 0 {
+		return e.executor.Run(l, aliases, step)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
 	defer cancel()
 
