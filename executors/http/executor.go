@@ -1,9 +1,9 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -63,7 +63,8 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	}
 
 	r := Result{Executor: t}
-	var body io.Reader
+
+	body := bytes.NewBuffer([]byte(t.Body))
 
 	path := t.URL + t.Path
 	method := t.Method
