@@ -15,13 +15,11 @@ const (
 	DetailsHigh = "high"
 )
 
-type (
-	// Aliases contains list of aliases
-	Aliases map[string]string
+// Aliases contains list of aliases
+type Aliases map[string]string
 
-	// ExecutorResult represents an executor result on a test step
-	ExecutorResult map[string]string
-)
+// ExecutorResult represents an executor result on a test step
+type ExecutorResult map[string]string
 
 // StepAssertions contains step assertions
 type StepAssertions struct {

@@ -248,7 +248,8 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 	var errors []Failure
 	var failures []Failure
 
-	for retry := 0; retry <= e.retry; retry++ {
+	var retry int
+	for retry = 0; retry < e.retry && !isOK; retry++ {
 		if retry > 1 && !isOK {
 			log.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
 			time.Sleep(time.Duration(e.delay) * time.Second)
@@ -270,15 +271,11 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 		if isOK {
 			break
 		}
-		// add errors / failures, only for last retry
-		if retry == e.retry {
-			tc.Errors = append(tc.Errors, errors...)
-			tc.Failures = append(tc.Failures, failures...)
-			if retry > 0 {
-				tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry+1)})
-			}
-		}
-
+	}
+	tc.Errors = append(tc.Errors, errors...)
+	tc.Failures = append(tc.Failures, failures...)
+	if retry > 0 && (len(failures) > 0 || len(errors) > 0) {
+		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry+1)})
 	}
 
 }
