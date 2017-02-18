@@ -249,7 +249,7 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 	var failures []Failure
 
 	var retry int
-	for retry = 0; retry < e.retry && !isOK; retry++ {
+	for retry = 0; retry <= e.retry && !isOK; retry++ {
 		if retry > 1 && !isOK {
 			log.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
 			time.Sleep(time.Duration(e.delay) * time.Second)
