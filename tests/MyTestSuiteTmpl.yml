@@ -1,0 +1,21 @@
+name: MyTestSuiteTmpl
+vars:
+  api.foo: 'http://api/foo'
+  second: 'venomWithTmpl'
+
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo '{{.api.foo}}'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.stdout ShouldEqual http://api/foo
+
+- name: testB
+  steps:
+  - type: exec
+    script: echo 'XXX{{.testA.result.stdout}}YYY'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.stdout ShouldEqual XXXhttp://api/fooYYY

@@ -1,4 +1,4 @@
-name: MyTestCase
+name: MyTestSuite
 testcases:
 - name: cdsfoo status
   steps:

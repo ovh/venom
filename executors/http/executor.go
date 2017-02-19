@@ -54,7 +54,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep, templater *venom.Templater) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor
@@ -64,14 +64,14 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 
 	r := Result{Executor: t}
 
-	body := bytes.NewBuffer([]byte(t.Body))
+	body := bytes.NewBuffer([]byte(templater.Apply(t.Body)))
 
 	path := t.URL + t.Path
 	method := t.Method
 	if method == "" {
 		method = "GET"
 	}
-	req, err := http.NewRequest(method, path, body)
+	req, err := http.NewRequest(templater.Apply(method), templater.Apply(path), body)
 	if err != nil {
 		return nil, err
 	}
