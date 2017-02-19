@@ -81,7 +81,7 @@ testcases:
 
 ```
 
-Using variable and reuse results
+Using variables and reuse results
 
 ```yaml
 name: MyTestSuiteTmpl
@@ -240,7 +240,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(*log.Entry, Aliases, TestStep, *Templater) (ExecutorResult, error)
 }
 ```
 
@@ -285,8 +285,12 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		return nil, err
 	}
 
-	// to something with t.Command here...
+  // apply testsuite variables and results of previous testcases
+  command := templater.Apply(t.Script)
+
+	// to something with command here...
 	//...
+
 	output := "foo"
 	ouputCode := 0
 
