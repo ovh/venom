@@ -11,6 +11,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/fsamin/go-dump"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
 )
@@ -179,6 +180,12 @@ func runTestSuite(ts *TestSuite, detailsLevel string) {
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
+	d, err := dump.ToMap(ts.Vars)
+	if err != nil {
+		log.Errorf("err:%s", err)
+	}
+	ts.Templater = newTemplater(d)
+
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
 		totalSteps += len(tc.TestSteps)
@@ -224,14 +231,13 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 	l = l.WithField("x.testcase", tc.Name)
 	l.Infof("start")
 	for _, step := range tc.TestSteps {
-
 		e, err := getExecutorWrap(step)
 		if err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: err.Error()})
 			break
 		}
 
-		runTestStep(e, tc, step, l, detailsLevel)
+		runTestStep(e, ts, tc, step, l, detailsLevel, ts.Templater)
 
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
@@ -243,7 +249,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 	l.Infof("end")
 }
 
-func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string) {
+func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string, templater *Templater) {
 
 	var isOK bool
 	var errors []Failure
@@ -256,13 +262,15 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
-		result, err := runTestStepExecutor(e, step, l)
+		result, err := e.executor.Run(l, aliases, step, ts.Templater)
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
 			continue
 		}
 
-		log.Debugf("result:%+v", result)
+		ts.Templater.Add(tc.Name, result)
+
+		log.Debugf("result:%+v", ts.Templater)
 
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
 			isOK, errors, failures = applyChecks(result, step, h.GetDefaultAssertions(), l)
@@ -280,9 +288,9 @@ func runTestStep(e *executorWrap, tc *TestCase, step TestStep, l *log.Entry, det
 	}
 }
 
-func runTestStepExecutor(e *executorWrap, step TestStep, l *log.Entry) (ExecutorResult, error) {
+func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
 	if e.timeout == 0 {
-		return e.executor.Run(l, aliases, step)
+		return e.executor.Run(l, aliases, step, ts.Templater)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
@@ -291,7 +299,7 @@ func runTestStepExecutor(e *executorWrap, step TestStep, l *log.Entry) (Executor
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
 	go func(e *executorWrap, step TestStep, l *log.Entry) {
-		result, err := e.executor.Run(l, aliases, step)
+		result, err := e.executor.Run(l, aliases, step, ts.Templater)
 		cherr <- err
 		ch <- result
 	}(e, step, l)

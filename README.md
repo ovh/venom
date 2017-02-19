@@ -36,7 +36,7 @@ Flags:
 * Run `venom template`
 * Examples: https://github.com/ovh/cds/tree/master/tests
 
-### example:
+### Example:
 
 ```yaml
 
@@ -78,6 +78,33 @@ testcases:
     delay: 2
     assertions:
     - result.statuscode ShouldEqual 200
+
+```
+
+Using variable and reuse results
+
+```yaml
+name: MyTestSuiteTmpl
+vars:
+  api.foo: 'http://api/foo'
+  second: 'venomWithTmpl'
+
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo '{{.api.foo}}'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.stdout ShouldEqual http://api/foo
+
+- name: testB
+  steps:
+  - type: exec
+    script: echo 'XXX{{.testA.result.stdout}}YYY'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.stdout ShouldEqual XXXhttp://api/fooYYY
 
 ```
 

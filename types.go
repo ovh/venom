@@ -29,7 +29,7 @@ type StepAssertions struct {
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(*log.Entry, Aliases, TestStep, *Templater) (ExecutorResult, error)
 }
 
 // executorWrap contains an executor implementation and some attributes
@@ -59,20 +59,22 @@ type Tests struct {
 // TestSuite is a single JUnit test suite which may contain many
 // testcases.
 type TestSuite struct {
-	XMLName    xml.Name   `xml:"testsuite" json:"-" yaml:"-"`
-	Disabled   int        `xml:"disabled,attr,omitempty" json:"disabled" yaml:"-"`
-	Errors     int        `xml:"errors,attr,omitempty" json:"errors" yaml:"-"`
-	Failures   int        `xml:"failures,attr,omitempty" json:"failures" yaml:"-"`
-	Hostname   string     `xml:"hostname,attr,omitempty" json:"hostname" yaml:"-"`
-	ID         string     `xml:"id,attr,omitempty" json:"id" yaml:"-"`
-	Name       string     `xml:"name,attr" json:"name" yaml:"name"`
-	Package    string     `xml:"package,attr,omitempty" json:"package" yaml:"-"`
-	Properties []Property `xml:"-" json:"properties" yaml:"-"`
-	Skipped    int        `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
-	Total      int        `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
-	TestCases  []TestCase `xml:"testcase" json:"tests" yaml:"testcases"`
-	Time       string     `xml:"time,attr,omitempty" json:"time" yaml:"-"`
-	Timestamp  string     `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
+	XMLName    xml.Name               `xml:"testsuite" json:"-" yaml:"-"`
+	Disabled   int                    `xml:"disabled,attr,omitempty" json:"disabled" yaml:"-"`
+	Errors     int                    `xml:"errors,attr,omitempty" json:"errors" yaml:"-"`
+	Failures   int                    `xml:"failures,attr,omitempty" json:"failures" yaml:"-"`
+	Hostname   string                 `xml:"hostname,attr,omitempty" json:"hostname" yaml:"-"`
+	ID         string                 `xml:"id,attr,omitempty" json:"id" yaml:"-"`
+	Name       string                 `xml:"name,attr" json:"name" yaml:"name"`
+	Package    string                 `xml:"package,attr,omitempty" json:"package" yaml:"-"`
+	Properties []Property             `xml:"-" json:"properties" yaml:"-"`
+	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
+	Total      int                    `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
+	TestCases  []TestCase             `xml:"testcase" json:"tests" yaml:"testcases"`
+	Time       string                 `xml:"time,attr,omitempty" json:"time" yaml:"-"`
+	Timestamp  string                 `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
+	Vars       map[string]interface{} `xml:"-" json:"-" yaml:"vars"`
+	Templater  *Templater             `xml:"-" json:"-" yaml:"-"`
 }
 
 // Property represents a key/value pair used to define properties.
