@@ -37,6 +37,7 @@ type executorWrap struct {
 	executor Executor
 	retry    int // nb retry a test case if it is in failure.
 	delay    int // delay between two retries
+	timeout  int // timeout on executor
 }
 
 // executorWithDefaultAssertions execute a testStep.

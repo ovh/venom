@@ -57,11 +57,12 @@ testcases:
     - result.stdout ShouldNotContainSubstring foo
     - result.timeseconds ShouldBeLessThan 1
 
-- name: GET http testcase
+- name: GET http testcase, with 5 seconds timeout
   steps:
   - type: http
     method: GET
     url: https://eu.api.ovh.com/1.0/
+    timeout: 5
     assertions:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing

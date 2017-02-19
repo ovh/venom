@@ -18,7 +18,7 @@ func RegisterExecutor(name string, e Executor) {
 func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 
 	var name string
-	var retry, delay int
+	var retry, delay, timeout int
 
 	if itype, ok := t["type"]; ok {
 		name = fmt.Sprintf("%s", itype)
@@ -36,12 +36,17 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 	if errDelay != nil {
 		return nil, errDelay
 	}
+	timeout, errTimeout := getAttrInt(t, "timeout")
+	if errTimeout != nil {
+		return nil, errTimeout
+	}
 
 	if e, ok := executors[name]; ok {
 		ew := &executorWrap{
 			executor: e,
 			retry:    retry,
 			delay:    delay,
+			timeout:  timeout,
 		}
 		return ew, nil
 	}
@@ -51,12 +56,15 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 
 func getAttrInt(t map[string]interface{}, name string) (int, error) {
 	var out int
-	if i, ok := t["retry"]; ok {
+	if i, ok := t[name]; ok {
 		var ok bool
 		out, ok = i.(int)
 		if !ok {
 			return -1, fmt.Errorf("attribute %s '%s' is not an integer", name, i)
 		}
+	}
+	if out < 0 {
+		out = 0
 	}
 	return out, nil
 }
