@@ -49,7 +49,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep, templater *venom.Templater) (venom.ExecutorResult, error) {
+func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
@@ -60,7 +60,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep, te
 		return nil, fmt.Errorf("Invalid command")
 	}
 
-	scriptContent := templater.Apply(t.Script)
+	scriptContent := t.Script
 	for alias, real := range aliases {
 		if strings.Contains(scriptContent, alias+" ") {
 			scriptContent = strings.Replace(scriptContent, alias+" ", real+" ", 1)

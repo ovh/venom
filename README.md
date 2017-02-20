@@ -240,7 +240,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep, *Templater) (ExecutorResult, error)
+	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
 }
 ```
 
@@ -285,10 +285,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		return nil, err
 	}
 
-  // apply testsuite variables and results of previous testcases
-  command := templater.Apply(t.Script)
-
-	// to something with command here...
+	// to something with t.Command here...
 	//...
 
 	output := "foo"

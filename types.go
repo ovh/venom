@@ -29,7 +29,7 @@ type StepAssertions struct {
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep, *Templater) (ExecutorResult, error)
+	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
 }
 
 // executorWrap contains an executor implementation and some attributes
