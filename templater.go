@@ -1,7 +1,11 @@
 package venom
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // Templater contains templating values on a testsuite
@@ -21,9 +25,26 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 }
 
 // Apply apply vars on string
-func (tmpl *Templater) Apply(s string) string {
-	for k, v := range tmpl.values {
-		s = strings.Replace(s, "{{."+k+"}}", v, -1)
+func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
+
+	log.Debugf("templater> before: %+v", step)
+
+	s, err := json.Marshal(step)
+	if err != nil {
+		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
-	return s
+	sb := string(s)
+
+	for k, v := range tmpl.values {
+		sb = strings.Replace(sb, "{{."+k+"}}", v, -1)
+	}
+
+	var t TestStep
+	if err := json.Unmarshal([]byte(sb), &t); err != nil {
+		return nil, fmt.Errorf("templater> Error while unmarshal: %s", err)
+	}
+
+	log.Debugf("templater> after: %+v", t)
+
+	return t, nil
 }
