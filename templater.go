@@ -14,6 +14,9 @@ type Templater struct {
 }
 
 func newTemplater(values map[string]string) *Templater {
+	if values == nil {
+		values = make(map[string]string)
+	}
 	return &Templater{Values: values}
 }
 
