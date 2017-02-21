@@ -13,6 +13,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
+	"github.com/mattn/go-zglob"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/runabove/venom"
@@ -85,7 +86,7 @@ func (e *Executor) readfile(path string) (Result, error) {
 		path = filepath.Dir(path)
 	}
 
-	filesPath, errg := filepath.Glob(path)
+	filesPath, errg := zglob.Glob(path)
 	if errg != nil {
 		return result, fmt.Errorf("Error reading files on path:%s :%s", path, errg)
 	}
