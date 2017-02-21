@@ -32,6 +32,7 @@ testcases:
 ```yaml
   result.executor
   result.content
+  result.contentjson
   result.err
   result.timeSeconds
   result.timeHuman
@@ -41,10 +42,63 @@ testcases:
 - result.executor: executor condition with file path
 - result.err: if exist, this field contains error
 - result.content: content of readed file
+- result.contentjson: content of readed file if it's a json. You can access json data as result.contentjson.yourkey for example
 
 
 ## Default assertion
 
 ```yaml
 result.err ShouldNotExist
+```
+
+## Example
+
+testa.txt file:
+
+```
+simple content
+multilines
+```
+
+testa.json file:
+
+```json
+{
+  "foo": "bar"
+}
+```
+
+testb.json file:
+
+```json
+[
+  {
+    "foo": "bar",
+    "foo2": "bar2"
+  }
+]
+
+```
+
+venom test file:
+
+```
+name: TestSuite Read File
+testcases:
+- name: TestCase Read File
+  steps:
+  - type: readfile
+    path: testa.json
+    assertions:
+      - result.contentjson.foo ShouldEqual bar
+
+  - type: readfile
+    path: testb.json
+    assertions:
+      - result.contentjson.contentjson0.foo2 ShouldEqual bar2
+
+  - type: readfile
+    path: test.txt
+    assertions:
+      - result.content ShouldContainSubstring multilines
 ```

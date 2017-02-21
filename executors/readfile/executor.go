@@ -1,6 +1,7 @@
-package exec
+package readfile
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,11 +30,12 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
-	Content     string   `json:"content,omitempty" yaml:"content,omitempty"`
-	Err         string   `json:"error" yaml:"error"`
-	TimeSeconds float64  `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
+	Executor    Executor    `json:"executor,omitempty" yaml:"executor,omitempty"`
+	Content     string      `json:"content,omitempty" yaml:"content,omitempty"`
+	ContentJSON interface{} `json:"contentjson,omitempty" yaml:"contentjson,omitempty"`
+	Err         string      `json:"error" yaml:"error"`
+	TimeSeconds float64     `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	TimeHuman   string      `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for type exec
@@ -62,6 +64,16 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	}
 	result.Content = content
 
+	bodyJSONArray := []interface{}{}
+	if err := json.Unmarshal([]byte(content), &bodyJSONArray); err != nil {
+		bodyJSONMap := map[string]interface{}{}
+		if err2 := json.Unmarshal([]byte(content), &bodyJSONMap); err2 == nil {
+			result.ContentJSON = bodyJSONMap
+		}
+	} else {
+		result.ContentJSON = bodyJSONArray
+	}
+
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
@@ -73,8 +85,7 @@ func (e *Executor) readfile(path string) (string, error) {
 
 	fileInfo, _ := os.Stat(path)
 	if fileInfo != nil && fileInfo.IsDir() {
-		path = filepath.Dir(path) + "/*.yml"
-		log.Debugf("path computed:%s", path)
+		path = filepath.Dir(path)
 	}
 
 	filesPath, errg := filepath.Glob(path)
@@ -82,9 +93,12 @@ func (e *Executor) readfile(path string) (string, error) {
 		return "", fmt.Errorf("Error reading files on path:%s :%s", path, errg)
 	}
 
+	if len(filesPath) == 0 {
+		return "", fmt.Errorf("Invalid path '%s' or file not found", path)
+	}
+
 	var out string
 	for _, f := range filesPath {
-		log.Debugf("read %s", f)
 		dat, errr := ioutil.ReadFile(f)
 		if errr != nil {
 			return "", fmt.Errorf("Error while reading file")

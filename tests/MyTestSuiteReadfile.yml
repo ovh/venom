@@ -3,4 +3,16 @@ testcases:
 - name: TestCase Read File
   steps:
   - type: readfile
-    path: MyTestSuiteReadfile.yml
+    path: testa.json
+    assertions:
+      - result.contentjson.foo ShouldEqual bar
+
+  - type: readfile
+    path: testb.json
+    assertions:
+      - result.contentjson.contentjson0.foo2 ShouldEqual bar2
+
+  - type: readfile
+    path: test.txt
+    assertions:
+      - result.content ShouldContainSubstring multilines
