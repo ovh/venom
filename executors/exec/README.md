@@ -47,7 +47,6 @@ timehuman
 - result.timeseconds & result.timehuman: time of execution
 - result.executor.path: executor condition
 - result.err: if exists, this field contains error
-- result.body: body of HTTP response
 - result.stdout: Standard Output of executed script
 - result.stderr: Error Output of executed script
 - result.code: Exit Code
