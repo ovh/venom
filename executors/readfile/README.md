@@ -42,7 +42,7 @@ testcases:
   result.mod.filename
 ```
 
-- result.timeSeconds & result.timeHuman: time for read file
+- result.timeseconds & result.timehuman: time for read file
 - result.executor.path: executor condition with file path
 - result.err: if exist, this field contains error
 - result.content: content of readed file
