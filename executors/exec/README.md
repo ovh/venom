@@ -1,5 +1,6 @@
 # Venom - Executor Exec
 
+Step for execute a script
 
 
 ## Input
@@ -19,6 +20,17 @@ testcases:
 
 ```
 
+Multiline script:
+
+```yaml
+name: Title of TestSuite
+testcases:
+- name: multiline script
+  steps:
+  - script: |
+            echo "Foo" \
+            echo "Bar"
+```
 
 ## Output
 
