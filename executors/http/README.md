@@ -57,7 +57,9 @@ result.headers
 result.error
 ```
 - result.timeseconds & result.timehuman: time of execution
-- result.executor.path: executor condition
+- result.executor.executor.method: HTTP method used, example: GET
+- result.executor.executor.url: url called
+- result.executor.executor.multipartform: multipartform if exists
 - result.err: if exists, this field contains error
 - result.body: body of HTTP response
 - result.bodyjson: body of HTTP response if it's a json. You can access json data as result.bodyjson.yourkey for example
