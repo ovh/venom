@@ -19,6 +19,9 @@ func newTemplater(values map[string]string) *Templater {
 
 // Add add data to templater
 func (tmpl *Templater) Add(prefix string, values map[string]string) {
+	if tmpl.Values == nil {
+		tmpl.Values = make(map[string]string)
+	}
 	for k, v := range values {
 		tmpl.Values[prefix+"."+k] = v
 	}
