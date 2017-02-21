@@ -22,3 +22,13 @@ testcases:
     - result.statuscode ShouldEqual 401
     - result.headers.www-authenticate ShouldEqual X-OVH-Auth
     - result.timeseconds ShouldBeLessThan 1
+
+- name: POST http multipart
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/auth/logout
+    multipart_form:
+      file: '@./venom.gif'
+    assertions:
+    - result.statuscode ShouldEqual 401
