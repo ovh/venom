@@ -44,19 +44,19 @@ type Executor struct {
 // Result represents a step result
 type Result struct {
 	Executor    Executor    `json:"executor,omitempty" yaml:"executor,omitempty"`
-	TimeSeconds float64     `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-	TimeHuman   string      `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
-	StatusCode  int         `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
+	TimeSeconds float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
+	TimeHuman   string      `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
+	StatusCode  int         `json:"statuscode,omitempty" yaml:"statuscode,omitempty"`
 	Body        string      `json:"body,omitempty" yaml:"body,omitempty"`
 	BodyJSON    interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
 	Headers     Headers     `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Err         error       `json:"error,omitempty" yaml:"error,omitempty"`
+	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.statusCode ShouldEqual 200"}}
+	return venom.StepAssertions{Assertions: []string{"result.statuscode ShouldEqual 200"}}
 }
 
 // Run execute TestStep
@@ -142,12 +142,12 @@ func (e Executor) getRequest() (*http.Request, error) {
 			return nil, fmt.Errorf("'multipart_form' should be a map")
 		}
 		writer = multipart.NewWriter(body)
-		for keyf, valuef := range form {
-			key, ok := keyf.(string)
+		for k, v := range form {
+			key, ok := k.(string)
 			if !ok {
 				return nil, fmt.Errorf("'multipart_form' should be a map with keys as strings")
 			}
-			value, ok := valuef.(string)
+			value, ok := v.(string)
 			if !ok {
 				return nil, fmt.Errorf("'multipart_form' should be a map with values as strings")
 			}
