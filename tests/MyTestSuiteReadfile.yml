@@ -1,0 +1,6 @@
+name: TestSuite Read File
+testcases:
+- name: TestCase Read File
+  steps:
+  - type: readfile
+    path: MyTestSuiteReadfile.yml
