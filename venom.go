@@ -2,7 +2,13 @@ package venom
 
 import (
 	"fmt"
+	"os"
 )
+
+// Version of Blinkstick
+// One Line for this, used by release.sh script
+// Keep "const Version on one line"
+const Version = "0.9.0"
 
 var (
 	executors = map[string]Executor{}
@@ -67,4 +73,10 @@ func getAttrInt(t map[string]interface{}, name string) (int, error) {
 		out = 0
 	}
 	return out, nil
+}
+
+// Exit func display an error message on stderr and exit 1
+func Exit(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...)
+	os.Exit(1)
 }
