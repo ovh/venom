@@ -1,7 +1,7 @@
 package venom
 
 import (
-	"encoding/json"
+	"gopkg.in/yaml.v2"
 	"fmt"
 	"strings"
 
@@ -33,9 +33,10 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 // Apply apply vars on string
 func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 
-	log.Debugf("templater> before: %+v", step)
+	log.Debugf("templater> before: %#v", step)
 
-	s, err := json.Marshal(step)
+	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
+	s, err := yaml.Marshal(step)
 	if err != nil {
 		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
@@ -46,7 +47,7 @@ func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 	}
 
 	var t TestStep
-	if err := json.Unmarshal([]byte(sb), &t); err != nil {
+	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
 		return nil, fmt.Errorf("templater> Error while unmarshal: %s", err)
 	}
 
