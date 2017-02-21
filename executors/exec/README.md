@@ -45,7 +45,7 @@ timehuman
 ```
 
 - result.timeseconds & result.timehuman: time of execution
-- result.executor.path: executor condition
+- result.executor.executor.script: script executed
 - result.err: if exists, this field contains error
 - result.stdout: Standard Output of executed script
 - result.stderr: Error Output of executed script
