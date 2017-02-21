@@ -231,6 +231,10 @@ testcases:
 
 ```
 
+### SMTP
+
+See https://github.com/runabove/venom/tree/master/executors/smtp
+
 ### Write your executor
 
 An executor have to implement this interface

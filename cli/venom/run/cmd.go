@@ -15,6 +15,7 @@ import (
 	"github.com/runabove/venom"
 	ex "github.com/runabove/venom/executors/exec"
 	"github.com/runabove/venom/executors/http"
+	"github.com/runabove/venom/executors/smtp"
 )
 
 var (
@@ -57,6 +58,7 @@ var Cmd = &cobra.Command{
 
 		venom.RegisterExecutor(ex.Name, ex.New())
 		venom.RegisterExecutor(http.Name, http.New())
+		venom.RegisterExecutor(smtp.Name, smtp.New())
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if parallel < 0 {
