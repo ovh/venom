@@ -30,20 +30,26 @@ testcases:
 ## Output
 
 ```yaml
-  result.executor
+  result.timeseconds
+  result.timehuman
+  result.executor.executor.path
   result.content
   result.contentjson
-  result.err
-  result.timeSeconds
-  result.timeHuman
+  result.size.filename
+  result.md5sum.filename
+  result.modtime.filename
+  result.mod.filename
 ```
 
 - result.timeSeconds & result.timeHuman: time for read file
-- result.executor: executor condition with file path
+- result.executor.path: executor condition with file path
 - result.err: if exist, this field contains error
 - result.content: content of readed file
 - result.contentjson: content of readed file if it's a json. You can access json data as result.contentjson.yourkey for example
-
+- result.size.filename: size of file 'filename'
+- result.md5sum.filename: md5 of file 'fifename'
+- result.modtime.filename: date modification of file 'filename', example: 1487698253
+- result.mod.filename: rights on file 'filename', example: -rw-r--r--
 
 ## Default assertion
 
