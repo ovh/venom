@@ -1,11 +1,11 @@
-# Venom - Executor SMTP
+# Venom - Executor Read file
 
 Step for Read file
 
 Use case: you software write a file. Venom checks that file is produced, read it,
 and return content. Content can be used by another steps of testsuite.
 
-path can contains a fullpath, a wildcard or a directory:
+Path can contains a fullpath, a wildcard or a directory:
 
 ```
 - path: /a/full/path/file.txt
