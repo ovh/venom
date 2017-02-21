@@ -82,7 +82,7 @@ testb.json file:
 
 venom test file:
 
-```
+```yaml
 name: TestSuite Read File
 testcases:
 - name: TestCase Read File
