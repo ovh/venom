@@ -56,8 +56,8 @@ result.bodyjson
 result.headers
 result.error
 ```
-- result.timeseconds & result.timehuman: time for read file
-- result.executor.path: executor condition with file path
+- result.timeseconds & result.timehuman: time of execution
+- result.executor.path: executor condition
 - result.err: if exist, this field contains error
 - result.body: body of HTTP response
 - result.bodyjson: body of HTTP response if it's a json. You can access json data as result.bodyjson.yourkey for example
