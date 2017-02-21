@@ -12,6 +12,7 @@ Path can contains a fullpath, a wildcard or a directory:
 - path: afile.txt
 - path: *.yml
 - path: a_directory/
+- path: ./foo/b*/**/z*.txt
 ```
 
 ## Input
