@@ -33,12 +33,12 @@ type Headers map[string]string
 
 // Executor struct
 type Executor struct {
-	Method        string  	  `json:"method" yaml:"method"`
-	URL           string  	  `json:"url" yaml:"url"`
-	Path          string  	  `json:"path" yaml:"path"`
-	Body          string  	  `json:"body" yaml:"body"`
+	Method        string      `json:"method" yaml:"method"`
+	URL           string      `json:"url" yaml:"url"`
+	Path          string      `json:"path" yaml:"path"`
+	Body          string      `json:"body" yaml:"body"`
 	MultipartForm interface{} `json:"multipart_form" yaml:"multipart_form"`
-	Headers       Headers 	  `json:"headers" yaml:"headers"`
+	Headers       Headers     `json:"headers" yaml:"headers"`
 }
 
 // Result represents a step result
@@ -56,7 +56,7 @@ type Result struct {
 // GetDefaultAssertions return default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
+	return venom.StepAssertions{Assertions: []string{"result.statusCode ShouldEqual 200"}}
 }
 
 // Run execute TestStep
@@ -122,7 +122,6 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
 }
 
-
 // getRequest returns the request correctly set for the current executor
 func (e Executor) getRequest() (*http.Request, error) {
 	path := fmt.Sprintf("%s%s", e.URL, e.Path)
@@ -143,12 +142,12 @@ func (e Executor) getRequest() (*http.Request, error) {
 			return nil, fmt.Errorf("'multipart_form' should be a map")
 		}
 		writer = multipart.NewWriter(body)
-		for key_, value_ := range form {
-			key, ok := key_.(string)
+		for keyf, valuef := range form {
+			key, ok := keyf.(string)
 			if !ok {
 				return nil, fmt.Errorf("'multipart_form' should be a map with keys as strings")
 			}
-			value, ok := value_.(string)
+			value, ok := valuef.(string)
 			if !ok {
 				return nil, fmt.Errorf("'multipart_form' should be a map with values as strings")
 			}
