@@ -27,6 +27,18 @@
 			"revisionTime": "2016-10-12T01:35:12Z"
 		},
 		{
+			"checksumSHA1": "5xzgVm4v/J7VXwtip+KDu96be18=",
+			"path": "github.com/mattn/go-zglob",
+			"revision": "95345c4e1c0ebc9d16a3284177f09360f4d20fab",
+			"revisionTime": "2017-01-24T11:57:57Z"
+		},
+		{
+			"checksumSHA1": "xcAVbwtk3z9gi2Eig6DYgAiMzSc=",
+			"path": "github.com/mattn/go-zglob/fastwalk",
+			"revision": "95345c4e1c0ebc9d16a3284177f09360f4d20fab",
+			"revisionTime": "2017-01-24T11:57:57Z"
+		},
+		{
 			"checksumSHA1": "0lYe+0oPjhUOecK2xxOsDJuxbK4=",
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "ed105d635dfa9ea7133f7c79f1eb36203fc3a156",
