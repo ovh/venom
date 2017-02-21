@@ -160,8 +160,7 @@ func (e *Executor) sendEmail() error {
 		return fmt.Errorf("Error with c.Data:%s", err.Error())
 	}
 
-	_, err = w.Write([]byte(message))
-	if err != nil {
+	if _, err := w.Write([]byte(message)); err != nil {
 		return fmt.Errorf("Error with c.Write:%s", err.Error())
 	}
 
