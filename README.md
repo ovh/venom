@@ -179,27 +179,9 @@ venom run  --details=low --format=xml --output-dir="."
 
 ### Exec
 
-Default value of type is `exec`
+`exec` is the default type for a step
 
-In your yaml file, you can use:
-
-```yaml
-  - script mandatory
-```
-
-```yaml
-
-name: Title of TestSuite
-testcases:
-- name: Check if exit code != 1 and echo command response in less than 1s
-  steps:
-  - script: echo 'foo'
-    assertions:
-    - result.code ShouldEqual 0
-    - result.timeseconds ShouldBeLessThan 1
-
-```
-
+See https://github.com/runabove/venom/tree/master/executors/exec
 
 ### HTTP
 
