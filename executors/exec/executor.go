@@ -37,10 +37,10 @@ type Result struct {
 	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
 	StdOut      string   `json:"stdout,omitempty" yaml:"stdout,omitempty"`
 	StdErr      string   `json:"stderr,omitempty" yaml:"stderr,omitempty"`
-	Err         error    `json:"error,omitempty" yaml:"error,omitempty"`
+	Err         string   `json:"err,omitempty" yaml:"err,omitempty"`
 	Code        string   `json:"code,omitempty" yaml:"code,omitempty"`
-	TimeSeconds float64  `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
+	TimeSeconds float64  `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
+	TimeHuman   string   `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for type exec
@@ -176,7 +176,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	}()
 
 	if err := cmd.Start(); err != nil {
-		result.Err = err
+		result.Err = err.Error()
 		result.Code = "127"
 		l.Debugf(err.Error())
 		return dump.ToMap(t, dump.WithDefaultLowerCaseFormatter())
