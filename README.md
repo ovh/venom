@@ -230,7 +230,8 @@ type Executor struct {
 type Result struct {
 	Code        int    `json:"code,omitempty" yaml:"code,omitempty"`
 	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
-	Output      string `json:"Output,omitempty" yaml:"Output,omitempty"`
+	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
+	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
   Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
 }
 
@@ -252,14 +253,14 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	// to something with t.Command here...
 	//...
 
-	output := "foo"
+	systemout := "foo"
 	ouputCode := 0
 
 	// prepare result
 	r := Result{
 		Code:    ouputCode, // return Output Code
 		Command: t.Command, // return Command executed
-		Output:  output,    // return Output string
+		Systemout:  systemout,    // return Output string
     Executor: t, // return executor, usefull for display Executor context in failure
 	}
 

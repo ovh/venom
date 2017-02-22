@@ -112,9 +112,9 @@ func outputResult(tests venom.Tests, elapsed time.Duration) {
 			log.Fatalf("Error: cannot format output yaml (%s)", err)
 		}
 	default:
-		dataxml, err := xml.Marshal(tests)
-		if err != nil {
-			log.Fatalf("Error: cannot format output xml (%s)", err)
+		dataxml, errm := xml.Marshal(tests)
+		if errm != nil {
+			log.Fatalf("Error: cannot format xml output: %s", errm)
 		}
 		data = append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), dataxml...)
 	}
@@ -134,7 +134,6 @@ func outputResult(tests venom.Tests, elapsed time.Duration) {
 			os.Exit(1)
 		}
 	}
-
 }
 
 func outputResume(tests venom.Tests, elapsed time.Duration) {

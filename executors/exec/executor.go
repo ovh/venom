@@ -35,8 +35,8 @@ type Executor struct {
 // Result represents a step result
 type Result struct {
 	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
-	StdOut      string   `json:"stdout,omitempty" yaml:"stdout,omitempty"`
-	StdErr      string   `json:"stderr,omitempty" yaml:"stderr,omitempty"`
+	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"`
+	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"`
 	Err         string   `json:"err,omitempty" yaml:"err,omitempty"`
 	Code        string   `json:"code,omitempty" yaml:"code,omitempty"`
 	TimeSeconds float64  `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
@@ -156,7 +156,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 				close(outchan)
 				return
 			}
-			result.StdOut += line
+			result.Systemout += line
 			l.Debugf(line)
 		}
 	}()
@@ -170,7 +170,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 				close(errchan)
 				return
 			}
-			result.StdErr += line
+			result.Systemerr += line
 			l.Debugf(line)
 		}
 	}()

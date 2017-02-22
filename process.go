@@ -261,6 +261,7 @@ func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l 
 	var isOK bool
 	var errors []Failure
 	var failures []Failure
+	var systemerr, systemout string
 
 	var retry int
 	for retry = 0; retry <= e.retry && !isOK; retry++ {
@@ -280,9 +281,9 @@ func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l 
 		log.Debugf("result:%+v", ts.Templater)
 
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
-			isOK, errors, failures = applyChecks(result, step, h.GetDefaultAssertions(), l)
+			isOK, errors, failures, systemout, systemerr = applyChecks(result, step, h.GetDefaultAssertions(), l)
 		} else {
-			isOK, errors, failures = applyChecks(result, step, nil, l)
+			isOK, errors, failures, systemout, systemerr = applyChecks(result, step, nil, l)
 		}
 		if isOK {
 			break
@@ -293,6 +294,8 @@ func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l 
 	if retry > 0 && (len(failures) > 0 || len(errors) > 0) {
 		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry)})
 	}
+	tc.Systemout.Value += systemout
+	tc.Systemerr.Value += systemerr
 }
 
 func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
