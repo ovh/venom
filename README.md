@@ -230,7 +230,7 @@ type Executor struct {
 type Result struct {
 	Code        int    `json:"code,omitempty" yaml:"code,omitempty"`
 	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
-  Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
+	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
 	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
   Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
 }
