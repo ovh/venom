@@ -273,7 +273,7 @@ func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l 
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
-		result, err := e.executor.Run(l, aliases, step)
+		result, err := runTestStepExecutor(e, ts, step, l, templater)
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
 			continue
