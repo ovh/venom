@@ -50,8 +50,9 @@ var Cmd = &cobra.Command{
 
 		if len(args) == 0 {
 			path = append(path, ".")
+		} else {
+			path = args[0:]
 		}
-		path = args[0:]
 
 		venom.RegisterExecutor(ex.Name, ex.New())
 		venom.RegisterExecutor(http.Name, http.New())
