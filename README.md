@@ -195,6 +195,11 @@ See https://github.com/runabove/venom/tree/master/executors/readfile
 
 See https://github.com/runabove/venom/tree/master/executors/smtp
 
+### SSH
+
+See https://github.com/runabove/venom/tree/master/executors/ssh
+
+
 ### Write your executor
 
 An executor have to implement this interface

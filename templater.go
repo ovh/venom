@@ -1,11 +1,10 @@
 package venom
 
 import (
-	"gopkg.in/yaml.v2"
 	"fmt"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 // Templater contains templating values on a testsuite
@@ -32,9 +31,6 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 
 // Apply apply vars on string
 func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
-
-	log.Debugf("templater> before: %#v", step)
-
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
 	s, err := yaml.Marshal(step)
 	if err != nil {
@@ -50,8 +46,6 @@ func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
 		return nil, fmt.Errorf("templater> Error while unmarshal: %s", err)
 	}
-
-	log.Debugf("templater> after: %+v", t)
 
 	return t, nil
 }
