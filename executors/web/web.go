@@ -24,9 +24,9 @@ func New() venom.Executor {
 
 // Executor struct
 type Executor struct {
-	URL        string `json:"url" yaml:"url"`
-	Action     string `json:"action" yaml:"action"`
-	Screenshot string `json:"screenshot" yaml:"screenshot"`
+	URL        string `json:"url,omitempty" yaml:"url"`
+	Action     string `json:"action,omitempty" yaml:"action"`
+	Screenshot string `json:"screenshot,omitempty" yaml:"screenshot"`
 }
 
 // Result represents a step result
@@ -35,7 +35,6 @@ type Result struct {
 	TimeSeconds float64  `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
 	TimeHuman   string   `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 	Title       string   `json:"title,omitempty" yaml:"title,omitempty"`
-	Err         error    `json:"error,omitempty" yaml:"error,omitempty"`
 }
 
 // Run execute TestStep
@@ -51,19 +50,16 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 
 	varContext := ctx.Value(venom.ContextKey).(map[string]interface{})
 	if varContext == nil {
-		r.Err = fmt.Errorf("Executor web need a context")
-		return endExecutor(r, start)
+		return nil, fmt.Errorf("Executor web need a context")
 	}
 
 	if _, ok := varContext[ctxWeb.ContextPageKey]; !ok {
-		r.Err = fmt.Errorf("Executor web need a page in context")
-		return endExecutor(r, start)
+		return nil, fmt.Errorf("Executor web need a page in context")
 	}
 
 	page := varContext[ctxWeb.ContextPageKey].(*agouti.Page)
 	if page == nil {
-		r.Err = fmt.Errorf("page is nil in context")
-		return endExecutor(r, start)
+		return nil, fmt.Errorf("page is nil in context")
 	}
 
 	switch t.Action {

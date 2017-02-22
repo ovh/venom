@@ -36,5 +36,3 @@ testcases:
 * navigate: navigate to url
 * title: get title value
 * screenshot: take a screenshot
-
-more actions are coming... 
