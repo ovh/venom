@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	path           string
+	path           []string
 	alias          []string
 	format         string
 	parallel       int
@@ -48,14 +48,10 @@ var Cmd = &cobra.Command{
 	Short: "Run Tests",
 	PreRun: func(cmd *cobra.Command, args []string) {
 
-		if len(args) > 1 {
-			log.Fatalf("Invalid path: venom run <path>")
+		if len(args) == 0 {
+			path = append(path, ".")
 		}
-		if len(args) == 1 {
-			path = args[0]
-		} else {
-			path = "."
-		}
+		path = args[0:]
 
 		venom.RegisterExecutor(ex.Name, ex.New())
 		venom.RegisterExecutor(http.Name, http.New())
