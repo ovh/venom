@@ -129,7 +129,7 @@ func (e *Executor) sendEmail() error {
 		var errd error
 		c, errd = smtp.Dial(servername)
 		if errd != nil {
-			log.Errorf("Error while smtp.Dial:%s", errd)
+			return fmt.Errorf("Error while smtp.Dial:%s", errd)
 		}
 		defer c.Close()
 	}

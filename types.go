@@ -112,12 +112,12 @@ type TestStep map[string]interface{}
 
 // Failure contains data related to a failed test.
 type Failure struct {
-	Value   string `xml:",innerxml" json:"value" yaml:"value,omitempty"`
+	Value   string `xml:",cdata" json:"value" yaml:"value,omitempty"`
 	Type    string `xml:"type,attr,omitempty" json:"type" yaml:"type,omitempty"`
 	Message string `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
 }
 
 // InnerResult is used by TestCase
 type InnerResult struct {
-	Value string `xml:",innerxml" json:"value" yaml:"value"`
+	Value string `xml:",cdata" json:"value" yaml:"value"`
 }

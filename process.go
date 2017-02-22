@@ -21,7 +21,7 @@ var bars map[string]*pb.ProgressBar
 var mutex = &sync.Mutex{}
 
 // Process runs tests suite and return a Tests result
-func Process(path string, alias []string, parallel int, detailsLevel string) (Tests, error) {
+func Process(path []string, alias []string, parallel int, detailsLevel string) (Tests, error) {
 	log.Infof("Start processing path %s", path)
 
 	aliases = make(map[string]string)
@@ -34,17 +34,19 @@ func Process(path string, alias []string, parallel int, detailsLevel string) (Te
 		aliases[t[0]] = strings.Join(t[1:], "")
 	}
 
-	fileInfo, _ := os.Stat(path)
-	if fileInfo != nil && fileInfo.IsDir() {
-		path = filepath.Dir(path) + "/*.yml"
-		log.Debugf("path computed:%s", path)
+	var filesPath []string
+	for _, p := range path {
+		fileInfo, _ := os.Stat(p)
+		if fileInfo != nil && fileInfo.IsDir() {
+			p = filepath.Dir(p) + "/*.yml"
+			log.Debugf("path computed:%s", path)
+		}
+		fp, errg := filepath.Glob(p)
+		if errg != nil {
+			log.Fatalf("Error reading files on path:%s :%s", path, errg)
+		}
+		filesPath = append(filesPath, fp...)
 	}
-
-	filesPath, errg := filepath.Glob(path)
-	if errg != nil {
-		log.Fatalf("Error reading files on path:%s :%s", path, errg)
-	}
-
 	tss := []TestSuite{}
 
 	log.Debugf("Work with parallel %d", parallel)
@@ -143,6 +145,7 @@ func Process(path string, alias []string, parallel int, detailsLevel string) (Te
 		pool, errs = pb.StartPool(pbbars...)
 		if errs != nil {
 			log.Errorf("Error while prepare details bars: %s", errs)
+			pool = nil
 		}
 	}
 
@@ -161,7 +164,7 @@ func Process(path string, alias []string, parallel int, detailsLevel string) (Te
 
 	log.Infof("end processing path %s", path)
 
-	if detailsLevel != DetailsLow {
+	if detailsLevel != DetailsLow && pool != nil {
 		if err := pool.Stop(); err != nil {
 			log.Errorf("Error while closing pool progress bar: %s", err)
 		}
@@ -269,6 +272,7 @@ func runTestStep(ctx context.Context, e *executorWrap, ts *TestSuite, tc *TestCa
 	var isOK bool
 	var errors []Failure
 	var failures []Failure
+	var systemerr, systemout string
 
 	var retry int
 
@@ -289,9 +293,9 @@ func runTestStep(ctx context.Context, e *executorWrap, ts *TestSuite, tc *TestCa
 		log.Debugf("result:%+v", ts.Templater)
 
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
-			isOK, errors, failures = applyChecks(result, step, h.GetDefaultAssertions(), l)
+			isOK, errors, failures, systemout, systemerr = applyChecks(result, step, h.GetDefaultAssertions(), l)
 		} else {
-			isOK, errors, failures = applyChecks(result, step, nil, l)
+			isOK, errors, failures, systemout, systemerr = applyChecks(result, step, nil, l)
 		}
 		if isOK {
 			break
@@ -302,6 +306,8 @@ func runTestStep(ctx context.Context, e *executorWrap, ts *TestSuite, tc *TestCa
 	if retry > 0 && (len(failures) > 0 || len(errors) > 0) {
 		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempt(s)", retry)})
 	}
+	tc.Systemout.Value += systemout
+	tc.Systemerr.Value += systemerr
 }
 
 func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
