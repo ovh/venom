@@ -228,8 +228,16 @@ func runTestSuite(ts *TestSuite, detailsLevel string) {
 }
 
 func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string) {
+	l.Infof("Init context")
+	ctx, errContext := getContextWrap(tc)
+	if errContext != nil {
+		tc.Errors = append(tc.Errors, Failure{Value: errContext.Error()})
+		return
+	}
+
 	l = l.WithField("x.testcase", tc.Name)
 	l.Infof("start")
+
 	for _, stepIn := range tc.TestSteps {
 
 		step, erra := ts.Templater.Apply(stepIn)
@@ -244,7 +252,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 			break
 		}
 
-		runTestStep(e, ts, tc, step, l, detailsLevel, ts.Templater)
+		runTestStep(ctx, e, ts, tc, step, l, detailsLevel, ts.Templater)
 
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
@@ -256,20 +264,21 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 	l.Infof("end")
 }
 
-func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string, templater *Templater) {
+func runTestStep(ctx context.Context, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string, templater *Templater) {
 
 	var isOK bool
 	var errors []Failure
 	var failures []Failure
 
 	var retry int
+
 	for retry = 0; retry <= e.retry && !isOK; retry++ {
 		if retry > 1 && !isOK {
 			log.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
-		result, err := e.executor.Run(l, aliases, step)
+		result, err := e.executor.Run(ctx, l, aliases, step)
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
 			continue

@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,12 +34,12 @@ type Headers map[string]string
 
 // Executor struct
 type Executor struct {
-	Method        string  	  `json:"method" yaml:"method"`
-	URL           string  	  `json:"url" yaml:"url"`
-	Path          string  	  `json:"path" yaml:"path"`
-	Body          string  	  `json:"body" yaml:"body"`
+	Method        string      `json:"method" yaml:"method"`
+	URL           string      `json:"url" yaml:"url"`
+	Path          string      `json:"path" yaml:"path"`
+	Body          string      `json:"body" yaml:"body"`
 	MultipartForm interface{} `json:"multipart_form" yaml:"multipart_form"`
-	Headers       Headers 	  `json:"headers" yaml:"headers"`
+	Headers       Headers     `json:"headers" yaml:"headers"`
 }
 
 // Result represents a step result
@@ -60,7 +61,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor
@@ -121,7 +122,6 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 	r.StatusCode = resp.StatusCode
 	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
 }
-
 
 // getRequest returns the request correctly set for the current executor
 func (e Executor) getRequest() (*http.Request, error) {

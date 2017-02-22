@@ -13,11 +13,12 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/runabove/venom"
+	ctxWeb "github.com/runabove/venom/context/web"
 	ex "github.com/runabove/venom/executors/exec"
 	"github.com/runabove/venom/executors/http"
 	"github.com/runabove/venom/executors/readfile"
 	"github.com/runabove/venom/executors/smtp"
-	"github.com/runabove/venom/executors/surf"
+	exWeb "github.com/runabove/venom/executors/web"
 )
 
 var (
@@ -62,7 +63,10 @@ var Cmd = &cobra.Command{
 		venom.RegisterExecutor(http.Name, http.New())
 		venom.RegisterExecutor(smtp.Name, smtp.New())
 		venom.RegisterExecutor(readfile.Name, readfile.New())
-		venom.RegisterExecutor(surf.Name, surf.New())
+		venom.RegisterExecutor(exWeb.Name, exWeb.New())
+
+		// Register Context
+		venom.RegisterTestCaseContext(ctxWeb.Name, ctxWeb.New())
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if parallel < 0 {
