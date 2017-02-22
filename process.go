@@ -231,7 +231,7 @@ func runTestSuite(ts *TestSuite, detailsLevel string) {
 }
 
 func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string) {
-	l.Infof("Init context")
+	l.Debugf("Init context")
 	ctx, errContext := getContextWrap(tc)
 	if errContext != nil {
 		tc.Errors = append(tc.Errors, Failure{Value: errContext.Error()})
