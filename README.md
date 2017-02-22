@@ -185,48 +185,7 @@ See https://github.com/runabove/venom/tree/master/executors/exec
 
 ### HTTP
 
-In your yaml file, you can use:
-
-```yaml
-  - method optional, default value : GET
-  - url mandatory
-  - path optional
-  - body optional
-  - headers optional
-```
-
-```yaml
-
-name: Title of TestSuite
-testcases:
-
-- name: GET http testcase
-  steps:
-  - type: http
-    method: GET
-    url: https://eu.api.ovh.com/1.0/
-    assertions:
-    - result.body ShouldContainSubstring /dedicated/server
-    - result.body ShouldContainSubstring /ipLoadbalancing
-    - result.statuscode ShouldEqual 200
-    - result.bodyjson.apis.apis0.path ShouldEqual /allDom
-
-- name: POST http with multipart
-  steps:
-  - type: http
-    method: POST
-    url: https://eu.api.ovh.com/1.0/
-    multipart_form:
-        file: '@/tmp/myfile.tmp'
-    assertions:
-    - result.statuscode ShouldNotEqual 200
-```
-*NB: to post a file, prefix the path to the file with '@'*
-
-
-### SMTP
-
-See https://github.com/runabove/venom/tree/master/executors/smtp
+See https://github.com/runabove/venom/tree/master/executors/http
 
 ### Read file
 
