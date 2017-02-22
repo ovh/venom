@@ -246,6 +246,10 @@ testcases:
 
 See https://github.com/runabove/venom/tree/master/executors/smtp
 
+### Read file
+
+See https://github.com/runabove/venom/tree/master/executors/readfile
+
 ### SMTP
 
 See https://github.com/runabove/venom/tree/master/executors/smtp
