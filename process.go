@@ -310,18 +310,18 @@ func runTestStep(ctx context.Context, e *executorWrap, ts *TestSuite, tc *TestCa
 	tc.Systemerr.Value += systemerr
 }
 
-func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
+func runTestStepExecutor(ctx context.Context, e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
 	if e.timeout == 0 {
-		return e.executor.Run(l, aliases, step)
+		return e.executor.Run(ctx, l, aliases, step)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.timeout)*time.Second)
 	defer cancel()
 
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
 	go func(e *executorWrap, step TestStep, l *log.Entry) {
-		result, err := e.executor.Run(l, aliases, step)
+		result, err := e.executor.Run(ctxTimeout, l, aliases, step)
 		cherr <- err
 		ch <- result
 	}(e, step, l)
@@ -331,7 +331,7 @@ func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.E
 		return nil, err
 	case result := <-ch:
 		return result, nil
-	case <-ctx.Done():
+	case <-ctxTimeout.Done():
 		return nil, fmt.Errorf("Timeout after %d second(s)", e.timeout)
 	}
 

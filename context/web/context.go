@@ -3,7 +3,6 @@ package web
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/sclevine/agouti"
 
 	"github.com/runabove/venom"
