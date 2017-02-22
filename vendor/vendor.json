@@ -15,6 +15,36 @@
 			"revisionTime": "2017-02-17T17:35:12Z"
 		},
 		{
+			"checksumSHA1": "Um9voOUNeH3a1TILYjYRznmnUkE=",
+			"path": "github.com/google/go-github/github",
+			"revision": "c9c37fd6ce0247943d1aa34fc3813c62c5cb0225",
+			"revisionTime": "2017-01-19T07:22:36Z"
+		},
+		{
+			"checksumSHA1": "p3IB18uJRs4dL2K5yx24MrLYE9A=",
+			"path": "github.com/google/go-querystring/query",
+			"revision": "53e6ce116135b80d037921a7fdd5138cf32d7a8a",
+			"revisionTime": "2017-01-11T10:11:55Z"
+		},
+		{
+			"checksumSHA1": "YjZiQ5N552dJ7GpJ2P4TTRu4PKI=",
+			"path": "github.com/inconshreveable/go-update",
+			"revision": "8152e7eb6ccf8679a64582a66b78519688d156ad",
+			"revisionTime": "2016-01-12T19:33:35Z"
+		},
+		{
+			"checksumSHA1": "LeFW+ad/zlj30+Z0O4wwnXrVUSQ=",
+			"path": "github.com/inconshreveable/go-update/internal/binarydist",
+			"revision": "8152e7eb6ccf8679a64582a66b78519688d156ad",
+			"revisionTime": "2016-01-12T19:33:35Z"
+		},
+		{
+			"checksumSHA1": "H63+DW/S2nASpHk59G1wEUZD1qk=",
+			"path": "github.com/inconshreveable/go-update/internal/osext",
+			"revision": "8152e7eb6ccf8679a64582a66b78519688d156ad",
+			"revisionTime": "2016-01-12T19:33:35Z"
+		},
+		{
 			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
 			"path": "github.com/inconshreveable/mousetrap",
 			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",

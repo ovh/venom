@@ -6,6 +6,8 @@ import (
 
 	"github.com/runabove/venom/cli/venom/run"
 	"github.com/runabove/venom/cli/venom/template"
+	"github.com/runabove/venom/cli/venom/update"
+	"github.com/runabove/venom/cli/venom/version"
 )
 
 var rootCmd = &cobra.Command{
@@ -25,4 +27,6 @@ func main() {
 func addCommands() {
 	rootCmd.AddCommand(run.Cmd)
 	rootCmd.AddCommand(template.Cmd)
+	rootCmd.AddCommand(version.Cmd)
+	rootCmd.AddCommand(update.Cmd)
 }
