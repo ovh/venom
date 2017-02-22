@@ -19,6 +19,7 @@ testcases:
     url: http://www.google.fr
   - type: web
     action: title
+    screenshot: google.jpg
     assertions:
       - result.title ShouldEqual Google
 
@@ -34,5 +35,6 @@ testcases:
 ## Action
 * navigate: navigate to url
 * title: get title value
+* screenshot: take a screenshot
 
 more actions are coming... 

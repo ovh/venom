@@ -24,8 +24,9 @@ func New() venom.Executor {
 
 // Executor struct
 type Executor struct {
-	URL    string `json:"url" yaml:"url"`
-	Action string `json:"action" yaml:"action"`
+	URL        string `json:"url" yaml:"url"`
+	Action     string `json:"action" yaml:"action"`
+	Screenshot string `json:"screenshot" yaml:"screenshot"`
 }
 
 // Result represents a step result
@@ -68,14 +69,20 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 	switch t.Action {
 	case "navigate":
 		if err := page.Navigate("http://www.google.fr"); err != nil {
-			r.Err = err
+			return nil, err
 		}
 	case "title":
 		title, err := page.Title()
 		if err != nil {
-			r.Err = err
+			return nil, err
 		} else {
 			r.Title = title
+		}
+	}
+
+	if (t.Screenshot != "") {
+		if err := page.Screenshot(t.Screenshot); err != nil {
+			return nil, err
 		}
 	}
 	return endExecutor(r, start)
