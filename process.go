@@ -145,6 +145,7 @@ func Process(path []string, alias []string, parallel int, detailsLevel string) (
 		pool, errs = pb.StartPool(pbbars...)
 		if errs != nil {
 			log.Errorf("Error while prepare details bars: %s", errs)
+			pool = nil
 		}
 	}
 
@@ -163,7 +164,7 @@ func Process(path []string, alias []string, parallel int, detailsLevel string) (
 
 	log.Infof("end processing path %s", path)
 
-	if detailsLevel != DetailsLow {
+	if detailsLevel != DetailsLow && pool != nil {
 		if err := pool.Stop(); err != nil {
 			log.Errorf("Error while closing pool progress bar: %s", err)
 		}

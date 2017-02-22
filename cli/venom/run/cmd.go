@@ -49,7 +49,7 @@ var Cmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 
 		if len(args) == 0 {
-			log.Fatalf("Invalid path: venom run <path>")
+			path = append(path, ".")
 		}
 		path = args[0:]
 
