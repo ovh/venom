@@ -11,7 +11,7 @@ import (
 	"github.com/sclevine/agouti"
 
 	"github.com/runabove/venom"
-	ctxWeb "github.com/runabove/venom/context/web"
+	"github.com/runabove/venom/context/webctx"
 )
 
 // Name of executor
@@ -53,11 +53,11 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 		return nil, fmt.Errorf("Executor web need a context")
 	}
 
-	if _, ok := varContext[ctxWeb.ContextPageKey]; !ok {
+	if _, ok := varContext[webctx.ContextPageKey]; !ok {
 		return nil, fmt.Errorf("Executor web need a page in context")
 	}
 
-	page := varContext[ctxWeb.ContextPageKey].(*agouti.Page)
+	page := varContext[webctx.ContextPageKey].(*agouti.Page)
 	if page == nil {
 		return nil, fmt.Errorf("page is nil in context")
 	}

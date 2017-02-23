@@ -1,4 +1,4 @@
-package web
+package webctx
 
 import (
 	"fmt"
@@ -19,8 +19,7 @@ func New() venom.TestCaseContext {
 }
 
 // TestCaseContex represents the context of a testcase
-type TestCaseContext struct {
-}
+type TestCaseContext struct {}
 
 // BuildContext build context of type web.
 // It creates a new browser
