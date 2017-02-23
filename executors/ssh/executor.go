@@ -17,7 +17,7 @@ import (
 	"github.com/runabove/venom"
 )
 
-// Name for test exec
+// Name for test ssh
 const Name = "ssh"
 
 // New returns a new Test Exec
@@ -167,7 +167,6 @@ func privateKey(file string) (key ssh.Signer, err error) {
 		}
 		file = usr.HomeDir + "/.ssh/id_rsa"
 	}
-	fmt.Println(file)
 	//Read the file
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
