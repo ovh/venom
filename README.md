@@ -254,7 +254,7 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 		return nil, err
 	}
 
-	// Get testcase context
+	// Get testcase context if needed
 	varContext := ctx.Value(venom.ContextKey).(map[string]interface{})
 	if varContext == nil {
         return nil, fmt.Errorf("Executor web need a context")
@@ -285,7 +285,9 @@ Feel free to open a Pull Request with your executors.
 
 ## TestCase Context
 
-TestCase Context allows you to inject datas in all Steps
+TestCase Context allows you to inject datas in all Steps.
+
+Define a context is optional, but can be usefull to keep data between teststeps on a testcase.
 
 ### Write your TestCase Context
 
