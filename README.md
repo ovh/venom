@@ -195,6 +195,10 @@ See https://github.com/runabove/venom/tree/master/executors/readfile
 
 See https://github.com/runabove/venom/tree/master/executors/smtp
 
+### SSH
+
+See https://github.com/runabove/venom/tree/master/executors/ssh
+
 ### WEB
 
 See https://github.com/runabove/venom/tree/master/executors/web
