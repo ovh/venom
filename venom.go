@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"os"
 )
@@ -12,6 +13,11 @@ const Version = "0.0.1"
 
 var (
 	executors = map[string]Executor{}
+	contexts  = map[string]TestCaseContext{}
+)
+
+const (
+	ContextKey = "tcContext"
 )
 
 // RegisterExecutor register Test Executors
@@ -58,6 +64,35 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 	}
 
 	return nil, fmt.Errorf("type '%s' is not implemented", name)
+}
+
+// RegisterTestCaseContext new register TestCaseContext
+func RegisterTestCaseContext(name string, tcc TestCaseContext) {
+	contexts[name] = tcc
+}
+
+// getContextWrap initializes a context for a testcase
+// no type -> parent context
+func getContextWrap(tc *TestCase) (context.Context, error) {
+	if tc.Context == nil {
+		return context.Background(), nil
+	}
+
+	var typeName string
+	if itype, ok := tc.Context["type"]; ok {
+		typeName = fmt.Sprintf("%s", itype)
+	}
+
+	if typeName == "" {
+		return nil, fmt.Errorf("context type '%s' is not implemented", typeName)
+	}
+
+	tcVars, errC := contexts[typeName].BuildContext(tc)
+	if errC != nil {
+		return nil, fmt.Errorf("Cannot build context type '%s': %s", typeName, errC)
+	}
+	return context.WithValue(context.Background(), ContextKey, tcVars), nil
+
 }
 
 func getAttrInt(t map[string]interface{}, name string) (int, error) {

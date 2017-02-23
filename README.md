@@ -195,6 +195,10 @@ See https://github.com/runabove/venom/tree/master/executors/readfile
 
 See https://github.com/runabove/venom/tree/master/executors/smtp
 
+### WEB
+
+See https://github.com/runabove/venom/tree/master/executors/web
+
 ### Write your executor
 
 An executor have to implement this interface
@@ -204,7 +208,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(ctx context.Content, *log.Entry, Aliases, TestStep) (ExecutorResult, error)
 }
 ```
 
@@ -242,13 +246,20 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
 		return nil, err
 	}
+
+	// Get testcase context if needed
+	varContext := ctx.Value(venom.ContextKey).(map[string]interface{})
+	if varContext == nil {
+        return nil, fmt.Errorf("Executor web need a context")
+    }
+    bar := varContext['foo']
 
 	// to something with t.Command here...
 	//...
@@ -270,6 +281,50 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 ```
 
 Feel free to open a Pull Request with your executors.
+
+
+## TestCase Context
+
+TestCase Context allows you to inject datas in all Steps.
+
+Define a context is optional, but can be usefull to keep data between teststeps on a testcase.
+
+### Write your TestCase Context
+
+A TestCase Context has to implement this interface
+
+```go
+
+type TestCaseContext interface {
+	BuildContext(tc *TestCase) (map[string]interface{}, error)
+}
+```
+
+Example
+
+```go
+// Context Type name
+const Name = "foo"
+const ContextFooKey = "foo"
+const ContextBarKey = "bar"
+
+// New returns a new TestCaseContext
+func New() venom.TestCaseContext {
+	return &TestCaseContext{}
+}
+
+// TestCaseContex represents the context of a testcase
+type TestCaseContext struct {
+}
+
+func (TestCaseContext) BuildContext(tc *venom.TestCase) (map[string]interface{}, error) {
+	vars := make(map[string]interface{})
+
+	vars[ContextFooKey] = 'fooValue'
+	vars[ContextBarKey] = 'varValue'
+	return vars, nil
+}
+```
 
 
 # Hacking
