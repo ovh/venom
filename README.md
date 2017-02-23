@@ -54,7 +54,7 @@ testcases:
     - result.code ShouldEqual 0
   - script: echo 'bar'
     assertions:
-    - result.stdout ShouldNotContainSubstring foo
+    - result.systemout ShouldNotContainSubstring foo
     - result.timeseconds ShouldBeLessThan 1
 
 - name: GET http testcase, with 5 seconds timeout
@@ -96,15 +96,15 @@ testcases:
     script: echo '{{.api.foo}}'
     assertions:
     - result.code ShouldEqual 0
-    - result.stdout ShouldEqual http://api/foo
+    - result.systemout ShouldEqual http://api/foo
 
 - name: testB
   steps:
   - type: exec
-    script: echo 'XXX{{.testA.result.stdout}}YYY'
+    script: echo 'XXX{{.testA.result.systemout}}YYY'
     assertions:
     - result.code ShouldEqual 0
-    - result.stdout ShouldEqual XXXhttp://api/fooYYY
+    - result.systemout ShouldEqual XXXhttp://api/fooYYY
 
 ```
 
@@ -199,6 +199,9 @@ See https://github.com/runabove/venom/tree/master/executors/smtp
 
 See https://github.com/runabove/venom/tree/master/executors/ssh
 
+### WEB
+
+See https://github.com/runabove/venom/tree/master/executors/web
 
 ### Write your executor
 
@@ -209,7 +212,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(*log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(ctx context.Content, *log.Entry, Aliases, TestStep) (ExecutorResult, error)
 }
 ```
 
@@ -237,7 +240,7 @@ type Result struct {
 	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
 	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
 	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
-  Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
+	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
 }
 
 // GetDefaultAssertions return default assertions for this executor
@@ -247,13 +250,20 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
 		return nil, err
 	}
+
+	// Get testcase context if needed
+	varContext := ctx.Value(venom.ContextKey).(map[string]interface{})
+	if varContext == nil {
+        return nil, fmt.Errorf("Executor web need a context")
+    }
+    bar := varContext['foo']
 
 	// to something with t.Command here...
 	//...
@@ -266,7 +276,7 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 		Code:    ouputCode, // return Output Code
 		Command: t.Command, // return Command executed
 		Systemout:  systemout,    // return Output string
-    Executor: t, // return executor, usefull for display Executor context in failure
+		Executor: t, // return executor, usefull for display Executor context in failure
 	}
 
 	return dump.ToMap(r)
@@ -275,6 +285,50 @@ func (Executor) Run(l *log.Entry, aliases venom.Aliases, step venom.TestStep) (v
 ```
 
 Feel free to open a Pull Request with your executors.
+
+
+## TestCase Context
+
+TestCase Context allows you to inject datas in all Steps.
+
+Define a context is optional, but can be usefull to keep data between teststeps on a testcase.
+
+### Write your TestCase Context
+
+A TestCase Context has to implement this interface
+
+```go
+
+type TestCaseContext interface {
+	BuildContext(tc *TestCase) (map[string]interface{}, error)
+}
+```
+
+Example
+
+```go
+// Context Type name
+const Name = "foo"
+const ContextFooKey = "foo"
+const ContextBarKey = "bar"
+
+// New returns a new TestCaseContext
+func New() venom.TestCaseContext {
+	return &TestCaseContext{}
+}
+
+// TestCaseContex represents the context of a testcase
+type TestCaseContext struct {
+}
+
+func (TestCaseContext) BuildContext(tc *venom.TestCase) (map[string]interface{}, error) {
+	vars := make(map[string]interface{})
+
+	vars[ContextFooKey] = 'fooValue'
+	vars[ContextBarKey] = 'varValue'
+	return vars, nil
+}
+```
 
 
 # Hacking

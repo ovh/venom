@@ -36,8 +36,8 @@ testcases:
 
 ```yaml
 executor
-stdout
-stderr
+systemout
+systemerr
 err
 code
 timeseconds
@@ -47,8 +47,8 @@ timehuman
 - result.timeseconds & result.timehuman: time of execution
 - result.executor.executor.script: script executed
 - result.err: if exists, this field contains error
-- result.stdout: Standard Output of executed script
-- result.stderr: Error Output of executed script
+- result.systemout: Standard Output of executed script
+- result.systemerr: Error Output of executed script
 - result.code: Exit Code
 
 ## Default assertion

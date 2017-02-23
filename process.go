@@ -231,8 +231,16 @@ func runTestSuite(ts *TestSuite, detailsLevel string) {
 }
 
 func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string) {
+	l.Debugf("Init context")
+	ctx, errContext := getContextWrap(tc)
+	if errContext != nil {
+		tc.Errors = append(tc.Errors, Failure{Value: errContext.Error()})
+		return
+	}
+
 	l = l.WithField("x.testcase", tc.Name)
 	l.Infof("start")
+
 	for _, stepIn := range tc.TestSteps {
 
 		step, erra := ts.Templater.Apply(stepIn)
@@ -247,7 +255,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 			break
 		}
 
-		runTestStep(e, ts, tc, step, l, detailsLevel, ts.Templater)
+		runTestStep(ctx, e, ts, tc, step, l, detailsLevel, ts.Templater)
 
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
@@ -259,7 +267,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, l *log.Entry, detailsLevel string)
 	l.Infof("end")
 }
 
-func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string, templater *Templater) {
+func runTestStep(ctx context.Context, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l *log.Entry, detailsLevel string, templater *Templater) {
 
 	var isOK bool
 	var errors []Failure
@@ -267,13 +275,15 @@ func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l 
 	var systemerr, systemout string
 
 	var retry int
+
 	for retry = 0; retry <= e.retry && !isOK; retry++ {
 		if retry > 1 && !isOK {
 			log.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
-		result, err := runTestStepExecutor(e, ts, step, l, templater)
+		result, err := runTestStepExecutor(ctx, e, ts, step, l, templater)
+
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
 			continue
@@ -301,18 +311,18 @@ func runTestStep(e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, l 
 	tc.Systemerr.Value += systemerr
 }
 
-func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
+func runTestStepExecutor(ctx context.Context, e *executorWrap, ts *TestSuite, step TestStep, l *log.Entry, templater *Templater) (ExecutorResult, error) {
 	if e.timeout == 0 {
-		return e.executor.Run(l, aliases, step)
+		return e.executor.Run(ctx, l, aliases, step)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.timeout)*time.Second)
 	defer cancel()
 
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
 	go func(e *executorWrap, step TestStep, l *log.Entry) {
-		result, err := e.executor.Run(l, aliases, step)
+		result, err := e.executor.Run(ctxTimeout, l, aliases, step)
 		cherr <- err
 		ch <- result
 	}(e, step, l)
@@ -322,7 +332,7 @@ func runTestStepExecutor(e *executorWrap, ts *TestSuite, step TestStep, l *log.E
 		return nil, err
 	case result := <-ch:
 		return result, nil
-	case <-ctx.Done():
+	case <-ctxTimeout.Done():
 		return nil, fmt.Errorf("Timeout after %d second(s)", e.timeout)
 	}
 

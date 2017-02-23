@@ -75,6 +75,42 @@
 			"revisionTime": "2017-01-18T00:13:03Z"
 		},
 		{
+			"checksumSHA1": "pZrnx0NTU91ci2mqD+0rMHHMWtA=",
+			"path": "github.com/sclevine/agouti",
+			"revision": "da6ce95d89acab048b648c71fb45b57622d3457e",
+			"revisionTime": "2016-11-24T05:24:21Z"
+		},
+		{
+			"checksumSHA1": "bLf6Lg7b6d/+QSwMa7wFvJfxGN4=",
+			"path": "github.com/sclevine/agouti/api",
+			"revision": "da6ce95d89acab048b648c71fb45b57622d3457e",
+			"revisionTime": "2016-11-24T05:24:21Z"
+		},
+		{
+			"checksumSHA1": "Yl+nKbowoSkeEZVjG8JUr1xum3w=",
+			"path": "github.com/sclevine/agouti/api/internal/bus",
+			"revision": "da6ce95d89acab048b648c71fb45b57622d3457e",
+			"revisionTime": "2016-11-24T05:24:21Z"
+		},
+		{
+			"checksumSHA1": "D/zRQi9pX42xYVX1p3mZrNDGRX4=",
+			"path": "github.com/sclevine/agouti/api/internal/service",
+			"revision": "da6ce95d89acab048b648c71fb45b57622d3457e",
+			"revisionTime": "2016-11-24T05:24:21Z"
+		},
+		{
+			"checksumSHA1": "Ac+sqfWJvIqAoFnDzZRH8HP/1gg=",
+			"path": "github.com/sclevine/agouti/internal/element",
+			"revision": "da6ce95d89acab048b648c71fb45b57622d3457e",
+			"revisionTime": "2016-11-24T05:24:21Z"
+		},
+		{
+			"checksumSHA1": "rsdZ0GsD51gqfRPf3NFox3xw8eM=",
+			"path": "github.com/sclevine/agouti/internal/target",
+			"revision": "da6ce95d89acab048b648c71fb45b57622d3457e",
+			"revisionTime": "2016-11-24T05:24:21Z"
+		},
+		{
 			"checksumSHA1": "RPVh5/wbvFG0q0CWHXifXpkYTDg=",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "26acb9229f421449ac63d014995b282d59261a8b",
