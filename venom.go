@@ -17,6 +17,8 @@ var (
 )
 
 const (
+	// ContextKey is key for Test Case Context. this
+	// can be used by executors for getting context
 	ContextKey = "tcContext"
 )
 
@@ -92,7 +94,6 @@ func getContextWrap(tc *TestCase) (context.Context, error) {
 		return nil, fmt.Errorf("Cannot build context type '%s': %s", typeName, errC)
 	}
 	return context.WithValue(context.Background(), ContextKey, tcVars), nil
-
 }
 
 func getAttrInt(t map[string]interface{}, name string) (int, error) {
