@@ -7,32 +7,46 @@ Venom allows you to navigate into it and execute actions.
 
 ## Input
 
+* Action (https://github.com/runabove/venom/tree/master/executors/web/types.go)
+* Screenshot
+
 ```yaml
 name: TestSuite Web
 testcases:
-- name: TestCase Get URL and check title
+- name: TestCase Google search
   context:
     type: web
+    width: 1920
+    height: 1080
   steps:
   - type: web
-    action: navigate
-    url: http://www.google.fr
-  - type: web
-    action: title
-    screenshot: google.jpg
+    action:
+      navigate: https://www.google.fr
     assertions:
-      - result.title ShouldEqual Google
+    - result.title ShouldEqual Google
+    - result.url ShouldEqual https://www.google.fr
+  - type: web
+    action:
+      find: input[name="q"]
+    assertions:
+     - result.find ShouldEqual 1
+  - type: web
+    action:
+      fill:
+        find: input[name="q"]
+        text: "venom runabove"
+  - type: web
+    action:
+      click: input[value="Recherche Google"]
+    screenshot: googlesearch.jpg
 
 ```
 
 ## Output
 
+* result.url
 * result.timeseconds
 * result.timehuman
 * result.title
-* result.error
-
-## Action
-* navigate: navigate to url
-* title: get title value
-* screenshot: take a screenshot
+* result.find
+* result.html

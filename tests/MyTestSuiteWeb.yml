@@ -1,15 +1,27 @@
-name: TestSuite Suft
+name: TestSuite Web
 testcases:
 - name: TestCase Get URL and check totle
   context:
     type: web
+    width: 1920
+    height: 1080
   steps:
   - type: web
-    action: navigate
-    url: http://www.google.fr
-  - type: web
-    action: title
-    screenshot: google.jpg
+    action:
+      navigate: https://www.google.fr
     assertions:
-      - result.title ShouldEqual Google
-
+    - result.title ShouldEqual Google
+  - type: web
+    action:
+      find: input[name="q"]
+    assertions:
+     - result.find ShouldEqual 1
+  - type: web
+    action:
+      fill:
+        find: input[name="q"]
+        text: "venom runabove"
+  - type: web
+    action:
+      click: input[value="Recherche Google"]
+    screenshot: googlesearch.jpg
