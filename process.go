@@ -55,7 +55,7 @@ func computeAliases(alias []string) map[string]string {
 	return aliases
 }
 
-func computeStats(testsResult *Tests, chanEnd chan TestSuite, wg *sync.WaitGroup) {
+func computeStats(testsResult *Tests, chanEnd <-chan TestSuite, wg *sync.WaitGroup) {
 	for t := range chanEnd {
 		testsResult.TestSuites = append(testsResult.TestSuites, t)
 		if t.Failures > 0 {

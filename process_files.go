@@ -30,7 +30,7 @@ func getFilesPath(path []string) []string {
 	return filesPath
 }
 
-func readFiles(detailsLevel string, filesPath []string, chanToRun chan TestSuite) map[string]*pb.ProgressBar {
+func readFiles(detailsLevel string, filesPath []string, chanToRun chan<- TestSuite) map[string]*pb.ProgressBar {
 	bars := make(map[string]*pb.ProgressBar)
 	for _, f := range filesPath {
 		log.Debugf("read %s", f)
