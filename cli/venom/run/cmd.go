@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/runabove/venom"
+	"github.com/runabove/venom/context/default"
 	"github.com/runabove/venom/context/webctx"
 	ex "github.com/runabove/venom/executors/exec"
 	"github.com/runabove/venom/executors/http"
@@ -65,6 +66,7 @@ var Cmd = &cobra.Command{
 		venom.RegisterExecutor(web.Name, web.New())
 
 		// Register Context
+		venom.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
 		venom.RegisterTestCaseContext(webctx.Name, webctx.New())
 	},
 	Run: func(cmd *cobra.Command, args []string) {

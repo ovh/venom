@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"context"
 	"fmt"
 	"os"
 )
@@ -75,11 +74,10 @@ func RegisterTestCaseContext(name string, tcc TestCaseContext) {
 
 // getContextWrap initializes a context for a testcase
 // no type -> parent context
-func getContextWrap(tc *TestCase) (context.Context, error) {
+func getContextWrap(tc *TestCase) (TestCaseContext, error) {
 	if tc.Context == nil {
-		return context.Background(), nil
+		return contexts["default"], nil
 	}
-
 	var typeName string
 	if itype, ok := tc.Context["type"]; ok {
 		typeName = fmt.Sprintf("%s", itype)
@@ -88,12 +86,8 @@ func getContextWrap(tc *TestCase) (context.Context, error) {
 	if typeName == "" {
 		return nil, fmt.Errorf("context type '%s' is not implemented", typeName)
 	}
-
-	tcVars, errC := contexts[typeName].BuildContext(tc)
-	if errC != nil {
-		return nil, fmt.Errorf("Cannot build context type '%s': %s", typeName, errC)
-	}
-	return context.WithValue(context.Background(), ContextKey, tcVars), nil
+	contexts[typeName].SetTestCase(*tc)
+	return contexts[typeName], nil
 }
 
 func getAttrInt(t map[string]interface{}, name string) (int, error) {

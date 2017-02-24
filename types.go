@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"context"
 	"encoding/xml"
 
 	log "github.com/Sirupsen/logrus"
@@ -30,12 +29,25 @@ type StepAssertions struct {
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(context.Context, *log.Entry, Aliases, TestStep) (ExecutorResult, error)
+	Run(TestCaseContext, *log.Entry, Aliases, TestStep) (ExecutorResult, error)
 }
 
 // TestCaseContext represents the context of a testcase
 type TestCaseContext interface {
-	BuildContext(tc *TestCase) (map[string]interface{}, error)
+	Init() error
+	Close() error
+	SetTestCase(tc TestCase)
+}
+
+// TestCaseContextStruct
+type TestCaseContextStruct struct {
+	TestCaseContext
+	TestCase TestCase
+}
+
+// SetTestCase set testcase in context
+func (t *TestCaseContextStruct) SetTestCase(tc TestCase) {
+	t.TestCase = tc
 }
 
 // executorWrap contains an executor implementation and some attributes
