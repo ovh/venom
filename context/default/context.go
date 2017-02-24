@@ -7,23 +7,23 @@ const Name = "default"
 
 // New returns a new TestCaseContext
 func New() venom.TestCaseContext {
-	ctx := &TestCaseContext{}
+	ctx := &DefaultTestCaseContext{}
 	ctx.Name = Name
 	return ctx
 }
 
 // TestCaseContext represents the context of a testcase
-type TestCaseContext struct {
-	venom.TestCaseContextStruct
+type DefaultTestCaseContext struct {
+	venom.CommonTestCaseContext
 	datas map[string]interface{}
 }
 
 // Init Initialize the context
-func (tcc *TestCaseContext) Init() error {
+func (tcc *DefaultTestCaseContext) Init() error {
 	return nil
 }
 
 // Close the context
-func (tcc *TestCaseContext) Close() error {
+func (tcc *DefaultTestCaseContext) Close() error {
 	return nil
 }

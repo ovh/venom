@@ -41,19 +41,19 @@ type TestCaseContext interface {
 }
 
 // TestCaseContextStruct
-type TestCaseContextStruct struct {
+type CommonTestCaseContext struct {
 	TestCaseContext
 	TestCase TestCase
 	Name     string
 }
 
 // SetTestCase set testcase in context
-func (t *TestCaseContextStruct) SetTestCase(tc TestCase) {
+func (t *CommonTestCaseContext) SetTestCase(tc TestCase) {
 	t.TestCase = tc
 }
 
 // GetName Get the context name
-func (t *TestCaseContextStruct) GetName() string {
+func (t *CommonTestCaseContext) GetName() string {
 	return t.Name
 }
 

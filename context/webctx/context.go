@@ -19,21 +19,21 @@ const (
 
 // New returns a new TestCaseContext
 func New() venom.TestCaseContext {
-	ctx := &TestCaseContext{}
+	ctx := &WebTestCaseContext{}
 	ctx.Name = Name
 	return ctx
 }
 
 // TestCaseContex represents the context of a testcase
-type TestCaseContext struct {
-	venom.TestCaseContextStruct
+type WebTestCaseContext struct {
+	venom.CommonTestCaseContext
 	wd   *agouti.WebDriver
 	Page *agouti.Page
 }
 
 // BuildContext build context of type web.
 // It creates a new browser
-func (tcc *TestCaseContext) Init() error {
+func (tcc *WebTestCaseContext) Init() error {
 	// Init web driver
 	tcc.wd = agouti.PhantomJS()
 	if err := tcc.wd.Start(); err != nil {
@@ -78,6 +78,6 @@ func (tcc *TestCaseContext) Init() error {
 }
 
 // Close web driver
-func (tcc *TestCaseContext) Close() error {
+func (tcc *WebTestCaseContext) Close() error {
 	return tcc.wd.Stop()
 }

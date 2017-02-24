@@ -41,10 +41,10 @@ type Result struct {
 
 // Run execute TestStep
 func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
-	var ctx *webctx.TestCaseContext
+	var ctx *webctx.WebTestCaseContext
 	switch testCaseContext.(type) {
-	case *webctx.TestCaseContext:
-		ctx = testCaseContext.(*webctx.TestCaseContext)
+	case *webctx.WebTestCaseContext:
+		ctx = testCaseContext.(*webctx.WebTestCaseContext)
 	default:
 		return nil, fmt.Errorf("Web executor need a Web context")
 	}
