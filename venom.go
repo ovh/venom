@@ -38,7 +38,7 @@ func getExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWr
 
 	if name == "" && tcc.GetName() != "default" {
 		name = tcc.GetName()
-	} else {
+	} else if name == "" {
 		name = "exec"
 	}
 
