@@ -37,17 +37,24 @@ type TestCaseContext interface {
 	Init() error
 	Close() error
 	SetTestCase(tc TestCase)
+	GetName() string
 }
 
 // TestCaseContextStruct
 type TestCaseContextStruct struct {
 	TestCaseContext
 	TestCase TestCase
+	Name     string
 }
 
 // SetTestCase set testcase in context
 func (t *TestCaseContextStruct) SetTestCase(tc TestCase) {
 	t.TestCase = tc
+}
+
+// GetName Get the context name
+func (t *TestCaseContextStruct) GetName() string {
+	return t.Name
 }
 
 // executorWrap contains an executor implementation and some attributes

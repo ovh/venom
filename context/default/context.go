@@ -7,7 +7,9 @@ const Name = "default"
 
 // New returns a new TestCaseContext
 func New() venom.TestCaseContext {
-	return &TestCaseContext{}
+	ctx := &TestCaseContext{}
+	ctx.Name = Name
+	return ctx
 }
 
 // TestCaseContext represents the context of a testcase

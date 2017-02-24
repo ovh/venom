@@ -6,22 +6,18 @@ testcases:
     width: 1920
     height: 1080
   steps:
-  - type: web
-    action:
+  - action:
       navigate: https://www.google.fr
     assertions:
     - result.title ShouldEqual Google
-  - type: web
-    action:
+  - action:
       find: input[name="q"]
     assertions:
      - result.find ShouldEqual 1
-  - type: web
-    action:
+  - action:
       fill:
       - find: input[name="q"]
         text: "venom runabove"
-  - type: web
-    action:
+  - action:
       click: input[value="Recherche Google"]
     screenshot: googlesearch.jpg

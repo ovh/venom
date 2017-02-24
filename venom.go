@@ -28,8 +28,7 @@ func RegisterExecutor(name string, e Executor) {
 
 // getExecutorWrap initializes a test by name
 // no type -> exec is default
-func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
-
+func getExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWrap, error) {
 	var name string
 	var retry, delay, timeout int
 
@@ -37,7 +36,9 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 		name = fmt.Sprintf("%s", itype)
 	}
 
-	if name == "" {
+	if name == "" && tcc.GetName() != "default" {
+		name = tcc.GetName()
+	} else {
 		name = "exec"
 	}
 
@@ -64,7 +65,7 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 		return ew, nil
 	}
 
-	return nil, fmt.Errorf("type '%s' is not implemented", name)
+	return nil, fmt.Errorf("[%s] type '%s' is not implemented", tcc.GetName(), name)
 }
 
 // RegisterTestCaseContext new register TestCaseContext

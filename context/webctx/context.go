@@ -13,21 +13,15 @@ const Name = "web"
 
 // Key of context element in testsuite file
 const (
-	Width      = "width"
-	Height     = "height"
-	Screenshot = "screenshotOnFailure"
-)
-
-// Key of element in the testcase context
-const (
-	ContextDriverKey           = "driver"
-	ContextPageKey             = "page"
-	ContextScreenshotOnFailure = "screenshotOnFailure"
+	Width  = "width"
+	Height = "height"
 )
 
 // New returns a new TestCaseContext
 func New() venom.TestCaseContext {
-	return &TestCaseContext{}
+	ctx := &TestCaseContext{}
+	ctx.Name = Name
+	return ctx
 }
 
 // TestCaseContex represents the context of a testcase
