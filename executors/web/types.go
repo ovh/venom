@@ -3,7 +3,7 @@ package web
 // Action represents what can be done with web executor
 type Action struct {
 	Click    string `yaml:"search,omitempty"`
-	Fill     *Fill  `yaml:"fill,omitempty"`
+	Fill     []Fill `yaml:"fill,omitempty"`
 	Find     string `yaml:"find,omitempty"`
 	Navigate string `yaml:"find,omitempty"`
 }

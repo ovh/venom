@@ -75,13 +75,16 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 			return nil, failWithScreenshot(varContext, page, fmt.Errorf("Cannot click on element %s: %s", t.Action.Click, err))
 		}
 	} else if t.Action.Fill != nil {
-		s, err := find(page, t.Action.Fill.Find, r)
-		if err != nil {
-			return nil, failWithScreenshot(varContext, page, err)
+		for _, f := range t.Action.Fill {
+			s, err := findOne(page, f.Find, r)
+			if err != nil {
+				return nil, failWithScreenshot(varContext, page, err)
+			}
+			if err := s.Fill(f.Text); err != nil {
+				return nil, failWithScreenshot(varContext, page, fmt.Errorf("Cannot fill element %s: %s", f.Find, err))
+			}
 		}
-		if err := s.Fill(t.Action.Fill.Text); err != nil {
-			return nil, failWithScreenshot(varContext, page, fmt.Errorf("Cannot fill element %s: %s", t.Action.Fill.Find, err))
-		}
+
 	} else if t.Action.Find != "" {
 		_, err := find(page, t.Action.Find, r)
 		if err != nil {
@@ -106,12 +109,6 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 		return nil, failWithScreenshot(varContext, page, fmt.Errorf("Cannot get title: %s", err))
 	}
 	r.Title = title
-
-	html, errH := page.HTML()
-	if errH != nil {
-		return nil, fmt.Errorf("Cannot get HTML page: %s", errH)
-	}
-	r.HTML = html
 
 	url, errU := page.URL()
 	if errU != nil {
@@ -151,5 +148,20 @@ func find(page *agouti.Page, search string, r *Result) (*agouti.Selection, error
 		nbElement = 0
 	}
 	r.Find = nbElement
+	return s, nil
+}
+
+func findOne(page *agouti.Page, search string, r *Result) (*agouti.Selection, error) {
+	s := page.Find(search)
+	if s == nil {
+		return nil, fmt.Errorf("Cannot find element %s", search)
+	}
+	nbElement, errC := s.Count()
+	if errC != nil {
+		return nil, fmt.Errorf("Cannot find element %s: %s", search, errC)
+	}
+	if nbElement != 1 {
+		return nil, fmt.Errorf("Find %s elements", nbElement)
+	}
 	return s, nil
 }

@@ -33,7 +33,7 @@ testcases:
   - type: web
     action:
       fill:
-        find: input[name="q"]
+      - find: input[name="q"]
         text: "venom runabove"
   - type: web
     action:
