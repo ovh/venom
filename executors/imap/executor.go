@@ -94,7 +94,6 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 }
 
 func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
-
 	if e.SearchFrom == "" && e.SearchSubject == "" {
 		return nil, fmt.Errorf("You have to use searchfrom and/or searchsubject")
 	}
@@ -174,7 +173,6 @@ func (m *Mail) move(c *imap.Client, mbox string) error {
 }
 
 func connect(host, imapUsername, imapPassword string) (*imap.Client, error) {
-
 	c, errd := imap.DialTLS(host+":993", nil)
 	if errd != nil {
 		return nil, fmt.Errorf("Unable to dial: %s", errd)
