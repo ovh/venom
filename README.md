@@ -21,14 +21,15 @@ Usage:
   venom run [flags]
 
 Flags:
-      --alias stringSlice   --alias cds:'cds -f config.json' --alias cds2:'cds -f config.json'
-      --details string      Output Details Level : low, medium, high (default "medium")
-      --format string       --formt:yaml, json, xml (default "xml")
-      --log string          Log Level : debug, info or warn (default "warn")
-      --output-dir string   Output Directory: create tests results file inside this directory
-      --parallel int        --parallel=2 (default 1)
-      --resume              Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
-      --resumeFailures      Output Resume Failures (default true)
+      --alias stringSlice     --alias cds:'cds -f config.json' --alias cds2:'cds -f config.json'
+      --details string        Output Details Level : low, medium, high (default "medium")
+      --exclude stringSlice   --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
+      --format string         --formt:yaml, json, xml (default "xml")
+      --log string            Log Level : debug, info or warn (default "warn")
+      --output-dir string     Output Directory: create tests results file inside this directory
+      --parallel int          --parallel=2 : launches 2 Test Suites in parallel (default 1)
+      --resume                Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
+      --resumeFailures        Output Resume Failures (default true)
 ```
 
 ## TestSuite files

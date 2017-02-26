@@ -12,8 +12,21 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getFilesPath(path []string) []string {
+func getFilesPath(path []string, exclude []string) []string {
 	var filesPath []string
+	var fpathsExcluded []string
+
+	if len(exclude) > 0 {
+		for _, p := range exclude {
+			pe, erre := filepath.Glob(p)
+			if erre != nil {
+				log.Fatalf("Error reading files on path:%s :%s", path, erre)
+			}
+			fpathsExcluded = append(fpathsExcluded, pe...)
+		}
+	}
+	log.Debugf("fpathsExcluded: %v", fpathsExcluded)
+
 	for _, p := range path {
 		fileInfo, _ := os.Stat(p)
 		if fileInfo != nil && fileInfo.IsDir() {
@@ -25,7 +38,15 @@ func getFilesPath(path []string) []string {
 			log.Fatalf("Error reading files on path:%s :%s", path, errg)
 		}
 		for _, fp := range fpaths {
-			if strings.HasSuffix(fp, ".yml") || strings.HasSuffix(fp, ".yaml") {
+			toExclude := false
+			for _, te := range fpathsExcluded {
+				if te == fp {
+					toExclude = true
+				}
+			}
+			if toExclude {
+				log.Debugf("%s is excluded ", fp)
+			} else if strings.HasSuffix(fp, ".yml") || strings.HasSuffix(fp, ".yaml") {
 				filesPath = append(filesPath, fp)
 			} else {
 				log.Debugf("%s is skipped (not yaml extension)", fp)

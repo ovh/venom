@@ -6,7 +6,7 @@ import (
 )
 
 // Process runs tests suite and return a Tests result
-func Process(path []string, alias []string, parallel int, detailsLevel string) (Tests, error) {
+func Process(path []string, alias []string, exclude []string, parallel int, detailsLevel string) (Tests, error) {
 
 	chanEnd := make(chan TestSuite, 1)
 	parallels := make(chan TestSuite, parallel)
@@ -15,7 +15,7 @@ func Process(path []string, alias []string, parallel int, detailsLevel string) (
 
 	aliases := computeAliases(alias)
 
-	filesPath := getFilesPath(path)
+	filesPath := getFilesPath(path, exclude)
 	wg.Add(len(filesPath))
 	chanToRun := make(chan TestSuite, len(filesPath)+1)
 
