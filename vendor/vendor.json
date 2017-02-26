@@ -141,6 +141,12 @@
 			"revisionTime": "2017-01-16T16:32:51Z"
 		},
 		{
+			"checksumSHA1": "FYm9gvCqKRBRmx3yqLKA/VdiOB4=",
+			"path": "github.com/yesnault/go-imap/imap",
+			"revision": "eb9bbb66bd7bb6b40517b5423ce45f370325d67c",
+			"revisionTime": "2016-07-10T14:19:53Z"
+		},
+		{
 			"checksumSHA1": "h+pFYiRHBogczS8/F1NoN3Ata44=",
 			"path": "golang.org/x/crypto/curve25519",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
