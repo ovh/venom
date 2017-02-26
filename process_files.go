@@ -25,7 +25,6 @@ func getFilesPath(path []string, exclude []string) []string {
 			fpathsExcluded = append(fpathsExcluded, pe...)
 		}
 	}
-	log.Debugf("fpathsExcluded: %v", fpathsExcluded)
 
 	for _, p := range path {
 		fileInfo, _ := os.Stat(p)
@@ -42,6 +41,7 @@ func getFilesPath(path []string, exclude []string) []string {
 			for _, te := range fpathsExcluded {
 				if te == fp {
 					toExclude = true
+					break
 				}
 			}
 			if toExclude {
@@ -53,6 +53,8 @@ func getFilesPath(path []string, exclude []string) []string {
 			}
 		}
 	}
+
+	log.Debugf("files to run: %v", filesPath)
 
 	sort.Strings(filesPath)
 	return filesPath
