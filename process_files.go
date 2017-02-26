@@ -44,12 +44,8 @@ func getFilesPath(path []string, exclude []string) []string {
 					break
 				}
 			}
-			if toExclude {
-				log.Debugf("%s is excluded ", fp)
-			} else if strings.HasSuffix(fp, ".yml") || strings.HasSuffix(fp, ".yaml") {
+			if !toExclude && (strings.HasSuffix(fp, ".yml") || strings.HasSuffix(fp, ".yaml")) {
 				filesPath = append(filesPath, fp)
-			} else {
-				log.Debugf("%s is skipped (not yaml extension)", fp)
 			}
 		}
 	}
