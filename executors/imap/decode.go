@@ -37,6 +37,7 @@ func extract(rsp imap.Response, l *log.Entry) (*Mail, error) {
 	var params map[string]string
 
 	header := imap.AsBytes(rsp.MessageInfo().Attrs["RFC822.HEADER"])
+	uid := imap.AsNumber((rsp.MessageInfo().Attrs["UID"]))
 	body := imap.AsBytes(rsp.MessageInfo().Attrs["RFC822.TEXT"])
 	if mmsg, _ := mail.ReadMessage(bytes.NewReader(header)); mmsg != nil {
 		var errds error
@@ -76,6 +77,7 @@ func extract(rsp imap.Response, l *log.Entry) (*Mail, error) {
 				tm.Date = time.Now()
 			}
 		}
+		tm.UID = uid
 	}
 
 	r := quotedprintable.NewReader(bytes.NewReader(body))

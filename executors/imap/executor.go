@@ -30,7 +30,8 @@ type Executor struct {
 	IMAPHost      string `json:"imaphost,omitempty" yaml:"imaphost,omitempty"`
 	IMAPUser      string `json:"imapuser,omitempty" yaml:"imapuser,omitempty"`
 	IMAPPassword  string `json:"imappassword,omitempty" yaml:"imappassword,omitempty"`
-	Box           string `json:"box,omitempty" yaml:"box,omitempty"`
+	MBox          string `json:"mbox,omitempty" yaml:"mbox,omitempty"`
+	MBoxIfSuccess string `json:"mboxifsuccess,omitempty" yaml:"mboxifsuccess,omitempty"`
 	SearchFrom    string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
 	SearchSubject string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
 }
@@ -39,6 +40,7 @@ type Executor struct {
 type Mail struct {
 	From    string
 	Subject string
+	UID     uint32
 	Date    time.Time
 	Body    string
 }
@@ -106,7 +108,7 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 
 	var box string
 
-	if e.Box == "" {
+	if e.MBox == "" {
 		box = "INBOX"
 	}
 
@@ -135,6 +137,12 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 		}
 
 		if e.isSearched(m) {
+			if e.MBoxIfSuccess != "" {
+				l.Debugf("Move to %s", e.MBoxIfSuccess)
+				if err := m.move(c, e.MBoxIfSuccess); err != nil {
+					return nil, err
+				}
+			}
 			return m, nil
 		}
 	}
@@ -155,6 +163,16 @@ func (e *Executor) isSearched(m *Mail) bool {
 	}
 
 	return false
+}
+
+func (m *Mail) move(c *imap.Client, mbox string) error {
+	seq, _ := imap.NewSeqSet("")
+	seq.AddNum(m.UID)
+
+	if _, err := c.UIDMove(seq, mbox); err != nil {
+		return fmt.Errorf("Error while move msg to %s, err:%s", mbox, err.Error())
+	}
+	return nil
 }
 
 func connect(host, imapUsername, imapPassword string) (*imap.Client, error) {

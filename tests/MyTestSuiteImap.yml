@@ -6,7 +6,8 @@ testcases:
     imaphost: yourimaphost
     imapuser: yourimapuser
     imappassword: "yourimappassword"
-    box: INBOX
+    mbox: INBOX
+    mboxifsuccess: venomProcessed
     searchsubject: Title of mail
     assertions:
     - result.err ShouldNotExist
