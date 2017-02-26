@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
@@ -19,11 +20,17 @@ func getFilesPath(path []string) []string {
 			p = filepath.Dir(p) + "/*.yml"
 			log.Debugf("path computed:%s", path)
 		}
-		fp, errg := filepath.Glob(p)
+		fpaths, errg := filepath.Glob(p)
 		if errg != nil {
 			log.Fatalf("Error reading files on path:%s :%s", path, errg)
 		}
-		filesPath = append(filesPath, fp...)
+		for _, fp := range fpaths {
+			if strings.HasSuffix(fp, ".yml") || strings.HasSuffix(fp, ".yaml") {
+				filesPath = append(filesPath, fp)
+			} else {
+				log.Debugf("%s is skipped (not yaml extension)", fp)
+			}
+		}
 	}
 
 	sort.Strings(filesPath)
