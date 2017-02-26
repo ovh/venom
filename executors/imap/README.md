@@ -15,14 +15,14 @@ testcases:
     imapuser: yourimapuser
     imappassword: "yourimappassword"
     mbox: INBOX
-    mboxifsuccess: mailsMatches
+    mboxonsuccess: mailsMatches
     searchsubject: Title of mail
     assertions:
     - result.err ShouldNotExist
 ```
 
 * mbox: optional, default is INBOX
-* mboxifsuccess: optional. If not empty, move found mail (matching criteria) to another mbox.
+* mboxonsuccess: optional. If not empty, move found mail (matching criteria) to another mbox.
 
 ## Output
 

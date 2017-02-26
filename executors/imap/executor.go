@@ -31,7 +31,7 @@ type Executor struct {
 	IMAPUser      string `json:"imapuser,omitempty" yaml:"imapuser,omitempty"`
 	IMAPPassword  string `json:"imappassword,omitempty" yaml:"imappassword,omitempty"`
 	MBox          string `json:"mbox,omitempty" yaml:"mbox,omitempty"`
-	MBoxIfSuccess string `json:"mboxifsuccess,omitempty" yaml:"mboxifsuccess,omitempty"`
+	MBoxOnSuccess string `json:"mboxonsuccess,omitempty" yaml:"mboxonsuccess,omitempty"`
 	SearchFrom    string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
 	SearchSubject string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
 }
@@ -41,7 +41,6 @@ type Mail struct {
 	From    string
 	Subject string
 	UID     uint32
-	Date    time.Time
 	Body    string
 }
 
@@ -62,7 +61,6 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 
 // Run execute TestStep of type exec
 func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
-
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
 		return nil, err
@@ -90,7 +88,7 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
-	result.Executor.IMAPPassword = "****hide****" // do not output password
+	result.Executor.IMAPPassword = "****hiden****" // do not output password
 
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
@@ -137,9 +135,9 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 		}
 
 		if e.isSearched(m) {
-			if e.MBoxIfSuccess != "" {
-				l.Debugf("Move to %s", e.MBoxIfSuccess)
-				if err := m.move(c, e.MBoxIfSuccess); err != nil {
+			if e.MBoxOnSuccess != "" {
+				l.Debugf("Move to %s", e.MBoxOnSuccess)
+				if err := m.move(c, e.MBoxOnSuccess); err != nil {
 					return nil, err
 				}
 			}

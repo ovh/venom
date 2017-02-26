@@ -69,7 +69,7 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
-	result.Executor.Password = "****hide****" // do not output password
+	result.Executor.Password = "****hiden****" // do not output password
 
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
