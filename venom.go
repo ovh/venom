@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"context"
 	"fmt"
 	"os"
 )
@@ -29,8 +28,7 @@ func RegisterExecutor(name string, e Executor) {
 
 // getExecutorWrap initializes a test by name
 // no type -> exec is default
-func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
-
+func getExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWrap, error) {
 	var name string
 	var retry, delay, timeout int
 
@@ -38,7 +36,9 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 		name = fmt.Sprintf("%s", itype)
 	}
 
-	if name == "" {
+	if name == "" && tcc.GetName() != "default" {
+		name = tcc.GetName()
+	} else if name == "" {
 		name = "exec"
 	}
 
@@ -65,7 +65,7 @@ func getExecutorWrap(t map[string]interface{}) (*executorWrap, error) {
 		return ew, nil
 	}
 
-	return nil, fmt.Errorf("type '%s' is not implemented", name)
+	return nil, fmt.Errorf("[%s] type '%s' is not implemented", tcc.GetName(), name)
 }
 
 // RegisterTestCaseContext new register TestCaseContext
@@ -75,11 +75,10 @@ func RegisterTestCaseContext(name string, tcc TestCaseContext) {
 
 // getContextWrap initializes a context for a testcase
 // no type -> parent context
-func getContextWrap(tc *TestCase) (context.Context, error) {
+func getContextWrap(tc *TestCase) (TestCaseContext, error) {
 	if tc.Context == nil {
-		return context.Background(), nil
+		return contexts["default"], nil
 	}
-
 	var typeName string
 	if itype, ok := tc.Context["type"]; ok {
 		typeName = fmt.Sprintf("%s", itype)
@@ -88,12 +87,8 @@ func getContextWrap(tc *TestCase) (context.Context, error) {
 	if typeName == "" {
 		return nil, fmt.Errorf("context type '%s' is not implemented", typeName)
 	}
-
-	tcVars, errC := contexts[typeName].BuildContext(tc)
-	if errC != nil {
-		return nil, fmt.Errorf("Cannot build context type '%s': %s", typeName, errC)
-	}
-	return context.WithValue(context.Background(), ContextKey, tcVars), nil
+	contexts[typeName].SetTestCase(*tc)
+	return contexts[typeName], nil
 }
 
 func getAttrInt(t map[string]interface{}, name string) (int, error) {

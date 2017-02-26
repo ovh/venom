@@ -300,7 +300,10 @@ A TestCase Context has to implement this interface
 ```go
 
 type TestCaseContext interface {
-	BuildContext(tc *TestCase) (map[string]interface{}, error)
+	Init() error
+	Close() error
+	SetTestCase(tc TestCase)
+	GetName() string
 }
 ```
 
@@ -308,28 +311,32 @@ Example
 
 ```go
 // Context Type name
-const Name = "foo"
-const ContextFooKey = "foo"
-const ContextBarKey = "bar"
+const Name = "default"
 
 // New returns a new TestCaseContext
 func New() venom.TestCaseContext {
-	return &TestCaseContext{}
+	ctx := &DefaultTestCaseContext{}
+	ctx.Name = Name
+	return ctx
 }
 
-// TestCaseContex represents the context of a testcase
-type TestCaseContext struct {
+// DefaultTestCaseContext represents the context of a testcase
+type DefaultTestCaseContext struct {
+	venom.CommonTestCaseContext
+	datas map[string]interface{}
 }
 
-func (TestCaseContext) BuildContext(tc *venom.TestCase) (map[string]interface{}, error) {
-	vars := make(map[string]interface{})
+// Init Initialize the context
+func (tcc *DefaultTestCaseContext) Init() error {
+	return nil
+}
 
-	vars[ContextFooKey] = 'fooValue'
-	vars[ContextBarKey] = 'varValue'
-	return vars, nil
+// Close the context
+func (tcc *DefaultTestCaseContext) Close() error {
+	return nil
 }
 ```
-
+Methods SetTestCase and  GetName are implemented by CommonTestCaseContext
 
 # Hacking
 
