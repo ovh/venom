@@ -103,6 +103,7 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 	if errc != nil {
 		return nil, fmt.Errorf("Error while connecting:%s", errc.Error())
 	}
+	defer c.Close(false)
 
 	var box string
 
@@ -112,7 +113,6 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 
 	count, err := queryCount(c, box)
 	if err != nil {
-		disconnect(c)
 		return nil, fmt.Errorf("Error while queryCount:%s", err.Error())
 	}
 
@@ -124,7 +124,6 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 
 	messages, err := fetch(c, box, count, l)
 	if err != nil {
-		disconnect(c)
 		return nil, fmt.Errorf("Error while feching messages:%s", err.Error())
 	}
 
@@ -145,7 +144,7 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Mail not found")
+	return nil, errors.New("Mail not found")
 }
 
 func (e *Executor) isSearched(m *Mail) bool {
@@ -223,12 +222,6 @@ func fetch(c *imap.Client, box string, nb uint32, l *log.Entry) ([]imap.Response
 	}
 	l.Debugf("Nb messages fetch:%d", len(messages))
 	return messages, nil
-}
-
-func disconnect(c *imap.Client) {
-	if c != nil {
-		c.Close(false)
-	}
 }
 
 func queryCount(imapClient *imap.Client, box string) (uint32, error) {
