@@ -12,17 +12,27 @@ testcases:
   steps:
   - type: imap
     imaphost: yourimaphost
+    imapport: 993
     imapuser: yourimapuser
     imappassword: "yourimappassword"
     mbox: INBOX
     mboxonsuccess: mailsMatches
-    searchsubject: Title of mail
+    searchfrom: '.*@your-domain.localhost'
+    searchsubject: 'Title of mail with *'
     assertions:
     - result.err ShouldNotExist
 ```
 
+* imaphost: imap host
+* imapport: optional, default: 993
+* imapuser: imap username
+* imappassword: imap password
+* searchfrom: optional
+* searchsubject: optional
 * mbox: optional, default is INBOX
 * mboxonsuccess: optional. If not empty, move found mail (matching criteria) to another mbox.
+
+Input must contains searchfrom and/or searchsubject.
 
 ## Output
 

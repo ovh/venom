@@ -8,6 +8,6 @@ testcases:
     imappassword: "yourimappassword"
     mbox: INBOX
     mboxifsuccess: venomProcessed
-    searchsubject: Title of mail
+    searchsubject: Title m.*
     assertions:
     - result.err ShouldNotExist

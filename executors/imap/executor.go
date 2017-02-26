@@ -3,6 +3,7 @@ package imap
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -28,6 +29,7 @@ func New() venom.Executor {
 // Executor represents a Test Exec
 type Executor struct {
 	IMAPHost      string `json:"imaphost,omitempty" yaml:"imaphost,omitempty"`
+	IMAPPort      string `json:"imapport,omitempty" yaml:"imapport,omitempty"`
 	IMAPUser      string `json:"imapuser,omitempty" yaml:"imapuser,omitempty"`
 	IMAPPassword  string `json:"imappassword,omitempty" yaml:"imappassword,omitempty"`
 	MBox          string `json:"mbox,omitempty" yaml:"mbox,omitempty"`
@@ -76,19 +78,21 @@ func (Executor) Run(ctx venom.TestCaseContext, l *log.Entry, aliases venom.Alias
 	result := Result{Executor: t}
 	find, errs := t.getMail(l)
 	if errs != nil {
+		fmt.Printf("AAAA VVVVV errs: %s", errs)
 		result.Err = errs.Error()
 	}
+	fmt.Printf("AAAA XXXXX ")
 	if find != nil {
 		result.Subject = find.Subject
 		result.Body = find.Body
-	} else {
+	} else if result.Err == "" {
 		result.Err = "searched mail not found"
 	}
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
-	result.Executor.IMAPPassword = "****hiden****" // do not output password
+	result.Executor.IMAPPassword = "****hidden****" // do not output password
 
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
@@ -98,7 +102,7 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 		return nil, fmt.Errorf("You have to use searchfrom and/or searchsubject")
 	}
 
-	c, errc := connect(e.IMAPHost, e.IMAPUser, e.IMAPPassword)
+	c, errc := connect(e.IMAPHost, e.IMAPPort, e.IMAPUser, e.IMAPPassword)
 	if errc != nil {
 		return nil, fmt.Errorf("Error while connecting:%s", errc.Error())
 	}
@@ -108,6 +112,8 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 
 	if e.MBox == "" {
 		box = "INBOX"
+	} else {
+		box = e.MBox
 	}
 
 	count, err := queryCount(c, box)
@@ -132,7 +138,12 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 			return nil, erre
 		}
 
-		if e.isSearched(m) {
+		found, errs := e.isSearched(m)
+		if errs != nil {
+			return nil, errs
+		}
+
+		if found {
 			if e.MBoxOnSuccess != "" {
 				l.Debugf("Move to %s", e.MBoxOnSuccess)
 				if err := m.move(c, e.MBoxOnSuccess); err != nil {
@@ -146,19 +157,36 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 	return nil, errors.New("Mail not found")
 }
 
-func (e *Executor) isSearched(m *Mail) bool {
+func (e *Executor) isSearched(m *Mail) (bool, error) {
+	fmt.Printf("GHFJK ############# ")
 	if e.SearchFrom != "" && e.SearchSubject != "" {
-		return strings.Contains(m.From, e.SearchFrom) ||
-			strings.Contains(m.Subject, e.SearchSubject)
-	}
-	if e.SearchFrom != "" {
-		return strings.Contains(m.From, e.SearchFrom)
-	}
-	if e.SearchSubject != "" {
-		return strings.Contains(m.Subject, e.SearchSubject)
+		ma, erra := regexp.MatchString(e.SearchFrom, m.From)
+		mb, errb := regexp.MatchString(e.SearchSubject, m.Subject)
+		if erra != nil {
+			return false, erra
+		}
+		if errb != nil {
+			return false, errb
+		}
+		return ma && mb, nil
 	}
 
-	return false
+	if e.SearchFrom != "" {
+		ma, erra := regexp.MatchString(e.SearchFrom, m.From)
+		if erra != nil {
+			return false, erra
+		}
+		return ma, nil
+	}
+	if e.SearchSubject != "" {
+		mb, errb := regexp.MatchString(e.SearchSubject, m.Subject)
+		if errb != nil {
+			return false, errb
+		}
+		return mb, nil
+	}
+
+	return false, nil
 }
 
 func (m *Mail) move(c *imap.Client, mbox string) error {
@@ -171,8 +199,16 @@ func (m *Mail) move(c *imap.Client, mbox string) error {
 	return nil
 }
 
-func connect(host, imapUsername, imapPassword string) (*imap.Client, error) {
-	c, errd := imap.DialTLS(host+":993", nil)
+func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error) {
+	if !strings.Contains(host, ":") {
+		if port == "" {
+			port = ":993"
+		} else if port != "" && !strings.HasPrefix(port, ":") {
+			port = ":" + port
+		}
+	}
+
+	c, errd := imap.DialTLS(host+port, nil)
 	if errd != nil {
 		return nil, fmt.Errorf("Unable to dial: %s", errd)
 	}

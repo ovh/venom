@@ -67,7 +67,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, aliases
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
-	result.Executor.Password = "****hiden****" // do not output password
+	result.Executor.Password = "****hidden****" // do not output password
 
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
