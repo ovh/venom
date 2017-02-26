@@ -35,7 +35,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, a
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
 		}
-		if len(tc.Failures) > 0 {
+		if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
 			break
 		}
 	}
