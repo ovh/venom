@@ -13,82 +13,71 @@ const Name = "web"
 
 // Key of context element in testsuite file
 const (
-	Width      = "width"
-	Height     = "height"
-	Screenshot = "screenshotOnFailure"
-)
-
-// Key of element in the testcase context
-const (
-	ContextDriverKey           = "driver"
-	ContextPageKey             = "page"
-	ContextScreenshotOnFailure = "screenshotOnFailure"
+	Width  = "width"
+	Height = "height"
 )
 
 // New returns a new TestCaseContext
 func New() venom.TestCaseContext {
-	return &TestCaseContext{}
+	ctx := &WebTestCaseContext{}
+	ctx.Name = Name
+	return ctx
 }
 
 // TestCaseContex represents the context of a testcase
-type TestCaseContext struct{}
+type WebTestCaseContext struct {
+	venom.CommonTestCaseContext
+	wd   *agouti.WebDriver
+	Page *agouti.Page
+}
 
 // BuildContext build context of type web.
 // It creates a new browser
-func (TestCaseContext) BuildContext(tc *venom.TestCase) (map[string]interface{}, error) {
-	vars := make(map[string]interface{})
-
-	// Get web driver
-	wd := agouti.PhantomJS()
-	if err := wd.Start(); err != nil {
-		return nil, fmt.Errorf("Cannot start web driver %s", err)
+func (tcc *WebTestCaseContext) Init() error {
+	// Init web driver
+	tcc.wd = agouti.PhantomJS()
+	if err := tcc.wd.Start(); err != nil {
+		return fmt.Errorf("Cannot start web driver %s", err)
 	}
-	vars[ContextDriverKey] = wd
 
-	// Get Page
-	page, err := wd.NewPage()
-	if err != nil {
-		return nil, fmt.Errorf("Cannot create new page %s", err)
+	// Init Page
+	var errP error
+	tcc.Page, errP = tcc.wd.NewPage()
+	if errP != nil {
+		return fmt.Errorf("Cannot create new page %s", errP)
 	}
 
 	resizePage := false
-	if _, ok := tc.Context[Width]; ok {
-		if _, ok := tc.Context[Height]; ok {
+	if _, ok := tcc.TestCase.Context[Width]; ok {
+		if _, ok := tcc.TestCase.Context[Height]; ok {
 			resizePage = true
 		}
 	}
 
-	// Get Page size
+	// Resize Page
 	if resizePage {
 		var width, height int
-		switch tc.Context[Width].(type) {
+		switch tcc.TestCase.Context[Width].(type) {
 		case int:
-			width = tc.Context[Width].(int)
+			width = tcc.TestCase.Context[Width].(int)
 		default:
-			return nil, fmt.Errorf("%s is not an integer: %s", Width, fmt.Sprintf("%s", tc.Context[Width]))
+			return fmt.Errorf("%s is not an integer: %s", Width, fmt.Sprintf("%s", tcc.TestCase.Context[Width]))
 		}
-		switch tc.Context[Height].(type) {
+		switch tcc.TestCase.Context[Height].(type) {
 		case int:
-			height = tc.Context[Height].(int)
+			height = tcc.TestCase.Context[Height].(int)
 		default:
-			return nil, fmt.Errorf("%s is not an integer: %s", Height, fmt.Sprintf("%s", tc.Context[Height]))
+			return fmt.Errorf("%s is not an integer: %s", Height, fmt.Sprintf("%s", tcc.TestCase.Context[Height]))
 		}
 
-		if err := page.Size(width, height); err != nil {
-			return nil, fmt.Errorf("Cannot resize page: %s", err)
+		if err := tcc.Page.Size(width, height); err != nil {
+			return fmt.Errorf("Cannot resize page: %s", err)
 		}
 	}
-	vars[ContextPageKey] = page
+	return nil
+}
 
-	// Get screenshot param
-	if _, ok := tc.Context[Screenshot]; ok {
-		switch tc.Context[Screenshot].(type) {
-		case bool:
-			vars[ContextScreenshotOnFailure] = tc.Context[Screenshot].(bool)
-		default:
-			return nil, fmt.Errorf("%s must be a boolean, go %s", ContextScreenshotOnFailure, fmt.Sprintf("%s", tc.Context[ContextScreenshotOnFailure]))
-		}
-	}
-
-	return vars, nil
+// Close web driver
+func (tcc *WebTestCaseContext) Close() error {
+	return tcc.wd.Stop()
 }

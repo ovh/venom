@@ -1,9 +1,8 @@
 package web
 
 import (
-	"context"
-	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/runabove/venom"
 	"github.com/runabove/venom/context/webctx"
-	"strings"
 )
 
 // Name of executor
@@ -42,7 +40,15 @@ type Result struct {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+	var ctx *webctx.WebTestCaseContext
+	switch testCaseContext.(type) {
+	case *webctx.WebTestCaseContext:
+		ctx = testCaseContext.(*webctx.WebTestCaseContext)
+	default:
+		return nil, fmt.Errorf("Web executor need a Web context")
+	}
+
 	start := time.Now()
 
 	// transform step to Executor Instance
@@ -52,65 +58,52 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 	}
 	r := &Result{Executor: t}
 
-	// Get Web Context
-	varContext := ctx.Value(venom.ContextKey).(map[string]interface{})
-	if varContext == nil {
-		return nil, errors.New("Executor web need a context")
-	}
-	if _, ok := varContext[webctx.ContextPageKey]; !ok {
-		return nil, errors.New("Executor web need a page in context")
-	}
-	page := varContext[webctx.ContextPageKey].(*agouti.Page)
-	if page == nil {
-		return nil, errors.New("page is nil in context")
-	}
-
 	// Check action to realise
 	if t.Action.Click != "" {
-		s, err := find(page, t.Action.Click, r)
+		s, err := find(ctx.Page, t.Action.Click, r)
 		if err != nil {
-			return nil, failWithScreenshot(varContext, page, err)
+			return nil, err
 		}
 		if err := s.Click(); err != nil {
-			return nil, failWithScreenshot(varContext, page, fmt.Errorf("Cannot click on element %s: %s", t.Action.Click, err))
+			return nil, err
 		}
 	} else if t.Action.Fill != nil {
 		for _, f := range t.Action.Fill {
-			s, err := findOne(page, f.Find, r)
+			s, err := findOne(ctx.Page, f.Find, r)
 			if err != nil {
-				return nil, failWithScreenshot(varContext, page, err)
+				return nil, err
 			}
 			if err := s.Fill(f.Text); err != nil {
-				return nil, failWithScreenshot(varContext, page, fmt.Errorf("Cannot fill element %s: %s", f.Find, err))
+				return nil, err
 			}
 		}
 
 	} else if t.Action.Find != "" {
-		_, err := find(page, t.Action.Find, r)
+		_, err := find(ctx.Page, t.Action.Find, r)
 		if err != nil {
-			return nil, failWithScreenshot(varContext, page, err)
+			return nil, err
 		}
 	} else if t.Action.Navigate != "" {
-		if err := page.Navigate(t.Action.Navigate); err != nil {
+		if err := ctx.Page.Navigate(t.Action.Navigate); err != nil {
 			return nil, err
 		}
 	}
 
 	// take a screenshot
 	if t.Screenshot != "" {
-		if err := page.Screenshot(t.Screenshot); err != nil {
+		if err := ctx.Page.Screenshot(t.Screenshot); err != nil {
 			return nil, err
 		}
 	}
 
 	// get page title
-	title, err := page.Title()
+	title, err := ctx.Page.Title()
 	if err != nil {
-		return nil, failWithScreenshot(varContext, page, fmt.Errorf("Cannot get title: %s", err))
+		return nil, err
 	}
 	r.Title = title
 
-	url, errU := page.URL()
+	url, errU := ctx.Page.URL()
 	if errU != nil {
 		return nil, fmt.Errorf("Cannot get URL: %s", errU)
 	}
@@ -121,18 +114,6 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 	r.TimeHuman = fmt.Sprintf("%s", elapsed)
 
 	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
-}
-
-func failWithScreenshot(contextVars map[string]interface{}, page *agouti.Page, parentError error) error {
-	if b, ok := contextVars[webctx.ContextScreenshotOnFailure]; ok {
-		if b.(bool) {
-			if errS := page.Screenshot("failure.png"); errS != nil {
-				log.Warn("Screeshot on failure failed: %s", errS)
-			}
-		}
-
-	}
-	return parentError
 }
 
 func find(page *agouti.Page, search string, r *Result) (*agouti.Selection, error) {
