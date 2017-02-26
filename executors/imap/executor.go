@@ -2,6 +2,7 @@ package imap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -118,7 +119,7 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 	l.Debugf("count messages:%d", count)
 
 	if count == 0 {
-		return nil, fmt.Errorf("No message to fetch")
+		return nil, errors.New("No message to fetch")
 	}
 
 	messages, err := fetch(c, box, count, l)
