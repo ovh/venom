@@ -1,0 +1,12 @@
+name: TestSuite with IMAP Steps
+testcases:
+- name: TestCase IMAP
+  steps:
+  - type: imap
+    imaphost: yourimaphost
+    imapuser: yourimapuser
+    imappassword: "yourimappassword"
+    box: INBOX
+    searchsubject: Title of mail
+    assertions:
+    - result.err ShouldNotExist

@@ -14,8 +14,9 @@ import (
 
 	"github.com/runabove/venom"
 	"github.com/runabove/venom/context/webctx"
-	ex "github.com/runabove/venom/executors/exec"
+	"github.com/runabove/venom/executors/exec"
 	"github.com/runabove/venom/executors/http"
+	"github.com/runabove/venom/executors/imap"
 	"github.com/runabove/venom/executors/readfile"
 	"github.com/runabove/venom/executors/smtp"
 	"github.com/runabove/venom/executors/ssh"
@@ -57,10 +58,11 @@ var Cmd = &cobra.Command{
 			path = args[0:]
 		}
 
-		venom.RegisterExecutor(ex.Name, ex.New())
+		venom.RegisterExecutor(exec.Name, exec.New())
 		venom.RegisterExecutor(http.Name, http.New())
-		venom.RegisterExecutor(smtp.Name, smtp.New())
+		venom.RegisterExecutor(imap.Name, imap.New())
 		venom.RegisterExecutor(readfile.Name, readfile.New())
+		venom.RegisterExecutor(smtp.Name, smtp.New())
 		venom.RegisterExecutor(ssh.Name, ssh.New())
 		venom.RegisterExecutor(web.Name, web.New())
 

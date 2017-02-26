@@ -61,7 +61,7 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 	start := time.Now()
 
 	result := Result{Executor: t}
-	errs := t.sendEmail()
+	errs := t.sendEmail(l)
 	if errs != nil {
 		result.Err = errs.Error()
 	}
@@ -69,12 +69,12 @@ func (Executor) Run(ctx context.Context, l *log.Entry, aliases venom.Aliases, st
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
+	result.Executor.Password = "****hide****" // do not output password
 
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
 
-func (e *Executor) sendEmail() error {
-
+func (e *Executor) sendEmail(l *log.Entry) error {
 	if e.To == "" {
 		return fmt.Errorf("Invalid To")
 	}
@@ -169,6 +169,7 @@ func (e *Executor) sendEmail() error {
 		return fmt.Errorf("Error with c.Close:%s", err.Error())
 	}
 
+	l.Debugf("Mail sent to %s", mailTo.Address)
 	c.Quit()
 
 	return nil

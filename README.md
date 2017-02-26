@@ -121,6 +121,17 @@ venom run --alias='cdsro:cds -f $HOME/.cds/it.user.ro.json' --alias='cds:cds -f 
 venom run  --details=low --format=xml --output-dir="."
 ```
 
+## Executors
+
+* **exec**: https://github.com/runabove/venom/tree/master/executors/exec `exec` is the default type for a step
+* **http**: https://github.com/runabove/venom/tree/master/executors/http
+* **imap**: https://github.com/runabove/venom/tree/master/executors/imap
+* **readfile**: https://github.com/runabove/venom/tree/master/executors/readfile
+* **smtp**: https://github.com/runabove/venom/tree/master/executors/smtp
+* **ssh**: https://github.com/runabove/venom/tree/master/executors/ssh
+* **web**: https://github.com/runabove/venom/tree/master/executors/web
+
+
 ## Assertion
 
 ### Keywords
@@ -175,33 +186,6 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldNotHappenWithin
 * ShouldBeChronological
 
-## Executors
-
-### Exec
-
-`exec` is the default type for a step
-
-See https://github.com/runabove/venom/tree/master/executors/exec
-
-### HTTP
-
-See https://github.com/runabove/venom/tree/master/executors/http
-
-### Read file
-
-See https://github.com/runabove/venom/tree/master/executors/readfile
-
-### SMTP
-
-See https://github.com/runabove/venom/tree/master/executors/smtp
-
-### SSH
-
-See https://github.com/runabove/venom/tree/master/executors/ssh
-
-### WEB
-
-See https://github.com/runabove/venom/tree/master/executors/web
 
 ### Write your executor
 
