@@ -5,26 +5,52 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
 )
 
-func getFilesPath(path []string) []string {
+func getFilesPath(path []string, exclude []string) []string {
 	var filesPath []string
+	var fpathsExcluded []string
+
+	if len(exclude) > 0 {
+		for _, p := range exclude {
+			pe, erre := filepath.Glob(p)
+			if erre != nil {
+				log.Fatalf("Error reading files on path:%s :%s", path, erre)
+			}
+			fpathsExcluded = append(fpathsExcluded, pe...)
+		}
+	}
+
 	for _, p := range path {
 		fileInfo, _ := os.Stat(p)
 		if fileInfo != nil && fileInfo.IsDir() {
 			p = filepath.Dir(p) + "/*.yml"
 			log.Debugf("path computed:%s", path)
 		}
-		fp, errg := filepath.Glob(p)
+		fpaths, errg := filepath.Glob(p)
 		if errg != nil {
 			log.Fatalf("Error reading files on path:%s :%s", path, errg)
 		}
-		filesPath = append(filesPath, fp...)
+		for _, fp := range fpaths {
+			toExclude := false
+			for _, te := range fpathsExcluded {
+				if te == fp {
+					toExclude = true
+					break
+				}
+			}
+			if !toExclude && (strings.HasSuffix(fp, ".yml") || strings.HasSuffix(fp, ".yaml")) {
+				filesPath = append(filesPath, fp)
+			}
+		}
 	}
+
+	log.Debugf("files to run: %v", filesPath)
 
 	sort.Strings(filesPath)
 	return filesPath

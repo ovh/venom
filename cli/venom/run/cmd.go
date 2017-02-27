@@ -26,6 +26,7 @@ import (
 var (
 	path           []string
 	alias          []string
+	exclude        []string
 	format         string
 	parallel       int
 	logLevel       string
@@ -37,6 +38,7 @@ var (
 
 func init() {
 	Cmd.Flags().StringSliceVarP(&alias, "alias", "", []string{""}, "--alias cds:'cds -f config.json' --alias cds2:'cds -f config.json'")
+	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--formt:yaml, json, xml")
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
@@ -93,7 +95,7 @@ var Cmd = &cobra.Command{
 		}
 
 		start := time.Now()
-		tests, err := venom.Process(path, alias, parallel, detailsLevel)
+		tests, err := venom.Process(path, alias, exclude, parallel, detailsLevel)
 		if err != nil {
 			log.Fatal(err)
 		}
