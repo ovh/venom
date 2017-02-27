@@ -40,7 +40,7 @@ type TestCaseContext interface {
 	GetName() string
 }
 
-// TestCaseContextStruct
+// CommonTestCaseContext represents a Default TestCase Context
 type CommonTestCaseContext struct {
 	TestCaseContext
 	TestCase TestCase

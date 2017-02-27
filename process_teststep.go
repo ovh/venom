@@ -32,7 +32,7 @@ func runTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 
 		ts.Templater.Add(tc.Name, result)
 
-		log.Debugf("result:%+v", ts.Templater)
+		log.Debugf("result step:%+v", result)
 
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
 			isOK, errors, failures, systemout, systemerr = applyChecks(result, step, h.GetDefaultAssertions(), l)
@@ -64,8 +64,11 @@ func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, st
 	cherr := make(chan error)
 	go func(tcc TestCaseContext, e *executorWrap, step TestStep, l *log.Entry) {
 		result, err := e.executor.Run(tcc, l, aliases, step)
-		cherr <- err
-		ch <- result
+		if err != nil {
+			cherr <- err
+		} else {
+			ch <- result
+		}
 	}(tcc, e, step, l)
 
 	select {
