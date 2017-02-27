@@ -109,6 +109,27 @@ testcases:
 
 ```
 
+Extract variable from results and reuse it in step after
+
+```
+name: MyTestSuite
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo 'foo with a bar here'
+    extracts:
+      result.systemout: foo with a (?P<myvariable>[a-z]+) here
+
+- name: testB
+  steps:
+  - type: exec
+    script: echo {{.testA.myvariable}}
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring bar
+```
+
 ## RUN Venom locally on CDS Integration Tests
 
 ```bash
