@@ -78,10 +78,8 @@ func (Executor) Run(ctx venom.TestCaseContext, l *log.Entry, aliases venom.Alias
 	result := Result{Executor: t}
 	find, errs := t.getMail(l)
 	if errs != nil {
-		fmt.Printf("AAAA VVVVV errs: %s", errs)
 		result.Err = errs.Error()
 	}
-	fmt.Printf("AAAA XXXXX ")
 	if find != nil {
 		result.Subject = find.Subject
 		result.Body = find.Body
@@ -158,7 +156,6 @@ func (e *Executor) getMail(l *log.Entry) (*Mail, error) {
 }
 
 func (e *Executor) isSearched(m *Mail) (bool, error) {
-	fmt.Printf("GHFJK ############# ")
 	if e.SearchFrom != "" && e.SearchSubject != "" {
 		ma, erra := regexp.MatchString(e.SearchFrom, m.From)
 		mb, errb := regexp.MatchString(e.SearchSubject, m.Subject)
