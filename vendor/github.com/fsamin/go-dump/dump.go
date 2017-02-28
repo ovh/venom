@@ -302,7 +302,7 @@ func ToMap(i interface{}, formatters ...KeyFormatterFunc) (map[string]string, er
 }
 
 func validAndNotEmpty(v reflect.Value) bool {
-	if v.IsValid() {
+	if v.IsValid() && v.CanInterface() {
 		if v.Kind() == reflect.String {
 			return v.String() != ""
 		}
