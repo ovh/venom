@@ -27,7 +27,6 @@ func (t *testingT) Error(args ...interface{}) {
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
 func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure, string, string) {
-
 	isOK, errors, failures, systemout, systemerr := applyAssertions(*executorResult, step, defaultAssertions, l)
 	if !isOK {
 		return isOK, errors, failures, systemout, systemerr
@@ -42,7 +41,6 @@ func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertion
 }
 
 func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l *log.Entry) (bool, []Failure, []Failure, string, string) {
-
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure

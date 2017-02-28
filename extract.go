@@ -11,7 +11,6 @@ import (
 
 // applyExtracts try to run extract on step, return true if all extracts are OK, false otherwise
 func applyExtracts(executorResult *ExecutorResult, step TestStep, l *log.Entry) (bool, []Failure, []Failure) {
-
 	var se StepExtracts
 	var errors []Failure
 	var failures []Failure
