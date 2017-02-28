@@ -119,7 +119,7 @@ testcases:
   - type: exec
     script: echo 'foo with a bar here'
     extracts:
-      result.systemout: foo with a (?P<myvariable>[a-z]+) here
+      result.systemout: foo with a {{myvariable=[a-z]+}} here
 
 - name: testB
   steps:

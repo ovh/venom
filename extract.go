@@ -3,6 +3,7 @@ package venom
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/mitchellh/mapstructure"
@@ -25,7 +26,7 @@ func applyExtracts(executorResult *ExecutorResult, step TestStep, l *log.Entry) 
 		if _, ok := e[key]; !ok {
 			return false, []Failure{{Value: fmt.Sprintf("key %s in result is not found", key)}}, failures
 		}
-		errs, fails := checkExtracts(pattern, e[key], executorResult, l)
+		errs, fails := checkExtracts(transformPattern(pattern), e[key], executorResult, l)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -37,6 +38,23 @@ func applyExtracts(executorResult *ExecutorResult, step TestStep, l *log.Entry) 
 	}
 
 	return isOK, errors, failures
+}
+
+// example:
+// in: "result.systemout: foo with a {{myvariable=[a-z]+}} here"
+// out: "result.systemout: foo with a (?P<myvariable>[a-z]+) here"
+func transformPattern(pattern string) string {
+	var p = pattern
+
+	r, _ := regexp.Compile(`{{[a-zA-Z0-9]+=.*?}}`)
+
+	for _, v := range r.FindAllString(pattern, -1) {
+		varname := v[2:strings.Index(v, "=")]             // extract "foo from '{{foo=value}}'"
+		valregex := v[strings.Index(v, "=")+1 : len(v)-2] // extract "value from '{{foo=value}}'"
+		p = strings.Replace(p, "{{"+varname+"="+valregex+"}}", "(?P<"+varname+">"+valregex+")", -1)
+	}
+
+	return p
 }
 
 func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l *log.Entry) (*Failure, *Failure) {
