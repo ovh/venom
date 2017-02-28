@@ -1,8 +1,15 @@
 package venom
 
 import (
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 // Version of Venom
@@ -110,4 +117,89 @@ func getAttrInt(t map[string]interface{}, name string) (int, error) {
 func Exit(format string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(1)
+}
+
+// OutputResult output result to sdtout, files...
+func OutputResult(format string, resume, resumeFailures bool, outputDir string, tests Tests, elapsed time.Duration, detailsLevel string) {
+	var data []byte
+	var err error
+	switch format {
+	case "json":
+		data, err = json.Marshal(tests)
+		if err != nil {
+			log.Fatalf("Error: cannot format output json (%s)", err)
+		}
+	case "yml", "yaml":
+		data, err = yaml.Marshal(tests)
+		if err != nil {
+			log.Fatalf("Error: cannot format output yaml (%s)", err)
+		}
+	default:
+		dataxml, errm := xml.Marshal(tests)
+		if errm != nil {
+			log.Fatalf("Error: cannot format xml output: %s", errm)
+		}
+		data = append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), dataxml...)
+	}
+
+	if detailsLevel == "high" {
+		fmt.Printf(string(data))
+	}
+
+	if resume {
+		outputResume(tests, elapsed, resumeFailures)
+	}
+
+	if outputDir != "" {
+		filename := outputDir + "/" + "test_results" + "." + format
+		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
+			fmt.Printf("Error while creating file %s, err:%s", filename, err)
+			os.Exit(1)
+		}
+	}
+}
+
+func outputResume(tests Tests, elapsed time.Duration, resumeFailures bool) {
+
+	if resumeFailures {
+		for _, t := range tests.TestSuites {
+			if t.Failures > 0 || t.Errors > 0 {
+				fmt.Printf("FAILED %s\n", t.Name)
+				fmt.Printf("--------------\n")
+
+				for _, tc := range t.TestCases {
+					for _, f := range tc.Failures {
+						fmt.Printf("%s\n", f.Value)
+					}
+					for _, f := range tc.Errors {
+						fmt.Printf("%s\n", f.Value)
+					}
+				}
+				fmt.Printf("-=-=-=-=-=-=-=-=-\n")
+			}
+		}
+	}
+
+	totalTestCases := 0
+	totalTestSteps := 0
+	for _, t := range tests.TestSuites {
+		if t.Failures > 0 || t.Errors > 0 {
+			fmt.Printf("FAILED %s\n", t.Name)
+		}
+		totalTestCases += len(t.TestCases)
+		for _, tc := range t.TestCases {
+			totalTestSteps += len(tc.TestSteps)
+		}
+	}
+
+	fmt.Printf("Total:%d TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d TotalTestCase:%d TotalTestStep:%d Duration:%s\n",
+		tests.Total,
+		tests.TotalOK,
+		tests.TotalKO,
+		tests.TotalSkipped,
+		len(tests.TestSuites),
+		totalTestCases,
+		totalTestSteps,
+		elapsed,
+	)
 }

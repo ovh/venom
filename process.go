@@ -3,10 +3,30 @@ package venom
 import (
 	"strings"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // Process runs tests suite and return a Tests result
-func Process(path []string, alias []string, exclude []string, parallel int, detailsLevel string) (Tests, error) {
+func Process(path []string, alias []string, exclude []string, parallel int, logLevel string, detailsLevel string) (Tests, error) {
+
+	switch logLevel {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "error":
+		log.SetLevel(log.WarnLevel)
+	default:
+		log.SetLevel(log.WarnLevel)
+	}
+
+	switch detailsLevel {
+	case DetailsLow, DetailsMedium, DetailsHigh:
+		log.Infof("Detail Level: %s", detailsLevel)
+	default:
+		log.Fatalf("Invalid details. Must be low, medium or high")
+	}
 
 	chanEnd := make(chan TestSuite, 1)
 	parallels := make(chan TestSuite, parallel)
