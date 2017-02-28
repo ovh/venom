@@ -1,6 +1,8 @@
 package run
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -79,6 +81,9 @@ var Cmd = &cobra.Command{
 		}
 
 		elapsed := time.Since(start)
-		venom.OutputResult(format, resume, resumeFailures, outputDir, tests, elapsed, detailsLevel)
+		if err := venom.OutputResult(format, resume, resumeFailures, outputDir, *tests, elapsed, detailsLevel); err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 	},
 }

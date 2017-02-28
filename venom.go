@@ -17,6 +17,9 @@ import (
 // Keep "const Version on one line"
 const Version = "0.0.1"
 
+// PrintFunc used by venom to print output
+var PrintFunc = fmt.Printf
+
 var (
 	executors = map[string]Executor{}
 	contexts  = map[string]TestCaseContext{}
@@ -120,7 +123,7 @@ func Exit(format string, args ...interface{}) {
 }
 
 // OutputResult output result to sdtout, files...
-func OutputResult(format string, resume, resumeFailures bool, outputDir string, tests Tests, elapsed time.Duration, detailsLevel string) {
+func OutputResult(format string, resume, resumeFailures bool, outputDir string, tests Tests, elapsed time.Duration, detailsLevel string) error {
 	var data []byte
 	var err error
 	switch format {
@@ -143,7 +146,7 @@ func OutputResult(format string, resume, resumeFailures bool, outputDir string, 
 	}
 
 	if detailsLevel == "high" {
-		fmt.Printf(string(data))
+		PrintFunc(string(data))
 	}
 
 	if resume {
@@ -153,10 +156,10 @@ func OutputResult(format string, resume, resumeFailures bool, outputDir string, 
 	if outputDir != "" {
 		filename := outputDir + "/" + "test_results" + "." + format
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
-			fmt.Printf("Error while creating file %s, err:%s", filename, err)
-			os.Exit(1)
+			return fmt.Errorf("Error while creating file %s, err:%s", filename, err)
 		}
 	}
+	return nil
 }
 
 func outputResume(tests Tests, elapsed time.Duration, resumeFailures bool) {
@@ -164,18 +167,18 @@ func outputResume(tests Tests, elapsed time.Duration, resumeFailures bool) {
 	if resumeFailures {
 		for _, t := range tests.TestSuites {
 			if t.Failures > 0 || t.Errors > 0 {
-				fmt.Printf("FAILED %s\n", t.Name)
-				fmt.Printf("--------------\n")
+				PrintFunc("FAILED %s\n", t.Name)
+				PrintFunc("--------------\n")
 
 				for _, tc := range t.TestCases {
 					for _, f := range tc.Failures {
-						fmt.Printf("%s\n", f.Value)
+						PrintFunc("%s\n", f.Value)
 					}
 					for _, f := range tc.Errors {
-						fmt.Printf("%s\n", f.Value)
+						PrintFunc("%s\n", f.Value)
 					}
 				}
-				fmt.Printf("-=-=-=-=-=-=-=-=-\n")
+				PrintFunc("-=-=-=-=-=-=-=-=-\n")
 			}
 		}
 	}
@@ -184,7 +187,7 @@ func outputResume(tests Tests, elapsed time.Duration, resumeFailures bool) {
 	totalTestSteps := 0
 	for _, t := range tests.TestSuites {
 		if t.Failures > 0 || t.Errors > 0 {
-			fmt.Printf("FAILED %s\n", t.Name)
+			PrintFunc("FAILED %s\n", t.Name)
 		}
 		totalTestCases += len(t.TestCases)
 		for _, tc := range t.TestCases {
@@ -192,7 +195,7 @@ func outputResume(tests Tests, elapsed time.Duration, resumeFailures bool) {
 		}
 	}
 
-	fmt.Printf("Total:%d TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d TotalTestCase:%d TotalTestStep:%d Duration:%s\n",
+	PrintFunc("Total:%d TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d TotalTestCase:%d TotalTestStep:%d Duration:%s\n",
 		tests.Total,
 		tests.TotalOK,
 		tests.TotalKO,

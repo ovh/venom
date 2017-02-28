@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"errors"
 	"strings"
 	"sync"
 
@@ -8,7 +9,7 @@ import (
 )
 
 // Process runs tests suite and return a Tests result
-func Process(path []string, alias []string, exclude []string, parallel int, logLevel string, detailsLevel string) (Tests, error) {
+func Process(path []string, alias []string, exclude []string, parallel int, logLevel string, detailsLevel string) (*Tests, error) {
 
 	switch logLevel {
 	case "debug":
@@ -25,13 +26,13 @@ func Process(path []string, alias []string, exclude []string, parallel int, logL
 	case DetailsLow, DetailsMedium, DetailsHigh:
 		log.Infof("Detail Level: %s", detailsLevel)
 	default:
-		log.Fatalf("Invalid details. Must be low, medium or high")
+		return nil, errors.New("Invalid details. Must be low, medium or high")
 	}
 
 	chanEnd := make(chan TestSuite, 1)
 	parallels := make(chan TestSuite, parallel)
 	wg := sync.WaitGroup{}
-	testsResult := Tests{}
+	testsResult := &Tests{}
 
 	aliases := computeAliases(alias)
 
@@ -39,7 +40,7 @@ func Process(path []string, alias []string, exclude []string, parallel int, logL
 	wg.Add(len(filesPath))
 	chanToRun := make(chan TestSuite, len(filesPath)+1)
 
-	go computeStats(&testsResult, chanEnd, &wg)
+	go computeStats(testsResult, chanEnd, &wg)
 
 	bars := readFiles(detailsLevel, filesPath, chanToRun)
 
