@@ -30,15 +30,19 @@ func runTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 			continue
 		}
 
+		// add result in templater
+		ts.Templater.Add(tc.Name, result)
+
+		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
+			isOK, errors, failures, systemout, systemerr = applyChecks(&result, step, h.GetDefaultAssertions(), l)
+		} else {
+			isOK, errors, failures, systemout, systemerr = applyChecks(&result, step, nil, l)
+		}
+		// add result again for extracts values
 		ts.Templater.Add(tc.Name, result)
 
 		log.Debugf("result step:%+v", result)
 
-		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
-			isOK, errors, failures, systemout, systemerr = applyChecks(result, step, h.GetDefaultAssertions(), l)
-		} else {
-			isOK, errors, failures, systemout, systemerr = applyChecks(result, step, nil, l)
-		}
 		if isOK {
 			break
 		}

@@ -1,21 +1,24 @@
 name: MyTestSuite
 testcases:
-- name: cdsfoo status
+- name: testA
   steps:
   - type: exec
-    script: echo 'foo'
+    script: echo 'foo with a bar here'
     assertions:
     - result.code ShouldEqual 0
     - result.timeseconds ShouldBeLessThan 1
+    extracts:
+      result.systemout: foo with a {{myvariable=[a-z]+}} here
+
+- name: testB
+  steps:
+  - type: exec
+    script: echo {{.testA.myvariable}}
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring bar
 
 - name: sleep 1
   steps:
   - type: exec
     script: sleep 1
-    assertions:
-    - result.code ShouldEqual 0
-
-- name: sleep 3
-  steps:
-  - type: exec
-    script: sleep 3

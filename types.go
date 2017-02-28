@@ -26,6 +26,11 @@ type StepAssertions struct {
 	Assertions []string `json:"assertions,omitempty" yaml:"assertions,omitempty"`
 }
 
+// StepExtracts contains "step extracts"
+type StepExtracts struct {
+	Extracts map[string]string `json:"extracts,omitempty" yaml:"extracts,omitempty"`
+}
+
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
