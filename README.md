@@ -111,7 +111,7 @@ testcases:
 
 Extract variable from results and reuse it in step after
 
-```
+```yaml
 name: MyTestSuite
 testcases:
 - name: testA
