@@ -41,7 +41,7 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 		bars[ts.Package].Prefix(o)
 		bars[ts.Package].Finish()
 	} else {
-		fmt.Println(o)
+		PrintFunc("%s\n", o)
 	}
 }
 
