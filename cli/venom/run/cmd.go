@@ -3,6 +3,7 @@ package run
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -22,7 +23,7 @@ import (
 
 var (
 	path           []string
-	alias          []string
+	variables      []string
 	exclude        []string
 	format         string
 	parallel       int
@@ -34,7 +35,7 @@ var (
 )
 
 func init() {
-	Cmd.Flags().StringSliceVarP(&alias, "alias", "", []string{""}, "--alias cds:'cds -f config.json' --alias cds2:'cds -f config.json'")
+	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds:'cds -f config.json' --var cds2:'cds -f config.json'")
 	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--formt:yaml, json, xml")
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
@@ -74,8 +75,17 @@ var Cmd = &cobra.Command{
 			parallel = 1
 		}
 
+		mapvars := make(map[string]string)
+		for _, a := range variables {
+			t := strings.Split(a, ":")
+			if len(t) < 2 {
+				continue
+			}
+			mapvars[t[0]] = strings.Join(t[1:], "")
+		}
+
 		start := time.Now()
-		tests, err := venom.Process(path, alias, exclude, parallel, logLevel, detailsLevel)
+		tests, err := venom.Process(path, mapvars, exclude, parallel, logLevel, detailsLevel)
 		if err != nil {
 			log.Fatal(err)
 		}

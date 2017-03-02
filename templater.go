@@ -24,8 +24,12 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 	if tmpl.Values == nil {
 		tmpl.Values = make(map[string]string)
 	}
+	dot := ""
+	if prefix != "" {
+		dot = "."
+	}
 	for k, v := range values {
-		tmpl.Values[prefix+"."+k] = v
+		tmpl.Values[prefix+dot+k] = v
 	}
 }
 
@@ -36,11 +40,7 @@ func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 	if err != nil {
 		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
-	sb := string(s)
-
-	for k, v := range tmpl.Values {
-		sb = strings.Replace(sb, "{{."+k+"}}", v, -1)
-	}
+	sb := tmpl.applyString(string(s))
 
 	var t TestStep
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
@@ -48,4 +48,11 @@ func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 	}
 
 	return t, nil
+}
+
+func (tmpl *Templater) applyString(in string) string {
+	for k, v := range tmpl.Values {
+		in = strings.Replace(in, "{{."+k+"}}", v, -1)
+	}
+	return in
 }

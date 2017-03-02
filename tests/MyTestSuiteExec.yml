@@ -3,7 +3,7 @@ testcases:
 - name: testA
   steps:
   - type: exec
-    script: echo 'foo with a bar here'
+    script: {{.aaa}} 'foo with a bar here'
     assertions:
     - result.code ShouldEqual 0
     - result.timeseconds ShouldBeLessThan 1

@@ -5,7 +5,7 @@ import (
 	"gopkg.in/cheggaaa/pb.v1"
 )
 
-func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, aliases map[string]string, l *log.Entry, detailsLevel string) {
+func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l *log.Entry, detailsLevel string) {
 	l.Debugf("Init context")
 	tcc, errContext := getContextWrap(tc)
 	if errContext != nil {
@@ -35,7 +35,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, a
 			break
 		}
 
-		runTestStep(tcc, e, ts, tc, step, ts.Templater, aliases, l, detailsLevel)
+		runTestStep(tcc, e, ts, tc, step, ts.Templater, l, detailsLevel)
 
 		if detailsLevel != DetailsLow {
 			bars[ts.Package].Increment()
