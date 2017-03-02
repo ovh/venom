@@ -33,14 +33,13 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 	}
 }
 
-// Apply apply vars on string
-func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
+func (tmpl *Templater) applyOnStep(step TestStep) (TestStep, error) {
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
 	s, err := yaml.Marshal(step)
 	if err != nil {
 		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
-	sb := tmpl.applyString(string(s))
+	sb := tmpl.apply(s)
 
 	var t TestStep
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
@@ -50,9 +49,10 @@ func (tmpl *Templater) Apply(step TestStep) (TestStep, error) {
 	return t, nil
 }
 
-func (tmpl *Templater) applyString(in string) string {
+func (tmpl *Templater) apply(in []byte) []byte {
+	out := string(in)
 	for k, v := range tmpl.Values {
-		in = strings.Replace(in, "{{."+k+"}}", v, -1)
+		out = strings.Replace(out, "{{."+k+"}}", v, -1)
 	}
-	return in
+	return []byte(out)
 }

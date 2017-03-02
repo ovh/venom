@@ -23,7 +23,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l
 
 	for _, stepIn := range tc.TestSteps {
 
-		step, erra := ts.Templater.Apply(stepIn)
+		step, erra := ts.Templater.applyOnStep(stepIn)
 		if erra != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: erra.Error()})
 			break

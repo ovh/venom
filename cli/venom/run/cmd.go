@@ -26,6 +26,7 @@ var (
 	variables      []string
 	exclude        []string
 	format         string
+	withEnv        bool
 	parallel       int
 	logLevel       string
 	outputDir      string
@@ -35,9 +36,10 @@ var (
 )
 
 func init() {
-	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds:'cds -f config.json' --var cds2:'cds -f config.json'")
+	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
-	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--formt:yaml, json, xml")
+	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml")
+	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
@@ -76,8 +78,13 @@ var Cmd = &cobra.Command{
 		}
 
 		mapvars := make(map[string]string)
+
+		if withEnv {
+			variables = append(variables, os.Environ()...)
+		}
+
 		for _, a := range variables {
-			t := strings.Split(a, ":")
+			t := strings.Split(a, "=")
 			if len(t) < 2 {
 				continue
 			}
