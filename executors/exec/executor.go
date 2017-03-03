@@ -191,5 +191,8 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step ve
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
 
+	result.Systemout = strings.TrimRight(result.Systemout, "\n")
+	result.Systemerr = strings.TrimRight(result.Systemerr, "\n")
+
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
