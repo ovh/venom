@@ -343,6 +343,7 @@ func (tcc *DefaultTestCaseContext) Close() error {
 	return nil
 }
 ```
+
 Methods SetTestCase and  GetName are implemented by CommonTestCaseContext
 
 # Hacking
