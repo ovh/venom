@@ -10,7 +10,7 @@ testcases:
     script: echo '{{.api.foo}}'
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual http://api/foo
+    - result.systemout ShouldContainSubstring http://api/foo
 
 - name: testB
   steps:
@@ -18,4 +18,4 @@ testcases:
     script: echo 'XXX{{.testA.result.systemout}}YYY'
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual XXXhttp://api/fooYYY
+    - result.systemout ShouldContainSubstring XXXhttp://api/fooYYY
