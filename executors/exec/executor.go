@@ -49,7 +49,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, aliases venom.Aliases, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	var t Executor
 	if err := mapstructure.Decode(step, &t); err != nil {
@@ -61,13 +61,6 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, aliases
 	}
 
 	scriptContent := t.Script
-	for alias, real := range aliases {
-		if strings.Contains(scriptContent, alias+" ") {
-			scriptContent = strings.Replace(scriptContent, alias+" ", real+" ", 1)
-		}
-	}
-
-	t.Script = scriptContent
 
 	// Default shell is sh
 	shell := "/bin/sh"
@@ -197,6 +190,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, aliases
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
+
+	result.Systemout = strings.TrimRight(result.Systemout, "\n")
+	result.Systemerr = strings.TrimRight(result.Systemerr, "\n")
 
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
