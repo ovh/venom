@@ -37,6 +37,7 @@ type Executor struct {
 	URL           string      `json:"url" yaml:"url"`
 	Path          string      `json:"path" yaml:"path"`
 	Body          string      `json:"body" yaml:"body"`
+    BodyFile      string      `json:"bodyfile" yaml:"bodyfile"`
 	MultipartForm interface{} `json:"multipart_form" yaml:"multipart_form"`
 	Headers       Headers     `json:"headers" yaml:"headers"`
 }
@@ -129,14 +130,23 @@ func (e Executor) getRequest() (*http.Request, error) {
 	if method == "" {
 		method = "GET"
 	}
-	if e.Body != "" && e.MultipartForm != nil {
-		return nil, fmt.Errorf("Cannot use both 'body' and 'multipart_form'")
+	if (e.Body != "" || e.BodyFile != "") && e.MultipartForm != nil {
+		return nil, fmt.Errorf("Can only use one of 'body', 'body_file' and 'multipart_form'")
 	}
 	body := &bytes.Buffer{}
 	var writer *multipart.Writer
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
-	} else if e.MultipartForm != nil {
+	} else if e.BodyFile != "" {
+        path := string(e.BodyFile)
+        if _, err := os.Stat(path); !os.IsNotExist(err) {
+            temp, err := ioutil.ReadFile(path)
+            if err != nil {
+                return nil, err
+            }
+            body = bytes.NewBuffer(temp)
+        }
+    } else if e.MultipartForm != nil {
 		form, ok := e.MultipartForm.(map[interface{}]interface{})
 		if !ok {
 			return nil, fmt.Errorf("'multipart_form' should be a map")
