@@ -31,7 +31,7 @@ func New() venom.Executor {
 // Headers represents header HTTP for Request
 type Headers map[string]string
 
-// Executor struct
+// Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
 	Method        string      `json:"method" yaml:"method"`
 	URL           string      `json:"url" yaml:"url"`
@@ -42,7 +42,7 @@ type Executor struct {
 	Headers       Headers     `json:"headers" yaml:"headers"`
 }
 
-// Result represents a step result
+// Result represents a step result. Json and yaml descriptor are used for json output
 type Result struct {
 	Executor    Executor    `json:"executor,omitempty" yaml:"executor,omitempty"`
 	TimeSeconds float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`

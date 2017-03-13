@@ -13,6 +13,7 @@ In your yaml file, you can use:
   - url mandatory
   - path optional
   - body optional
+  - bodyFile optional
   - headers optional
 ```
 
@@ -32,6 +33,17 @@ testcases:
     - result.statuscode ShouldEqual 200
     - result.bodyjson.apis.apis0.path ShouldEqual /allDom
 
+
+- name: POST http with bodyFile
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/
+    bodyFile: /tmp/myfile.tmp
+    assertions:
+    - result.statuscode ShouldNotEqual 200
+
+
 - name: POST http with multipart
   steps:
   - type: http
@@ -42,7 +54,7 @@ testcases:
     assertions:
     - result.statuscode ShouldNotEqual 200
 ```
-*NB: to post a file, prefix the path to the file with '@'*
+*NB: to post a file with multipart_form, prefix the path to the file with '@'*
 
 ## Output
 
