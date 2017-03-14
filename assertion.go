@@ -169,6 +169,10 @@ var assertMap = map[string]func(actual interface{}, expected ...interface{}) str
 // ShouldContainSubstring receives exactly more than 2 string parameters and ensures that the first contains the second as a substring.
 func ShouldContainSubstring(actual interface{}, expected ...interface{}) string {
 	var arg string
+	if len(expected) == 1 {
+		return assertions.ShouldContainSubstring(actual, expected)
+	}
+
 	for _, e := range expected {
 		arg = fmt.Sprintf("%s %v", arg, e)
 	}
