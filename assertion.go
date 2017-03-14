@@ -170,7 +170,7 @@ var assertMap = map[string]func(actual interface{}, expected ...interface{}) str
 func ShouldContainSubstring(actual interface{}, expected ...interface{}) string {
 	var arg string
 	if len(expected) == 1 {
-		return assertions.ShouldContainSubstring(actual, expected)
+		return assertions.ShouldContainSubstring(actual, expected...)
 	}
 
 	for _, e := range expected {
