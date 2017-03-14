@@ -2,7 +2,6 @@ package venom
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -169,22 +168,9 @@ var assertMap = map[string]func(actual interface{}, expected ...interface{}) str
 
 // ShouldContainSubstring receives exactly more than 2 string parameters and ensures that the first contains the second as a substring.
 func ShouldContainSubstring(actual interface{}, expected ...interface{}) string {
-	if len(expected) == 0 {
-		return "This assertion requires at least 1 comparison value (you provided 0)."
-	}
-
 	var arg string
 	for _, e := range expected {
 		arg = fmt.Sprintf("%s %v", arg, e)
 	}
-
-	long, longOk := actual.(string)
-	if !longOk {
-		return fmt.Sprintf("Both arguments to this assertion must be strings (you provided %v and %v).", reflect.TypeOf(actual), reflect.TypeOf(arg))
-	}
-
-	if !strings.Contains(long, arg) {
-		return fmt.Sprintf("Expected '%s' to contain substring '%s' (but it didn't)!", long, arg)
-	}
-	return ""
+	return assertions.ShouldContainSubstring(actual, arg)
 }
