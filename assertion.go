@@ -150,7 +150,7 @@ var assertMap = map[string]func(actual interface{}, expected ...interface{}) str
 	"ShouldNotEndWith":             assertions.ShouldNotEndWith,
 	"ShouldBeBlank":                assertions.ShouldBeBlank,
 	"ShouldNotBeBlank":             assertions.ShouldNotBeBlank,
-	"ShouldContainSubstring":       assertions.ShouldContainSubstring,
+	"ShouldContainSubstring":       ShouldContainSubstring,
 	"ShouldNotContainSubstring":    assertions.ShouldNotContainSubstring,
 	"ShouldEqualWithout":           assertions.ShouldEqualWithout,
 	"ShouldEqualTrimSpace":         assertions.ShouldEqualTrimSpace,
@@ -164,4 +164,17 @@ var assertMap = map[string]func(actual interface{}, expected ...interface{}) str
 	"ShouldHappenWithin":           assertions.ShouldHappenWithin,
 	"ShouldNotHappenWithin":        assertions.ShouldNotHappenWithin,
 	"ShouldBeChronological":        assertions.ShouldBeChronological,
+}
+
+// ShouldContainSubstring receives exactly more than 2 string parameters and ensures that the first contains the second as a substring.
+func ShouldContainSubstring(actual interface{}, expected ...interface{}) string {
+	var arg string
+	if len(expected) == 1 {
+		return assertions.ShouldContainSubstring(actual, expected...)
+	}
+
+	for _, e := range expected {
+		arg = fmt.Sprintf("%s %v", arg, e)
+	}
+	return assertions.ShouldContainSubstring(actual, arg)
 }
