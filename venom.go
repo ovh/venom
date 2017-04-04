@@ -36,9 +36,9 @@ func RegisterExecutor(name string, e Executor) {
 	executors[name] = e
 }
 
-// getExecutorWrap initializes a test by name
+// ExecutorWrap initializes a test by name
 // no type -> exec is default
-func getExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWrap, error) {
+func ExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWrap, error) {
 	var name string
 	var retry, delay, timeout int
 
@@ -83,9 +83,9 @@ func RegisterTestCaseContext(name string, tcc TestCaseContext) {
 	contexts[name] = tcc
 }
 
-// getContextWrap initializes a context for a testcase
+// ContextWrap initializes a context for a testcase
 // no type -> parent context
-func getContextWrap(tc *TestCase) (TestCaseContext, error) {
+func ContextWrap(tc *TestCase) (TestCaseContext, error) {
 	if tc.Context == nil {
 		return contexts["default"], nil
 	}

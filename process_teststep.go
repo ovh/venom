@@ -8,7 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func runTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l *log.Entry, detailsLevel string) {
+func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l *log.Entry, detailsLevel string) {
 
 	var isOK bool
 	var errors []Failure

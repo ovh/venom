@@ -33,7 +33,7 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 	}
 }
 
-func (tmpl *Templater) applyOnStep(step TestStep) (TestStep, error) {
+func (tmpl *Templater) ApplyOnStep(step TestStep) (TestStep, error) {
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
 	s, err := yaml.Marshal(step)
 	if err != nil {
