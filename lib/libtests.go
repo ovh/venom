@@ -3,6 +3,7 @@ package venom
 import (
 	"testing"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/runabove/venom"
 	"github.com/runabove/venom/context/default"
 	"github.com/runabove/venom/context/webctx"
@@ -36,9 +37,13 @@ type T struct {
 	ts   *venom.TestSuite
 	tc   *venom.TestCase
 	Name string
+	log  *logrus.Entry
 }
 
 func NewTestCase(t *testing.T, name string, variables map[string]string) *T {
+	logger := logrus.New()
+	logger.Formatter = &logrus.TextFormatter{}
+
 	return &T{
 		t,
 		&venom.TestSuite{
@@ -49,6 +54,7 @@ func NewTestCase(t *testing.T, name string, variables map[string]string) *T {
 			Name: name,
 		},
 		name,
+		logrus.NewEntry(logger),
 	}
 }
 
