@@ -41,12 +41,14 @@ func extract(rsp imap.Response, l *log.Entry) (*Mail, error) {
 		var errds error
 		tm.Subject, errds = decodeHeader(mmsg, "Subject")
 		if errds != nil {
-			return nil, errds
+			log.Warnf("Cannot decode subject: %s", errds)
+			return nil, nil
 		}
 		var errdf error
 		tm.From, errdf = decodeHeader(mmsg, "From")
 		if errdf != nil {
-			return nil, fmt.Errorf("Error while read From field:%s", errdf)
+			log.Warnf("Cannot decode from: %s", errdf)
+			return nil, nil
 		}
 
 		var errpm error
