@@ -18,6 +18,7 @@ testcases:
     type: web
     width: 1920
     height: 1080
+    driver: phantomjs
   steps:
   - action:
       navigate: https://www.google.fr
