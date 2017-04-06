@@ -21,7 +21,8 @@ testcases:
     driver: phantomjs
   steps:
   - action:
-      navigate: https://www.google.fr
+      navigate:
+        url: https://www.google.fr
     assertions:
     - result.title ShouldEqual Google
     - result.url ShouldEqual https://www.google.fr
@@ -34,7 +35,9 @@ testcases:
       - find: input[name="q"]
         text: "venom runabove"
   - action:
-      click: input[value="Recherche Google"]
+      click:
+        find: input[value="Recherche Google"]
+        wait: 1
     screenshot: googlesearch.jpg
 
 ```

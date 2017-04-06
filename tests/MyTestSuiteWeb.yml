@@ -7,7 +7,8 @@ testcases:
     height: 1080
   steps:
   - action:
-      navigate: https://www.google.fr
+      navigate:
+        url: https://www.google.fr
     assertions:
     - result.title ShouldEqual Google
   - action:
@@ -19,5 +20,7 @@ testcases:
       - find: input[name="q"]
         text: "venom runabove"
   - action:
-      click: input[value="Recherche Google"]
+      click:
+        find: input[value="Recherche Google"]
+        wait: 1
     screenshot: googlesearch.jpg
