@@ -8,7 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l *log.Entry, detailsLevel string) {
+func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l Logger, detailsLevel string) {
 
 	var isOK bool
 	var errors []Failure
@@ -56,7 +56,7 @@ func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 	tc.Systemerr.Value += systemerr
 }
 
-func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, step TestStep, templater *Templater, l *log.Entry) (ExecutorResult, error) {
+func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, step TestStep, templater *Templater, l Logger) (ExecutorResult, error) {
 	if e.timeout == 0 {
 		return e.executor.Run(tcc, l, step)
 	}
@@ -66,7 +66,7 @@ func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, st
 
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
-	go func(tcc TestCaseContext, e *executorWrap, step TestStep, l *log.Entry) {
+	go func(tcc TestCaseContext, e *executorWrap, step TestStep, l Logger) {
 		result, err := e.executor.Run(tcc, l, step)
 		if err != nil {
 			cherr <- err

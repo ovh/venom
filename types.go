@@ -3,7 +3,7 @@ package venom
 import (
 	"encoding/xml"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -34,7 +34,7 @@ type StepExtracts struct {
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(TestCaseContext, *log.Entry, TestStep) (ExecutorResult, error)
+	Run(TestCaseContext, Logger, TestStep) (ExecutorResult, error)
 }
 
 // TestCaseContext represents the context of a testcase
@@ -144,4 +144,16 @@ type Failure struct {
 // InnerResult is used by TestCase
 type InnerResult struct {
 	Value string `xml:",cdata" json:"value" yaml:"value"`
+}
+
+//Logger is basicaly an interface for logrus.Entry
+type Logger interface {
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Printf(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
+	WithField(key string, value interface{}) *logrus.Entry
 }

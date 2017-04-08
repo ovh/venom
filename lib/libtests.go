@@ -37,7 +37,7 @@ type T struct {
 	ts   *venom.TestSuite
 	tc   *venom.TestCase
 	Name string
-	log  *logrus.Entry
+	log  venom.Logger
 }
 
 func NewTestCase(t *testing.T, name string, variables map[string]string) *T {

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sclevine/agouti"
@@ -40,7 +39,7 @@ type Result struct {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 	var ctx *webctx.WebTestCaseContext
 	switch testCaseContext.(type) {
 	case *webctx.WebTestCaseContext:

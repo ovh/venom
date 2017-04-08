@@ -1,11 +1,10 @@
 package venom
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 )
 
-func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l *log.Entry, detailsLevel string) {
+func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l Logger, detailsLevel string) {
 	l.Debugf("Init context")
 	tcc, errContext := ContextWrap(tc)
 	if errContext != nil {
