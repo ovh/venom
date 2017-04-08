@@ -84,7 +84,7 @@ var Cmd = &cobra.Command{
 		}
 
 		for _, a := range variables {
-			t := strings.Split(a, "=")
+			t := strings.SplitN(a, "=", 2)
 			if len(t) < 2 {
 				continue
 			}
