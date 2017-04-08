@@ -1,10 +1,6 @@
 package venom
 
-import (
-	"encoding/xml"
-
-	"github.com/Sirupsen/logrus"
-)
+import "encoding/xml"
 
 const (
 	// DetailsLow prints only summary results
@@ -150,10 +146,8 @@ type InnerResult struct {
 type Logger interface {
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
-	Printf(format string, args ...interface{})
 	Warnf(format string, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Fatalf(format string, args ...interface{})
-	WithField(key string, value interface{}) *logrus.Entry
 }

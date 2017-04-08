@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"github.com/Sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 )
 
@@ -17,7 +18,9 @@ func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l
 	}
 	defer tcc.Close()
 
-	l = l.WithField("x.testcase", tc.Name)
+	if _l, ok := l.(*logrus.Entry); ok {
+		l = _l.WithField("x.testcase", tc.Name)
+	}
 	l.Infof("start")
 
 	for _, stepIn := range tc.TestSteps {

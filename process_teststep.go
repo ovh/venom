@@ -8,7 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l Logger, detailsLevel string) {
+func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l Logger, detailsLevel string) ExecutorResult {
 
 	var isOK bool
 	var errors []Failure
@@ -16,6 +16,7 @@ func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 	var systemerr, systemout string
 
 	var retry int
+	var result ExecutorResult
 
 	for retry = 0; retry <= e.retry && !isOK; retry++ {
 		if retry > 1 && !isOK {
@@ -23,7 +24,8 @@ func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
-		result, err := runTestStepExecutor(tcc, e, ts, step, templater, l)
+		var err error
+		result, err = runTestStepExecutor(tcc, e, ts, step, templater, l)
 
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
@@ -54,6 +56,8 @@ func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 	}
 	tc.Systemout.Value += systemout
 	tc.Systemerr.Value += systemerr
+
+	return result
 }
 
 func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, step TestStep, templater *Templater, l Logger) (ExecutorResult, error) {
