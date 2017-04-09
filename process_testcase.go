@@ -31,7 +31,7 @@ func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l
 			break
 		}
 
-		e, err := ExecutorWrap(step, tcc)
+		e, err := WrapExecutor(step, tcc)
 		if err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: err.Error()})
 			break

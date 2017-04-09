@@ -36,9 +36,9 @@ func RegisterExecutor(name string, e Executor) {
 	executors[name] = e
 }
 
-// ExecutorWrap initializes a test by name
+// WrapExecutor initializes a test by name
 // no type -> exec is default
-func ExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWrap, error) {
+func WrapExecutor(t map[string]interface{}, tcc TestCaseContext) (*ExecutorWrap, error) {
 	var name string
 	var retry, delay, timeout int
 
@@ -66,7 +66,7 @@ func ExecutorWrap(t map[string]interface{}, tcc TestCaseContext) (*executorWrap,
 	}
 
 	if e, ok := executors[name]; ok {
-		ew := &executorWrap{
+		ew := &ExecutorWrap{
 			executor: e,
 			retry:    retry,
 			delay:    delay,

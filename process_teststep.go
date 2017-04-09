@@ -8,8 +8,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l Logger, detailsLevel string) ExecutorResult {
-
+//RunTestStep executes a venom testcase is a venom context
+func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l Logger, detailsLevel string) ExecutorResult {
 	var isOK bool
 	var errors []Failure
 	var failures []Failure
@@ -60,7 +60,7 @@ func RunTestStep(tcc TestCaseContext, e *executorWrap, ts *TestSuite, tc *TestCa
 	return result
 }
 
-func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, step TestStep, templater *Templater, l Logger) (ExecutorResult, error) {
+func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, step TestStep, templater *Templater, l Logger) (ExecutorResult, error) {
 	if e.timeout == 0 {
 		return e.executor.Run(tcc, l, step)
 	}
@@ -70,7 +70,7 @@ func runTestStepExecutor(tcc TestCaseContext, e *executorWrap, ts *TestSuite, st
 
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
-	go func(tcc TestCaseContext, e *executorWrap, step TestStep, l Logger) {
+	go func(tcc TestCaseContext, e *ExecutorWrap, step TestStep, l Logger) {
 		result, err := e.executor.Run(tcc, l, step)
 		if err != nil {
 			cherr <- err

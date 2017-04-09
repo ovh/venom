@@ -8,10 +8,12 @@ import (
 )
 
 func TestVenomTestCase(t *testing.T) {
-	v := venom.NewTestCase(t, "TestVenomTestCase", venom.V{})
-	r := venom.RunTest(v, venom.H{
-		"type":   "exec",
-		"script": "echo foo",
+	v := venom.TestCase(t, "TestVenomTestCase", venom.V{
+		"foo": "bar",
 	})
-	assert.Equal(t, "foo", r["result.systemout"])
+	r := v.Do(venom.H{
+		"type":   "exec",
+		"script": "echo {{.foo}}",
+	})
+	assert.Equal(t, "bar", r["result.systemout"])
 }

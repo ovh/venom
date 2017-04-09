@@ -58,8 +58,8 @@ func (t *CommonTestCaseContext) GetName() string {
 	return t.Name
 }
 
-// executorWrap contains an executor implementation and some attributes
-type executorWrap struct {
+// ExecutorWrap contains an executor implementation and some attributes
+type ExecutorWrap struct {
 	executor Executor
 	retry    int // nb retry a test case if it is in failure.
 	delay    int // delay between two retries

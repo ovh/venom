@@ -27,10 +27,16 @@ func init() {
 	venom.RegisterTestCaseContext(webctx.Name, webctx.New())
 }
 
+//H is a map of test parameters
 type H map[string]interface{}
 
+//V is a map of Variables
 type V map[string]string
 
+//R is a map of Results
+type R map[string]string
+
+//T is a superset of testing.T
 type T struct {
 	*testing.T
 	ts   *venom.TestSuite
@@ -38,20 +44,37 @@ type T struct {
 	Name string
 }
 
+//Logger is a superset of the testing Logger compliant with logrus Entry
 type Logger struct{ t *testing.T }
 
-func (l *Logger) Debugf(format string, args ...interface{})   { l.t.Logf(format, args...) }
-func (l *Logger) Infof(format string, args ...interface{})    { l.t.Logf(format, args...) }
-func (l *Logger) Printf(format string, args ...interface{})   { l.t.Logf(format, args...) }
-func (l *Logger) Warnf(format string, args ...interface{})    { l.t.Logf(format, args...) }
-func (l *Logger) Warningf(format string, args ...interface{}) { l.t.Logf(format, args...) }
-func (l *Logger) Errorf(format string, args ...interface{})   { l.t.Logf(format, args...) }
-func (l *Logger) Fatalf(format string, args ...interface{})   { l.t.Logf(format, args...) }
+// Debugf calls testing.T.Logf
+func (l *Logger) Debugf(format string, args ...interface{}) { l.t.Logf("[DEBUG] "+format, args...) }
+
+// Infof calls testing.T.Logf
+func (l *Logger) Infof(format string, args ...interface{}) { l.t.Logf("[INFO] "+format, args...) }
+
+// Printf calls testing.T.Logf
+func (l *Logger) Printf(format string, args ...interface{}) { l.t.Logf(format, args...) }
+
+// Warnf calls testing.T.Logf
+func (l *Logger) Warnf(format string, args ...interface{}) { l.t.Logf("[WARN] "+format, args...) }
+
+// Warningf calls testing.T.Logf
+func (l *Logger) Warningf(format string, args ...interface{}) { l.t.Logf("[WARN] "+format, args...) }
+
+// Errorf calls testing.T.Logf
+func (l *Logger) Errorf(format string, args ...interface{}) { l.t.Logf("[ERROR] "+format, args...) }
+
+// Fatalf calls testing.T.Logf
+func (l *Logger) Fatalf(format string, args ...interface{}) { l.t.Logf("[FATAL] "+format, args...) }
+
+// WithField calls testing.T.Logf
 func (l *Logger) WithField(key string, value interface{}) venom.Logger {
 	return l
 }
 
-func NewTestCase(t *testing.T, name string, variables map[string]string) *T {
+//TestCase instanciates a veom testcase
+func TestCase(t *testing.T, name string, variables map[string]string) *T {
 	return &T{
 		t,
 		&venom.TestSuite{
@@ -65,7 +88,8 @@ func NewTestCase(t *testing.T, name string, variables map[string]string) *T {
 	}
 }
 
-func RunTest(t *T, teststep H) V {
+//Do execuutes a veom test steps
+func (t *T) Do(teststep H) R {
 	ts := t.ts
 	tc := t.tc
 	tcc, errContext := venom.ContextWrap(tc)
@@ -102,5 +126,5 @@ func RunTest(t *T, teststep H) V {
 		t.Errorf("\r Error %s", e.Value)
 	}
 
-	return V(res)
+	return R(res)
 }
