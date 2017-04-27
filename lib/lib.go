@@ -3,6 +3,8 @@ package venom
 import (
 	"testing"
 
+	"encoding/json"
+
 	"github.com/runabove/venom"
 	"github.com/runabove/venom/context/default"
 	"github.com/runabove/venom/context/webctx"
@@ -27,8 +29,8 @@ func init() {
 	venom.RegisterTestCaseContext(webctx.Name, webctx.New())
 }
 
-//H is a map of test parameters
-type H map[string]interface{}
+//P is a map of test parameters
+type P map[string]interface{}
 
 //V is a map of Variables
 type V map[string]string
@@ -88,8 +90,8 @@ func TestCase(t *testing.T, name string, variables map[string]string) *T {
 	}
 }
 
-//Do execuutes a veom test steps
-func (t *T) Do(teststep H) R {
+//Do executes a veom test steps
+func (t *T) Do(teststepParams P) R {
 	ts := t.ts
 	tc := t.tc
 	tcc, errContext := venom.ContextWrap(tc)
@@ -104,13 +106,13 @@ func (t *T) Do(teststep H) R {
 	}
 	defer tcc.Close()
 
-	step, erra := ts.Templater.ApplyOnStep(venom.TestStep(teststep))
+	step, erra := ts.Templater.ApplyOnStep(venom.TestStep(teststepParams))
 	if erra != nil {
 		t.Error(erra)
 		return nil
 	}
 
-	e, err := venom.ExecutorWrap(step, tcc)
+	e, err := venom.WrapExecutor(step, tcc)
 	if err != nil {
 		t.Error(err)
 		return nil
@@ -127,4 +129,87 @@ func (t *T) Do(teststep H) R {
 	}
 
 	return R(res)
+}
+
+//NewExec returns a venom.P properly initialized for exec Executor
+func NewExec(script string) P {
+	return P{
+		"type":   "exec",
+		"script": script,
+	}
+}
+
+var HTTP = struct {
+	Get      func(url, path string) P
+	Post     func(url, path string, body []byte) P
+	PostJSON func(url, path string, body interface{}) P
+	Put      func(url, path string, body []byte) P
+	PutJSON  func(url, path string, body interface{}) P
+	Delete   func(url, path string) P
+}{
+	Get: func(url, path string) P {
+		return P{
+			"type":   "http",
+			"method": "GET",
+			"url":    url,
+			"path":   path,
+		}
+	},
+	Post: func(url, path string, body []byte) P {
+		return P{
+			"type":   "http",
+			"method": "POST",
+			"url":    url,
+			"path":   path,
+			"body":   string(body),
+		}
+	},
+	PostJSON: func(url, path string, body interface{}) P {
+		b, err := json.Marshal(body)
+		if err != nil {
+			panic(err)
+		}
+		return P{
+			"type":   "http",
+			"method": "POST",
+			"url":    url,
+			"path":   path,
+			"body":   string(b),
+		}
+	},
+	Put: func(url, path string, body []byte) P {
+		return P{
+			"type":   "http",
+			"method": "PUT",
+			"url":    url,
+			"path":   path,
+			"body":   string(body),
+		}
+	},
+	PutJSON: func(url, path string, body interface{}) P {
+		b, err := json.Marshal(body)
+		if err != nil {
+			panic(err)
+		}
+		return P{
+			"type":   "http",
+			"method": "PUT",
+			"url":    url,
+			"path":   path,
+			"body":   string(b),
+		}
+	},
+	Delete: func(url, path string) P {
+		return P{
+			"type":   "http",
+			"method": "DELETE",
+			"url":    url,
+			"path":   path,
+		}
+	},
+}
+
+func (p P) WithHeaders(headers http.Headers) P {
+	p["headers"] = headers
+	return p
 }
