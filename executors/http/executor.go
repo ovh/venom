@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 
@@ -61,7 +60,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l *log.Entry, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
 	var t Executor

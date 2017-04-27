@@ -13,6 +13,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/yesnault/go-imap/imap"
+
+	"github.com/runabove/venom"
 )
 
 func decodeHeader(msg *mail.Message, headerName string) (string, error) {
@@ -30,7 +32,7 @@ func hash(in string) string {
 	return fmt.Sprintf("%x", h2.Sum(nil))
 }
 
-func extract(rsp imap.Response, l *log.Entry) (*Mail, error) {
+func extract(rsp imap.Response, l venom.Logger) (*Mail, error) {
 	tm := &Mail{}
 	var params map[string]string
 
