@@ -78,6 +78,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			if err := s.Fill(f.Text); err != nil {
 				return nil, err
 			}
+			if f.Key != nil {
+				if err := s.SendKeys(Keys[*f.Key]); err != nil {
+					return nil, err
+				}
+			}
 		}
 
 	} else if t.Action.Find != "" {
