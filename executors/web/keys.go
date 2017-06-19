@@ -1,5 +1,6 @@
 package web
 
+// Keys map returning key code by its name
 var Keys = map[string]string{
 	"NULL":            "\uE000",
 	"CANCEL":          "\uE001",
