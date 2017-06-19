@@ -92,7 +92,7 @@ var Cmd = &cobra.Command{
 		}
 
 		start := time.Now()
-		tests, err := venom.Process(path, mapvars, exclude, parallel, logLevel, detailsLevel)
+		tests, err := venom.Process(path, mapvars, exclude, parallel, logLevel, detailsLevel, os.Stdout)
 		if err != nil {
 			log.Fatal(err)
 		}
