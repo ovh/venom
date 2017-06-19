@@ -6,6 +6,7 @@ type Action struct {
 	Fill     []Fill    `yaml:"fill,omitempty"`
 	Find     string    `yaml:"find,omitempty"`
 	Navigate *Navigate `yaml:"navigate,omitempty"`
+	Wait     int64     `yaml:"wait,omitempty"`
 }
 
 // Fill represents informations needed to fill input/textarea
