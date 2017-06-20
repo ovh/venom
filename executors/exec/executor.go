@@ -129,7 +129,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	cmd.Env = []string{}
 
 	for _, e := range env {
-		if strings.HasPrefix(e, "PATH=") {
+		if strings.HasPrefix(e, "PATH=") || strings.HasPrefix(e, "HOME=") {
 			cmd.Env = append(cmd.Env, e)
 			break
 		}
