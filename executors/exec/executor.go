@@ -125,6 +125,16 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	cmd := exec.Command(shell, opts...)
 	l.Debugf("teststep exec '%s %s'", shell, strings.Join(opts, " "))
 
+	env := os.Environ()
+	cmd.Env = []string{}
+
+	for _, e := range env {
+		if strings.HasPrefix(e, "PATH=") || strings.HasPrefix(e, "HOME=") {
+			cmd.Env = append(cmd.Env, e)
+			break
+		}
+	}
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("runScriptAction: Cannot get stdout pipe: %s\n", err)
