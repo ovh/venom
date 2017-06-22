@@ -15,7 +15,7 @@ import (
 // Version of Venom
 // One Line for this, used by release.sh script
 // Keep "const Version on one line"
-const Version = "0.0.8"
+const Version = "0.0.9"
 
 // PrintFunc used by venom to print output
 var PrintFunc = fmt.Printf
