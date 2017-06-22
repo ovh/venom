@@ -103,7 +103,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			}
 		}
 	} else if t.Action.Wait != 0 {
-		time.Sleep(time.Duration(t.Action.Click.Wait) * time.Second)
+		time.Sleep(time.Duration(t.Action.Wait) * time.Second)
 	}
 
 	// take a screenshot
