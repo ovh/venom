@@ -15,6 +15,7 @@ import (
 	"github.com/runabove/venom/executors/exec"
 	"github.com/runabove/venom/executors/http"
 	"github.com/runabove/venom/executors/imap"
+	"github.com/runabove/venom/executors/ovhapi"
 	"github.com/runabove/venom/executors/readfile"
 	"github.com/runabove/venom/executors/smtp"
 	"github.com/runabove/venom/executors/ssh"
@@ -67,6 +68,7 @@ var Cmd = &cobra.Command{
 		venom.RegisterExecutor(smtp.Name, smtp.New())
 		venom.RegisterExecutor(ssh.Name, ssh.New())
 		venom.RegisterExecutor(web.Name, web.New())
+		venom.RegisterExecutor(ovhapi.Name, ovhapi.New())
 
 		// Register Context
 		venom.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
