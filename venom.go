@@ -95,7 +95,7 @@ func ContextWrap(tc *TestCase) (TestCaseContext, error) {
 	}
 
 	if typeName == "" {
-		return nil, fmt.Errorf("context type '%s' is not implemented", typeName)
+		return contexts["default"], nil
 	}
 	contexts[typeName].SetTestCase(*tc)
 	return contexts[typeName], nil
