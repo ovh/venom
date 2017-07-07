@@ -75,6 +75,12 @@
 			"revisionTime": "2017-01-18T00:13:03Z"
 		},
 		{
+			"checksumSHA1": "9vQ5+o0oO/0deG+uokvvdpeSv0Y=",
+			"path": "github.com/ovh/go-ovh/ovh",
+			"revision": "d95f6f91b1fb339a53fc438df7289cd85756193b",
+			"revisionTime": "2017-06-30T08:30:08Z"
+		},
+		{
 			"checksumSHA1": "pZrnx0NTU91ci2mqD+0rMHHMWtA=",
 			"path": "github.com/sclevine/agouti",
 			"revision": "da6ce95d89acab048b648c71fb45b57622d3457e",
@@ -181,6 +187,12 @@
 			"path": "gopkg.in/cheggaaa/pb.v1",
 			"revision": "d7e6ca3010b6f084d8056847f55d7f572f180678",
 			"revisionTime": "2016-11-21T09:29:06Z"
+		},
+		{
+			"checksumSHA1": "WNjUTH01NMhPWjpwnsaL3SW52Gw=",
+			"path": "gopkg.in/ini.v1",
+			"revision": "d3de07a94d22b4a0972deb4b96d790c2c0ce8333",
+			"revisionTime": "2017-06-02T20:46:24Z"
 		},
 		{
 			"checksumSHA1": "12GqsW8PiRPnezDDy0v4brZrndM=",
