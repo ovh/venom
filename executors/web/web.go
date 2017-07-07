@@ -159,7 +159,7 @@ func findOne(page *agouti.Page, search string, r *Result) (*agouti.Selection, er
 		return nil, fmt.Errorf("Cannot find element %s: %s", search, errC)
 	}
 	if nbElement != 1 {
-		return nil, fmt.Errorf("Find %s elements", nbElement)
+		return nil, fmt.Errorf("Find %d elements", nbElement)
 	}
 	return s, nil
 }
