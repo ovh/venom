@@ -8,57 +8,58 @@ import (
 	"github.com/runabove/venom"
 )
 
-// Context Type name
+// Name is Context Type name.
 const Name = "default"
 
-// New returns a new TestCaseContext
+// New returns a new TestCaseContext.
 func New() venom.TestCaseContext {
 	ctx := &DefaultTestCaseContext{}
 	ctx.Name = Name
 	return ctx
 }
 
-// TestCaseContext represents the context of a testcase
+// DefaultTestCaseContext represents the context of a testcase.
 type DefaultTestCaseContext struct {
 	venom.CommonTestCaseContext
 	datas map[string]interface{}
 }
 
-// Init Initialize the context
+// Init Initialize the context.
 func (tcc *DefaultTestCaseContext) Init() error {
 	tcc.datas = tcc.TestCase.Context
 	return nil
 }
 
-// Close the context
+// Close the context.
 func (tcc *DefaultTestCaseContext) Close() error {
 	return nil
 }
 
+// GetString returns string from default context.
 func (tcc *DefaultTestCaseContext) GetString(key string) (string, error) {
 	if tcc.datas[key] == nil {
 		return "", NotFound(key)
 	}
-
-	if result, ok := tcc.datas[key].(string); !ok {
-		return "", errors.New(fmt.Sprintf("arguments %s invalid", key))
-	} else {
-		return result, nil
+	result, ok := tcc.datas[key].(string)
+	if !ok {
+		return "", InvalidArgument(key)
 	}
+	return result, nil
 }
 
+// GetFloat returns float64 from default context.
 func (tcc *DefaultTestCaseContext) GetFloat(key string) (float64, error) {
 	if tcc.datas[key] == nil {
 		return 0, NotFound(key)
 	}
-
-	if result, ok := tcc.datas[key].(float64); !ok {
-		return 0, errors.New(fmt.Sprintf("arguments %s invalid", key))
-	} else {
-		return result, nil
+	result, ok := tcc.datas[key].(float64)
+	if !ok {
+		return 0, InvalidArgument(key)
 	}
+	return result, nil
 }
 
+// GetInt returns int from default context.
 func (tcc *DefaultTestCaseContext) GetInt(key string) (int, error) {
 	res, err := tcc.GetFloat(key)
 	if err != nil {
@@ -68,18 +69,19 @@ func (tcc *DefaultTestCaseContext) GetInt(key string) (int, error) {
 	return int(res), nil
 }
 
+// GetBool returns bool from default context.
 func (tcc *DefaultTestCaseContext) GetBool(key string) (bool, error) {
 	if tcc.datas[key] == nil {
 		return false, NotFound(key)
 	}
-
-	if result, ok := tcc.datas[key].(bool); !ok {
-		return false, errors.New(fmt.Sprintf("arguments %s invalid", key))
-	} else {
-		return result, nil
+	result, ok := tcc.datas[key].(bool)
+	if !ok {
+		return false, InvalidArgument(key)
 	}
+	return result, nil
 }
 
+// GetStringSlice returns string slice from default context.
 func (tcc *DefaultTestCaseContext) GetStringSlice(key string) ([]string, error) {
 	if tcc.datas[key] == nil {
 		return nil, NotFound(key)
@@ -92,7 +94,7 @@ func (tcc *DefaultTestCaseContext) GetStringSlice(key string) ([]string, error) 
 
 	slice, ok := tcc.datas[key].([]interface{})
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("arguments %s invalid", key))
+		return nil, InvalidArgument(key)
 	}
 
 	res := make([]string, len(slice))
@@ -109,6 +111,7 @@ func (tcc *DefaultTestCaseContext) GetStringSlice(key string) ([]string, error) 
 	return res, nil
 }
 
+// GetComplex unmarshal argument in struct from default context.
 func (tcc *DefaultTestCaseContext) GetComplex(key string, arg interface{}) error {
 	if tcc.datas[key] == nil {
 		return NotFound(key)
@@ -128,3 +131,6 @@ func (tcc *DefaultTestCaseContext) GetComplex(key string, arg interface{}) error
 
 // NotFound is error returned when trying to get missing argument
 func NotFound(key string) error { return fmt.Errorf("missing context argument '%s'", key) }
+
+// InvalidArgument is error returned when trying to cast argument with wrong type
+func InvalidArgument(key string) error { return fmt.Errorf("invalid context argument type '%s'", key) }
