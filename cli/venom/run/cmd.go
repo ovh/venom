@@ -1,10 +1,15 @@
 package run
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
+
+	yaml "gopkg.in/yaml.v2"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -27,6 +32,7 @@ var (
 	variables      []string
 	exclude        []string
 	format         string
+	varFile        string
 	withEnv        bool
 	parallel       int
 	logLevel       string
@@ -38,6 +44,7 @@ var (
 
 func init() {
 	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
+	Cmd.Flags().StringVarP(&varFile, "var-from-file", "", "", "--var-from-file filename.yaml : yaml|json, must contains map[string]string'")
 	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml")
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
@@ -91,6 +98,29 @@ var Cmd = &cobra.Command{
 				continue
 			}
 			mapvars[t[0]] = strings.Join(t[1:], "")
+		}
+
+		if varFile != "" {
+			varFileMap := make(map[string]string)
+			bytes, err := ioutil.ReadFile(varFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			switch filepath.Ext(varFile) {
+			case ".json":
+				err = json.Unmarshal(bytes, &varFileMap)
+			case ".yaml":
+				err = yaml.Unmarshal(bytes, &varFileMap)
+			default:
+				log.Fatal("unsupported varFile format")
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			for key, value := range varFileMap {
+				mapvars[key] = value
+			}
 		}
 
 		start := time.Now()
