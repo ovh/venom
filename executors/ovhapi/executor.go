@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"time"
 
@@ -29,12 +28,11 @@ type Headers map[string]string
 
 // Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
-	Method      string            `json:"method" yaml:"method"`
-	NoAuth      bool              `json:"no_auth" yaml:"noAuth"`
-	Path        string            `json:"path" yaml:"path"`
-	Body        string            `json:"body" yaml:"body"`
-	BodyFile    string            `json:"bodyfile" yaml:"bodyfile"`
-	QueryParams map[string]string `json:"queryparams,omitempty" yaml:"queryparams,omitempty"`
+	Method   string `json:"method" yaml:"method"`
+	NoAuth   bool   `json:"no_auth" yaml:"noAuth"`
+	Path     string `json:"path" yaml:"path"`
+	Body     string `json:"body" yaml:"body"`
+	BodyFile string `json:"bodyfile" yaml:"bodyfile"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -112,17 +110,10 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		return nil, err
 	}
 
-	path := t.Path
-	if t.QueryParams != nil {
-		urlParams := url.Values{}
-		for key, value := range t.QueryParams {
-			urlParams.Add(key, value)
-		}
-		path += "?" + urlParams.Encode()
-	}
 	// do api call
 	resp := new(interface{})
-	if err = client.CallAPI(t.Method, path, requestBody, resp, !t.NoAuth); err != nil {
+
+	if err = client.CallAPI(t.Method, t.Path, requestBody, resp, !t.NoAuth); err != nil {
 		apiError, ok := err.(*ovh.APIError)
 		if !ok {
 			return nil, err
