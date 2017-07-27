@@ -1,7 +1,6 @@
 package dump
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +8,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // KeyFormatterFunc is a type for key formatting
@@ -87,11 +88,15 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 	if formatters == nil {
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
-	var buf bytes.Buffer
-	if err := Fdump(&buf, i, formatters...); err != nil {
+	m, err := ToMap(i, formatters...)
+	if err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+	res := ""
+	for k, v := range m {
+		res += fmt.Sprintf("%s: %s\n", k, v)
+	}
+	return res, nil
 }
 
 func fdumpStructField(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
@@ -122,8 +127,8 @@ func fdumpStructField(w map[string]string, s reflect.Value, roots []string, form
 			if validAndNotEmpty(f) {
 				data = f.Interface()
 				if f.Kind() == reflect.Interface {
-					im, ok := data.(map[string]interface{})
-					if ok {
+					im := map[string]interface{}{}
+					if mapstructure.Decode(data, im) != nil {
 						if err := fDumpMap(w, im, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
 							return err
 						}
@@ -178,8 +183,8 @@ func fdumpStruct(w map[string]string, i interface{}, roots []string, formatters 
 		if validAndNotEmpty(s) {
 			data = s.Interface()
 			if s.Kind() == reflect.Interface {
-				im, ok := data.(map[string]interface{})
-				if ok {
+				im := map[string]interface{}{}
+				if mapstructure.Decode(data, im) != nil {
 					return fDumpMap(w, im, roots, formatters...)
 				}
 				am, ok := data.([]interface{})
@@ -198,6 +203,11 @@ func fdumpStruct(w map[string]string, i interface{}, roots []string, formatters 
 
 func fDumpArray(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
+
+	nodeLen := append(roots, "Len")
+	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
+	w[nodeLenFormatted] = fmt.Sprintf("%d", v.Len())
+
 	for i := 0; i < v.Len(); i++ {
 		var l string
 		var croots []string
@@ -232,8 +242,8 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 			if validAndNotEmpty(f) {
 				data = f.Interface()
 				if f.Kind() == reflect.Interface {
-					im, ok := data.(map[string]interface{})
-					if ok {
+					im := map[string]interface{}{}
+					if mapstructure.Decode(data, im) != nil {
 						if err := fDumpMap(w, im, croots, formatters...); err != nil {
 							return err
 						}
@@ -247,6 +257,7 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 						continue
 					}
 				}
+
 				k := strings.Join(sliceFormat(croots, formatters), ".")
 				w[k] = fmt.Sprintf("%v", data)
 			}
@@ -259,6 +270,11 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
 	keys := v.MapKeys()
+
+	nodeLen := append(roots, "Len")
+	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
+	w[nodeLenFormatted] = fmt.Sprintf("%d", len(keys))
+
 	for _, k := range keys {
 		key := fmt.Sprintf("%v", k.Interface())
 		roots := append(roots, key)
@@ -273,16 +289,25 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 			}
 		default:
 			if value.Kind() == reflect.Interface {
-				im, ok := value.Interface().(map[string]interface{})
-				if ok {
-					if err := fDumpMap(w, im, roots, formatters...); err != nil {
-						return err
+				im := map[string]interface{}{}
+				if mapstructure.Decode(value.Interface(), &im) != nil {
+					if len(im) > 0 {
+						if err := fDumpMap(w, im, roots, formatters...); err != nil {
+							return err
+						}
+						continue
 					}
-					continue
 				}
 				am, ok := value.Interface().([]interface{})
 				if ok {
 					if err := fDumpArray(w, am, roots, formatters...); err != nil {
+						return err
+					}
+					continue
+				}
+				mi, ok := value.Interface().(map[string]interface{})
+				if ok {
+					if err := fDumpMap(w, mi, roots, formatters...); err != nil {
 						return err
 					}
 					continue
@@ -334,6 +359,16 @@ func sliceFormat(s []string, formatters []KeyFormatterFunc) []string {
 func format(s string, formatters []KeyFormatterFunc) string {
 	for _, f := range formatters {
 		s = f(s)
+	}
+	return s
+}
+
+// MustSdump is a helper that wraps a call to a function returning (string, error)
+// and panics if the error is non-nil.
+func MustSdump(i interface{}, formatters ...KeyFormatterFunc) string {
+	s, err := Sdump(i, formatters...)
+	if err != nil {
+		panic(err)
 	}
 	return s
 }
