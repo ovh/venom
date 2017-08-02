@@ -97,21 +97,25 @@ Pipeline.AttachedApplication.Len: 0
 Pipeline.GroupPermission.Len: 0
 Pipeline.ID: 0
 Pipeline.LastModified: 0
+Pipeline.LastPipelineBuild:
 Pipeline.Name: MyPipeline
 Pipeline.Parameter.Len: 0
 Pipeline.Permission: 0
 Pipeline.ProjectID: 0
+Pipeline.ProjectKey:
 Pipeline.Stages.Len: 1
 Pipeline.Stages.Stages0.BuildOrder: 1
 Pipeline.Stages.Stages0.Enabled: true
 Pipeline.Stages.Stages0.ID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Actions.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Description:
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Enabled: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Final: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.ID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.LastModified: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Name: Script
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Len: 1
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Description:
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.ID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Name: script
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Type: text
@@ -127,6 +131,7 @@ Pipeline.Stages.Stages0.Jobs.Jobs0.Action.LastModified: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Name: Job 1
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Parameters.Len: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Requirements.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Type:
 Pipeline.Stages.Stages0.Jobs.Jobs0.Enabled: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.LastModified: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineActionID: 0
@@ -138,6 +143,7 @@ Pipeline.Stages.Stages0.PipelineBuildJobs.Len: 0
 Pipeline.Stages.Stages0.PipelineID: 0
 Pipeline.Stages.Stages0.Prerequisites.Len: 0
 Pipeline.Stages.Stages0.RunJobs.Len: 0
+Pipeline.Stages.Stages0.Status:
 Pipeline.Type: build
 ````
 

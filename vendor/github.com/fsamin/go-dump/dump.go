@@ -73,7 +73,12 @@ func Fdump(w io.Writer, i interface{}, formatters ...KeyFormatterFunc) (err erro
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		_, err := fmt.Fprintf(w, "%s: %s\n", k, res[k])
+		var err error
+		if res[k] == "" {
+			_, err = fmt.Fprintf(w, "%s:\n", k)
+		} else {
+			_, err = fmt.Fprintf(w, "%s: %s\n", k, res[k])
+		}
 		if err != nil {
 			return err
 		}
@@ -100,6 +105,7 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 func fdumpStruct(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
 
 	for i := 0; i < s.NumField(); i++ {
+
 		croots := append(roots, s.Type().Field(i).Name)
 		if err := fdumpInterface(w, s.Field(i).Interface(), croots, formatters...); err != nil {
 			return err
@@ -127,12 +133,14 @@ func valueFromInterface(i interface{}) reflect.Value {
 }
 
 func fdumpInterface(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
+
 	f := valueFromInterface(i)
 
 	if !validAndNotEmpty(f) {
+		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, formatters), "."))
+		w[k] = ""
 		return nil
 	}
-
 	switch f.Kind() {
 	case reflect.Struct:
 		croots := roots
@@ -202,7 +210,7 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 
 		f := valueFromInterface(value.Interface())
 
-		if f.Type().Kind() == reflect.Struct {
+		if validAndNotEmpty(f) && f.Type().Kind() == reflect.Struct {
 			croots = append(croots, f.Type().Name())
 		}
 
