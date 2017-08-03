@@ -141,8 +141,12 @@ func fdumpInterface(w map[string]string, i interface{}, roots []string, formatte
 		w[k] = ""
 		return nil
 	}
+
 	switch f.Kind() {
 	case reflect.Struct:
+		nodeType := append(roots, "__Type__")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, formatters), ".")
+		w[nodeTypeFormatted] = f.Type().Name()
 		croots := roots
 		if len(roots) == 0 {
 			croots = append(roots, f.Type().Name())
@@ -151,12 +155,17 @@ func fdumpInterface(w map[string]string, i interface{}, roots []string, formatte
 			return err
 		}
 	case reflect.Array, reflect.Slice:
+		nodeType := append(roots, "__Type__")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, formatters), ".")
+		w[nodeTypeFormatted] = "Array"
 		if err := fDumpArray(w, i, roots, formatters...); err != nil {
 			return err
 		}
 		return nil
 	case reflect.Map:
-
+		nodeType := append(roots, "__Type__")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, formatters), ".")
+		w[nodeTypeFormatted] = "Map"
 		if err := fDumpMap(w, i, roots, formatters...); err != nil {
 			return err
 		}
@@ -171,7 +180,7 @@ func fdumpInterface(w map[string]string, i interface{}, roots []string, formatte
 func fDumpArray(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
 
-	nodeLen := append(roots, "Len")
+	nodeLen := append(roots, "__Len__")
 	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
 	w[nodeLenFormatted] = fmt.Sprintf("%d", v.Len())
 
@@ -199,7 +208,7 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 
 	keys := v.MapKeys()
 
-	nodeLen := append(roots, "Len")
+	nodeLen := append(roots, "__Len__")
 	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
 	w[nodeLenFormatted] = fmt.Sprintf("%d", len(keys))
 
