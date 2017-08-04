@@ -24,7 +24,7 @@ Flags:
       --details string        Output Details Level : low, medium, high (default "medium")
       --env                   Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
       --exclude stringSlice   --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
-      --format string         --format:yaml, json, xml (default "xml")
+      --format string         --format:yaml, json, xml, tap (default "xml")
       --log string            Log Level : debug, info or warn (default "warn")
       --output-dir string     Output Directory: create tests results file inside this directory
       --parallel int          --parallel=2 : launches 2 Test Suites in parallel (default 1)
