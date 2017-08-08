@@ -13,6 +13,7 @@ type Templater struct {
 }
 
 func newTemplater(inputValues map[string]string) *Templater {
+	// Copy map to be thread safe with parallel > 1
 	values := make(map[string]string)
 	for key, value := range inputValues {
 		values[key] = value
