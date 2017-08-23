@@ -4,10 +4,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/runabove/venom/cli/venom/run"
-	"github.com/runabove/venom/cli/venom/template"
-	"github.com/runabove/venom/cli/venom/update"
-	"github.com/runabove/venom/cli/venom/version"
+	"github.com/ovh/venom/cli/venom/run"
+	"github.com/ovh/venom/cli/venom/template"
+	"github.com/ovh/venom/cli/venom/update"
+	"github.com/ovh/venom/cli/venom/version"
 )
 
 var rootCmd = &cobra.Command{

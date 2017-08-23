@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/runabove/venom/executors/http"
-	"github.com/runabove/venom/lib"
+	"github.com/ovh/venom/executors/http"
+	"github.com/ovh/venom/lib"
 )
 
 func TestVenomTestCase(t *testing.T) {
