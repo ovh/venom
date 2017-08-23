@@ -5,7 +5,7 @@ go:
 env:
   global:
   - PROJECT_NAME="venom"
-  - PROJECT_PATH="github.com/runabove"
+  - PROJECT_PATH="github.com/ovh"
 
 install: true
 
@@ -29,5 +29,5 @@ deploy:
     - cli/venom/bin/venom-windows-386
     - cli/venom/bin/venom-windows-amd64
   on:
-    repo: runabove/venom
+    repo: ovh/venom
     tags: true

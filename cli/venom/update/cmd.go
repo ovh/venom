@@ -8,12 +8,12 @@ import (
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // used by CI to inject architecture (linux-amd64, etc...) at build time
 var architecture string
-var urlGitubReleases = "https://github.com/runabove/venom/releases"
+var urlGitubReleases = "https://github.com/ovh/venom/releases"
 
 // Cmd update
 var Cmd = &cobra.Command{
@@ -27,7 +27,7 @@ var Cmd = &cobra.Command{
 
 func getURLArtifactFromGithub(architecture string) string {
 	client := github.NewClient(nil)
-	release, resp, err := client.Repositories.GetLatestRelease("runabove", "venom")
+	release, resp, err := client.Repositories.GetLatestRelease("ovh", "venom")
 	if err != nil {
 		venom.Exit("Repositories.GetLatestRelease returned error: %v\n%v", err, resp.Body)
 	}
@@ -41,7 +41,7 @@ func getURLArtifactFromGithub(architecture string) string {
 	}
 
 	text := "Invalid Artifacts on latest release. Please try again in few minutes.\n"
-	text += "If the problem persists, please open an issue on https://github.com/runabove/venom/issues\n"
+	text += "If the problem persists, please open an issue on https://github.com/ovh/venom/issues\n"
 	venom.Exit(text)
 	return ""
 }

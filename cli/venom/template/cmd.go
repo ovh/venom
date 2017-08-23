@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )

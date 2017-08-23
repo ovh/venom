@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // Cmd version
