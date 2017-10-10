@@ -81,10 +81,10 @@
 			"revisionTime": "2017-01-13T19:23:35Z"
 		},
 		{
-			"checksumSHA1": "9vQ5+o0oO/0deG+uokvvdpeSv0Y=",
+			"checksumSHA1": "MJ3dOH4XCOgb3iHEDAKIK8+1/dQ=",
 			"path": "github.com/ovh/go-ovh/ovh",
-			"revision": "d95f6f91b1fb339a53fc438df7289cd85756193b",
-			"revisionTime": "2017-06-30T08:30:08Z"
+			"revision": "4b1fea467323b74c5f462f0947f402b428ca0626",
+			"revisionTime": "2017-09-06T12:16:32Z"
 		},
 		{
 			"checksumSHA1": "pZrnx0NTU91ci2mqD+0rMHHMWtA=",
