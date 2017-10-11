@@ -67,17 +67,15 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		if errs != nil {
 			return nil, errs
 		}
-		_, errs = db.Exec(string(schema))
-		if errs != nil {
-			return nil, fmt.Errorf("failed to exec schema: %v", errs)
+		if _, err = db.Exec(string(schema)); err != nil {
+			return nil, fmt.Errorf("failed to exec schema: %v", err)
 		}
 	}
 	// Load fixtures in the databases.
 	// Bu default the package refuse to load if the database
 	// does not contains test to avoid wiping a production db.
 	fixtures.SkipDatabaseNameCheck(true)
-	err = loadFixtures(db, t.Files, t.Folder, databaseHelper(t.Database), l)
-	if err != nil {
+	if err = loadFixtures(db, t.Files, t.Folder, databaseHelper(t.Database), l); err != nil {
 		return nil, err
 	}
 	r := Result{Executor: t}
