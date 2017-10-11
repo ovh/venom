@@ -31,7 +31,7 @@ type Executor struct {
 	Folder   string   `json:"folder" yaml:"folder"`
 	Database string   `json:"database" yaml:"database"`
 	DSN      string   `json:"dsn" yaml:"dsn"`
-	Schema   string   `json:"schema" yaml:"schema"`
+	Schemas  []string `json:"schemas" yaml:"schemas"`
 }
 
 // Result represents a step result.
@@ -40,16 +40,15 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 	// Transform step to Executor instance.
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 	// Connect to the database and ping it.
-	l.Debugf("connecting to database %s, %s\n", t.Database, t.DSN)
+	l.Debugf("connecting to database %s, %s\n", e.Database, e.DSN)
 
-	db, err := sql.Open(t.Database, t.DSN)
+	db, err := sql.Open(e.Database, e.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
@@ -58,27 +57,29 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	if err = db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
-	// Load and import the schema in the database
+	// Load and import the schemas in the database
 	// if the argument is specified.
-	if t.Schema != "" {
-		l.Debugf("loading schema from file %s\n", t.Schema)
+	if len(e.Schemas) != 0 {
+		for _, s := range e.Schemas {
+			l.Debugf("loading schema from file %s\n", s)
 
-		schema, errs := ioutil.ReadFile(t.Schema)
-		if errs != nil {
-			return nil, errs
-		}
-		if _, err = db.Exec(string(schema)); err != nil {
-			return nil, fmt.Errorf("failed to exec schema: %v", err)
+			sbytes, errs := ioutil.ReadFile(s)
+			if errs != nil {
+				return nil, errs
+			}
+			if _, err = db.Exec(string(sbytes)); err != nil {
+				return nil, fmt.Errorf("failed to exec schema from file %s : %v", s, err)
+			}
 		}
 	}
 	// Load fixtures in the databases.
 	// Bu default the package refuse to load if the database
 	// does not contains test to avoid wiping a production db.
 	fixtures.SkipDatabaseNameCheck(true)
-	if err = loadFixtures(db, t.Files, t.Folder, databaseHelper(t.Database), l); err != nil {
+	if err = loadFixtures(db, e.Files, e.Folder, databaseHelper(e.Database), l); err != nil {
 		return nil, err
 	}
-	r := Result{Executor: t}
+	r := Result{Executor: e}
 
 	return dump.ToMap(r)
 }
