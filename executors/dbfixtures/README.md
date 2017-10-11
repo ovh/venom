@@ -11,13 +11,13 @@ In your yaml file, you declare tour step like this
 ```yaml
   - database mandatory [mysql/postgres]
   - dsn mandatory
-  - schema optional
+  - schemas optional
   - files optional
   - folder optional
  ```
 
-- `schema` is the path to a `.sql` file that contains the schema of your database. If it present, the content will be executed before loading the fixtures.
-- If `folder` is specified, the executor won't use the `files` parameter.
+- `schemas` is a list of paths to several `.sql` file that contains the schemas of the tables in your database. If specified, the content of every file will be executed before loading the fixtures.
+- `files` parameter is only used as a fallback if `folder` is not used.
 
 Example usage (_mysql_):
 ```yaml
@@ -30,8 +30,11 @@ testcases:
       - type: dbfixtures
         database: mysql
         dsn: user:password@(localhost:3306)/venom?multiStatements=true
-        schema: schemas/mysql.sql
+        schemas:
+          - schemas/mysql.sql
         folder: fixtures
+        files:
+          - fixtures/table.yml
 
 ```
 
