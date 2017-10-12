@@ -3,6 +3,8 @@ package venom
 import (
 	"fmt"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
@@ -78,7 +80,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 }
 
 func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
-	assert := strings.Split(assertion, " ")
+	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
 		return &Failure{Value: fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert))}, nil
 	}
@@ -110,6 +112,35 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 		return nil, &Failure{Value: prefix + "\n" + out + "\n" + sdump}
 	}
 	return nil, nil
+}
+
+// splitAssertion splits the assertion string a, with support
+// for quoted arguments.
+func splitAssertion(a string) []string {
+	lastQuote := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+		}
+	}
+	m := strings.FieldsFunc(a, f)
+	for i, e := range m {
+		first, _ := utf8.DecodeRuneInString(e)
+		last, _ := utf8.DecodeLastRuneInString(e)
+		if unicode.In(first, unicode.Quotation_Mark) && first == last {
+			m[i] = string([]rune(e)[1 : utf8.RuneCountInString(e)-1])
+		}
+	}
+	return m
 }
 
 // assertMap contains list of assertions func
