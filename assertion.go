@@ -46,7 +46,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 	var systemerr, systemout string
 
 	if err := mapstructure.Decode(step, &sa); err != nil {
-		return false, []Failure{{Value: fmt.Sprintf("error decoding assertions: %s", err)}}, failures, systemout, systemerr
+		return false, []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("error decoding assertions: %s", err))}}, failures, systemout, systemerr
 	}
 
 	if len(sa.Assertions) == 0 && defaultAssertions != nil {
@@ -80,7 +80,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
 	assert := strings.Split(assertion, " ")
 	if len(assert) < 2 {
-		return &Failure{Value: fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert))}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
 	}
 
 	actual, ok := executorResult[assert[0]]
@@ -88,14 +88,14 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 		if assert[1] == "ShouldNotExist" {
 			return nil, nil
 		}
-		return &Failure{Value: fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult)}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult))}, nil
 	} else if assert[1] == "ShouldNotExist" {
-		return &Failure{Value: fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual)}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual))}, nil
 	}
 
 	f, ok := assertMap[assert[1]]
 	if !ok {
-		return &Failure{Value: fmt.Sprintf("Method not found '%s'", assert[1])}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("Method not found '%s'", assert[1]))}, nil
 	}
 	args := make([]interface{}, len(assert[2:]))
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
@@ -107,7 +107,7 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 	if out != "" {
 		prefix := "assertion: " + assertion
 		sdump, _ := dump.Sdump(executorResult)
-		return nil, &Failure{Value: prefix + "\n" + out + "\n" + sdump}
+		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n" + sdump)}
 	}
 	return nil, nil
 }
