@@ -9,10 +9,22 @@
 			"revisionTime": "2017-01-13T01:19:11Z"
 		},
 		{
+			"checksumSHA1": "dvabztWVQX8f6oMLRyv4dLH+TGY=",
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "346938d642f2ec3594ed81d874461961cd0faa76",
+			"revisionTime": "2016-10-29T20:57:26Z"
+		},
+		{
 			"checksumSHA1": "WXLlWqs7BkjUUpyEarz56JHg5cU=",
 			"path": "github.com/fsamin/go-dump",
 			"revision": "244c7d5469c6e61292cb207a5fcddc224b8d0ee7",
 			"revisionTime": "2017-08-07T08:03:00Z"
+		},
+		{
+			"checksumSHA1": "QD6LqgLz2JMxXqns8TaxtK9AuHs=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "2e00b5cd70399450106cec6431c2e2ce3cae5034",
+			"revisionTime": "2016-12-24T12:10:19Z"
 		},
 		{
 			"checksumSHA1": "Um9voOUNeH3a1TILYjYRznmnUkE=",
@@ -49,6 +61,18 @@
 			"path": "github.com/inconshreveable/mousetrap",
 			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
 			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
+			"checksumSHA1": "JnN7V2ff27U0k2Xuc1RJSa520QQ=",
+			"path": "github.com/lib/pq",
+			"revision": "8df6253d1317616f36b0c3740eb30c239a7372cb",
+			"revisionTime": "2017-01-03T19:20:09Z"
+		},
+		{
+			"checksumSHA1": "xppHi82MLqVx1eyQmbhTesAEjx8=",
+			"path": "github.com/lib/pq/oid",
+			"revision": "8df6253d1317616f36b0c3740eb30c239a7372cb",
+			"revisionTime": "2017-01-03T19:20:09Z"
 		},
 		{
 			"checksumSHA1": "yf185lmVPcvXjLZuPT1s4JzxI18=",
@@ -153,6 +177,12 @@
 			"revisionTime": "2017-01-16T16:32:51Z"
 		},
 		{
+			"checksumSHA1": "JrOt/M8No13ZxxdPhpTC7YUBWDY=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "e964b172ca7f4c322ee4c39ea605ff53fab44f79",
+			"revisionTime": "2017-05-27T06:30:11Z"
+		},
+		{
 			"checksumSHA1": "FYm9gvCqKRBRmx3yqLKA/VdiOB4=",
 			"path": "github.com/yesnault/go-imap/imap",
 			"revision": "eb9bbb66bd7bb6b40517b5423ce45f370325d67c",
@@ -199,6 +229,12 @@
 			"path": "gopkg.in/ini.v1",
 			"revision": "d3de07a94d22b4a0972deb4b96d790c2c0ce8333",
 			"revisionTime": "2017-06-02T20:46:24Z"
+		},
+		{
+			"checksumSHA1": "Neja/m29s2ypv3jvoPyrK8kgCTM=",
+			"path": "gopkg.in/testfixtures.v2",
+			"revision": "e34263135c9fc3e6710268b1ba3a9b73fb7104d2",
+			"revisionTime": "2017-09-04T21:51:56Z"
 		},
 		{
 			"checksumSHA1": "12GqsW8PiRPnezDDy0v4brZrndM=",
