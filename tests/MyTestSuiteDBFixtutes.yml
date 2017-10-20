@@ -5,15 +5,15 @@ testcases:
    - type: dbfixtures
      database: mysql
      dsn: venom:venom@({{.mysqlhost}}:3306)/venom?multiStatements=true
-     schema: schemas/mysql.sql
-     folder: fixtures
+     schemas:
+       - testdata/schemas/mysql.sql
+     folder: testdata/fixtures
 
 - name: Load fixtures into PostgreSQL database
   steps:
    - type: dbfixtures
      database: postgres
-     dsn: "user=venom password=venom dbname=venom host={{.postgreshost}} port=5432"
-     schema: schemas/postgres.sql
-     files:
-        - fixtures/posts.yml
-        - fixtures/comments.yml
+     dsn: "user=venom password=venom dbname=venom host={{.postgreshost}} port=5432 sslmode=disable"
+     schemas:
+       - testdata/schemas/postgres.sql
+     folder: testdata/fixtures
