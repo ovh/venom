@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
 	"github.com/ovh/venom/context/webctx"
+	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
@@ -76,6 +77,7 @@ var Cmd = &cobra.Command{
 		venom.RegisterExecutor(ssh.Name, ssh.New())
 		venom.RegisterExecutor(web.Name, web.New())
 		venom.RegisterExecutor(ovhapi.Name, ovhapi.New())
+		venom.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 
 		// Register Context
 		venom.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
