@@ -38,7 +38,7 @@ type P map[string]interface{}
 type V map[string]string
 
 //R is a map of Results
-type R map[string]string
+type R map[string]interface{}
 
 //T is a superset of testing.T
 type T struct {

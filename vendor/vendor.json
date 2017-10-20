@@ -15,10 +15,10 @@
 			"revisionTime": "2016-10-29T20:57:26Z"
 		},
 		{
-			"checksumSHA1": "WXLlWqs7BkjUUpyEarz56JHg5cU=",
+			"checksumSHA1": "O56NibMsIjtMdW531necL/71Cu0=",
 			"path": "github.com/fsamin/go-dump",
-			"revision": "244c7d5469c6e61292cb207a5fcddc224b8d0ee7",
-			"revisionTime": "2017-08-07T08:03:00Z"
+			"revision": "172a863f227b9e60b1bdbdcd27d063b08b367d73",
+			"revisionTime": "2017-10-24T12:25:11Z"
 		},
 		{
 			"checksumSHA1": "QD6LqgLz2JMxXqns8TaxtK9AuHs=",
@@ -109,6 +109,12 @@
 			"path": "github.com/ovh/go-ovh/ovh",
 			"revision": "4b1fea467323b74c5f462f0947f402b428ca0626",
 			"revisionTime": "2017-09-06T12:16:32Z"
+		},
+		{
+			"checksumSHA1": "LuFv4/jlrmFNnDb/5SCSEPAM9vU=",
+			"path": "github.com/pmezard/go-difflib/difflib",
+			"revision": "792786c7400a136282c1664665ae0a8db921c6c2",
+			"revisionTime": "2016-01-10T10:55:54Z"
 		},
 		{
 			"checksumSHA1": "pZrnx0NTU91ci2mqD+0rMHHMWtA=",

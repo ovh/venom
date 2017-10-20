@@ -32,3 +32,21 @@ testcases:
       file: '@./venom.gif'
     assertions:
     - result.statuscode ShouldEqual 401
+
+- name: POST http (enhanced assertions)
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/newAccount/rules
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.__type__ ShouldEqual Array
+      # Ensure a minimum of fields are present.
+      - result.bodyjson.__len__ ShouldBeGreaterThanOrEqualTo 8
+      # Ensure fields have the right keys.
+      - result.bodyjson.bodyjson0 ShouldContainKey fieldName
+      - result.bodyjson.bodyjson0 ShouldContainKey mandatory
+      - result.bodyjson.bodyjson0 ShouldContainKey regularExpression
+      - result.bodyjson.bodyjson0 ShouldContainKey prefix
+      - result.bodyjson.bodyjson0 ShouldContainKey examples
+      - result.bodyjson.bodyjson0 ShouldNotContainKey lol

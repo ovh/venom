@@ -13,10 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name of executor
@@ -117,9 +116,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	for k, v := range resp.Header {
 		r.Headers[k] = v[0]
 	}
-
 	r.StatusCode = resp.StatusCode
-	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
+
+	return executors.Dump(r)
 }
 
 // getRequest returns the request correctly set for the current executor
