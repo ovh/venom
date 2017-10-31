@@ -23,6 +23,6 @@ func TestVenomTestCase(t *testing.T) {
 		venom.HTTP.Get("https://www.google.com", "").
 			WithHeaders(http.Headers{"test": "test"}))
 
-	assert.Equal(t, "200", r["result.statuscode"])
+	assert.Equal(t, 200, r["result.statuscode"])
 
 }
