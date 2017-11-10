@@ -41,6 +41,7 @@ var (
 	detailsLevel   string
 	resumeFailures bool
 	resume         bool
+	strict         bool
 )
 
 func init() {
@@ -50,6 +51,7 @@ func init() {
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
+	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "medium", "Output Details Level : low, medium, high")
@@ -135,6 +137,9 @@ var Cmd = &cobra.Command{
 		if err := venom.OutputResult(format, resume, resumeFailures, outputDir, *tests, elapsed, detailsLevel); err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
+		}
+		if strict && tests.TotalKO > 0 {
+			os.Exit(2)
 		}
 	},
 }
