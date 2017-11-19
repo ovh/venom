@@ -18,19 +18,6 @@ import (
 	"github.com/ovh/venom/executors/web"
 )
 
-func init() {
-	venom.RegisterExecutor(exec.Name, exec.New())
-	venom.RegisterExecutor(http.Name, http.New())
-	venom.RegisterExecutor(imap.Name, imap.New())
-	venom.RegisterExecutor(readfile.Name, readfile.New())
-	venom.RegisterExecutor(smtp.Name, smtp.New())
-	venom.RegisterExecutor(ssh.Name, ssh.New())
-	venom.RegisterExecutor(web.Name, web.New())
-	venom.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
-	venom.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
-	venom.RegisterTestCaseContext(webctx.Name, webctx.New())
-}
-
 //P is a map of test parameters
 type P map[string]interface{}
 
@@ -43,6 +30,7 @@ type R map[string]interface{}
 //T is a superset of testing.T
 type T struct {
 	*testing.T
+	v    *venom.Venom
 	ts   *venom.TestSuite
 	tc   *venom.TestCase
 	Name string
@@ -79,8 +67,21 @@ func (l *Logger) WithField(key string, value interface{}) venom.Logger {
 
 //TestCase instanciates a veom testcase
 func TestCase(t *testing.T, name string, variables map[string]string) *T {
-	return &T{
+	v := venom.New()
+	v.RegisterExecutor(exec.Name, exec.New())
+	v.RegisterExecutor(http.Name, http.New())
+	v.RegisterExecutor(imap.Name, imap.New())
+	v.RegisterExecutor(readfile.Name, readfile.New())
+	v.RegisterExecutor(smtp.Name, smtp.New())
+	v.RegisterExecutor(ssh.Name, ssh.New())
+	v.RegisterExecutor(web.Name, web.New())
+	v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
+	v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
+	v.RegisterTestCaseContext(webctx.Name, webctx.New())
+
+	vt := &T{
 		t,
+		v,
 		&venom.TestSuite{
 			Templater: &venom.Templater{Values: variables},
 			Name:      name,
@@ -90,13 +91,15 @@ func TestCase(t *testing.T, name string, variables map[string]string) *T {
 		},
 		name,
 	}
+
+	return vt
 }
 
 //Do executes a veom test steps
 func (t *T) Do(teststepParams P) R {
 	ts := t.ts
 	tc := t.tc
-	tcc, errContext := venom.ContextWrap(tc)
+	tcc, errContext := t.v.ContextWrap(tc)
 	if errContext != nil {
 		t.Error(errContext)
 		return nil
@@ -114,13 +117,13 @@ func (t *T) Do(teststepParams P) R {
 		return nil
 	}
 
-	e, err := venom.WrapExecutor(step, tcc)
+	e, err := t.v.WrapExecutor(step, tcc)
 	if err != nil {
 		t.Error(err)
 		return nil
 	}
 
-	res := venom.RunTestStep(tcc, e, ts, tc, step, ts.Templater, &Logger{t.T}, "low")
+	res := t.v.RunTestStep(tcc, e, ts, tc, step, &Logger{t.T})
 
 	for _, f := range tc.Failures {
 		t.Errorf("\r Failure %s", f.Value)
