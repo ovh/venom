@@ -1,4 +1,4 @@
-package main
+package venom_test
 
 import (
 	"testing"

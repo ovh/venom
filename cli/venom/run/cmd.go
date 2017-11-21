@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
@@ -35,13 +34,13 @@ var (
 	format         string
 	varFile        string
 	withEnv        bool
-	parallel       int
 	logLevel       string
 	outputDir      string
 	detailsLevel   string
 	resumeFailures bool
 	resume         bool
 	strict         bool
+	v              *venom.Venom
 )
 
 func init() {
@@ -50,13 +49,12 @@ func init() {
 	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
-	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
-	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "medium", "Output Details Level : low, medium, high")
-	Cmd.PersistentFlags().BoolVarP(&resume, "resume", "", true, "Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite")
-	Cmd.PersistentFlags().BoolVarP(&resumeFailures, "resumeFailures", "", true, "Output Resume Failures")
+	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "low", "Output Details Level : low, medium, high")
+	Cmd.PersistentFlags().BoolVarP(&resume, "resume", "", false, "Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite")
+	Cmd.PersistentFlags().BoolVarP(&resumeFailures, "resumeFailures", "", false, "Output Resume Failures")
 }
 
 // Cmd run
@@ -71,27 +69,32 @@ var Cmd = &cobra.Command{
 			path = args[0:]
 		}
 
-		venom.RegisterExecutor(exec.Name, exec.New())
-		venom.RegisterExecutor(http.Name, http.New())
-		venom.RegisterExecutor(imap.Name, imap.New())
-		venom.RegisterExecutor(readfile.Name, readfile.New())
-		venom.RegisterExecutor(smtp.Name, smtp.New())
-		venom.RegisterExecutor(ssh.Name, ssh.New())
-		venom.RegisterExecutor(web.Name, web.New())
-		venom.RegisterExecutor(ovhapi.Name, ovhapi.New())
-		venom.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
+		v = venom.New()
+		v.RegisterExecutor(exec.Name, exec.New())
+		v.RegisterExecutor(http.Name, http.New())
+		v.RegisterExecutor(imap.Name, imap.New())
+		v.RegisterExecutor(readfile.Name, readfile.New())
+		v.RegisterExecutor(smtp.Name, smtp.New())
+		v.RegisterExecutor(ssh.Name, ssh.New())
+		v.RegisterExecutor(web.Name, web.New())
+		v.RegisterExecutor(ovhapi.Name, ovhapi.New())
+		v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 
 		// Register Context
-		venom.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
-		venom.RegisterTestCaseContext(webctx.Name, webctx.New())
+		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
+		v.RegisterTestCaseContext(webctx.Name, webctx.New())
+
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if parallel < 0 {
-			parallel = 1
-		}
+
+		v.LogLevel = logLevel
+		v.OutputDetails = detailsLevel
+		v.OutputDir = outputDir
+		v.OutputFormat = format
+		v.OutputResume = resume
+		v.OutputResumeFailures = resumeFailures
 
 		mapvars := make(map[string]string)
-
 		if withEnv {
 			variables = append(variables, os.Environ()...)
 		}
@@ -113,7 +116,7 @@ var Cmd = &cobra.Command{
 			switch filepath.Ext(varFile) {
 			case ".json":
 				err = json.Unmarshal(bytes, &varFileMap)
-			case ".yaml":
+			case ".yaml", ".yml":
 				err = yaml.Unmarshal(bytes, &varFileMap)
 			default:
 				log.Fatal("unsupported varFile format")
@@ -127,14 +130,16 @@ var Cmd = &cobra.Command{
 			}
 		}
 
+		v.AddVariables(mapvars)
+
 		start := time.Now()
-		tests, err := venom.Process(path, mapvars, exclude, parallel, logLevel, detailsLevel, os.Stdout)
+		tests, err := v.Process(path, exclude)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		elapsed := time.Since(start)
-		if err := venom.OutputResult(format, resume, resumeFailures, outputDir, *tests, elapsed, detailsLevel); err != nil {
+		if err := v.OutputResult(*tests, elapsed); err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			os.Exit(1)
 		}

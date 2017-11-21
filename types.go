@@ -72,6 +72,10 @@ type executorWithDefaultAssertions interface {
 	GetDefaultAssertions() *StepAssertions
 }
 
+type executorWithZeroValueResult interface {
+	ZeroValueResult() ExecutorResult
+}
+
 // Tests contains all informations about tests in a pipeline build
 type Tests struct {
 	XMLName      xml.Name    `xml:"testsuites" json:"-" yaml:"-"`
