@@ -70,6 +70,11 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 
 // Run execute TestStep
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+	t0 := time.Now()
+	l.Debugf("http.Run> Begin")
+	defer func() {
+		l.Debugf("http.Run> End (%.3f seconds)", time.Since(t0).Seconds())
+	}()
 
 	// transform step to Executor Instance
 	var t Executor
@@ -97,7 +102,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	client := &http.Client{Transport: tr}
 
 	start := time.Now()
+	l.Debugf("http.Run.doRequest> Begin")
 	resp, err := client.Do(req)
+	l.Debugf("http.Run.doRequest> End (%.3f seconds)", time.Since(t0).Seconds())
 	if err != nil {
 		return nil, err
 	}
