@@ -50,3 +50,13 @@ testcases:
       - result.bodyjson.bodyjson0 ShouldContainKey prefix
       - result.bodyjson.bodyjson0 ShouldContainKey examples
       - result.bodyjson.bodyjson0 ShouldNotContainKey lol
+      - result.statuscode ShouldNotEqual {{.POST http multipart.result.statuscode}}
+
+- name: GET http (with templated stuff)
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/{{.POST http multipart.result.bodyjson.bodyjson0.fieldName}}
+    assertions:
+      - result.statuscode ShouldEqual 404
+      - result.statuscode ShouldNotEqual {{.POST http multipart.result.statuscode}}
