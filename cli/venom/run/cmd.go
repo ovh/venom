@@ -40,6 +40,7 @@ var (
 	resumeFailures bool
 	resume         bool
 	strict         bool
+	noCheckVars    bool
 	v              *venom.Venom
 )
 
@@ -50,6 +51,7 @@ func init() {
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
+	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "low", "Output Details Level : low, medium, high")
@@ -133,6 +135,13 @@ var Cmd = &cobra.Command{
 		v.AddVariables(mapvars)
 
 		start := time.Now()
+
+		if !noCheckVars {
+			if err := v.Parse(path, exclude); err != nil {
+				log.Fatal(err)
+			}
+		}
+
 		tests, err := v.Process(path, exclude)
 		if err != nil {
 			log.Fatal(err)

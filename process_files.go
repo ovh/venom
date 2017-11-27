@@ -29,12 +29,10 @@ func getFilesPath(path []string, exclude []string) ([]string, error) {
 
 	for _, p := range path {
 		p = strings.TrimSpace(p)
-
-		fileInfo, err := os.Stat(p)
-		if err != nil {
-			return nil, err
-		}
-
+		
+		// no need to check err on os.stat.
+		// if we put ./test/*.yml, it will fail and it's normal
+		fileInfo, _ := os.Stat(p)
 		if fileInfo != nil && fileInfo.IsDir() {
 			p = p + string(os.PathSeparator) + "*.yml"
 		}
@@ -42,7 +40,7 @@ func getFilesPath(path []string, exclude []string) ([]string, error) {
 		fpaths, errg := filepath.Glob(p)
 		if errg != nil {
 			log.Errorf("Error reading files on path:%s :%s", path, errg)
-			return nil, err
+			return nil, errg
 		}
 		for _, fp := range fpaths {
 			toExclude := false
@@ -66,7 +64,7 @@ func (v *Venom) readFiles(filesPath []string) error {
 	v.outputProgressBar = make(map[string]*pb.ProgressBar)
 
 	for _, f := range filesPath {
-		log.Debugf("Reading %s", f)
+		log.Info("Reading ", f)
 		dat, errr := ioutil.ReadFile(f)
 		if errr != nil {
 			return fmt.Errorf("Error while reading file %s err:%s", f, errr)
