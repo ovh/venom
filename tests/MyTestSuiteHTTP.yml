@@ -60,3 +60,16 @@ testcases:
     assertions:
       - result.statuscode ShouldEqual 404
       - result.statuscode ShouldNotEqual {{.POST http multipart.result.statuscode}}
+
+- name: GET http (with skip body)
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0
+    skip_body: true
+    skip_headers: true
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.body ShouldBeEmpty
+      - result.headers ShouldBeEmpty
+
