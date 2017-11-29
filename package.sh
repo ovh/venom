@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd cli/venom
-for GOOS in windows darwin linux freebsd; do
+for GOOS in windows darwin linux freebsd solaris; do
     for GOARCH in 386 amd64 arm; do
         if [[ $GOARCH == "arm" && $GOOS != "linux" ]]; then
           continue;
