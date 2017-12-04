@@ -5,7 +5,7 @@ It can also output xUnit results files.
 
 <img src="./venom.gif" alt="Venom Demonstration" width="80%">
 
-## Commmand Line
+## Command Line
 
 Install with:
 ```bash
@@ -291,7 +291,7 @@ func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (v
 		Code:    ouputCode, // return Output Code
 		Command: t.Command, // return Command executed
 		Systemout:  systemout,    // return Output string
-		Executor: t, // return executor, usefull for display Executor context in failure
+		Executor: t, // return executor, useful for display Executor context in failure
 	}
 
 	return dump.ToMap(r)
@@ -306,7 +306,7 @@ Feel free to open a Pull Request with your executors.
 
 TestCase Context allows you to inject datas in all Steps.
 
-Define a context is optional, but can be usefull to keep data between teststeps on a testcase.
+Define a context is optional, but can be useful to keep data between teststeps on a testcase.
 
 ### Write your TestCase Context
 

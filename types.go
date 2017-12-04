@@ -149,7 +149,7 @@ type InnerResult struct {
 	Value string `xml:",cdata" json:"value" yaml:"value"`
 }
 
-//Logger is basicaly an interface for logrus.Entry
+//Logger is basically an interface for logrus.Entry
 type Logger interface {
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
