@@ -41,6 +41,7 @@ var (
 	resume         bool
 	strict         bool
 	noCheckVars    bool
+	parallel       int
 	v              *venom.Venom
 )
 
@@ -52,6 +53,7 @@ func init() {
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
 	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
+	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "low", "Output Details Level : low, medium, high")
@@ -95,6 +97,7 @@ var Cmd = &cobra.Command{
 		v.OutputFormat = format
 		v.OutputResume = resume
 		v.OutputResumeFailures = resumeFailures
+		v.Parallel = parallel
 
 		mapvars := make(map[string]string)
 		if withEnv {
