@@ -275,12 +275,12 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
-	// to something with t.Command here...
+	// to something with e.Command here...
 	//...
 
 	systemout := "foo"
@@ -289,9 +289,9 @@ func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (v
 	// prepare result
 	r := Result{
 		Code:    ouputCode, // return Output Code
-		Command: t.Command, // return Command executed
+		Command: e.Command, // return Command executed
 		Systemout:  systemout,    // return Output string
-		Executor: t, // return executor, useful for display Executor context in failure
+		Executor: e, // return executor, useful for display Executor context in failure
 	}
 
 	return dump.ToMap(r)
