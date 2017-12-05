@@ -262,7 +262,7 @@ type Result struct {
 	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
 	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
 	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
+	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for this executor
