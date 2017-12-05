@@ -68,6 +68,7 @@ func (l *Logger) WithField(key string, value interface{}) venom.Logger {
 //TestCase instanciates a veom testcase
 func TestCase(t *testing.T, name string, variables map[string]string) *T {
 	v := venom.New()
+	v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 	v.RegisterExecutor(exec.Name, exec.New())
 	v.RegisterExecutor(http.Name, http.New())
 	v.RegisterExecutor(imap.Name, imap.New())
@@ -75,7 +76,6 @@ func TestCase(t *testing.T, name string, variables map[string]string) *T {
 	v.RegisterExecutor(smtp.Name, smtp.New())
 	v.RegisterExecutor(ssh.Name, ssh.New())
 	v.RegisterExecutor(web.Name, web.New())
-	v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 	v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
 	v.RegisterTestCaseContext(webctx.Name, webctx.New())
 

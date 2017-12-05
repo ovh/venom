@@ -160,6 +160,7 @@ venom run  --details=low --format=xml --output-dir="."
 
 ## Executors
 
+* **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
 * **http**: https://github.com/ovh/venom/tree/master/executors/http
 * **imap**: https://github.com/ovh/venom/tree/master/executors/imap
@@ -167,7 +168,6 @@ venom run  --details=low --format=xml --output-dir="."
 * **smtp**: https://github.com/ovh/venom/tree/master/executors/smtp
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
-* **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 
 
 ## Assertion
