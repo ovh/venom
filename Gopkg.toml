@@ -31,3 +31,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/yesnault/go-imap"
+
+[[override]]
+  branch = "master"
+  name = "github.com/davecgh/go-spew"
