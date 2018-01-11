@@ -160,9 +160,10 @@
   revision = "3ded668c5379f6951fb0de06174442072e5447d3"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "316e9227019baa6ea3f76ea21538bab101fd1182"
+  revision = "810d7000345868fc619eb81f46307107118f4ae1"
 
 [[projects]]
   name = "google.golang.org/appengine"
