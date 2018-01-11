@@ -31,7 +31,3 @@
 [[constraint]]
   branch = "master"
   name = "github.com/yesnault/go-imap"
-
-[[constraint]]
-  name = "gopkg.in/testfixtures.v2"
-  version = "2.4.2"
