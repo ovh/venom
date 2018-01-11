@@ -47,3 +47,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/sclevine/agouti"
+
+[[override]]
+  branch = "master"
+  name = "github.com/spf13/pflag"
