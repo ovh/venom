@@ -72,9 +72,10 @@
   revision = "4959821b481786922ac53e7ef25c61ae19fb7c36"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "ed105d635dfa9ea7133f7c79f1eb36203fc3a156"
+  revision = "b4575eea38cca1123ec2dc90c26529b5c5acfcff"
 
 [[projects]]
   name = "github.com/mndrix/tap-go"
