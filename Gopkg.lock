@@ -179,8 +179,8 @@
 [[projects]]
   name = "gopkg.in/ini.v1"
   packages = ["."]
-  revision = "d3de07a94d22b4a0972deb4b96d790c2c0ce8333"
-  version = "v1.28.0"
+  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
+  version = "v1.32.0"
 
 [[projects]]
   name = "gopkg.in/testfixtures.v2"
