@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestRepositoriesService_ListStatuses(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/repos/o/r/commits/r/statuses", func(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func TestRepositoriesService_ListStatuses(t *testing.T) {
 	})
 
 	opt := &ListOptions{Page: 2}
-	statuses, _, err := client.Repositories.ListStatuses("o", "r", "r", opt)
+	statuses, _, err := client.Repositories.ListStatuses(context.Background(), "o", "r", "r", opt)
 	if err != nil {
 		t.Errorf("Repositories.ListStatuses returned error: %v", err)
 	}
@@ -36,12 +37,15 @@ func TestRepositoriesService_ListStatuses(t *testing.T) {
 }
 
 func TestRepositoriesService_ListStatuses_invalidOwner(t *testing.T) {
-	_, _, err := client.Repositories.ListStatuses("%", "r", "r", nil)
+	client, _, _, teardown := setup()
+	defer teardown()
+
+	_, _, err := client.Repositories.ListStatuses(context.Background(), "%", "r", "r", nil)
 	testURLParseError(t, err)
 }
 
 func TestRepositoriesService_CreateStatus(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &RepoStatus{State: String("s"), TargetURL: String("t"), Description: String("d")}
@@ -57,7 +61,7 @@ func TestRepositoriesService_CreateStatus(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	status, _, err := client.Repositories.CreateStatus("o", "r", "r", input)
+	status, _, err := client.Repositories.CreateStatus(context.Background(), "o", "r", "r", input)
 	if err != nil {
 		t.Errorf("Repositories.CreateStatus returned error: %v", err)
 	}
@@ -69,12 +73,15 @@ func TestRepositoriesService_CreateStatus(t *testing.T) {
 }
 
 func TestRepositoriesService_CreateStatus_invalidOwner(t *testing.T) {
-	_, _, err := client.Repositories.CreateStatus("%", "r", "r", nil)
+	client, _, _, teardown := setup()
+	defer teardown()
+
+	_, _, err := client.Repositories.CreateStatus(context.Background(), "%", "r", "r", nil)
 	testURLParseError(t, err)
 }
 
 func TestRepositoriesService_GetCombinedStatus(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/repos/o/r/commits/r/status", func(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +91,7 @@ func TestRepositoriesService_GetCombinedStatus(t *testing.T) {
 	})
 
 	opt := &ListOptions{Page: 2}
-	status, _, err := client.Repositories.GetCombinedStatus("o", "r", "r", opt)
+	status, _, err := client.Repositories.GetCombinedStatus(context.Background(), "o", "r", "r", opt)
 	if err != nil {
 		t.Errorf("Repositories.GetCombinedStatus returned error: %v", err)
 	}

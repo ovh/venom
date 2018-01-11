@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,10 +15,10 @@ import (
 )
 
 func TestProjectsService_UpdateProject(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
-	input := &ProjectOptions{Name: "Project Name", Body: "Project body."}
+	input := &ProjectOptions{Name: "Project Name", Body: "Project body.", State: "open"}
 
 	mux.HandleFunc("/projects/1", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "PATCH")
@@ -32,7 +33,7 @@ func TestProjectsService_UpdateProject(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	project, _, err := client.Projects.UpdateProject(1, input)
+	project, _, err := client.Projects.UpdateProject(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Projects.UpdateProject returned error: %v", err)
 	}
@@ -44,7 +45,7 @@ func TestProjectsService_UpdateProject(t *testing.T) {
 }
 
 func TestProjectsService_GetProject(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/1", func(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +54,7 @@ func TestProjectsService_GetProject(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	project, _, err := client.Projects.GetProject(1)
+	project, _, err := client.Projects.GetProject(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Projects.GetProject returned error: %v", err)
 	}
@@ -65,7 +66,7 @@ func TestProjectsService_GetProject(t *testing.T) {
 }
 
 func TestProjectsService_DeleteProject(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/1", func(w http.ResponseWriter, r *http.Request) {
@@ -73,14 +74,14 @@ func TestProjectsService_DeleteProject(t *testing.T) {
 		testHeader(t, r, "Accept", mediaTypeProjectsPreview)
 	})
 
-	_, err := client.Projects.DeleteProject(1)
+	_, err := client.Projects.DeleteProject(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Projects.DeleteProject returned error: %v", err)
 	}
 }
 
 func TestProjectsService_ListProjectColumns(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/1/columns", func(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +92,7 @@ func TestProjectsService_ListProjectColumns(t *testing.T) {
 	})
 
 	opt := &ListOptions{Page: 2}
-	columns, _, err := client.Projects.ListProjectColumns(1, opt)
+	columns, _, err := client.Projects.ListProjectColumns(context.Background(), 1, opt)
 	if err != nil {
 		t.Errorf("Projects.ListProjectColumns returned error: %v", err)
 	}
@@ -103,7 +104,7 @@ func TestProjectsService_ListProjectColumns(t *testing.T) {
 }
 
 func TestProjectsService_GetProjectColumn(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/columns/1", func(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +113,7 @@ func TestProjectsService_GetProjectColumn(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	column, _, err := client.Projects.GetProjectColumn(1)
+	column, _, err := client.Projects.GetProjectColumn(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Projects.GetProjectColumn returned error: %v", err)
 	}
@@ -124,7 +125,7 @@ func TestProjectsService_GetProjectColumn(t *testing.T) {
 }
 
 func TestProjectsService_CreateProjectColumn(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &ProjectColumnOptions{Name: "Column Name"}
@@ -142,7 +143,7 @@ func TestProjectsService_CreateProjectColumn(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	column, _, err := client.Projects.CreateProjectColumn(1, input)
+	column, _, err := client.Projects.CreateProjectColumn(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Projects.CreateProjectColumn returned error: %v", err)
 	}
@@ -154,7 +155,7 @@ func TestProjectsService_CreateProjectColumn(t *testing.T) {
 }
 
 func TestProjectsService_UpdateProjectColumn(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &ProjectColumnOptions{Name: "Column Name"}
@@ -172,7 +173,7 @@ func TestProjectsService_UpdateProjectColumn(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	column, _, err := client.Projects.UpdateProjectColumn(1, input)
+	column, _, err := client.Projects.UpdateProjectColumn(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Projects.UpdateProjectColumn returned error: %v", err)
 	}
@@ -184,7 +185,7 @@ func TestProjectsService_UpdateProjectColumn(t *testing.T) {
 }
 
 func TestProjectsService_DeleteProjectColumn(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/columns/1", func(w http.ResponseWriter, r *http.Request) {
@@ -192,14 +193,14 @@ func TestProjectsService_DeleteProjectColumn(t *testing.T) {
 		testHeader(t, r, "Accept", mediaTypeProjectsPreview)
 	})
 
-	_, err := client.Projects.DeleteProjectColumn(1)
+	_, err := client.Projects.DeleteProjectColumn(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Projects.DeleteProjectColumn returned error: %v", err)
 	}
 }
 
 func TestProjectsService_MoveProjectColumn(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &ProjectColumnMoveOptions{Position: "after:12345"}
@@ -215,14 +216,14 @@ func TestProjectsService_MoveProjectColumn(t *testing.T) {
 		}
 	})
 
-	_, err := client.Projects.MoveProjectColumn(1, input)
+	_, err := client.Projects.MoveProjectColumn(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Projects.MoveProjectColumn returned error: %v", err)
 	}
 }
 
 func TestProjectsService_ListProjectCards(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/columns/1/cards", func(w http.ResponseWriter, r *http.Request) {
@@ -233,7 +234,7 @@ func TestProjectsService_ListProjectCards(t *testing.T) {
 	})
 
 	opt := &ListOptions{Page: 2}
-	cards, _, err := client.Projects.ListProjectCards(1, opt)
+	cards, _, err := client.Projects.ListProjectCards(context.Background(), 1, opt)
 	if err != nil {
 		t.Errorf("Projects.ListProjectCards returned error: %v", err)
 	}
@@ -245,7 +246,7 @@ func TestProjectsService_ListProjectCards(t *testing.T) {
 }
 
 func TestProjectsService_GetProjectCard(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/columns/cards/1", func(w http.ResponseWriter, r *http.Request) {
@@ -254,7 +255,7 @@ func TestProjectsService_GetProjectCard(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	card, _, err := client.Projects.GetProjectCard(1)
+	card, _, err := client.Projects.GetProjectCard(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Projects.GetProjectCard returned error: %v", err)
 	}
@@ -266,7 +267,7 @@ func TestProjectsService_GetProjectCard(t *testing.T) {
 }
 
 func TestProjectsService_CreateProjectCard(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &ProjectCardOptions{
@@ -287,7 +288,7 @@ func TestProjectsService_CreateProjectCard(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	card, _, err := client.Projects.CreateProjectCard(1, input)
+	card, _, err := client.Projects.CreateProjectCard(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Projects.CreateProjectCard returned error: %v", err)
 	}
@@ -299,7 +300,7 @@ func TestProjectsService_CreateProjectCard(t *testing.T) {
 }
 
 func TestProjectsService_UpdateProjectCard(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &ProjectCardOptions{
@@ -320,7 +321,7 @@ func TestProjectsService_UpdateProjectCard(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	card, _, err := client.Projects.UpdateProjectCard(1, input)
+	card, _, err := client.Projects.UpdateProjectCard(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Projects.UpdateProjectCard returned error: %v", err)
 	}
@@ -332,7 +333,7 @@ func TestProjectsService_UpdateProjectCard(t *testing.T) {
 }
 
 func TestProjectsService_DeleteProjectCard(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/projects/columns/cards/1", func(w http.ResponseWriter, r *http.Request) {
@@ -340,14 +341,14 @@ func TestProjectsService_DeleteProjectCard(t *testing.T) {
 		testHeader(t, r, "Accept", mediaTypeProjectsPreview)
 	})
 
-	_, err := client.Projects.DeleteProjectCard(1)
+	_, err := client.Projects.DeleteProjectCard(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Projects.DeleteProjectCard returned error: %v", err)
 	}
 }
 
 func TestProjectsService_MoveProjectCard(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &ProjectCardMoveOptions{Position: "after:12345"}
@@ -363,7 +364,7 @@ func TestProjectsService_MoveProjectCard(t *testing.T) {
 		}
 	})
 
-	_, err := client.Projects.MoveProjectCard(1, input)
+	_, err := client.Projects.MoveProjectCard(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Projects.MoveProjectCard returned error: %v", err)
 	}

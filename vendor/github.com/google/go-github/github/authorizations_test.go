@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestAuthorizationsService_List(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/authorizations", func(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func TestAuthorizationsService_List(t *testing.T) {
 	})
 
 	opt := &ListOptions{Page: 1, PerPage: 2}
-	got, _, err := client.Authorizations.List(opt)
+	got, _, err := client.Authorizations.List(context.Background(), opt)
 	if err != nil {
 		t.Errorf("Authorizations.List returned error: %v", err)
 	}
@@ -36,7 +37,7 @@ func TestAuthorizationsService_List(t *testing.T) {
 }
 
 func TestAuthorizationsService_Get(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/authorizations/1", func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +45,7 @@ func TestAuthorizationsService_Get(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	got, _, err := client.Authorizations.Get(1)
+	got, _, err := client.Authorizations.Get(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Authorizations.Get returned error: %v", err)
 	}
@@ -56,7 +57,7 @@ func TestAuthorizationsService_Get(t *testing.T) {
 }
 
 func TestAuthorizationsService_Create(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &AuthorizationRequest{
@@ -75,7 +76,7 @@ func TestAuthorizationsService_Create(t *testing.T) {
 		fmt.Fprint(w, `{"ID":1}`)
 	})
 
-	got, _, err := client.Authorizations.Create(input)
+	got, _, err := client.Authorizations.Create(context.Background(), input)
 	if err != nil {
 		t.Errorf("Authorizations.Create returned error: %v", err)
 	}
@@ -87,7 +88,7 @@ func TestAuthorizationsService_Create(t *testing.T) {
 }
 
 func TestAuthorizationsService_GetOrCreateForApp(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &AuthorizationRequest{
@@ -106,7 +107,7 @@ func TestAuthorizationsService_GetOrCreateForApp(t *testing.T) {
 		fmt.Fprint(w, `{"ID":1}`)
 	})
 
-	got, _, err := client.Authorizations.GetOrCreateForApp("id", input)
+	got, _, err := client.Authorizations.GetOrCreateForApp(context.Background(), "id", input)
 	if err != nil {
 		t.Errorf("Authorizations.GetOrCreateForApp returned error: %v", err)
 	}
@@ -118,7 +119,7 @@ func TestAuthorizationsService_GetOrCreateForApp(t *testing.T) {
 }
 
 func TestAuthorizationsService_GetOrCreateForApp_Fingerprint(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &AuthorizationRequest{
@@ -138,7 +139,7 @@ func TestAuthorizationsService_GetOrCreateForApp_Fingerprint(t *testing.T) {
 		fmt.Fprint(w, `{"ID":1}`)
 	})
 
-	got, _, err := client.Authorizations.GetOrCreateForApp("id", input)
+	got, _, err := client.Authorizations.GetOrCreateForApp(context.Background(), "id", input)
 	if err != nil {
 		t.Errorf("Authorizations.GetOrCreateForApp returned error: %v", err)
 	}
@@ -150,7 +151,7 @@ func TestAuthorizationsService_GetOrCreateForApp_Fingerprint(t *testing.T) {
 }
 
 func TestAuthorizationsService_Edit(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	input := &AuthorizationUpdateRequest{
@@ -169,7 +170,7 @@ func TestAuthorizationsService_Edit(t *testing.T) {
 		fmt.Fprint(w, `{"ID":1}`)
 	})
 
-	got, _, err := client.Authorizations.Edit(1, input)
+	got, _, err := client.Authorizations.Edit(context.Background(), 1, input)
 	if err != nil {
 		t.Errorf("Authorizations.Edit returned error: %v", err)
 	}
@@ -181,7 +182,7 @@ func TestAuthorizationsService_Edit(t *testing.T) {
 }
 
 func TestAuthorizationsService_Delete(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/authorizations/1", func(w http.ResponseWriter, r *http.Request) {
@@ -189,14 +190,14 @@ func TestAuthorizationsService_Delete(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	_, err := client.Authorizations.Delete(1)
+	_, err := client.Authorizations.Delete(context.Background(), 1)
 	if err != nil {
 		t.Errorf("Authorizations.Delete returned error: %v", err)
 	}
 }
 
 func TestAuthorizationsService_Check(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/applications/id/tokens/t", func(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +205,7 @@ func TestAuthorizationsService_Check(t *testing.T) {
 		fmt.Fprint(w, `{"id":1}`)
 	})
 
-	got, _, err := client.Authorizations.Check("id", "t")
+	got, _, err := client.Authorizations.Check(context.Background(), "id", "t")
 	if err != nil {
 		t.Errorf("Authorizations.Check returned error: %v", err)
 	}
@@ -216,7 +217,7 @@ func TestAuthorizationsService_Check(t *testing.T) {
 }
 
 func TestAuthorizationsService_Reset(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/applications/id/tokens/t", func(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +225,7 @@ func TestAuthorizationsService_Reset(t *testing.T) {
 		fmt.Fprint(w, `{"ID":1}`)
 	})
 
-	got, _, err := client.Authorizations.Reset("id", "t")
+	got, _, err := client.Authorizations.Reset(context.Background(), "id", "t")
 	if err != nil {
 		t.Errorf("Authorizations.Reset returned error: %v", err)
 	}
@@ -236,7 +237,7 @@ func TestAuthorizationsService_Reset(t *testing.T) {
 }
 
 func TestAuthorizationsService_Revoke(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/applications/id/tokens/t", func(w http.ResponseWriter, r *http.Request) {
@@ -244,14 +245,14 @@ func TestAuthorizationsService_Revoke(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	_, err := client.Authorizations.Revoke("id", "t")
+	_, err := client.Authorizations.Revoke(context.Background(), "id", "t")
 	if err != nil {
 		t.Errorf("Authorizations.Revoke returned error: %v", err)
 	}
 }
 
 func TestListGrants(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/applications/grants", func(w http.ResponseWriter, r *http.Request) {
@@ -259,7 +260,7 @@ func TestListGrants(t *testing.T) {
 		fmt.Fprint(w, `[{"id": 1}]`)
 	})
 
-	got, _, err := client.Authorizations.ListGrants()
+	got, _, err := client.Authorizations.ListGrants(context.Background(), nil)
 	if err != nil {
 		t.Errorf("OAuthAuthorizations.ListGrants returned error: %v", err)
 	}
@@ -270,8 +271,26 @@ func TestListGrants(t *testing.T) {
 	}
 }
 
+func TestListGrants_withOptions(t *testing.T) {
+	client, mux, _, teardown := setup()
+	defer teardown()
+
+	mux.HandleFunc("/applications/grants", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "GET")
+		testFormValues(t, r, values{
+			"page": "2",
+		})
+		fmt.Fprint(w, `[{"id": 1}]`)
+	})
+
+	_, _, err := client.Authorizations.ListGrants(context.Background(), &ListOptions{Page: 2})
+	if err != nil {
+		t.Errorf("OAuthAuthorizations.ListGrants returned error: %v", err)
+	}
+}
+
 func TestGetGrant(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/applications/grants/1", func(w http.ResponseWriter, r *http.Request) {
@@ -279,7 +298,7 @@ func TestGetGrant(t *testing.T) {
 		fmt.Fprint(w, `{"id": 1}`)
 	})
 
-	got, _, err := client.Authorizations.GetGrant(1)
+	got, _, err := client.Authorizations.GetGrant(context.Background(), 1)
 	if err != nil {
 		t.Errorf("OAuthAuthorizations.GetGrant returned error: %v", err)
 	}
@@ -291,21 +310,21 @@ func TestGetGrant(t *testing.T) {
 }
 
 func TestDeleteGrant(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/applications/grants/1", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "DELETE")
 	})
 
-	_, err := client.Authorizations.DeleteGrant(1)
+	_, err := client.Authorizations.DeleteGrant(context.Background(), 1)
 	if err != nil {
 		t.Errorf("OAuthAuthorizations.DeleteGrant returned error: %v", err)
 	}
 }
 
 func TestAuthorizationsService_CreateImpersonation(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/admin/users/u/authorizations", func(w http.ResponseWriter, r *http.Request) {
@@ -314,7 +333,7 @@ func TestAuthorizationsService_CreateImpersonation(t *testing.T) {
 	})
 
 	req := &AuthorizationRequest{Scopes: []Scope{ScopePublicRepo}}
-	got, _, err := client.Authorizations.CreateImpersonation("u", req)
+	got, _, err := client.Authorizations.CreateImpersonation(context.Background(), "u", req)
 	if err != nil {
 		t.Errorf("Authorizations.CreateImpersonation returned error: %+v", err)
 	}
@@ -326,14 +345,14 @@ func TestAuthorizationsService_CreateImpersonation(t *testing.T) {
 }
 
 func TestAuthorizationsService_DeleteImpersonation(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/admin/users/u/authorizations", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "DELETE")
 	})
 
-	_, err := client.Authorizations.DeleteImpersonation("u")
+	_, err := client.Authorizations.DeleteImpersonation(context.Background(), "u")
 	if err != nil {
 		t.Errorf("Authorizations.DeleteImpersonation returned error: %+v", err)
 	}

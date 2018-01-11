@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestActivityService_ListStargazers(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/repos/o/r/stargazers", func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +28,7 @@ func TestActivityService_ListStargazers(t *testing.T) {
 		fmt.Fprint(w, `[{"starred_at":"2002-02-10T15:30:00Z","user":{"id":1}}]`)
 	})
 
-	stargazers, _, err := client.Activity.ListStargazers("o", "r", &ListOptions{Page: 2})
+	stargazers, _, err := client.Activity.ListStargazers(context.Background(), "o", "r", &ListOptions{Page: 2})
 	if err != nil {
 		t.Errorf("Activity.ListStargazers returned error: %v", err)
 	}
@@ -39,7 +40,7 @@ func TestActivityService_ListStargazers(t *testing.T) {
 }
 
 func TestActivityService_ListStarred_authenticatedUser(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/user/starred", func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +49,7 @@ func TestActivityService_ListStarred_authenticatedUser(t *testing.T) {
 		fmt.Fprint(w, `[{"starred_at":"2002-02-10T15:30:00Z","repo":{"id":1}}]`)
 	})
 
-	repos, _, err := client.Activity.ListStarred("", nil)
+	repos, _, err := client.Activity.ListStarred(context.Background(), "", nil)
 	if err != nil {
 		t.Errorf("Activity.ListStarred returned error: %v", err)
 	}
@@ -60,7 +61,7 @@ func TestActivityService_ListStarred_authenticatedUser(t *testing.T) {
 }
 
 func TestActivityService_ListStarred_specifiedUser(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/users/u/starred", func(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +76,7 @@ func TestActivityService_ListStarred_specifiedUser(t *testing.T) {
 	})
 
 	opt := &ActivityListStarredOptions{"created", "asc", ListOptions{Page: 2}}
-	repos, _, err := client.Activity.ListStarred("u", opt)
+	repos, _, err := client.Activity.ListStarred(context.Background(), "u", opt)
 	if err != nil {
 		t.Errorf("Activity.ListStarred returned error: %v", err)
 	}
@@ -87,12 +88,15 @@ func TestActivityService_ListStarred_specifiedUser(t *testing.T) {
 }
 
 func TestActivityService_ListStarred_invalidUser(t *testing.T) {
-	_, _, err := client.Activity.ListStarred("%", nil)
+	client, _, _, teardown := setup()
+	defer teardown()
+
+	_, _, err := client.Activity.ListStarred(context.Background(), "%", nil)
 	testURLParseError(t, err)
 }
 
 func TestActivityService_IsStarred_hasStar(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/user/starred/o/r", func(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +104,7 @@ func TestActivityService_IsStarred_hasStar(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	star, _, err := client.Activity.IsStarred("o", "r")
+	star, _, err := client.Activity.IsStarred(context.Background(), "o", "r")
 	if err != nil {
 		t.Errorf("Activity.IsStarred returned error: %v", err)
 	}
@@ -110,7 +114,7 @@ func TestActivityService_IsStarred_hasStar(t *testing.T) {
 }
 
 func TestActivityService_IsStarred_noStar(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/user/starred/o/r", func(w http.ResponseWriter, r *http.Request) {
@@ -118,7 +122,7 @@ func TestActivityService_IsStarred_noStar(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
-	star, _, err := client.Activity.IsStarred("o", "r")
+	star, _, err := client.Activity.IsStarred(context.Background(), "o", "r")
 	if err != nil {
 		t.Errorf("Activity.IsStarred returned error: %v", err)
 	}
@@ -128,44 +132,53 @@ func TestActivityService_IsStarred_noStar(t *testing.T) {
 }
 
 func TestActivityService_IsStarred_invalidID(t *testing.T) {
-	_, _, err := client.Activity.IsStarred("%", "%")
+	client, _, _, teardown := setup()
+	defer teardown()
+
+	_, _, err := client.Activity.IsStarred(context.Background(), "%", "%")
 	testURLParseError(t, err)
 }
 
 func TestActivityService_Star(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/user/starred/o/r", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "PUT")
 	})
 
-	_, err := client.Activity.Star("o", "r")
+	_, err := client.Activity.Star(context.Background(), "o", "r")
 	if err != nil {
 		t.Errorf("Activity.Star returned error: %v", err)
 	}
 }
 
 func TestActivityService_Star_invalidID(t *testing.T) {
-	_, err := client.Activity.Star("%", "%")
+	client, _, _, teardown := setup()
+	defer teardown()
+
+	_, err := client.Activity.Star(context.Background(), "%", "%")
 	testURLParseError(t, err)
 }
 
 func TestActivityService_Unstar(t *testing.T) {
-	setup()
+	client, mux, _, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/user/starred/o/r", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "DELETE")
 	})
 
-	_, err := client.Activity.Unstar("o", "r")
+	_, err := client.Activity.Unstar(context.Background(), "o", "r")
 	if err != nil {
 		t.Errorf("Activity.Unstar returned error: %v", err)
 	}
 }
 
 func TestActivityService_Unstar_invalidID(t *testing.T) {
-	_, err := client.Activity.Unstar("%", "%")
+	client, _, _, teardown := setup()
+	defer teardown()
+
+	_, err := client.Activity.Unstar(context.Background(), "%", "%")
 	testURLParseError(t, err)
 }
