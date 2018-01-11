@@ -149,6 +149,7 @@
   revision = "eb9bbb66bd7bb6b40517b5423ce45f370325d67c"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -157,12 +158,15 @@
     "ssh",
     "ssh/terminal"
   ]
-  revision = "3ded668c5379f6951fb0de06174442072e5447d3"
+  revision = "5f55bce93ad2c89f411e009659bb1fd83da36e7b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "810d7000345868fc619eb81f46307107118f4ae1"
 
 [[projects]]
