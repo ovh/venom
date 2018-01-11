@@ -48,12 +48,13 @@
   version = "v1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/lib/pq"
   packages = [
     ".",
     "oid"
   ]
-  revision = "8df6253d1317616f36b0c3740eb30c239a7372cb"
+  revision = "83612a56d3dd153a94a629cd64925371c9adad78"
 
 [[projects]]
   name = "github.com/mattn/go-runewidth"
