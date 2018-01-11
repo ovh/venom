@@ -57,9 +57,10 @@
   revision = "83612a56d3dd153a94a629cd64925371c9adad78"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
-  revision = "737072b4e32b7a5018b4a7125da8d12de90e8045"
+  revision = "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d"
 
 [[projects]]
   name = "github.com/mattn/go-zglob"
@@ -184,6 +185,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2974587c9d071bd2cd1ba220098ecc930f5ffc474ce029addf4ea590228b175a"
+  inputs-digest = "f925f348be67c721b9c63dcc6acf2d1cfb251073560fb01f95bdc100a076fc26"
   solver-name = "gps-cdcl"
   solver-version = 1

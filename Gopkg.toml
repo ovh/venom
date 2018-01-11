@@ -39,3 +39,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/go-sql-driver/mysql"
+
+[[override]]
+  branch = "master"
+  name = "github.com/mattn/go-runewidth"
