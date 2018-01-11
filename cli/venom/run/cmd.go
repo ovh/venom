@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/hcl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
@@ -47,7 +48,7 @@ var (
 
 func init() {
 	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
-	Cmd.Flags().StringVarP(&varFile, "var-from-file", "", "", "--var-from-file filename.yaml : yaml|json, must contains map[string]string'")
+	Cmd.Flags().StringVarP(&varFile, "var-from-file", "", "", "--var-from-file filename.yaml : hcl|json|yaml, must contains map[string]string'")
 	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
@@ -119,6 +120,8 @@ var Cmd = &cobra.Command{
 				log.Fatal(err)
 			}
 			switch filepath.Ext(varFile) {
+			case ".hcl":
+				err = hcl.Unmarshal(bytes, &varFileMap)
 			case ".json":
 				err = json.Unmarshal(bytes, &varFileMap)
 			case ".yaml", ".yml":
