@@ -111,7 +111,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "61e43dc76f7ee59a82bdf3d71033dc12bea4c77d"
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   name = "github.com/smartystreets/assertions"
@@ -149,7 +150,8 @@
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
-    "ssh"
+    "ssh",
+    "ssh/terminal"
   ]
   revision = "3ded668c5379f6951fb0de06174442072e5447d3"
 
