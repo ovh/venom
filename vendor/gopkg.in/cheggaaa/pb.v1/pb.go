@@ -13,7 +13,7 @@ import (
 )
 
 // Current version
-const Version = "1.0.18"
+const Version = "1.0.19"
 
 const (
 	// Default refresh rate - 200ms
@@ -466,11 +466,4 @@ func (pb *ProgressBar) refresher() {
 			pb.Update()
 		}
 	}
-}
-
-type window struct {
-	Row    uint16
-	Col    uint16
-	Xpixel uint16
-	Ypixel uint16
 }
