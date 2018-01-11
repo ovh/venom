@@ -78,9 +78,10 @@
   revision = "b4575eea38cca1123ec2dc90c26529b5c5acfcff"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mndrix/tap-go"
   packages = ["."]
-  revision = "56cca451570bb0366b29f30e1aeb5cf9736a1e18"
+  revision = "629fa407e90bbf3781e448e8e9b8931523ec823c"
 
 [[projects]]
   name = "github.com/ovh/go-ovh"

@@ -151,3 +151,15 @@ func (t *T) Diagnostic(message string) {
 func (t *T) Diagnosticf(format string, a ...interface{}) {
 	t.printf("# "+escapeNewlines(format)+"\n", a...)
 }
+
+// YAML generates a YAML block from the message.
+func (t *T) YAML(message interface{}) error {
+	bytes, err := yaml(message, "  ")
+	if err != nil {
+		return err
+	}
+	t.printf("  ---\n  ")
+	t.printf(string(bytes))
+	t.printf("  ...\n")
+	return nil
+}
