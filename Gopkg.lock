@@ -121,7 +121,8 @@
     "internal/go-render/render",
     "internal/oglematchers"
   ]
-  revision = "26acb9229f421449ac63d014995b282d59261a8b"
+  revision = "0b37b35ec7434b77e77a4bb29b79677cced992ea"
+  version = "1.8.1"
 
 [[projects]]
   name = "github.com/spf13/cobra"
