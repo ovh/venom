@@ -55,3 +55,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/spf13/cobra"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/pkg/errors"
