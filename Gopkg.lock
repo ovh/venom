@@ -84,9 +84,10 @@
   revision = "629fa407e90bbf3781e448e8e9b8931523ec823c"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ovh/go-ovh"
   packages = ["ovh"]
-  revision = "9b82ad5024f2ea77be20acc378d1f2ee0d59d4dd"
+  revision = "02f7e9439689eda7ce4752c7f37e50cb678f2679"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"

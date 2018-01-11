@@ -93,10 +93,10 @@ func TestAddRules(t *testing.T) {
 	ckRequest := client.NewCkRequest()
 	ckRequest.AddRecursiveRules(ReadWrite, "/")
 	ExpectedRules := []AccessRule{
-		AccessRule{Method: "GET", Path: "/*"},
-		AccessRule{Method: "POST", Path: "/*"},
-		AccessRule{Method: "PUT", Path: "/*"},
-		AccessRule{Method: "DELETE", Path: "/*"},
+		{Method: "GET", Path: "/*"},
+		{Method: "POST", Path: "/*"},
+		{Method: "PUT", Path: "/*"},
+		{Method: "DELETE", Path: "/*"},
 	}
 	if !reflect.DeepEqual(ckRequest.AccessRules, ExpectedRules) {
 		t.Fatalf("Inserting recursive RW rules for / should generate %v. Got %v", ExpectedRules, ckRequest.AccessRules)
@@ -106,7 +106,7 @@ func TestAddRules(t *testing.T) {
 	ckRequest = client.NewCkRequest()
 	ckRequest.AddRules(ReadOnly, "/sms")
 	ExpectedRules = []AccessRule{
-		AccessRule{Method: "GET", Path: "/sms"},
+		{Method: "GET", Path: "/sms"},
 	}
 	if !reflect.DeepEqual(ckRequest.AccessRules, ExpectedRules) {
 		t.Fatalf("Inserting RO rule for /sms should generate %v. Got %v", ExpectedRules, ckRequest.AccessRules)
@@ -116,13 +116,13 @@ func TestAddRules(t *testing.T) {
 	ckRequest = client.NewCkRequest()
 	ckRequest.AddRecursiveRules(ReadWriteSafe, "/sms")
 	ExpectedRules = []AccessRule{
-		AccessRule{Method: "GET", Path: "/sms"},
-		AccessRule{Method: "POST", Path: "/sms"},
-		AccessRule{Method: "PUT", Path: "/sms"},
+		{Method: "GET", Path: "/sms"},
+		{Method: "POST", Path: "/sms"},
+		{Method: "PUT", Path: "/sms"},
 
-		AccessRule{Method: "GET", Path: "/sms/*"},
-		AccessRule{Method: "POST", Path: "/sms/*"},
-		AccessRule{Method: "PUT", Path: "/sms/*"},
+		{Method: "GET", Path: "/sms/*"},
+		{Method: "POST", Path: "/sms/*"},
+		{Method: "PUT", Path: "/sms/*"},
 	}
 	if !reflect.DeepEqual(ckRequest.AccessRules, ExpectedRules) {
 		t.Fatalf("Inserting recursive safe RW rule for /sms should generate %v. Got %v", ExpectedRules, ckRequest.AccessRules)

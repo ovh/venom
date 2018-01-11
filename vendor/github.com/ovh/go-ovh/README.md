@@ -6,7 +6,7 @@ Lightweight Go wrapper around OVH's APIs. Handles all the hard work including cr
 [![GoDoc](https://godoc.org/github.com/ovh/go-ovh/go-ovh?status.svg)](http://godoc.org/github.com/ovh/go-ovh/ovh)
 [![Build Status](https://travis-ci.org/ovh/go-ovh.svg?branch=master)](https://travis-ci.org/ovh/go-ovh)
 [![Coverage Status](https://coveralls.io/repos/github/ovh/go-ovh/badge.svg?branch=master)](https://coveralls.io/github/ovh/go-ovh?branch=master)
-[![Go Report Card](http://goreportcard.com/badge/ovh/go-ovh)](http://goreportcard.com/report/ovh/go-ovh)
+[![Go Report Card](https://goreportcard.com/badge/ovh/go-ovh)](http://goreportcard.com/report/ovh/go-ovh)
 
 ```go
 package main
