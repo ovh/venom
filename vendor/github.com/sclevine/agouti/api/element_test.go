@@ -386,4 +386,29 @@ var _ = Describe("Element", func() {
 			})
 		})
 	})
+
+	Describe("#GetSize", func() {
+		It("should successfully send a GET request to the size endpoint", func() {
+			_, _, err := element.GetSize()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(bus.SendCall.Method).To(Equal("GET"))
+			Expect(bus.SendCall.Endpoint).To(Equal("element/some-id/size"))
+		})
+
+		It("should return the rounded size of the element", func() {
+			bus.SendCall.Result = `{"width": 100.7, "height": 200}`
+			width, height, err := element.GetSize()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(width).To(Equal(101))
+			Expect(height).To(Equal(200))
+		})
+
+		Context("when the bus indicates a failure", func() {
+			It("should return an error indicating the bus failed to retrieve the location", func() {
+				bus.SendCall.Err = errors.New("some error")
+				_, _, err := element.GetSize()
+				Expect(err).To(MatchError("some error"))
+			})
+		})
+	})
 })

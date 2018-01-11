@@ -63,6 +63,17 @@ var _ = Describe("Options", func() {
 		})
 	})
 
+	Describe("#ChromeOptions", func() {
+		It("should return an Option with ChromeOptions set", func() {
+			config := NewTestConfig()
+			ChromeOptions("args", []string{"v1", "v2"})(config)
+			Expect(config.ChromeOptions["args"]).To(Equal([]string{"v1", "v2"}))
+			ChromeOptions("other", "value")(config)
+			Expect(config.ChromeOptions["args"]).To(Equal([]string{"v1", "v2"}))
+			Expect(config.ChromeOptions["other"]).To(Equal("value"))
+		})
+	})
+
 	Describe("#Merge", func() {
 		It("should apply any provided options to an existing config", func() {
 			config := NewTestConfig()
@@ -85,6 +96,10 @@ var _ = Describe("Options", func() {
 			RejectInvalidSSL(config)
 			Expect(config.Capabilities()["browserName"]).To(Equal("some other browser"))
 			Expect(config.Capabilities()["acceptSslCerts"]).To(BeFalse())
+			ChromeOptions("args", "someArg")(config)
+			Expect(config.Capabilities()["chromeOptions"]).To(
+				Equal(map[string]interface{}{"args": "someArg"}),
+			)
 		})
 	})
 })

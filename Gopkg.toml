@@ -43,3 +43,7 @@
 [[override]]
   branch = "master"
   name = "github.com/mattn/go-runewidth"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/sclevine/agouti"

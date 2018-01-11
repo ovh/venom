@@ -96,6 +96,7 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/sclevine/agouti"
   packages = [
     ".",
@@ -105,7 +106,7 @@
     "internal/element",
     "internal/target"
   ]
-  revision = "da6ce95d89acab048b648c71fb45b57622d3457e"
+  revision = "8cf0313221cb2c26a4059f8e273c0856b4cb091d"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -189,6 +190,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f925f348be67c721b9c63dcc6acf2d1cfb251073560fb01f95bdc100a076fc26"
+  inputs-digest = "76c6dcd2a8a7e7d956df63e36e1479018e81ce6856e7373eae4b70154e1d6120"
   solver-name = "gps-cdcl"
   solver-version = 1
