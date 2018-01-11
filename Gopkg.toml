@@ -51,3 +51,7 @@
 [[override]]
   branch = "master"
   name = "github.com/spf13/pflag"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/spf13/cobra"
