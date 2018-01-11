@@ -33,9 +33,5 @@
   name = "github.com/yesnault/go-imap"
 
 [[constraint]]
-  name = "gopkg.in/cheggaaa/pb.v1"
-  version = "1.0.18"
-
-[[constraint]]
   name = "gopkg.in/testfixtures.v2"
   version = "2.4.2"
