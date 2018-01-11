@@ -63,12 +63,13 @@
   revision = "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d"
 
 [[projects]]
+  branch = "master"
   name = "github.com/mattn/go-zglob"
   packages = [
     ".",
     "fastwalk"
   ]
-  revision = "95345c4e1c0ebc9d16a3284177f09360f4d20fab"
+  revision = "4959821b481786922ac53e7ef25c61ae19fb7c36"
 
 [[projects]]
   name = "github.com/mitchellh/mapstructure"
