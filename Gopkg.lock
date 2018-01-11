@@ -185,8 +185,8 @@
 [[projects]]
   name = "gopkg.in/testfixtures.v2"
   packages = ["."]
-  revision = "e34263135c9fc3e6710268b1ba3a9b73fb7104d2"
-  version = "v2.4.2"
+  revision = "f79bf941e2785516a66bcf4de9a21b0b827ed716"
+  version = "v2.4.3"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
