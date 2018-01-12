@@ -218,7 +218,7 @@ var getEndpointForSignature = func(c *Client) string {
 	return c.endpoint
 }
 
-// NewRequest constructs a request for OVH api
+// NewRequest returns a new HTTP request
 func (c *Client) NewRequest(method, path string, reqBody interface{}, needAuth bool) (*http.Request, error) {
 	var body []byte
 	var err error
@@ -275,7 +275,7 @@ func (c *Client) NewRequest(method, path string, reqBody interface{}, needAuth b
 	return req, nil
 }
 
-// Do a request and unmarshall response into resType
+// Do sends an HTTP request and returns an HTTP response
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.Client.Do(req)
 }
@@ -311,8 +311,8 @@ func (c *Client) CallAPI(method, path string, reqBody, resType interface{}, need
 
 }
 
-// UnmarshalResponse check the response and unmarshals it into the response type if needed.
-// Helper function, called from CallAPI.
+// UnmarshalResponse checks the response and unmarshals it into the response
+// type if needed Helper function, called from CallAPI
 func (c *Client) UnmarshalResponse(response *http.Response, resType interface{}) error {
 	// Read all the response body
 	defer response.Body.Close()

@@ -1,6 +1,7 @@
 package update
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -26,7 +27,7 @@ var Cmd = &cobra.Command{
 
 func getURLArtifactFromGithub(architecture string) string {
 	client := github.NewClient(nil)
-	release, resp, err := client.Repositories.GetLatestRelease("ovh", "venom")
+	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "ovh", "venom")
 	if err != nil {
 		cli.Exit("Repositories.GetLatestRelease returned error: %v\n%v", err, resp.Body)
 	}
