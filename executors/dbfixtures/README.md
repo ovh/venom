@@ -12,12 +12,14 @@ In your yaml file, you declare tour step like this
   - database mandatory [mysql/postgres]
   - dsn mandatory
   - schemas optional
+  - migrations optional
   - files optional
   - folder optional
  ```
 
 - `schemas` is a list of paths to several `.sql` file that contains the schemas of the tables in your database. If specified, the content of every file will be executed before loading the fixtures.
 - `files` parameter is only used as a fallback if `folder` is not used.
+- `migrations` is a folder path that contains SQL migrations files that can be used to initialize the database, instead of a list of schemas. **Note that if `schemas` is not empty, it will have precedence and migrations files will be ignored.**
 
 Example usage (_mysql_):
 ```yaml

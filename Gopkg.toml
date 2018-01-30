@@ -59,3 +59,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/pkg/errors"
+
+[[constraint]]
+  name = "gopkg.in/gorp.v1"
+  version = "1.7.1"
