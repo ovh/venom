@@ -1,0 +1,21 @@
+-- +migrate Up
+
+CREATE TABLE posts (
+	id SERIAL PRIMARY KEY
+	,title VARCHAR(255) NOT NULL
+	,content TEXT NOT NULL
+	,created_at TIMESTAMP NOT NULL
+	,updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE tags (
+	id SERIAL PRIMARY KEY
+	,name VARCHAR(255) NOT NULL
+	,created_at TIMESTAMP NOT NULL
+	,updated_at TIMESTAMP NOT NULL
+);
+
+-- +migrate Down
+
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS tags;

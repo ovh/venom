@@ -34,27 +34,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/hashicorp/hcl"
-  packages = [
-    ".",
-    "hcl/ast",
-    "hcl/parser",
-    "hcl/scanner",
-    "hcl/strconv",
-    "hcl/token",
-    "json/parser",
-    "json/scanner",
-    "json/token"
-  ]
+  packages = [".","hcl/ast","hcl/parser","hcl/scanner","hcl/strconv","hcl/token","json/parser","json/scanner","json/token"]
   revision = "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8"
 
 [[projects]]
   branch = "master"
   name = "github.com/inconshreveable/go-update"
-  packages = [
-    ".",
-    "internal/binarydist",
-    "internal/osext"
-  ]
+  packages = [".","internal/binarydist","internal/osext"]
   revision = "8152e7eb6ccf8679a64582a66b78519688d156ad"
 
 [[projects]]
@@ -66,10 +52,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/lib/pq"
-  packages = [
-    ".",
-    "oid"
-  ]
+  packages = [".","oid"]
   revision = "83612a56d3dd153a94a629cd64925371c9adad78"
 
 [[projects]]
@@ -81,10 +64,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/mattn/go-zglob"
-  packages = [
-    ".",
-    "fastwalk"
-  ]
+  packages = [".","fastwalk"]
   revision = "4959821b481786922ac53e7ef25c61ae19fb7c36"
 
 [[projects]]
@@ -119,15 +99,14 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/rubenv/sql-migrate"
+  packages = [".","sqlparse"]
+  revision = "41bceb11e8a7d3933c55dbd23d74b2c5ff1e68b9"
+
+[[projects]]
+  branch = "master"
   name = "github.com/sclevine/agouti"
-  packages = [
-    ".",
-    "api",
-    "api/internal/bus",
-    "api/internal/service",
-    "internal/element",
-    "internal/target"
-  ]
+  packages = [".","api","api/internal/bus","api/internal/service","internal/element","internal/target"]
   revision = "8cf0313221cb2c26a4059f8e273c0856b4cb091d"
 
 [[projects]]
@@ -138,11 +117,7 @@
 
 [[projects]]
   name = "github.com/smartystreets/assertions"
-  packages = [
-    ".",
-    "internal/go-render/render",
-    "internal/oglematchers"
-  ]
+  packages = [".","internal/go-render/render","internal/oglematchers"]
   revision = "0b37b35ec7434b77e77a4bb29b79677cced992ea"
   version = "1.8.1"
 
@@ -173,22 +148,13 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "curve25519",
-    "ed25519",
-    "ed25519/internal/edwards25519",
-    "ssh",
-    "ssh/terminal"
-  ]
+  packages = ["curve25519","ed25519","ed25519/internal/edwards25519","ssh","ssh/terminal"]
   revision = "5f55bce93ad2c89f411e009659bb1fd83da36e7b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix","windows"]
   revision = "810d7000345868fc619eb81f46307107118f4ae1"
 
 [[projects]]
@@ -202,6 +168,12 @@
   packages = ["."]
   revision = "18d384da9bdc1e5a08fc2a62a494c321d9ae74ea"
   version = "v1.0.19"
+
+[[projects]]
+  name = "gopkg.in/gorp.v1"
+  packages = ["."]
+  revision = "c87af80f3cc5036b55b83d77171e156791085e2e"
+  version = "v1.7.1"
 
 [[projects]]
   name = "gopkg.in/ini.v1"
@@ -224,6 +196,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4c0ea5f7313214eafe5f87c0766422cc73da054db0be193196347246b4bc0079"
+  inputs-digest = "f65a0c4d48b20843720df5c06546c19cd318c76deb88b93d144fc8c8d5dc60a4"
   solver-name = "gps-cdcl"
   solver-version = 1
