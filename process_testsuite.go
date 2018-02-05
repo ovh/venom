@@ -29,9 +29,9 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 
 	var o string
 	if ts.Failures > 0 || ts.Errors > 0 {
-		o = fmt.Sprintf("❌ %s", rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("FAILURE %s", rightPad(ts.Package, " ", 47))
 	} else {
-		o = fmt.Sprintf("✅ %s", rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("SUCCESS %s", rightPad(ts.Package, " ", 47))
 	}
 	if v.OutputDetails == DetailsLow {
 		o += fmt.Sprintf("%s", elapsed)
