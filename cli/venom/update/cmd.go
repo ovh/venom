@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime"
+	"strings"
 
 	"github.com/google/go-github/github"
 	"github.com/inconshreveable/go-update"
@@ -11,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// used by CI to inject architecture (linux-amd64, etc...) at build time
-var architecture string
 var urlGitubReleases = "https://github.com/ovh/venom/releases"
 
 // Cmd update
@@ -21,11 +21,11 @@ var Cmd = &cobra.Command{
 	Short: "Update venom to the latest release version: venom update",
 	Long:  `venom update`,
 	Run: func(cmd *cobra.Command, args []string) {
-		doUpdate("", architecture)
+		doUpdate()
 	},
 }
 
-func getURLArtifactFromGithub(architecture string) string {
+func getURLArtifactFromGithub() string {
 	client := github.NewClient(nil)
 	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "ovh", "venom")
 	if err != nil {
@@ -34,7 +34,9 @@ func getURLArtifactFromGithub(architecture string) string {
 
 	if len(release.Assets) > 0 {
 		for _, asset := range release.Assets {
-			if *asset.Name == "venom-"+architecture {
+			assetName := strings.Replace(*asset.Name, ".", "-", -1)
+			current := fmt.Sprintf("venom-%s-%s", runtime.GOOS, runtime.GOARCH)
+			if assetName == current {
 				return *asset.BrowserDownloadURL
 			}
 		}
@@ -55,14 +57,8 @@ func getContentType(resp *http.Response) string {
 	return ""
 }
 
-func doUpdate(baseurl, architecture string) {
-	if architecture == "" {
-		text := "You seem to have a custom build of venom.\n"
-		text += "Please download latest release on %s\n"
-		cli.Exit(text, urlGitubReleases)
-	}
-
-	url := getURLArtifactFromGithub(architecture)
+func doUpdate() {
+	url := getURLArtifactFromGithub()
 	fmt.Printf("Url to update venom: %s\n", url)
 
 	resp, err := http.Get(url)
@@ -79,7 +75,7 @@ func doUpdate(baseurl, architecture string) {
 		cli.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, url)
 	}
 
-	fmt.Printf("Getting latest release from : %s ...\n", url)
+	fmt.Printf("Getting latest release from: %s ...\n", url)
 	defer resp.Body.Close()
 	if err = update.Apply(resp.Body, update.Options{}); err != nil {
 		cli.Exit("Error when updating venom from url: %s err:%s\n", url, err.Error())
