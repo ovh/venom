@@ -9,5 +9,6 @@ for DIST in `go tool dist list | grep -v '^android/' | grep -v '^nacl/' | grep -
     echo "Building ${architecture} ${path}"
     export GOOS=$GOOS
     export GOARCH=$GOARCH
-    go build -ldflags "-X github.com/ovh/venom/cli/venom/update.architecture=${architecture}" -o bin/venom.${architecture}
+
+    go build -ldflags "-X github.com/ovh/venom.Version=${GIT_DESCRIBE}" -o bin/venom.${architecture}
 done
