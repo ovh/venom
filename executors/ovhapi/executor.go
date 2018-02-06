@@ -135,17 +135,12 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		l.Warnf("fail to read headers from context : '%s'", err)
 	}
 	for key, value := range contextHeader {
-		req.Header.Add(key, value)
+		req.Header.Set(key, value)
 	}
 
 	if e.Headers != nil {
 		for key := range e.Headers {
-			req.Header.Add(key, e.Headers[key])
-		}
-	}
-	if e.Headers != nil {
-		for key := range e.Headers {
-			req.Header.Add(key, e.Headers[key])
+			req.Header.Set(key, e.Headers[key])
 		}
 	}
 
