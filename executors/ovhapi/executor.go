@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -47,6 +48,7 @@ type Result struct {
 	Body        string      `json:"body,omitempty" yaml:"body,omitempty"`
 	BodyJSON    interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
+	Headers     Headers     `json:"headers" yaml:"headers"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -149,6 +151,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	r.Headers = Headers{}
+	for k, v := range resp.Header {
+		r.Headers[k] = strings.Join(v, ",")
 	}
 
 	res := new(interface{})
