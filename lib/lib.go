@@ -7,12 +7,15 @@ import (
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
+	redisctx "github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
+
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/readfile"
+	"github.com/ovh/venom/executors/redis"
 	"github.com/ovh/venom/executors/smtp"
 	"github.com/ovh/venom/executors/ssh"
 	"github.com/ovh/venom/executors/web"
@@ -76,6 +79,9 @@ func TestCase(t *testing.T, name string, variables map[string]string) *T {
 	v.RegisterExecutor(smtp.Name, smtp.New())
 	v.RegisterExecutor(ssh.Name, ssh.New())
 	v.RegisterExecutor(web.Name, web.New())
+	v.RegisterExecutor(redis.Name, redis.New())
+
+	v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
 	v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
 	v.RegisterTestCaseContext(webctx.Name, webctx.New())
 
