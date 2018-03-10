@@ -1,6 +1,7 @@
 name: My Redis testsuite
 testcases:
 - name: Commands_Test_Case
+  description: Test commands property
   context:
     dialURL: "redis://localhost:6379/0"
     type: redis
@@ -17,11 +18,6 @@ testcases:
         - result.commands.commands0.response ShouldEqual OK
         - result.commands.commands1.response ShouldEqual bar
         - result.commands.commands2.response.response0 ShouldEqual foo
-  - type: redis
-    commands:
-        - UNKNOWN_COMMAND
-    assertions:
-        - result.commands.commands0.response ShouldEqual foo
 - name: File_Test_Case
   context:
       dialURL: "redis://localhost:6379/0"
