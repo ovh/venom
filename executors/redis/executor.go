@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/garyburd/redigo/redis"
+	shellwords "github.com/mattn/go-shellwords"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
 	redisCtx "github.com/ovh/venom/context/redis"
@@ -80,11 +80,15 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		if commands[i] == "" {
 			continue
 		}
-		name, args := getCommandDetails(commands[i])
+		name, args, err := getCommandDetails(commands[i])
+		if err != nil {
+			return nil, err
+		}
 
 		res, err := ctx.Client.Do(name, args...)
+
 		if err != nil {
-			arg := fmt.Sprint(args...)
+			arg := fmt.Sprint(args)
 			return nil, fmt.Errorf("redis executor failed to execute command %s %s : %s", name, arg, res)
 		}
 
@@ -100,13 +104,19 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	return executors.Dump(result)
 }
 
-func getCommandDetails(command string) (name string, args []interface{}) {
-	cmd := strings.Fields(command)
+func getCommandDetails(command string) (name string, arg []interface{}, err error) {
+
+	cmd, err := shellwords.Parse(command)
+	if err != nil {
+		return "", nil, err
+	}
+
 	name = cmd[0]
 	arguments := append(cmd[:0], cmd[1:]...)
-	args = sliceStringToSliceInterface(arguments)
 
-	return name, args
+	args := sliceStringToSliceInterface(arguments)
+
+	return name, args, nil
 }
 
 func sliceStringToSliceInterface(args []string) []interface{} {

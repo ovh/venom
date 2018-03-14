@@ -86,6 +86,12 @@
   revision = "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d"
 
 [[projects]]
+  name = "github.com/mattn/go-shellwords"
+  packages = ["."]
+  revision = "02e3cf038dcea8290e44424da473dd12be796a8a"
+  version = "v1.0.3"
+
+[[projects]]
   branch = "master"
   name = "github.com/mattn/go-zglob"
   packages = [".","fastwalk"]
@@ -220,6 +226,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0bfe24c2b2e59efc22a140a0c1f2c865ed70b17e4073660ef7658a3129364f49"
+  inputs-digest = "8edb6d1534f55754456588a25e9d267f225cc823d0a42ddba607bfd6a4c5c5e8"
   solver-name = "gps-cdcl"
   solver-version = 1

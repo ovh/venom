@@ -32,3 +32,5 @@ testcases:
         - result.commands.commands0.response ShouldEqual OK
         - result.commands.commands1.response ShouldEqual bar
         - result.commands.commands2.response.response0 ShouldEqual foo
+        - result.commands.commands3.response ShouldEqual OK
+        - result.commands.commands4.response ShouldEqual {"test":"go o"}
