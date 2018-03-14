@@ -1,3 +1,4 @@
 SET foo bar
 GET foo
+
 KEYS *

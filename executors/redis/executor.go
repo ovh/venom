@@ -77,6 +77,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result := Result{Executor: e, Commands: []Command{}}
 
 	for i := range commands {
+		if commands[i] == "" {
+			continue
+		}
 		name, args := getCommandDetails(commands[i])
 
 		res, err := ctx.Client.Do(name, args...)
