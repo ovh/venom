@@ -1,6 +1,7 @@
 package ovhapi
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -159,7 +160,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	res := new(interface{})
-	if err = client.UnmarshalResponse(resp, res); err != nil {
+	if err = unmarshalResponse(resp, res); err != nil {
 		apiError, ok := err.(*ovh.APIError)
 		if !ok {
 			return nil, err
@@ -206,4 +207,33 @@ func (e Executor) getRequestBody() (res interface{}, err error) {
 		return
 	}
 	return nil, nil
+}
+
+func unmarshalResponse(response *http.Response, resType interface{}) error {
+	// Read all the response body
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	// < 200 && >= 300 : API error
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		apiError := &ovh.APIError{Code: response.StatusCode}
+		if err = json.Unmarshal(body, apiError); err != nil {
+			apiError.Message = string(body)
+		}
+		apiError.QueryID = response.Header.Get("X-Ovh-QueryID")
+
+		return apiError
+	}
+
+	// Nothing to unmarshal
+	if len(body) == 0 || resType == nil {
+		return nil
+	}
+
+	d := json.NewDecoder(bytes.NewReader(body))
+	d.UseNumber()
+	return d.Decode(&resType)
 }
