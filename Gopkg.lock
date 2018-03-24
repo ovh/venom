@@ -14,10 +14,10 @@
   version = "v1.5.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/fsamin/go-dump"
   packages = ["."]
-  revision = "b3a2116ad4889b990f825a5f62bdf9c21f34f0ab"
+  revision = "7ae1b0fe42ebe02c8f87574289bad257adcc90c0"
+  version = "1.0.3"
 
 [[projects]]
   branch = "master"
@@ -257,6 +257,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d3028d5c70119e2527ef14bc65edef21d89f83bd4103f6d7d47c4467b161f1f0"
+  inputs-digest = "89d51e5cdbf9b8dd4eb2dbcb58d5997d452ba57926ddd9d418ac72fa670b0f2b"
   solver-name = "gps-cdcl"
   solver-version = 1

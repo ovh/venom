@@ -21,7 +21,7 @@
 
 
 [[constraint]]
-  branch = "master"
+  version = "1.0.3"
   name = "github.com/fsamin/go-dump"
 
 [[constraint]]
