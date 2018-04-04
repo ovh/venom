@@ -81,11 +81,12 @@ consumer_key=my_consumer_key
 Depending on the API you want to use, you may set the ``endpoint`` to:
 
 * ``ovh-eu`` for OVH Europe API
-* ``ovh-ca`` for OVH North-America API
+* ``ovh-us`` for OVH US API
+* ``ovh-ca`` for OVH Canada API
 * ``soyoustart-eu`` for So you Start Europe API
-* ``soyoustart-ca`` for So you Start North America API
+* ``soyoustart-ca`` for So you Start Canada API
 * ``kimsufi-eu`` for Kimsufi Europe API
-* ``kimsufi-ca`` for Kimsufi North America API
+* ``kimsufi-ca`` for Kimsufi Canada API
 * ``runabove-ca`` for RunAbove API
 * Or any arbitrary URL to use in a test for example
 
@@ -452,7 +453,15 @@ go vet ./...
 - **Create application credentials**: https://eu.api.ovh.com/createApp/
 - **Create script credentials** (all keys at once): https://eu.api.ovh.com/createToken/
 
-### OVH North America
+### OVH US
+
+- **Documentation**: https://api.ovh.us/
+- **Community support**: api-subscribe@ml.ovh.net
+- **Console**: https://api.ovh.us/console/
+- **Create application credentials**: https://api.ovh.us/createApp/
+- **Create script credentials** (all keys at once): https://api.ovh.us/createToken/
+
+### OVH Canada
 
 - **Documentation**: https://ca.api.ovh.com/
 - **Community support**: api-subscribe@ml.ovh.net
@@ -468,7 +477,7 @@ go vet ./...
 - **Create application credentials**: https://eu.api.soyoustart.com/createApp/
 - **Create script credentials** (all keys at once): https://eu.api.soyoustart.com/createToken/
 
-### So you Start North America
+### So you Start Canada
 
 - **Documentation**: https://ca.api.soyoustart.com/
 - **Community support**: api-subscribe@ml.ovh.net
@@ -484,7 +493,7 @@ go vet ./...
 - **Create application credentials**: https://eu.api.kimsufi.com/createApp/
 - **Create script credentials** (all keys at once): https://eu.api.kimsufi.com/createToken/
 
-### Kimsufi North America
+### Kimsufi Canada
 
 - **Documentation**: https://ca.api.kimsufi.com/
 - **Community support**: api-subscribe@ml.ovh.net

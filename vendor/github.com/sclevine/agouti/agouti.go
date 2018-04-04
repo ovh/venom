@@ -104,3 +104,20 @@ func SauceLabs(name, platform, browser, version, username, accessKey string, opt
 	capabilities["name"] = name
 	return NewPage(url, append([]Option{Desired(capabilities)}, options...)...)
 }
+
+// GeckoDriver returns an instance of a geckodriver WebDriver which supports
+// gecko based brwoser like Firefox.
+//
+// Provided Options will apply as default arguments for new pages.
+//
+// See https://github.com/mozilla/geckodriver for geckodriver details.
+func GeckoDriver(options ...Option) *WebDriver {
+	var binaryName string
+	if runtime.GOOS == "windows" {
+		binaryName = "geckodriver.exe"
+	} else {
+		binaryName = "geckodriver"
+	}
+	command := []string{binaryName, "--port={{.Port}}"}
+	return NewWebDriver("http://{{.Address}}", command, options...)
+}

@@ -16,13 +16,16 @@ import (
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
+	"github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
+
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/ovhapi"
 	"github.com/ovh/venom/executors/readfile"
+	"github.com/ovh/venom/executors/redis"
 	"github.com/ovh/venom/executors/smtp"
 	"github.com/ovh/venom/executors/ssh"
 	"github.com/ovh/venom/executors/web"
@@ -84,10 +87,12 @@ var Cmd = &cobra.Command{
 		v.RegisterExecutor(web.Name, web.New())
 		v.RegisterExecutor(ovhapi.Name, ovhapi.New())
 		v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
+		v.RegisterExecutor(redis.Name, redis.New())
 
 		// Register Context
 		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
 		v.RegisterTestCaseContext(webctx.Name, webctx.New())
+		v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
 
 	},
 	Run: func(cmd *cobra.Command, args []string) {

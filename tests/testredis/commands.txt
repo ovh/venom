@@ -1,0 +1,7 @@
+SET foo bar
+GET foo
+
+KEYS *
+
+SET beez "{\"test\":\"go o\"}"
+GET beez
