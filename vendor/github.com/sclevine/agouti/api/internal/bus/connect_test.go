@@ -120,7 +120,7 @@ var _ = Describe(".Connect", func() {
 	Context("when the request fails", func() {
 		It("should return an error", func() {
 			_, err := Connect("http://#", nil, nil)
-			Expect(err.Error()).To(ContainSubstring("Post http://#/session"))
+			Expect(err.Error()).To(ContainSubstring("#/session"))
 		})
 	})
 
@@ -137,6 +137,22 @@ var _ = Describe(".Connect", func() {
 			responseBody = "{}"
 			_, err := Connect(server.URL, nil, nil)
 			Expect(err).To(MatchError("failed to retrieve a session ID"))
+		})
+	})
+
+	Context("when the response has fallback session ID", func() {
+		It("can extract fallback sesssion ID", func() {
+			responseBody = `{"value": {"sessionId": "fallback-id"}}`
+			client, err := Connect(server.URL, nil, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(client.SessionURL).To(ContainSubstring("/session/fallback-id"))
+		})
+
+		It("uses primary session ID if both IDs are available", func() {
+			responseBody = `{"sessionId": "primary-id", "value": {"sessionId": "fallback-id"}}`
+			client, err := Connect(server.URL, nil, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(client.SessionURL).To(ContainSubstring("/session/primary-id"))
 		})
 	})
 })

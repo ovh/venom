@@ -499,6 +499,34 @@ func TestString(t *testing.T) {
 	})
 }
 
+func TestRawBytes(t *testing.T) {
+	runTests(t, dsn, func(dbt *DBTest) {
+		v1 := []byte("aaa")
+		v2 := []byte("bbb")
+		rows := dbt.mustQuery("SELECT ?, ?", v1, v2)
+		if rows.Next() {
+			var o1, o2 sql.RawBytes
+			if err := rows.Scan(&o1, &o2); err != nil {
+				dbt.Errorf("Got error: %v", err)
+			}
+			if !bytes.Equal(v1, o1) {
+				dbt.Errorf("expected %v, got %v", v1, o1)
+			}
+			if !bytes.Equal(v2, o2) {
+				dbt.Errorf("expected %v, got %v", v2, o2)
+			}
+			// https://github.com/go-sql-driver/mysql/issues/765
+			// Appending to RawBytes shouldn't overwrite next RawBytes.
+			o1 = append(o1, "xyzzy"...)
+			if !bytes.Equal(v2, o2) {
+				dbt.Errorf("expected %v, got %v", v2, o2)
+			}
+		} else {
+			dbt.Errorf("no data")
+		}
+	})
+}
+
 type testValuer struct {
 	value string
 }
@@ -1669,8 +1697,9 @@ func TestStmtMultiRows(t *testing.T) {
 // Regression test for
 // * more than 32 NULL parameters (issue 209)
 // * more parameters than fit into the buffer (issue 201)
+// * parameters * 64 > max_allowed_packet (issue 734)
 func TestPreparedManyCols(t *testing.T) {
-	const numParams = defaultBufSize
+	numParams := 65535
 	runTests(t, dsn, func(dbt *DBTest) {
 		query := "SELECT ?" + strings.Repeat(",?", numParams-1)
 		stmt, err := dbt.db.Prepare(query)
@@ -1678,15 +1707,25 @@ func TestPreparedManyCols(t *testing.T) {
 			dbt.Fatal(err)
 		}
 		defer stmt.Close()
+
 		// create more parameters than fit into the buffer
 		// which will take nil-values
 		params := make([]interface{}, numParams)
 		rows, err := stmt.Query(params...)
 		if err != nil {
-			stmt.Close()
 			dbt.Fatal(err)
 		}
-		defer rows.Close()
+		rows.Close()
+
+		// Create 0byte string which we can't send via STMT_LONG_DATA.
+		for i := 0; i < numParams; i++ {
+			params[i] = ""
+		}
+		rows, err = stmt.Query(params...)
+		if err != nil {
+			dbt.Fatal(err)
+		}
+		rows.Close()
 	})
 }
 

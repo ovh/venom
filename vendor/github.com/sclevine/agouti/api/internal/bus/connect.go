@@ -58,7 +58,13 @@ func openSession(url string, body io.Reader, httpClient *http.Client) (sessionID
 	}
 	defer response.Body.Close()
 
-	var sessionResponse struct{ SessionID string }
+	var sessionResponse struct {
+		SessionID string
+		// fallback for GeckoDriver
+		Value struct {
+			SessionID string
+		}
+	}
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return "", err
@@ -69,6 +75,10 @@ func openSession(url string, body io.Reader, httpClient *http.Client) (sessionID
 	}
 
 	if sessionResponse.SessionID == "" {
+		// fallback for GeckoDriver
+		if sessionResponse.Value.SessionID != "" {
+			return sessionResponse.Value.SessionID, nil
+		}
 		return "", errors.New("failed to retrieve a session ID")
 	}
 

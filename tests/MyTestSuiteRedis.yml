@@ -3,7 +3,7 @@ testcases:
 - name: Commands_Test_Case
   description: Test commands property
   context:
-    dialURL: "redis://localhost:6379/0"
+    dialURL: "redis://redisHost:6379/0"
     type: redis
   steps:
   - type: redis
@@ -20,7 +20,7 @@ testcases:
         - result.commands.commands2.response.response0 ShouldEqual foo
 - name: File_Test_Case
   context:
-      dialURL: "redis://localhost:6379/0"
+      dialURL: "redis://redisHost:6379/0"
       type: redis
   steps:
   - type: redis
