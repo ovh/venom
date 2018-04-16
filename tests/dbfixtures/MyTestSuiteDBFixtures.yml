@@ -1,10 +1,15 @@
 name: MyTestSuite DBFixtures
+vars:
+  mysqlHost: 'mysqlhost'
+  mysqlPort: '3306'
+  pgHost: 'postgreshost'
+  pgPort: '5432'
 testcases:
 - name: Load fixtures into MySQL database
   steps:
    - type: dbfixtures
      database: mysql
-     dsn: venom:venom@({{.mysqlhost}}:3306)/venom?multiStatements=true
+     dsn: venom:venom@({{.mysqlHost}}:{{.mysqlPort}})/venom?multiStatements=true
      schemas:
        - testdata/schemas/mysql.sql
      folder: testdata/fixtures
@@ -13,7 +18,7 @@ testcases:
   steps:
    - type: dbfixtures
      database: postgres
-     dsn: "user=venom password=venom dbname=venom host={{.postgreshost}} port=5432 sslmode=disable"
+     dsn: "user=venom password=venom dbname=venom host={{.pgHost}} port={{.pgPort}} sslmode=disable"
      schemas:
        - testdata/schemas/postgres.sql
      folder: testdata/fixtures
@@ -22,6 +27,6 @@ testcases:
   steps:
    - type: dbfixtures
      database: postgres
-     dsn: "user=venom password=venom dbname=venom host={{.postgreshost}} port=5432 sslmode=disable"
+     dsn: "user=venom password=venom dbname=venom host={{.pgHost}} port={{.pgPort}} sslmode=disable"
      migrations_path: testdata/migrations
      folder: testdata/fixtures

@@ -81,7 +81,10 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 		ts := TestSuite{}
 		ts.Templater = newTemplater(v.variables)
 		ts.Package = f
-
+		ts.WorkDir, err = filepath.Abs(filepath.Dir(f))
+		if err != nil {
+			return fmt.Errorf("Error while get path dir of file %s err:%s", f, err)
+		}
 		// Apply templater unitl there is no more modifications
 		// it permits to include testcase from env
 		out := ts.Templater.apply(dat)

@@ -30,7 +30,7 @@ type StepExtracts struct {
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(TestCaseContext, Logger, TestStep) (ExecutorResult, error)
+	Run(TestCaseContext, Logger, TestStep, string) (ExecutorResult, error)
 }
 
 // TestCaseContext represents the context of a testcase
@@ -105,6 +105,7 @@ type TestSuite struct {
 	Timestamp  string                 `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
 	Vars       map[string]interface{} `xml:"-" json:"-" yaml:"vars"`
 	Templater  *Templater             `xml:"-" json:"-" yaml:"-"`
+	WorkDir    string                 `xml:"-" json:"-" yaml:"-"`
 }
 
 // Property represents a key/value pair used to define properties.
