@@ -173,6 +173,7 @@ venom run  --details=low --format=xml --output-dir="."
 ## Assertion
 
 ### Keywords
+
 * ShouldEqual
 * ShouldNotEqual
 * ShouldAlmostEqual
@@ -224,6 +225,7 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldNotHappenWithin
 * ShouldBeChronological
 
+Most assertion keywords documentation can be found on [smartystreets/assertions README](https://github.com/smartystreets/assertions/blob/master/README.md#usage).
 
 ### Write your executor
 
