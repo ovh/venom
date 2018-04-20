@@ -1,4 +1,5 @@
 name: My Redis testsuite
+version: "2"
 vars:
   redisHost: 'redisHost'
   redisPort: '6379'

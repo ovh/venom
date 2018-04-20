@@ -1,4 +1,5 @@
 name: TestSuite Read File
+version: "2"
 testcases:
 - name: TestCase Read File
   steps:
