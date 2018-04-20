@@ -30,6 +30,7 @@ Flags:
       --parallel int          --parallel=2 : launches 2 Test Suites in parallel (default 1)
       --resume                Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
       --resumeFailures        Output Resume Failures (default true)
+      --stop-on-failure       Stop running Test Suite on first Test Case failure
       --var stringSlice       --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file         --var-from-file filename.yaml : yaml|json, must contains map[string]string
 ```
