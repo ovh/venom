@@ -21,18 +21,20 @@ Usage:
   venom run [flags]
 
 Flags:
-      --details string        Output Details Level : low, medium, high (default "medium")
-      --env                   Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
-      --exclude stringSlice   --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
-      --format string         --format:yaml, json, xml, tap (default "xml")
-      --log string            Log Level : debug, info or warn (default "warn")
-      --output-dir string     Output Directory: create tests results file inside this directory
-      --parallel int          --parallel=2 : launches 2 Test Suites in parallel (default 1)
-      --resume                Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
-      --resumeFailures        Output Resume Failures (default true)
+      --details string         Output Details Level : low, medium, high (default "low")
+      --env                    Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
+      --exclude strings        --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
+      --format string          --format:yaml, json, xml, tap (default "xml")
+      --log string             Log Level : debug, info or warn (default "warn")
+      --no-check-variables     Don't check variables before run
+      --output-dir string      Output Directory: create tests results file inside this directory
+      --parallel int           --parallel=2 : launches 2 Test Suites in parallel (default 1)
+      --resume                 Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite
+      --resumeFailures         Output Resume Failures
+      --strict                 Exit with an error code if one test fails
       --stop-on-failure       Stop running Test Suite on first Test Case failure
-      --var stringSlice       --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file         --var-from-file filename.yaml : yaml|json, must contains map[string]string
+      --var strings            --var cds='cds -f config.json' --var cds2='cds -f config.json'
+      --var-from-file string   --var-from-file filename.yaml : hcl|json|yaml, must contains map[string]string'
 ```
 
 ## TestSuite files
@@ -174,6 +176,7 @@ venom run  --details=low --format=xml --output-dir="."
 ## Assertion
 
 ### Keywords
+
 * ShouldEqual
 * ShouldNotEqual
 * ShouldAlmostEqual
@@ -225,6 +228,7 @@ venom run  --details=low --format=xml --output-dir="."
 * ShouldNotHappenWithin
 * ShouldBeChronological
 
+Most assertion keywords documentation can be found on [smartystreets/assertions README](https://github.com/smartystreets/assertions/blob/master/README.md#usage).
 
 ### Write your executor
 

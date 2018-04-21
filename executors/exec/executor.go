@@ -154,6 +154,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		for {
 			line, errs := stdoutreader.ReadString('\n')
 			if errs != nil {
+				// ReadString returns what has been read even though an error was encoutered
+				// ie. capture outputs with no '\n' at the end
+				result.Systemout += line
 				stdout.Close()
 				close(outchan)
 				return
@@ -168,6 +171,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		for {
 			line, errs := stderrreader.ReadString('\n')
 			if errs != nil {
+				// ReadString returns what has been read even though an error was encoutered
+				// ie. capture outputs with no '\n' at the end
+				result.Systemerr += line
 				stderr.Close()
 				close(errchan)
 				return
