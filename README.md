@@ -32,6 +32,7 @@ Flags:
       --resume                 Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite
       --resumeFailures         Output Resume Failures
       --strict                 Exit with an error code if one test fails
+      --stop-on-failure       Stop running Test Suite on first Test Case failure
       --var strings            --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file string   --var-from-file filename.yaml : hcl|json|yaml, must contains map[string]string'
 ```

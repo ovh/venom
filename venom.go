@@ -49,6 +49,7 @@ type Venom struct {
 	OutputDir            string
 	OutputResume         bool
 	OutputResumeFailures bool
+	StopOnFailure        bool
 }
 
 func (v *Venom) AddVariables(variables map[string]string) {
