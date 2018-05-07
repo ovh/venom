@@ -1,4 +1,5 @@
 name: MyTestSuite
+version: "2"
 testcases:
 - name: testA
   steps:

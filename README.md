@@ -42,6 +42,8 @@ Flags:
 * Run `venom template`
 * Examples: https://github.com/ovh/cds/tree/master/tests
 
+
+
 ### Example:
 
 ```yaml
@@ -134,6 +136,58 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemout ShouldContainSubstring bar
 ```
+
+### Testsuite Versions
+
+#### Version 2
+
+On this new version, venom use the testsuite folder as the basepath instead of location of venom execution.
+
+
+Considering this workspace :
+
+```yaml
+
+tests/
+   testsuiteA/
+      testsuite.yml
+      testa.json
+```
+
+On version 1
+
+```yaml
+
+name: TestSuite Read File
+testcases:
+- name: TestCase Read File
+  steps:
+  - type: readfile
+    path: testa.json
+    assertions:
+      - result.contentjson.foo ShouldEqual bar
+```
+
+If you execute ```venom run *``` into *tests/* folder, venom will try to find testa.json on tests/testa.json and will failed.
+You must execute venom on the testsuite dir.
+
+On version 2, venom use as basepath the testsuite file. So no matter where you execute venom command, testa.json will be found.
+
+To specify the version 2, add *version* property on the testsuite :
+
+```yaml
+
+version: "2"
+name: TestSuite Read File
+testcases:
+- name: TestCase Read File
+  steps:
+  - type: readfile
+    path: testa.json
+    assertions:
+      - result.contentjson.foo ShouldEqual bar
+```
+
 
 ## RUN Venom locally on CDS Integration Tests
 

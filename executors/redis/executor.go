@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/garyburd/redigo/redis"
 	shellwords "github.com/mattn/go-shellwords"
@@ -52,7 +53,7 @@ func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 
 	// Get context
 	ctx, ok := testCaseContext.(*redisCtx.RedisTestCaseContext)
@@ -67,7 +68,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 	commands := []string{}
 	if e.FilePath != "" {
-		commands, err = file2lines(e.FilePath)
+		commands, err = file2lines(path.Join(workdir, e.FilePath))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to load file %v", err)
 		}

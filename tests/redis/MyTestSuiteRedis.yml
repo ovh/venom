@@ -1,9 +1,13 @@
 name: My Redis testsuite
+version: "2"
+vars:
+  redisHost: 'redisHost'
+  redisPort: '6379'
 testcases:
 - name: Commands_Test_Case
   description: Test commands property
   context:
-    dialURL: "redis://redisHost:6379/0"
+    dialURL: "redis://{{.redisHost}}:{{.redisPort}}/0"
     type: redis
   steps:
   - type: redis
@@ -20,7 +24,7 @@ testcases:
         - result.commands.commands2.response.response0 ShouldEqual foo
 - name: File_Test_Case
   context:
-      dialURL: "redis://redisHost:6379/0"
+      dialURL: "redis://{{.redisHost}}:{{.redisPort}}/0"
       type: redis
   steps:
   - type: redis

@@ -58,7 +58,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -134,7 +134,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	cmd := exec.Command(shell, opts...)
 	l.Debugf("teststep exec '%s %s'", shell, strings.Join(opts, " "))
-
+	cmd.Dir = workdir
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("runScriptAction: Cannot get stdout pipe: %s\n", err)

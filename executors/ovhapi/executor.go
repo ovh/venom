@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -64,7 +65,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 	// Get context
 	ctx, ok := testCaseContext.(*defaultctx.DefaultTestCaseContext)
 	if !ok {
@@ -121,7 +122,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	// get request body from file or from field
-	requestBody, err := e.getRequestBody()
+	requestBody, err := e.getRequestBody(workdir)
 	if err != nil {
 		return nil, err
 	}
@@ -187,12 +188,12 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	return executors.Dump(r)
 }
 
-func (e Executor) getRequestBody() (res interface{}, err error) {
+func (e Executor) getRequestBody(workdir string) (res interface{}, err error) {
 	var bytes []byte
 	if e.Body != "" {
 		bytes = []byte(e.Body)
 	} else if e.BodyFile != "" {
-		path := string(e.BodyFile)
+		path := filepath.Join(workdir, string(e.BodyFile))
 		if _, err = os.Stat(path); !os.IsNotExist(err) {
 			bytes, err = ioutil.ReadFile(path)
 			if err != nil {
