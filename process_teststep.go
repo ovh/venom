@@ -23,7 +23,6 @@ func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite,
 		result, err = runTestStepExecutor(tcc, e, ts, step, l)
 
 		if err != nil {
-			tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
 			continue
 		}
 
