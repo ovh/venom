@@ -18,6 +18,7 @@ testcases:
     mbox: INBOX
     mboxonsuccess: mailsMatches
     searchfrom: '.*@your-domain.localhost'
+    searchto: 'you@company.tld'
     searchsubject: 'Title of mail with *'
     searchbody: '.*a body content.*'
     assertions:
@@ -29,12 +30,13 @@ testcases:
 * imapuser: imap username
 * imappassword: imap password
 * searchfrom: optional
+* searchto: optional
 * searchsubject: optional
 * searchbody: optional
 * mbox: optional, default is INBOX
 * mboxonsuccess: optional. If not empty, move found mail (matching criteria) to another mbox.
 
-Input must contains searchfrom and/or searchsubject.
+Input must contain at least one of searchfrom, searchto, searchsubject or searchbody.
 
 ## Output
 
