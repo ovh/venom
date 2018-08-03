@@ -2,6 +2,8 @@ package venom
 
 import (
 	"fmt"
+	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/fatih/color"
@@ -10,6 +12,25 @@ import (
 )
 
 func (v *Venom) runTestSuite(ts *TestSuite) {
+	if v.EnableProfiling {
+		var filename, filenameCPU, filenameMem string
+		if v.OutputDir != "" {
+			filename = v.OutputDir + "/"
+		}
+		filenameCPU = filename + "pprof_cpu_profile_" + ts.Filename + ".prof"
+		filenameMem = filename + "pprof_mem_profile_" + ts.Filename + ".prof"
+		fCPU, errCPU := os.Create(filenameCPU)
+		fMem, errMem := os.Create(filenameMem)
+		if errCPU != nil || errMem != nil {
+			log.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
+		} else {
+			pprof.StartCPUProfile(fCPU)
+			p := pprof.Lookup("heap")
+			defer p.WriteTo(fMem, 1)
+			defer pprof.StopCPUProfile()
+		}
+	}
+
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 

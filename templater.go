@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -42,7 +43,11 @@ func (tmpl *Templater) ApplyOnStep(step TestStep) (TestStep, error) {
 	if err != nil {
 		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
-	sb := tmpl.apply(s)
+	sb := s
+	// if the testTest use some variable, we run tmpl.apply on it
+	if strings.Contains(string(s), "{{") {
+		sb = tmpl.apply(s)
+	}
 
 	var t TestStep
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
@@ -54,14 +59,22 @@ func (tmpl *Templater) ApplyOnStep(step TestStep) (TestStep, error) {
 
 //ApplyOnContext executes the template on a context
 func (tmpl *Templater) ApplyOnContext(ctx map[string]interface{}) (map[string]interface{}, error) {
+	var t map[string]interface{}
+	if len(ctx) == 0 {
+		return t, nil
+	}
+
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
 	s, err := yaml.Marshal(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
-	sb := tmpl.apply(s)
+	sb := s
+	// if the context use some variable, we run tmpl.apply on it
+	if strings.Contains(string(s), "{{") {
+		sb = tmpl.apply(s)
+	}
 
-	var t map[string]interface{}
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
 		return nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)
 	}
@@ -70,17 +83,13 @@ func (tmpl *Templater) ApplyOnContext(ctx map[string]interface{}) (map[string]in
 }
 
 func (tmpl *Templater) apply(in []byte) []byte {
-	// Apply template values on values themselves first.
-	tmpValues := make(map[string]string)
-	for k1, v1 := range tmpl.Values {
-		for k2, v2 := range tmpl.Values {
-			v1 = strings.Replace(v1, "{{."+k2+"}}", v2, -1)
-		}
-		tmpValues[k1] = v1
-	}
 	out := string(in)
-	for k, v := range tmpValues {
-		out = strings.Replace(out, "{{."+k+"}}", v, -1)
+	for k, v := range tmpl.Values {
+		var buffer bytes.Buffer
+		buffer.WriteString("{{.")
+		buffer.WriteString(k)
+		buffer.WriteString("}}")
+		out = strings.Replace(out, buffer.String(), v, -1)
 	}
 	return []byte(out)
 }

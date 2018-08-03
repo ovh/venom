@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -32,22 +33,23 @@ import (
 )
 
 var (
-	path           []string
-	variables      []string
-	exclude        []string
-	format         string
-	varFile        string
-	withEnv        bool
-	logLevel       string
-	outputDir      string
-	detailsLevel   string
-	resumeFailures bool
-	resume         bool
-	strict         bool
-	noCheckVars    bool
-	parallel       int
-	stopOnFailure  bool
-	v              *venom.Venom
+	path            []string
+	variables       []string
+	exclude         []string
+	format          string
+	varFile         string
+	withEnv         bool
+	logLevel        string
+	outputDir       string
+	detailsLevel    string
+	resumeFailures  bool
+	resume          bool
+	strict          bool
+	noCheckVars     bool
+	parallel        int
+	stopOnFailure   bool
+	enableProfiling bool
+	v               *venom.Venom
 )
 
 func init() {
@@ -65,6 +67,7 @@ func init() {
 	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "low", "Output Details Level : low, medium, high")
 	Cmd.PersistentFlags().BoolVarP(&resume, "resume", "", false, "Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite")
 	Cmd.PersistentFlags().BoolVarP(&resumeFailures, "resumeFailures", "", false, "Output Resume Failures")
+	Cmd.PersistentFlags().BoolVarP(&enableProfiling, "profiling", "", false, "Enable Mem / CPU Profile with pprof")
 }
 
 // Cmd run
@@ -72,7 +75,6 @@ var Cmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run Tests",
 	PreRun: func(cmd *cobra.Command, args []string) {
-
 		if len(args) == 0 {
 			path = append(path, ".")
 		} else {
@@ -95,10 +97,9 @@ var Cmd = &cobra.Command{
 		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
 		v.RegisterTestCaseContext(webctx.Name, webctx.New())
 		v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
-
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-
+		v.EnableProfiling = enableProfiling
 		v.LogLevel = logLevel
 		v.OutputDetails = detailsLevel
 		v.OutputDir = outputDir
@@ -107,6 +108,25 @@ var Cmd = &cobra.Command{
 		v.OutputResumeFailures = resumeFailures
 		v.Parallel = parallel
 		v.StopOnFailure = stopOnFailure
+
+		if v.EnableProfiling {
+			var filename, filenameCPU, filenameMem string
+			if v.OutputDir != "" {
+				filename = v.OutputDir + "/"
+			}
+			filenameCPU = filename + "pprof_cpu_profile.prof"
+			filenameMem = filename + "pprof_mem_profile.prof"
+			fCPU, errCPU := os.Create(filenameCPU)
+			fMem, errMem := os.Create(filenameMem)
+			if errCPU != nil || errMem != nil {
+				log.Errorf("error while create profile file for root process CPU:%v MEM:%v", errCPU, errMem)
+			} else {
+				pprof.StartCPUProfile(fCPU)
+				p := pprof.Lookup("heap")
+				defer p.WriteTo(fMem, 1)
+				defer pprof.StopCPUProfile()
+			}
+		}
 
 		mapvars := make(map[string]string)
 		if withEnv {

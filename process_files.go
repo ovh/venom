@@ -106,6 +106,7 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 		}
 
 		ts.Name += " [" + f + "]"
+		ts.Filename = f
 
 		if ts.Version != "" && !strings.HasPrefix(ts.Version, "1") {
 			ts.WorkDir, err = filepath.Abs(filepath.Dir(f))
