@@ -22,6 +22,7 @@ func New() *Venom {
 		executors:            map[string]Executor{},
 		contexts:             map[string]TestCaseContext{},
 		variables:            map[string]string{},
+		EnableProfiling:      false,
 		IgnoreVariables:      []string{},
 		OutputFormat:         "xml",
 		OutputResume:         false,
@@ -43,6 +44,7 @@ type Venom struct {
 	IgnoreVariables []string
 	Parallel        int
 
+	EnableProfiling      bool
 	OutputDetails        string
 	outputProgressBar    map[string]*pb.ProgressBar
 	OutputFormat         string

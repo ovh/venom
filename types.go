@@ -96,6 +96,7 @@ type TestSuite struct {
 	Hostname   string                 `xml:"hostname,attr,omitempty" json:"hostname" yaml:"-"`
 	ID         string                 `xml:"id,attr,omitempty" json:"id" yaml:"-"`
 	Name       string                 `xml:"name,attr" json:"name" yaml:"name"`
+	Filename   string                 `xml:"-" json:"-" yaml:"-"`
 	Package    string                 `xml:"package,attr,omitempty" json:"package" yaml:"-"`
 	Properties []Property             `xml:"-" json:"properties" yaml:"-"`
 	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
