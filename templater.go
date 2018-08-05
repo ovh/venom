@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -37,7 +38,7 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 }
 
 //ApplyOnStep executes the template on a test step
-func (tmpl *Templater) ApplyOnStep(step TestStep) (TestStep, error) {
+func (tmpl *Templater) ApplyOnStep(stepNumber int, step TestStep) (TestStep, error) {
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
 	s, err := yaml.Marshal(step)
 	if err != nil {
@@ -46,6 +47,9 @@ func (tmpl *Templater) ApplyOnStep(step TestStep) (TestStep, error) {
 	sb := s
 	// if the testTest use some variable, we run tmpl.apply on it
 	if strings.Contains(string(s), "{{") {
+		if stepNumber >= 0 {
+			tmpl.Add("", map[string]string{"venom.teststep.number": fmt.Sprintf("%d", stepNumber)})
+		}
 		sb = tmpl.apply(s)
 	}
 
@@ -83,6 +87,10 @@ func (tmpl *Templater) ApplyOnContext(ctx map[string]interface{}) (map[string]in
 }
 
 func (tmpl *Templater) apply(in []byte) []byte {
+	tmpl.Add("", map[string]string{
+		"venom.datetime":  time.Now().Format(time.RFC3339),
+		"venom.timestamp": fmt.Sprintf("%d", time.Now().Unix()),
+	})
 	out := string(in)
 	for k, v := range tmpl.Values {
 		var buffer bytes.Buffer

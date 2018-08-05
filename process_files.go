@@ -101,6 +101,7 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 			return fmt.Errorf("Error while unmarshal file %s err: %v", f, err)
 		}
 
+		ts.ShortName = ts.Name
 		ts.Name += " [" + f + "]"
 		ts.Filename = f
 

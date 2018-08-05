@@ -86,9 +86,14 @@ func (v *Venom) Parse(path []string, exclude []string) error {
 		}
 		if !varExtracted {
 			var ignored bool
+			// ignore {{.venom.var..}}
+			if strings.HasPrefix(k, "venom.") {
+				continue
+			}
 			for _, i := range v.IgnoreVariables {
 				if strings.HasPrefix(k, i) {
 					ignored = true
+					break
 				}
 			}
 			if !ignored {

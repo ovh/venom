@@ -21,7 +21,6 @@ Usage:
   venom run [flags]
 
 Flags:
-      --details string         Output Details Level : low, medium, high (default "low")
       --env                    Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
       --exclude strings        --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
       --format string          --format:yaml, json, xml, tap (default "xml")
@@ -30,6 +29,7 @@ Flags:
       --no-check-variables     Don't check variables before run
       --output-dir string      Output Directory: create tests results file inside this directory
       --parallel int           --parallel=2 : launches 2 Test Suites in parallel (default 1)
+      --profiling              Enable Mem / CPU Profile with pprof
       --stop-on-failure        Stop running Test Suite on first Test Case failure
       --strict                 Exit with an error code if one test fails
       --var strings            --var cds='cds -f config.json' --var cds2='cds -f config.json'

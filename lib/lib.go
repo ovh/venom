@@ -117,7 +117,7 @@ func (t *T) Do(teststepParams P) R {
 	}
 	defer tcc.Close()
 
-	step, erra := ts.Templater.ApplyOnStep(venom.TestStep(teststepParams))
+	step, erra := ts.Templater.ApplyOnStep(-1, venom.TestStep(teststepParams))
 	if erra != nil {
 		t.Error(erra)
 		return nil
