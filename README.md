@@ -149,6 +149,28 @@ testcases:
     - result.systemout ShouldContainSubstring bar
 ```
 
+Builtin venom variables
+
+```yaml
+name: MyTestSuite
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo '{{.venom.testsuite}} {{.venom.testsuite.filename}} {{.venom.testcase}} {{.venom.teststep.number}} {{.venom.datetime}} {{.venom.timestamp}}'
+    # will display something as: MyTestSuite MyTestSuiteWithVenomBuiltinVar.yml testA 0 2018-08-05T21:38:24+02:00 1533497904
+
+```
+
+Builtin variables:
+
+* {{.venom.testsuite}}
+* {{.venom.testsuite.filename}}
+* {{.venom.testcase}}
+* {{.venom.teststep.number}}
+* {{.venom.datetime}}
+* {{.venom.timestamp}}
+
 ### Testsuite Versions
 
 #### Version 2
@@ -224,7 +246,7 @@ venom run --var-from-file vars.yaml --parallel=5
 ## RUN Venom, with an export xUnit
 
 ```bash
-venom run  --details=low --format=xml --output-dir="."
+venom run  --format=xml --output-dir="."
 ```
 
 ## Assertion
