@@ -39,6 +39,8 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		log.Errorf("err:%s", err)
 	}
 	ts.Templater.Add("", d)
+	ts.Templater.Add("", map[string]string{"venom.testsuite": ts.ShortName})
+	ts.Templater.Add("", map[string]string{"venom.testsuite.filename": ts.Filename})
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
@@ -58,8 +60,6 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		o = fmt.Sprintf("%s %s", green("SUCCESS"), rightPad(ts.Package, " ", 47))
 	}
 	o += fmt.Sprintf("%s", elapsed)
-
-	// TODO display line of failure if level = medium
 	v.PrintFunc("%s\n", o)
 }
 
