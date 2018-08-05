@@ -30,8 +30,6 @@ Flags:
       --no-check-variables     Don't check variables before run
       --output-dir string      Output Directory: create tests results file inside this directory
       --parallel int           --parallel=2 : launches 2 Test Suites in parallel (default 1)
-      --resume                 Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite
-      --resumeFailures         Output Resume Failures
       --stop-on-failure        Stop running Test Suite on first Test Case failure
       --strict                 Exit with an error code if one test fails
       --var strings            --var cds='cds -f config.json' --var cds2='cds -f config.json'

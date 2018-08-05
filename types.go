@@ -5,9 +5,9 @@ import "encoding/xml"
 const (
 	// DetailsLow prints only summary results
 	DetailsLow = "low"
-	// DetailsMedium prints progress bar and summary
+	// DetailsMedium summary with lines in failure
 	DetailsMedium = "medium"
-	// DetailsHigh prints progress bar and details
+	// DetailsHigh all
 	DetailsHigh = "high"
 )
 

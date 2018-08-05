@@ -41,9 +41,6 @@ var (
 	withEnv         bool
 	logLevel        string
 	outputDir       string
-	detailsLevel    string
-	resumeFailures  bool
-	resume          bool
 	strict          bool
 	noCheckVars     bool
 	parallel        int
@@ -64,9 +61,6 @@ func init() {
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
-	Cmd.PersistentFlags().StringVarP(&detailsLevel, "details", "", "low", "Output Details Level : low, medium, high")
-	Cmd.PersistentFlags().BoolVarP(&resume, "resume", "", false, "Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite")
-	Cmd.PersistentFlags().BoolVarP(&resumeFailures, "resumeFailures", "", false, "Output Resume Failures")
 	Cmd.PersistentFlags().BoolVarP(&enableProfiling, "profiling", "", false, "Enable Mem / CPU Profile with pprof")
 }
 
@@ -101,11 +95,8 @@ var Cmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		v.EnableProfiling = enableProfiling
 		v.LogLevel = logLevel
-		v.OutputDetails = detailsLevel
 		v.OutputDir = outputDir
 		v.OutputFormat = format
-		v.OutputResume = resume
-		v.OutputResumeFailures = resumeFailures
 		v.Parallel = parallel
 		v.StopOnFailure = stopOnFailure
 

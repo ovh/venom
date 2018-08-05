@@ -39,8 +39,8 @@ type assertionsApplied struct {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
-	res := applyAssertions(*executorResult, step, defaultAssertions, l)
+func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
+	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions, l)
 	if !res.ok {
 		return res
 	}
@@ -54,7 +54,7 @@ func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertion
 	return res
 }
 
-func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
+func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -76,7 +76,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(assertion, executorResult, l)
+		errs, fails := check(tc, stepNumber, assertion, executorResult, l)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -98,7 +98,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
-func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
+func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
 		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
@@ -126,7 +126,13 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 	out := f(actual, args...)
 
 	if out != "" {
-		prefix := "assertion: " + assertion
+		var prefix string
+		if stepNumber >= 0 {
+			prefix = fmt.Sprintf("testcase %s / step n°%d / assertion: %s", tc.Name, stepNumber, assertion)
+		} else {
+			// venom used as lib
+			prefix = fmt.Sprintf("assertion: %s", assertion)
+		}
 
 		sdump := &bytes.Buffer{}
 		dumpEncoder := dump.NewDefaultEncoder(sdump)
