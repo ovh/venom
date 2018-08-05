@@ -31,9 +31,9 @@ func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite,
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
 
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
-			assertRes = applyChecks(&result, *tc, stepNumber, step, h.GetDefaultAssertions(), l)
+			assertRes = applyChecks(&result, *tc, stepNumber, step, h.GetDefaultAssertions())
 		} else {
-			assertRes = applyChecks(&result, *tc, stepNumber, step, nil, l)
+			assertRes = applyChecks(&result, *tc, stepNumber, step, nil)
 		}
 		// add result again for extracts values
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))

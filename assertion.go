@@ -39,13 +39,13 @@ type assertionsApplied struct {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
-	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions, l)
+func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions)
 	if !res.ok {
 		return res
 	}
 
-	resExtract := applyExtracts(executorResult, step, l)
+	resExtract := applyExtracts(executorResult, step)
 
 	res.errors = append(res.errors, resExtract.errors...)
 	res.failures = append(res.failures, resExtract.failures...)
@@ -54,7 +54,7 @@ func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, st
 	return res
 }
 
-func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
+func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -76,7 +76,7 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, executorResult, l)
+		errs, fails := check(tc, stepNumber, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -98,7 +98,7 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
-func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
+func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
 		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
