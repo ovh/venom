@@ -129,7 +129,7 @@ func (t *T) Do(teststepParams P) R {
 		return nil
 	}
 
-	res := t.v.RunTestStep(tcc, e, ts, tc, step, &Logger{t.T})
+	res := t.v.RunTestStep(tcc, e, ts, tc, -1, step, &Logger{t.T})
 
 	for _, f := range tc.Failures {
 		t.Errorf("\r Failure %s", f.Value)

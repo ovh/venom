@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/hcl"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
 )
 
@@ -56,8 +55,7 @@ func getFilesPath(path []string, exclude []string) (filePaths []string, err erro
 
 			if !toExclude {
 				switch ext := filepath.Ext(fp); ext {
-				case ".hcl",
-					".yml", ".yaml":
+				case ".hcl", ".yml", ".yaml":
 					filePaths = append(filePaths, fp)
 				}
 			}
@@ -69,8 +67,6 @@ func getFilesPath(path []string, exclude []string) (filePaths []string, err erro
 }
 
 func (v *Venom) readFiles(filesPath []string) (err error) {
-	v.outputProgressBar = make(map[string]*pb.ProgressBar)
-
 	for _, f := range filesPath {
 		log.Info("Reading ", f)
 		dat, err := ioutil.ReadFile(f)
@@ -129,20 +125,6 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 		}
 		ts.Total = len(ts.TestCases)
 
-		b := pb.New(nSteps).Prefix(rightPad("READING "+ts.Package, " ", 47))
-		b.ShowCounters = false
-		b.Output = v.LogOutput
-		if v.OutputDetails == DetailsLow {
-			b.ShowBar = false
-			b.ShowFinalTime = false
-			b.ShowPercent = false
-			b.ShowSpeed = false
-			b.ShowTimeLeft = false
-		}
-
-		if v.OutputDetails != DetailsLow {
-			v.outputProgressBar[ts.Package] = b
-		}
 		v.testsuites = append(v.testsuites, ts)
 	}
 	return nil

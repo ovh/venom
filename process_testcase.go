@@ -127,26 +127,23 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) {
 	}
 	l.Infof("start")
 
-	for i, stepIn := range tc.TestSteps {
-		l.Debugf("Apply template on step %d", i)
+	for stepNumber, stepIn := range tc.TestSteps {
+		l.Debugf("Apply template on step %d", stepNumber)
 		step, erra := ts.Templater.ApplyOnStep(stepIn)
 		if erra != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(erra.Error())})
 			break
 		}
 
-		l.Debugf("Wrap executor on step %d", i)
+		l.Debugf("Wrap executor on step %d", stepNumber)
 		e, err := v.WrapExecutor(step, tcc)
 		if err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
 			break
 		}
 
-		v.RunTestStep(tcc, e, ts, tc, step, l)
+		v.RunTestStep(tcc, e, ts, tc, stepNumber, step, l)
 
-		if v.OutputDetails != DetailsLow {
-			v.outputProgressBar[ts.Package].Increment()
-		}
 		if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
 			break
 		}

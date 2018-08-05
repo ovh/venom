@@ -42,19 +42,14 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 	}
 
-	if v.OutputDetails == "high" {
-		v.PrintFunc(string(data))
-	}
-
-	if v.OutputResume {
-		v.outputResume(tests, elapsed)
-	}
+	v.outputResume(tests, elapsed)
 
 	if v.OutputDir != "" {
 		filename := v.OutputDir + "/" + "test_results" + "." + v.OutputFormat
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
 		}
+		v.PrintFunc("File %s is written\n", filename)
 	}
 	return nil
 }
@@ -96,29 +91,26 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 }
 
 func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
-	if v.OutputResumeFailures {
-		red := color.New(color.FgRed).SprintFunc()
-		for _, t := range tests.TestSuites {
-			if t.Failures > 0 || t.Errors > 0 {
-				v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
-				v.PrintFunc("--------------\n")
+	red := color.New(color.FgRed).SprintFunc()
+	for _, t := range tests.TestSuites {
+		if t.Failures > 0 || t.Errors > 0 {
+			v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
+			v.PrintFunc("--------------\n")
 
-				for _, tc := range t.TestCases {
-					for _, f := range tc.Failures {
-						v.PrintFunc("%s\n", f.Value)
-					}
-					for _, f := range tc.Errors {
-						v.PrintFunc("%s\n", f.Value)
-					}
+			for _, tc := range t.TestCases {
+				for _, f := range tc.Failures {
+					v.PrintFunc("%s\n", f.Value)
 				}
-				v.PrintFunc("-=-=-=-=-=-=-=-=-\n\n")
+				for _, f := range tc.Errors {
+					v.PrintFunc("%s\n", f.Value)
+				}
 			}
+			v.PrintFunc("-=-=-=-=-=-=-=-=-\n\n")
 		}
 	}
 
 	totalTestCases := 0
 	totalTestSteps := 0
-	red := color.New(color.FgRed).SprintFunc()
 	for _, t := range tests.TestSuites {
 		if t.Failures > 0 || t.Errors > 0 {
 			v.PrintFunc("%s %s\n", red("FAILED"), t.Name)

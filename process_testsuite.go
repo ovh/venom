@@ -57,15 +57,10 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		green := color.New(color.FgGreen).SprintFunc()
 		o = fmt.Sprintf("%s %s", green("SUCCESS"), rightPad(ts.Package, " ", 47))
 	}
-	if v.OutputDetails == DetailsLow {
-		o += fmt.Sprintf("%s", elapsed)
-	}
-	if v.OutputDetails != DetailsLow {
-		v.outputProgressBar[ts.Package].Prefix(o)
-		v.outputProgressBar[ts.Package].Finish()
-	} else {
-		v.PrintFunc("%s\n", o)
-	}
+	o += fmt.Sprintf("%s", elapsed)
+
+	// TODO display line of failure if level = medium
+	v.PrintFunc("%s\n", o)
 }
 
 func (v *Venom) runTestCases(ts *TestSuite, l Logger) {
