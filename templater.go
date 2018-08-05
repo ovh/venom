@@ -90,6 +90,10 @@ func (tmpl *Templater) apply(in []byte) []byte {
 		buffer.WriteString(k)
 		buffer.WriteString("}}")
 		out = strings.Replace(out, buffer.String(), v, -1)
+		// if no more variable to replace, exit
+		if !strings.Contains(out, "{{") {
+			return []byte(out)
+		}
 	}
 	return []byte(out)
 }
