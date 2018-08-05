@@ -1,0 +1,11 @@
+name: MyTestSuite
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo '{{.venom.testsuite}} {{.venom.testsuite.filename}} {{.venom.testcase}} {{.venom.teststep.number}} {{.venom.datetime}} {{.venom.timestamp}}'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring MyTestSuite
+    - result.systemout ShouldContainSubstring testA
+    - result.systemout ShouldContainSubstring 0
