@@ -144,9 +144,10 @@ type Skipped struct {
 
 // Failure contains data related to a failed test.
 type Failure struct {
-	Value   string `xml:",cdata" json:"value" yaml:"value,omitempty"`
-	Type    string `xml:"type,attr,omitempty" json:"type" yaml:"type,omitempty"`
-	Message string `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
+	Value   string         `xml:",cdata" json:"value" yaml:"value,omitempty"`
+	Result  ExecutorResult `xml:"-" json:"-" yaml:"-"`
+	Type    string         `xml:"type,attr,omitempty" json:"type" yaml:"type,omitempty"`
+	Message string         `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
 }
 
 // InnerResult is used by TestCase
