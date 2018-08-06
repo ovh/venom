@@ -1,16 +1,13 @@
 package venom
 
 import (
-	"bytes"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/smartystreets/assertions"
 )
@@ -133,30 +130,7 @@ func check(tc TestCase, stepNumber int, assertion string, executorResult Executo
 			// venom used as lib
 			prefix = fmt.Sprintf("assertion: %s", assertion)
 		}
-
-		sdump := &bytes.Buffer{}
-		dumpEncoder := dump.NewDefaultEncoder(sdump)
-		dumpEncoder.ExtraFields.DetailedMap = false
-		dumpEncoder.ExtraFields.DetailedStruct = false
-		dumpEncoder.ExtraFields.Len = false
-		dumpEncoder.ExtraFields.Type = false
-		dumpEncoder.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-
-		//Try to pretty print only the result
-		var smartPrinted bool
-		for k, v := range executorResult {
-			if k == "result" && reflect.TypeOf(v).Kind() != reflect.String {
-				dumpEncoder.Fdump(v)
-				smartPrinted = true
-				break
-			}
-		}
-		//If not succeed print all the stuff
-		if !smartPrinted {
-			dumpEncoder.Fdump(executorResult)
-		}
-
-		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n" + sdump.String())}
+		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n"), Result: executorResult}
 	}
 	return nil, nil
 }
