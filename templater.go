@@ -61,29 +61,32 @@ func (tmpl *Templater) ApplyOnStep(stepNumber int, step TestStep) (TestStep, err
 	return t, nil
 }
 
-//ApplyOnContext executes the template on a context
-func (tmpl *Templater) ApplyOnContext(ctx map[string]interface{}) (map[string]interface{}, error) {
+//ApplyOnMap executes the template on a context
+// return true if there is an variable replaced
+func (tmpl *Templater) ApplyOnMap(mapStringInterface map[string]interface{}) (bool, map[string]interface{}, error) {
 	var t map[string]interface{}
-	if len(ctx) == 0 {
-		return t, nil
+	if len(mapStringInterface) == 0 {
+		return false, t, nil
 	}
 
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
-	s, err := yaml.Marshal(ctx)
+	s, err := yaml.Marshal(mapStringInterface)
 	if err != nil {
-		return nil, fmt.Errorf("templater> Error while marshaling: %s", err)
+		return false, nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
 	sb := s
-	// if the context use some variable, we run tmpl.apply on it
+	// if the mapStringInterface use some variable, we run tmpl.apply on it
 	if strings.Contains(string(s), "{{") {
 		sb = tmpl.apply(s)
+	} else {
+		return false, nil, nil
 	}
 
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
-		return nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)
+		return false, nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)
 	}
 
-	return t, nil
+	return true, t, nil
 }
 
 func (tmpl *Templater) apply(in []byte) []byte {
