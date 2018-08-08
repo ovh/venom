@@ -50,7 +50,7 @@ func (tmpl *Templater) ApplyOnStep(stepNumber int, step TestStep) (TestStep, err
 		if stepNumber >= 0 {
 			tmpl.Add("", map[string]string{"venom.teststep.number": fmt.Sprintf("%d", stepNumber)})
 		}
-		sb = tmpl.apply(s)
+		_, sb = tmpl.apply(s)
 	}
 
 	var t TestStep
@@ -75,27 +75,28 @@ func (tmpl *Templater) ApplyOnMap(mapStringInterface map[string]interface{}) (bo
 		return false, nil, fmt.Errorf("templater> Error while marshaling: %s", err)
 	}
 	sb := s
+	var applied bool
 	// if the mapStringInterface use some variable, we run tmpl.apply on it
 	if strings.Contains(string(s), "{{") {
-		sb = tmpl.apply(s)
-	} else {
-		return false, nil, nil
+		applied, sb = tmpl.apply(s)
 	}
 
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
-		return false, nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)
+		return applied, nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)
 	}
 
-	return true, t, nil
+	return applied, t, nil
 }
 
-func (tmpl *Templater) apply(in []byte) []byte {
+func (tmpl *Templater) apply(in []byte) (bool, []byte) {
 	tmpl.Add("", map[string]string{
 		"venom.datetime":  time.Now().Format(time.RFC3339),
 		"venom.timestamp": fmt.Sprintf("%d", time.Now().Unix()),
 	})
+	var applied bool
 	out := string(in)
 	for k, v := range tmpl.Values {
+		applied = true
 		var buffer bytes.Buffer
 		buffer.WriteString("{{.")
 		buffer.WriteString(k)
@@ -103,8 +104,8 @@ func (tmpl *Templater) apply(in []byte) []byte {
 		out = strings.Replace(out, buffer.String(), v, -1)
 		// if no more variable to replace, exit
 		if !strings.Contains(out, "{{") {
-			return []byte(out)
+			return applied, []byte(out)
 		}
 	}
-	return []byte(out)
+	return applied, []byte(out)
 }
