@@ -41,6 +41,7 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 	ts.Templater.Add("", d)
 	ts.Templater.Add("", map[string]string{"venom.testsuite": ts.ShortName})
 	ts.Templater.Add("", map[string]string{"venom.testsuite.filename": ts.Filename})
+	ts.Templater.applyOnTmpl()
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
