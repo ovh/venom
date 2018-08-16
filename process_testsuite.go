@@ -43,7 +43,7 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 	ts.Templater.Add("", map[string]string{"venom.testsuite": ts.ShortName})
 	ts.Templater.Add("", map[string]string{"venom.testsuite.filename": ts.Filename})
 
-	// we apply templaters on current vars
+	// we apply templater on current vars only
 	for index := 0; index < 10; index++ {
 		var toApply bool
 		for k, v := range ts.Templater.Values {
