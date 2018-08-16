@@ -37,24 +37,6 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 	}
 }
 
-// applyOnTmpl apply tmpl on himself
-// do not call it everywhere, it's aggressive CPU
-func (tmpl *Templater) applyOnTmpl() {
-	for index := 0; index < 2; index++ {
-		var toApply bool
-		for k, v := range tmpl.Values {
-			if strings.Contains(v, "{{") {
-				toApply = true
-				_, s := tmpl.apply([]byte(v))
-				tmpl.Values[k] = string(s)
-			}
-		}
-		if !toApply {
-			break
-		}
-	}
-}
-
 //ApplyOnStep executes the template on a test step
 func (tmpl *Templater) ApplyOnStep(stepNumber int, step TestStep) (TestStep, error) {
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
