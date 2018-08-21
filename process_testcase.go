@@ -35,7 +35,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	defer tcc.Close()
 
 	vars := []string{}
-	extractedVars := []string{}
+	extractedVars := make([]string, 0, len(ts.Vars))
 
 	for k := range ts.Vars {
 		extractedVars = append(extractedVars, k)
