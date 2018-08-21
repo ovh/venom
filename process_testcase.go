@@ -37,6 +37,10 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	vars := []string{}
 	extractedVars := []string{}
 
+	for k := range ts.Vars {
+		extractedVars = append(extractedVars, k)
+	}
+
 	for stepNumber, stepIn := range tc.TestSteps {
 		step, erra := ts.Templater.ApplyOnStep(stepNumber, stepIn)
 		if erra != nil {
