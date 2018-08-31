@@ -10,5 +10,5 @@ for DIST in `go tool dist list | grep -v '^android/' | grep -v '^nacl/' | grep -
     export GOOS=$GOOS
     export GOARCH=$GOARCH
 
-    CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags "-X github.com/ovh/venom.Version=${GIT_DESCRIBE}" -o bin/venom.${architecture}
+    CGO_ENABLED=0 GO111MODULE=on go build -mod=vendor -a -installsuffix cgo -ldflags "-X github.com/ovh/venom.Version=${GIT_DESCRIBE}" -o bin/venom.${architecture}
 done
