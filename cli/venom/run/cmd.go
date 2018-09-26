@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
+	"github.com/ovh/venom/executors/kafka"
 	"github.com/ovh/venom/executors/ovhapi"
 	"github.com/ovh/venom/executors/readfile"
 	"github.com/ovh/venom/executors/redis"
@@ -86,6 +87,7 @@ var Cmd = &cobra.Command{
 		v.RegisterExecutor(ovhapi.Name, ovhapi.New())
 		v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 		v.RegisterExecutor(redis.Name, redis.New())
+		v.RegisterExecutor(kafka.Name, kafka.New())
 
 		// Register Context
 		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
