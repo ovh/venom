@@ -42,6 +42,7 @@ Flags:
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
 * **http**: https://github.com/ovh/venom/tree/master/executors/http
 * **imap**: https://github.com/ovh/venom/tree/master/executors/imap
+* **kafka** https://github.com/ovh/venom/tree/master/executors/kafka
 * **ovhapi**: https://github.com/ovh/venom/tree/master/executors/ovhapi
 * **readfile**: https://github.com/ovh/venom/tree/master/executors/readfile
 * **redis**: https://github.com/ovh/venom/tree/master/executors/redis
