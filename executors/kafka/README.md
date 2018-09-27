@@ -1,6 +1,6 @@
 # Venom - Executor Kafka
 
-Step for execute a Kakka
+Step to use read / write on a kafka topic.
 
 ## Input
 In your yaml file, you can use:
