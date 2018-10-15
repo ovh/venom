@@ -1,6 +1,6 @@
 # Venom - Executor Kafka
 
-Step to use read / write on a kafka topic.
+Step to use read / write on a Kafka topic.
 
 ## Input
 In your yaml file, you can use:
@@ -14,7 +14,7 @@ In your yaml file, you can use:
   - user optional
   - password optional
 
-  - client_type mandator : producer or consumer
+  - client_type mandator: producer or consumer
 
   # for consumer client type:
   - group_id mandatory
@@ -30,7 +30,7 @@ In your yaml file, you can use:
 
 ```
 
-Example :
+Example:
 
 ```yaml
 
@@ -38,7 +38,7 @@ name: My Kafka testsuite
 version: "2"
 testcases:
 - name: Kafka test
-  description: Test kafka
+  description: Test Kafka
   steps:
   - type: kafka
     clientType: producer

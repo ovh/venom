@@ -1,6 +1,6 @@
 # Venom - Executor SSH
 
-Step for execute a script on remote server via ssh
+Step for execute a script on remote server via SSH
 
 
 ## Input
@@ -10,7 +10,7 @@ In your yaml file, you can use:
 ```yaml
   - host mandatory
   - command mandatory
-  - user optional (default is os username)
+  - user optional (default is OS username)
   - password optional (mandatory if no privatekey is found)
   - privatekey optional (default is $HOME/.ssh/id_rsa)
 ```

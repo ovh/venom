@@ -2,7 +2,7 @@
 
 Step for sending SMTP
 
-Use case: you software have to check mails for doing something with them ?
+Use case: you software have to check mails for doing something with them?
 Venom can send mail then execute some tests on your software.
 
 ## Input
@@ -28,7 +28,7 @@ testcases:
 
 ## Output
 
-Noting, except result.err is there is an arror.
+Nothing, except result.err is there is an error.
 
 ## Default assertion
 

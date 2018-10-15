@@ -2,7 +2,7 @@
 
 Navigate in a web application
 
-Use case: You have a web application and you want to check some behaviours ?
+Use case: You have a web application and you want to check some behaviours?
 Venom allows you to navigate into it and execute actions.
 
 ## Input

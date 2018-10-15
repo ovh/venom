@@ -1,6 +1,6 @@
 # Venom - Executor IMAP
 
-Use case: your software send a mail  ?
+Use case: your software send a mail?
 Venom can test if mail is received. Body of mail can be reused in further steps.
 
 ## Input
@@ -40,7 +40,7 @@ Input must contain at least one of searchfrom, searchto, searchsubject or search
 
 ## Output
 
-* result.err is there is an arror.
+* result.err is there is an error.
 * result.subject: subject of searched mail
 * result.body: body of searched mail
 

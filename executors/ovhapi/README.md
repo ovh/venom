@@ -1,17 +1,17 @@
 # Venom - Executor OVHAPI
 
-Step to test ovh api
+Step to test OVH API
 
-Use case: you software need to make call to OVH api.<br>
-You will need ovh credentials to make api call. Please follow this tutorial to get all needed keys : <br>
-FR : https://www.ovh.com/fr/g934.premiers_pas_avec_lapi <br>
-EN : https://api.ovh.com/g934.first_step_with_api
+Use case: you software need to make call to OVH API.<br>
+You will need OVH credentials to make API call. Please follow this tutorial to get all needed keys: <br>
+FR: https://www.ovh.com/fr/g934.premiers_pas_avec_lapi <br>
+EN: https://api.ovh.com/g934.first_step_with_api
 
 ## Input
 In your yaml file, you can use:
 
 ```
-  - method optional, default value : GET
+  - method optional, default value: GET
   - path mandatory, example "/me"
   - noAuth optional
   - body optional
