@@ -6,7 +6,7 @@ Step for execute a HTTP Request
 In your yaml file, you can use:
 
 ```yaml
-  - method optional, default value : GET
+  - method optional, default value: GET
   - url mandatory
   - path optional
   - body optional

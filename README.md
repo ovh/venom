@@ -1,6 +1,6 @@
 # Venom
 
-Venom run executors (script, HTTP Request, etc... ) and assertions.
+Venom run executors (script, HTTP Request, etc. ) and assertions.
 It can also output xUnit results files.
 
 <img src="./venom.gif" alt="Venom Demonstration" width="80%">
@@ -179,7 +179,7 @@ Builtin variables:
 On this new version, venom use the testsuite folder as the basepath instead of location of venom execution.
 
 
-Considering this workspace :
+Considering this workspace:
 
 ```yaml
 
@@ -208,7 +208,7 @@ You must execute venom on the testsuite dir.
 
 On version 2, venom use as basepath the testsuite file. So no matter where you execute venom command, testa.json will be found.
 
-To specify the version 2, add *version* property on the testsuite :
+To specify the version 2, add *version* property on the testsuite:
 
 ```yaml
 
@@ -247,7 +247,7 @@ venom run --var-from-file vars.yaml --parallel=5
 ## RUN Venom, with an export xUnit
 
 ```bash
-venom run  --format=xml --output-dir="."
+venom run --format=xml --output-dir="."
 ```
 
 ## Assertion
@@ -372,7 +372,7 @@ func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (v
 	r := Result{
 		Code:    ouputCode, // return Output Code
 		Command: e.Command, // return Command executed
-		Systemout:  systemout,    // return Output string
+		Systemout: systemout, // return Output string
 		Executor: e, // return executor, useful for display Executor context in failure
 	}
 
@@ -386,9 +386,9 @@ Feel free to open a Pull Request with your executors.
 
 ## TestCase Context
 
-TestCase Context allows you to inject datas in all Steps.
+TestCase Context allows you to inject data in all steps.
 
-Define a context is optional, but can be useful to keep data between teststeps on a testcase.
+Define a context is optional, but can be useful to keep data between test steps on a testcase.
 
 ### Write your TestCase Context
 
@@ -434,7 +434,7 @@ func (tcc *DefaultTestCaseContext) Close() error {
 }
 ```
 
-Methods SetTestCase and  GetName are implemented by CommonTestCaseContext
+Methods SetTestCase and GetName are implemented by CommonTestCaseContext
 
 # Dependencies
 

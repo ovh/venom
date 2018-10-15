@@ -1,18 +1,18 @@
 # Venom - Executor Redis
 
-Step to execute command into redis
+Step to execute command into Redis
 
-Use case: your software need to make call to a redis.
+Use case: your software need to make call to a Redis.
 
 
 ## Input
 
 In your yaml file, you can use:
 
-- context : required. Must contains dialURL property. DialURL connects to a Redis server at the given URL using the Redis URI scheme.
+- context: required. Must contains dialURL property. DialURL connects to a Redis server at the given URL using the Redis URI scheme.
 URLs should follow the draft IANA specification for the scheme (https://www.iana.org/assignments/uri-schemes/prov/redis).
-- commands : an array of redis command
-- path : a file which contains a series of redis command. See example below.
+- commands: an array of Redis command
+- path: a file which contains a series of Redis command. See example below.
 
 If path property is filled, commands property will be ignored.
 
@@ -77,8 +77,8 @@ result.executor
 result.commands
 ```
 
-- result.executor.commands contains the list of redis command
+- result.executor.commands contains the list of Redis command
 - result.executor.FilePath contains the path of file
 
-- result.commands contains the list of executed redis command
-- result.commands.commandI.response represents the response of redis command. It can be an array or a string, depends of redis command
+- result.commands contains the list of executed Redis command
+- result.commands.commandI.response represents the response of Redis command. It can be an array or a string, depends of Redis command
