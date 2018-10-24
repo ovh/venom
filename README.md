@@ -1,4 +1,4 @@
-# Venom
+# 🐍 Venom
 
 Venom run executors (script, HTTP Request, etc. ) and assertions.
 It can also output xUnit results files.
