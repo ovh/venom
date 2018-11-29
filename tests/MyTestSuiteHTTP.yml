@@ -20,7 +20,7 @@ testcases:
     url: https://eu.api.ovh.com/1.0/auth/logout
     assertions:
     - result.statuscode ShouldEqual 401
-    - result.headers.www-authenticate ShouldEqual X-OVH-Auth
+    - result.headers.x-ovh-queryid ShouldNotBeEmpty
     - result.timeseconds ShouldBeLessThan 1
 
 - name: POST http multipart
@@ -69,7 +69,7 @@ testcases:
     skip_body: true
     skip_headers: true
     assertions:
-      - result.statuscode ShouldEqual 200
+      - result.statuscode ShouldEqual 500
       - result.body ShouldBeEmpty
       - result.headers ShouldBeEmpty
 
