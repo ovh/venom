@@ -8,6 +8,7 @@ In your yaml file, you can use:
 ```yaml
   - method optional, default value: GET
   - url mandatory
+  - unix_sock optional
   - path optional
   - body optional
   - bodyFile optional
@@ -58,6 +59,15 @@ testcases:
         file: '@/tmp/myfile.tmp'
     assertions:
     - result.statuscode ShouldNotEqual 200
+
+- name: GET API health over Unix Socket
+  steps:
+  - type: http
+    method: GET
+    unix_sock: /run/myapp/health.sock
+    url: http://unix/health
+    assertions:
+    - result.bodyjson.success ShouldBeTrue
 ```
 *NB: to post a file with multipart_form, prefix the path to the file with '@'*
 
