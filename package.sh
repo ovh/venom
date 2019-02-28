@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd cli/venom
-for DIST in `go tool dist list | grep -v '^android/' | grep -v '^nacl/' | grep -v '^plan9/' | grep -v '^darwin/arm'`; do
+for DIST in `go tool dist list | grep -v '^android/' | grep -v 'mips' | grep -v 'riscv64' | grep -v 'ppc64' | grep -v 's390x'  | grep -v '^nacl/' | grep -v '^plan9/' | grep -v '^darwin/arm' | grep -v '^js/wasm'`; do
     GOOS=`echo ${DIST} | cut -d / -f 1`
     GOARCH=`echo ${DIST} | cut -d / -f 2`
 
