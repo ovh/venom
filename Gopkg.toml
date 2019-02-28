@@ -21,7 +21,7 @@
 
 
 [[constraint]]
-  version = "1.0.3"
+  version = "1.0.8"
   name = "github.com/fsamin/go-dump"
 
 [[constraint]]

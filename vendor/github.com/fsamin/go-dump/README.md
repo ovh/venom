@@ -50,129 +50,60 @@ Will return such a map:
     dump.ToMap(a, dump.WithDefaultLowerCaseFormatter())
 ```
 
-## Complex example
-
-For the following complex struct:
-
+## Using go-dump to manage environment variables and using spf13/viper
 ```golang
-    sdk.Pipeline{
-            Name: "MyPipeline",
-            Type: sdk.BuildPipeline,
-            Stages: []sdk.Stage{
-                {
-                    BuildOrder: 1,
-                    Name:       "stage 1",
-                    Enabled:    true,
-                    Jobs: []sdk.Job{
-                        {
-                            Action: sdk.Action{
-                                Name:        "Job 1",
-                                Description: "This is job 1",
-                                Actions: []sdk.Action{
-                                    {
-
-                                        Type: sdk.BuiltinAction,
-                                        Name: sdk.ScriptAction,
-                                        Parameters: []sdk.Parameter{
-                                            {
-                                                Name:  "script",
-                                                Type:  sdk.TextParameter,
-                                                Value: "echo lol",
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
+    
+    type MyStruct struct {
+        A string
+        B struct {
+            InsideB string
         }
+    }
+
+    var myStruct MyStruct
+    myStruct.A = "value A"
+    myStruct.B.InsideB = "value B"
+    
+
+    dumper := dump.NewDefaultEncoder()
+    dumper.DisableTypePrefix = true
+    dumper.Separator = "_"
+    dumper.Prefix = "MYSTRUCT"
+    dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
+
+    envs, _ := dumper.ToStringMap(&myStruct) // envs is the map of the dumped MyStruct 
 ```
 
-Output will be
+Will return such a map:
 
-````bash
-Pipeline.AttachedApplication.__Len__: 0
-Pipeline.AttachedApplication.__Type__: Array
-Pipeline.GroupPermission.__Len__: 0
-Pipeline.GroupPermission.__Type__: Array
-Pipeline.ID: 0
-Pipeline.LastModified: 0
-Pipeline.LastPipelineBuild:
-Pipeline.Name: MyPipeline
-Pipeline.Parameter.__Len__: 0
-Pipeline.Parameter.__Type__: Array
-Pipeline.Permission: 0
-Pipeline.ProjectID: 0
-Pipeline.ProjectKey:
-Pipeline.Stages.Stages0.BuildOrder: 1
-Pipeline.Stages.Stages0.Enabled: true
-Pipeline.Stages.Stages0.ID: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Actions.__Len__: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Actions.__Type__: Array
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Description:
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Enabled: false
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Final: false
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.ID: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.LastModified: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Name: Script
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Description:
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.ID: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Name: script
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Type: text
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Value: echo lol
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.__Type__: Parameter
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.__Len__: 1
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.__Type__: Array
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Requirements.__Len__: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Requirements.__Type__: Array
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Type: Builtin
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.__Type__: Action
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.__Len__: 1
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.__Type__: Array
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Description: This is job 1
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Enabled: false
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Final: false
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.ID: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.LastModified: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Name: Job 1
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Parameters.__Len__: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Parameters.__Type__: Array
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Requirements.__Len__: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Requirements.__Type__: Array
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Type:
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.__Type__: Action
-Pipeline.Stages.Stages0.Jobs.Jobs0.Enabled: false
-Pipeline.Stages.Stages0.Jobs.Jobs0.LastModified: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineActionID: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineStageID: 0
-Pipeline.Stages.Stages0.Jobs.Jobs0.__Type__: Job
-Pipeline.Stages.Stages0.Jobs.__Len__: 1
-Pipeline.Stages.Stages0.Jobs.__Type__: Array
-Pipeline.Stages.Stages0.LastModified: 0
-Pipeline.Stages.Stages0.Name: stage 1
-Pipeline.Stages.Stages0.PipelineBuildJobs.__Len__: 0
-Pipeline.Stages.Stages0.PipelineBuildJobs.__Type__: Array
-Pipeline.Stages.Stages0.PipelineID: 0
-Pipeline.Stages.Stages0.Prerequisites.__Len__: 0
-Pipeline.Stages.Stages0.Prerequisites.__Type__: Array
-Pipeline.Stages.Stages0.RunJobs.__Len__: 0
-Pipeline.Stages.Stages0.RunJobs.__Type__: Array
-Pipeline.Stages.Stages0.Status:
-Pipeline.Stages.Stages0.__Type__: Stage
-Pipeline.Stages.__Len__: 1
-Pipeline.Stages.__Type__: Array
-Pipeline.Type: build
-__Type__: Pipeline
-````
+| KEY                    | Value         |
+| ---------------------- | ------------- |
+| MYSTRUCT_A             | value A       |
+| MYSTRUCT_B_INSIDEB     | value B       |
+
+The environement variables can be handled by **viper** [spf13/viper](https://github.com/spf13/viper).
+
+```golang
+    ...
+    for k := range envs {
+        viper.BindEnv(dumper.ViperKey(k), k)
+    }
+    
+    ...
+
+    viperSettings := viper.AllSettings()
+    for k, v := range viperSettings {
+        fmt.Println(k, v)
+    }
+    ...
+```
 
 ## More examples
 
-See [unit tests](test/dump_test.go) for more examples.
+See [unit tests](dump_test.go) for more examples.
 
 ## Dependencies
 
-Go-Dump needs Go >= 1.7
+Go-Dump needs Go >= 1.8
 
 No external dependencies :)
