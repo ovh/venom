@@ -46,8 +46,8 @@
 [[projects]]
   name = "github.com/fsamin/go-dump"
   packages = ["."]
-  revision = "d02295fd76cbfa974d2dff252119b0cc4c14c91d"
-  version = "v1.0.6"
+  revision = "1c5c7763a9ed04e110331fad0c7b67ff69a1e6b9"
+  version = "v1.0.8"
 
 [[projects]]
   name = "github.com/garyburd/redigo"
@@ -313,6 +313,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "270412dd699ec04a3e610b7a76d13beca077742770e74795f673e7d3171e8047"
+  inputs-digest = "3f5c2fe8cba9e30ea436f81285bfca8bf01b675e6279c2bfb9c091a9fc9a5cdd"
   solver-name = "gps-cdcl"
   solver-version = 1

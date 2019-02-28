@@ -71,16 +71,11 @@ type T struct {
 type Tbis struct {
 	Cbis string
 	Cter string
-	X    *Tter
-}
-
-type Tter struct {
-	X string
 }
 
 func TestDumpStruct_Nested(t *testing.T) {
 
-	a := T{23, "foo bar", Tbis{"lol", "lol", &Tter{"X"}}}
+	a := T{23, "foo bar", Tbis{"lol", "lol"}}
 
 	out := &bytes.Buffer{}
 	err := dump.Fdump(out, a)
@@ -90,7 +85,6 @@ func TestDumpStruct_Nested(t *testing.T) {
 T.B: foo bar
 T.C.Cbis: lol
 T.C.Cter: lol
-T.C.X.X: X
 `
 	assert.Equal(t, expected, out.String())
 
@@ -104,7 +98,7 @@ type TP struct {
 
 func TestDumpStruct_NestedWithPointer(t *testing.T) {
 	i := 23
-	a := TP{&i, "foo bar", &Tbis{"lol", "lol", nil}}
+	a := TP{&i, "foo bar", &Tbis{"lol", "lol"}}
 
 	out := &bytes.Buffer{}
 	err := dump.Fdump(out, a)
@@ -129,8 +123,8 @@ func TestDumpStruct_Map(t *testing.T) {
 
 	a := TM{A: 23, B: "foo bar"}
 	a.C = map[string]Tbis{}
-	a.C["bar"] = Tbis{"lel", "lel", nil}
-	a.C["foo"] = Tbis{"lol", "lol", nil}
+	a.C["bar"] = Tbis{"lel", "lel"}
+	a.C["foo"] = Tbis{"lol", "lol"}
 
 	out := &bytes.Buffer{}
 	dumper := dump.NewEncoder(out)
@@ -158,8 +152,8 @@ __Type__: TM
 
 func TestDumpArray(t *testing.T) {
 	a := []T{
-		{23, "foo bar", Tbis{"lol", "lol", nil}},
-		{24, "fee bor", Tbis{"lel", "lel", nil}},
+		{23, "foo bar", Tbis{"lol", "lol"}},
+		{24, "fee bor", Tbis{"lel", "lel"}},
 	}
 
 	out := &bytes.Buffer{}
@@ -199,8 +193,8 @@ func TestDumpStruct_Array(t *testing.T) {
 		A: 0,
 		B: "here",
 		C: []T{
-			{23, "foo bar", Tbis{"lol", "lol", nil}},
-			{24, "fee bor", Tbis{"lel", "lel", nil}},
+			{23, "foo bar", Tbis{"lol", "lol"}},
+			{24, "fee bor", Tbis{"lel", "lel"}},
 		},
 		D: []bool{true, false},
 	}
