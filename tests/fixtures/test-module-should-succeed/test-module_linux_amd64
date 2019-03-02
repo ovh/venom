@@ -1,0 +1,12 @@
+#!/bin/bash
+cat << EndOfMessage
+{
+ "type": "executor",
+ "name": "dummy",
+ "author": "François SAMIN",
+ "description": "this is a dummy executor",
+ "homepage": "http://nowhere.lolcat",
+ "url": "http://nowhere.lolcat",
+ "version": "0.1"
+}
+EndOfMessage
