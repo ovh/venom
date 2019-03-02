@@ -1,19 +1,14 @@
 package venom
 
 import (
-	"io"
+	"context"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type TestLogger struct {
 	t *testing.T
-}
-
-var _ io.Writer = TestLogger{}
-
-func (t TestLogger) Write(btes []byte) (int, error) {
-	t.t.Logf(string(btes))
-	return len(btes), nil
 }
 
 func (t TestLogger) Debugf(format string, args ...interface{}) {
@@ -33,4 +28,24 @@ func (t TestLogger) Errorf(format string, args ...interface{}) {
 }
 func (t TestLogger) Fatalf(format string, args ...interface{}) {
 	t.t.Logf(format, args...)
+}
+
+func TestRunTestStep(t *testing.T) {
+	v := New()
+	v.ConfigurationDirectory = "./dist/executors"
+
+	step := TestStep{
+		"type":   "http",
+		"method": "GET",
+		"url":    "https://jsonplaceholder.typicode.com/todos/1",
+	}
+
+	ctxMod, _ := v.getContextModule("")
+	ctx, _ := ctxMod.New(context.Background(), nil)
+
+	res, asserts, err := v.RunTestStep(ctx, "test", 0, step, TestLogger{t})
+	assert.NoError(t, err)
+	assert.NotNil(t, asserts)
+	t.Logf("assertions: %+v", asserts)
+	assert.NotNil(t, res)
 }

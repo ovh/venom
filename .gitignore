@@ -1,7 +1,7 @@
 .idea
 .vscode
-venom
 tests/pprof*
 tests/.DS_Store
 .DS_Store
 vendor/
+dist/
