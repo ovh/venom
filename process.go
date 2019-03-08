@@ -1,42 +1,21 @@
 package venom
 
 import (
+	"fmt"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
-
-func (v *Venom) init() error {
-	v.testsuites = []TestSuite{}
-	if v.Parallel == 0 {
-		v.Parallel = 1
-	}
-
-	if v.logger == nil {
-		v.logger = logrus.New()
-	}
-
-	switch v.LogLevel {
-	case "debug":
-		v.logger.SetLevel(logrus.DebugLevel)
-	case "info":
-		v.logger.SetLevel(logrus.InfoLevel)
-	case "error":
-		v.logger.SetLevel(logrus.ErrorLevel)
-	default:
-		v.logger.SetLevel(logrus.WarnLevel)
-	}
-
-	v.logger.SetOutput(v.LogOutput)
-
-	return nil
-}
 
 // Process runs tests suite and return a Tests result
 func (v *Venom) Process(path []string) (*Tests, error) {
 	if err := v.init(); err != nil {
 		return nil, err
 	}
+
+	if len(path) == 0 {
+		return nil, fmt.Errorf("nothing to do")
+	}
+
+	v.logger.Debug("Starting venom...")
 
 	filesPath, err := getFilesPath(path)
 	if err != nil {
@@ -60,7 +39,8 @@ func (v *Venom) Process(path []string) (*Tests, error) {
 		for ts := range chanToRun {
 			parallels <- ts
 			go func(ts *TestSuite) {
-				v.runTestSuite(ts)
+				tsLogger := v.logger.WithField("testsuite", ts.ShortName)
+				v.runTestSuite(ts, tsLogger)
 				chanEnd <- ts
 				<-parallels
 			}(ts)

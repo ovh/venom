@@ -33,11 +33,15 @@ func (t TestLogger) Fatalf(format string, args ...interface{}) {
 func TestRunTestStep(t *testing.T) {
 	v := New()
 	v.ConfigurationDirectory = "./dist/executors"
-
+	v.LogLevel = LogLevelDebug
 	step := TestStep{
 		"type":   "http",
 		"method": "GET",
 		"url":    "https://jsonplaceholder.typicode.com/todos/1",
+		"assertions": []string{
+			"result.statuscode ShouldEqual 200",
+			"result.timeseconds ShouldBeLessThan 1",
+		},
 	}
 
 	ctxMod, _ := v.getContextModule("")

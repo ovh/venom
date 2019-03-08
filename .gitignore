@@ -4,3 +4,4 @@ tests/pprof*
 tests/.DS_Store
 .DS_Store
 dist/
+coverage.*

@@ -20,12 +20,20 @@ func (e commonContextModule) Manifest() VenomModuleManifest {
 }
 
 func (e commonContextModule) New(ctx context.Context, values TestContextValues) (TestContext, error) {
-	return &commonContext{ctx, values}, nil
+	return &commonContext{Context: ctx, values: values}, nil
 }
 
 type commonContext struct {
 	context.Context
-	values TestContextValues
+	values           TestContextValues
+	workingDirectory string
+}
+
+func (e *commonContext) SetWorkingDirectory(s string) {
+	e.workingDirectory = s
+}
+func (e *commonContext) GetWorkingDirectory() string {
+	return e.workingDirectory
 }
 
 func (e *commonContext) Get(key string) interface{} {

@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/oldvenom/executors"
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/lib/executor"
 )
 
 // Headers represents header HTTP for Request
@@ -75,13 +75,7 @@ func (e Executor) Manifest() venom.VenomModuleManifest {
 	}
 }
 
-func (Executor) Run(ctx venom.TestContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
-	t0 := time.Now()
-	l.Debugf("http.Run> Begin")
-	defer func() {
-		l.Debugf("http.Run> End (%.3f seconds)", time.Since(t0).Seconds())
-	}()
-
+func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorResult, error) {
 	var e Executor
 	// transform step to Executor Instance
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -131,9 +125,9 @@ func (Executor) Run(ctx venom.TestContext, l venom.Logger, step venom.TestStep) 
 	}
 
 	start := time.Now()
-	l.Debugf("http.Run.doRequest> Begin")
+	executor.Debugf("http.Run.doRequest> Begin")
 	resp, err := client.Do(req)
-	l.Debugf("http.Run.doRequest> End (%.3f seconds)", time.Since(t0).Seconds())
+	executor.Debugf("http.Run.doRequest> End (%.3f seconds)", time.Since(start).Seconds())
 	if err != nil {
 		return nil, fmt.Errorf("client http error: %v", err)
 	}
@@ -174,7 +168,7 @@ func (Executor) Run(ctx venom.TestContext, l venom.Logger, step venom.TestStep) 
 
 	r.StatusCode = resp.StatusCode
 
-	return executors.Dump(r)
+	return venom.Dump(r)
 }
 
 // getRequest returns the request correctly set for the current executor

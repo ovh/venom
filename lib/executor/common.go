@@ -6,14 +6,16 @@ import (
 	"io/ioutil"
 	"log/syslog"
 	"os"
+	"time"
 
 	"github.com/sirupsen/logrus"
-
 	lsyslog "github.com/sirupsen/logrus/hooks/syslog"
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/lib/cmd"
 )
+
+var log venom.Logger = logrus.New()
 
 type Common interface {
 	venom.VenomModule
@@ -25,7 +27,7 @@ type venomExecutorLogger struct {
 	hook *lsyslog.SyslogHook
 }
 
-func NewLogger(syslogAddress, level string) (venom.Logger, error) {
+func newLogger(syslogAddress, level string) error {
 	logger := logrus.New()
 	logger.SetOutput(ioutil.Discard)
 	logger.SetFormatter(new(logrus.TextFormatter))
@@ -44,14 +46,15 @@ func NewLogger(syslogAddress, level string) (venom.Logger, error) {
 	var l venomExecutorLogger
 	hook, err := lsyslog.NewSyslogHook("tcp", syslogAddress, syslog.LOG_INFO|syslog.LOG_USER, "")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	l.hook = hook
 	l.Logger = logger
 	l.Logger.AddHook(l.hook)
+	log = &l
 
-	return &l, nil
+	return nil
 }
 
 func Start(c Common) error {
@@ -85,12 +88,18 @@ func Start(c Common) error {
 
 		loggerAddress := vals.GetString("logger")
 		logLevel := vals.GetString("log-level")
-		logger, err := NewLogger(loggerAddress, logLevel)
-		if err != nil {
+		if err := newLogger(loggerAddress, logLevel); err != nil {
 			return cmd.NewError(502, "logger error: %v", err)
 		}
 
-		res, err := c.Run(nil, logger, step)
+		t0 := time.Now()
+		name := c.Manifest().Name
+		Debugf(name + ".Run> Begin")
+		defer func() {
+			Debugf(name+".Run> End (%.3f seconds)", time.Since(t0).Seconds())
+		}()
+
+		res, err := c.Run(nil, step)
 		if err != nil {
 			return cmd.NewError(502, "executor error: %v", err)
 		}
@@ -150,4 +159,23 @@ func Start(c Common) error {
 	mainCmd.AddCommand(executeCmd, parseCmd, infoCmd, assertionsCmd)
 
 	return mainCmd.Execute()
+}
+
+func Debugf(format string, args ...interface{}) {
+	log.Debugf(format, args...)
+}
+func Infof(format string, args ...interface{}) {
+	log.Infof(format, args...)
+}
+func Warnf(format string, args ...interface{}) {
+	log.Warnf(format, args...)
+}
+func Warningf(format string, args ...interface{}) {
+	log.Warningf(format, args...)
+}
+func Errorf(format string, args ...interface{}) {
+	log.Errorf(format, args...)
+}
+func Fatalf(format string, args ...interface{}) {
+	log.Fatalf(format, args...)
 }

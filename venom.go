@@ -62,3 +62,29 @@ func (v *Venom) AddVariables(variables map[string]string) {
 		v.variables[k] = variable
 	}
 }
+
+func (v *Venom) init() error {
+	v.testsuites = []TestSuite{}
+	if v.Parallel == 0 {
+		v.Parallel = 1
+	}
+
+	v.logger = logrus.New()
+	formatter := new(LogFormatter)
+	v.logger.Formatter = formatter
+
+	switch v.LogLevel {
+	case "debug":
+		v.logger.SetLevel(logrus.DebugLevel)
+	case "info":
+		v.logger.SetLevel(logrus.InfoLevel)
+	case "error":
+		v.logger.SetLevel(logrus.ErrorLevel)
+	default:
+		v.logger.SetLevel(logrus.WarnLevel)
+	}
+
+	v.logger.SetOutput(v.LogOutput)
+
+	return nil
+}

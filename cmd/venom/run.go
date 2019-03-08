@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -120,13 +121,13 @@ func checkConfigurationDirectory(v *venom.Venom, vals cmd.Values) *cmd.Error {
 	if err := os.MkdirAll(configurationDirectory, os.FileMode(0755)); err != nil {
 		return cmd.NewError(128, "unable to create directory %s: %v", configurationDirectory, err)
 	}
-
 	v.ConfigurationDirectory = configurationDirectory
 	return nil
 }
 
 var runFunc = func(vals cmd.Values) *cmd.Error {
 	var v = venom.New()
+	v.LogLevel = vals.GetString("log")
 	if err := checkConfigurationDirectory(v, vals); err != nil {
 		return err
 	}
@@ -162,6 +163,14 @@ var runFunc = func(vals cmd.Values) *cmd.Error {
 	if len(mods) == 0 {
 		return cmd.NewError(2, "venom intialization error: no module found in configuration directory")
 	}
+
+	tests, err := v.Process(vals.GetStringSlice("path"))
+
+	if err != nil {
+		return cmd.NewError(1, "%v", err)
+	}
+
+	fmt.Println(tests)
 
 	return nil
 }

@@ -1,0 +1,15 @@
+name: MyTestSuite
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo 'foo'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.timeseconds ShouldBeLessThan 1
+
+- name: read a json file from the same directory
+  steps:
+  - script: cat testa.json
+    assertions:
+    - result.systemoutjson.foo ShouldContainSubstring bar

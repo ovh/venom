@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/cds/sdk/interpolate"
 
 	yaml "gopkg.in/yaml.v2"
@@ -76,19 +78,10 @@ type StepExtracts struct {
 	Extracts map[string]string `json:"extracts,omitempty" yaml:"extracts,omitempty"`
 }
 
-// ExecutorFactory
-type ExecutorFactory interface {
-	New() Executor
-}
-
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(TestContext, Logger, TestStep) (ExecutorResult, error)
-}
-
-type TestContextFactory interface {
-	New(ctx context.Context, values TestContextValues) (TestContext, error)
+	Run(TestContext, TestStep) (ExecutorResult, error)
 }
 
 // TestContext represents the context initialized over a test suite or a test case testcase
@@ -97,6 +90,8 @@ type TestContext interface {
 	Get(string) interface{}
 	RunCommand(cmd string, args ...interface{}) error
 	WithTimeout(d time.Duration) context.CancelFunc
+	SetWorkingDirectory(string)
+	GetWorkingDirectory() string
 }
 
 //func (t TestContext) WithTimeout(d time.Duration) context.CancelFunc {
@@ -178,6 +173,15 @@ type TestCase struct {
 	TestSteps []TestStep   `xml:"-" hcl:"step" json:"steps" yaml:"steps"`
 	Context   *ContextData `xml:"-" json:"-" yaml:"context,omitempty"`
 	Vars      H            `xml:"-" json:"-" yaml:"vars"`
+}
+
+type AssignStep struct {
+	Assignments map[string]Assignment `json:"vars" yaml:"vars" mapstructure:"vars"`
+}
+
+type Assignment struct {
+	From  string `json:"from" yaml:"from"`
+	Regex string `json:"regex" yaml:"regex"`
 }
 
 // TestStep represents a testStep
@@ -288,4 +292,47 @@ type Logger interface {
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Fatalf(format string, args ...interface{})
+}
+
+func LoggerWithField(l Logger, key string, i interface{}) Logger {
+	logrusLogger, ok := l.(*logrus.Entry)
+	if ok {
+		return logrusLogger.WithField(key, i)
+	}
+	return &LoggerWithPrefix{
+		parent:      l,
+		prefixKey:   key,
+		prefixValue: i,
+	}
+}
+
+type LoggerWithPrefix struct {
+	parent      Logger
+	prefixKey   string
+	prefixValue interface{}
+}
+
+func (l LoggerWithPrefix) Debugf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Debugf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Infof(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Infof(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Warnf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Warnf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Warningf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Warningf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Errorf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Errorf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Fatalf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Fatalf(s+"\t"+format, args...)
 }
