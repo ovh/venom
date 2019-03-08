@@ -154,6 +154,12 @@ loop:
 	if err != nil {
 		return nil, err
 	}
+
+	moduleEntryPointPath, err = filepath.Abs(moduleEntryPointPath)
+	if err != nil {
+		return nil, err
+	}
+
 	mod := newModule(moduleEntryPointPath, manifest)
 	return mod, err
 }

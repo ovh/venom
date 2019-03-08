@@ -41,13 +41,6 @@ func applyChecks(executorResult ExecutorResult, tcName string, stepNumber int, s
 	if !res.ok {
 		return res
 	}
-
-	resExtract := applyExtracts(executorResult, step)
-
-	res.errors = append(res.errors, resExtract.errors...)
-	res.failures = append(res.failures, resExtract.failures...)
-	res.ok = resExtract.ok
-
 	return res
 }
 

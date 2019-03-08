@@ -46,7 +46,7 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 
 func (v *Venom) readFiles(filesPath []string) (err error) {
 	for _, f := range filesPath {
-		logrus.Info("Reading ", f)
+		v.logger.Infof("Reading %s", f)
 		rawData, err := ioutil.ReadFile(f)
 		if err != nil {
 			return fmt.Errorf("error while reading file %s: %v", f, err)

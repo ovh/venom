@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -26,8 +27,9 @@ func (e executorModule) Manifest() VenomModuleManifest {
 	return e.manifest
 }
 
-func (e executorModule) New(ctx context.Context, v *Venom) (Executor, error) {
+func (e executorModule) New(ctx context.Context, v *Venom, l Logger) (Executor, error) {
 	var starter executorStarter
+	starter.l = LoggerWithField(l, "executor", e.manifest.Name)
 	starter.v = v
 	starter.executorModule = e
 	starter.logServer = syslog.NewServer()
@@ -38,6 +40,7 @@ func (e executorModule) New(ctx context.Context, v *Venom) (Executor, error) {
 	starter.logServerAddress = "0.0.0.0:" + strconv.Itoa(port)
 	starter.logServer.SetHandler(starter.logsHandler(ctx))
 	starter.logServer.SetFormat(syslog.Automatic)
+	l.Debugf("starting syslog server on %s", starter.logServerAddress)
 	if err := starter.logServer.ListenUDP(starter.logServerAddress); err != nil {
 		return nil, err
 	}
@@ -46,7 +49,6 @@ func (e executorModule) New(ctx context.Context, v *Venom) (Executor, error) {
 	}
 	go func(s *syslog.Server) {
 		s.Boot()
-		log.Println("syslog server booted", starter.logServerAddress)
 		s.Wait()
 	}(starter.logServer)
 
@@ -100,12 +102,13 @@ func (e executorModule) GetDefaultAssertions(ctx TestContext) (*StepAssertions, 
 // manage the log-level
 type executorStarter struct {
 	v                *Venom
+	l                Logger
 	logServer        *syslog.Server
 	logServerAddress string
 	executorModule
 }
 
-func (e *executorStarter) Run(ctx TestContext, logger Logger, step TestStep) (ExecutorResult, error) {
+func (e *executorStarter) Run(ctx TestContext, step TestStep) (ExecutorResult, error) {
 	if step == nil {
 		return nil, nil
 	}
@@ -116,6 +119,7 @@ func (e *executorStarter) Run(ctx TestContext, logger Logger, step TestStep) (Ex
 
 	// Instanciate the execute command
 	cmd := exec.CommandContext(ctx, e.entrypoint, "execute", "--logger", e.logServerAddress, "--log-level", e.v.LogLevel)
+	cmd.Dir = ctx.GetWorkingDirectory()
 
 	// Write in the stdin
 	stdin, err := cmd.StdinPipe()
@@ -135,7 +139,8 @@ func (e *executorStarter) Run(ctx TestContext, logger Logger, step TestStep) (Ex
 	output := new(bytes.Buffer)
 	cmd.Stdout = output
 	cmd.Stderr = output
-	// TODO: start the command in the right working directory
+
+	e.l.Debugf("starting command %s", cmd.Path)
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("unable to start command: %v", err)
@@ -160,17 +165,59 @@ func (e *executorStarter) Run(ctx TestContext, logger Logger, step TestStep) (Ex
 	return res, nil
 }
 
+var (
+	levelRegexp = regexp.MustCompile(`level=([a-z]*)`)
+	msgRegexp   = regexp.MustCompile(`msg=(".*"|\w)`)
+)
+
 func (e *executorStarter) logsHandler(ctx context.Context) syslog.Handler {
 	channel := make(syslog.LogPartsChannel)
 	handler := syslog.NewChannelHandler(channel)
-	log.Println("starting syslog server handler...")
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case logParts := <-channel:
-				fmt.Println(">>>", logParts)
+				content, has := logParts["content"]
+				if !has {
+					continue
+				}
+				scontent, ok := content.(string)
+				if !ok {
+					continue
+				}
+
+				levelMatch := levelRegexp.FindStringSubmatch(scontent)
+				if len(levelMatch) != 2 {
+					continue
+				}
+				level := levelMatch[1]
+
+				msgMatch := msgRegexp.FindStringSubmatch(scontent)
+				if len(msgMatch) != 2 {
+					continue
+				}
+				msg := msgMatch[1]
+
+				msg = strings.TrimPrefix(msg, "\"")
+				msg = strings.TrimSuffix(msg, "\"")
+
+				switch level {
+				case "debug":
+					e.l.Debugf(msg)
+				case "info":
+					e.l.Infof(msg)
+				case "warning":
+					e.l.Warningf(msg)
+				case "error":
+					e.l.Errorf(msg)
+				case "fatal":
+					e.l.Fatalf(msg)
+				default:
+					log.Println(level, msg)
+				}
+
 				//TODO: remap to logrus
 			}
 		}
@@ -187,8 +234,11 @@ func (v *Venom) getExecutorModule(step TestStep) (*executorModule, error) {
 	for _, m := range allModules {
 		var manifest = m.Manifest()
 		e, ok := m.(executorModule)
-		v.logger.Debugf("checking step %s against %+v", step.GetType(), manifest)
-		if ok && manifest.Type == "executor" && step.GetType() == manifest.Name {
+		var stepType = step.GetType()
+		if stepType == "" {
+			stepType = "exec"
+		}
+		if ok && manifest.Type == "executor" && stepType == manifest.Name {
 			mod = &e
 			break
 		}

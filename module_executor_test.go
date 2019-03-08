@@ -14,15 +14,17 @@ func Test_executorModule(t *testing.T) {
 	}
 
 	v := New()
+	v.init()
+	v.LogLevel = LogLevelDebug
 
 	ctxMod, _ := v.getContextModule("")
 	ctx, _ := ctxMod.New(context.Background(), nil)
 
-	executor, err := m.New(ctx, v)
+	executor, err := m.New(ctx, v, TestLogger{t})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
-	res, err := executor.Run(ctx, nil, nil)
+	res, err := executor.Run(ctx, nil)
 	assert.NoError(t, err)
 	assert.Nil(t, res)
 
@@ -31,7 +33,9 @@ func Test_executorModule(t *testing.T) {
 func Test_getExecutorModule(t *testing.T) {
 
 	v := New()
+	v.init()
 	v.ConfigurationDirectory = "./dist/executors"
+	v.LogLevel = LogLevelDebug
 
 	step := TestStep{
 		"type": "http",

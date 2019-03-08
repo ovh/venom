@@ -7,11 +7,9 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk/interpolate"
-
-	"github.com/fatih/color"
 )
 
-func (v *Venom) runTestSuite(ts *TestSuite) {
+func (v *Venom) runTestSuite(ts *TestSuite, log Logger) {
 	if v.EnableProfiling {
 		var filename, filenameCPU, filenameMem string
 		if v.OutputDir != "" {
@@ -22,7 +20,7 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		fCPU, errCPU := os.Create(filenameCPU)
 		fMem, errMem := os.Create(filenameMem)
 		if errCPU != nil || errMem != nil {
-			v.logger.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
+			log.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
 		} else {
 			pprof.StartCPUProfile(fCPU)
 			p := pprof.Lookup("heap")
@@ -31,12 +29,14 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		}
 	}
 
-	l := v.logger.WithField("v.testsuite", ts.Name)
 	start := time.Now()
+	log.Debugf("Begin")
+	defer func() {
+		log.Debugf("End (%.3f seconds)", time.Since(start).Seconds())
+	}()
 
 	// init variables on testsuite level
-	ts.Vars = H{}
-	ts.Vars.AddAll(v.variables)
+	ts.Vars = v.variables.Clone()
 	ts.Vars.Add("venom.testsuite", ts.ShortName)
 	ts.Vars.Add("venom.testsuite.filename", ts.Filename)
 
@@ -54,17 +54,15 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		totalSteps += len(tc.TestSteps)
 	}
 
-	v.runTestCases(ts, l)
+	v.runTestCases(ts, log)
 
 	elapsed := time.Since(start)
 
 	var o string
 	if ts.Failures > 0 || ts.Errors > 0 {
-		red := color.New(color.FgRed).SprintFunc()
-		o = fmt.Sprintf("%s %s", red("FAILURE"), rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("%s %s", "FAILURE", rightPad(ts.Package, " ", 47))
 	} else {
-		green := color.New(color.FgGreen).SprintFunc()
-		o = fmt.Sprintf("%s %s", green("SUCCESS"), rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("%s %s", "SUCCESS", rightPad(ts.Package, " ", 47))
 	}
 	o += fmt.Sprintf("%s", elapsed)
 	v.PrintFunc("%s\n", o)
@@ -73,8 +71,9 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 func (v *Venom) runTestCases(ts *TestSuite, l Logger) {
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
+		log := LoggerWithField(l, "testcase", tc.Name)
 		if len(tc.Skipped) == 0 {
-			v.runTestCase(ts, tc, l)
+			v.runTestCase(ts, tc, log)
 		}
 
 		if len(tc.Failures) > 0 {

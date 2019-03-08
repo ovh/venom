@@ -52,9 +52,7 @@ func (v *Venom) runTestStepExecutor(ctx TestContext, step TestStep, l Logger, e 
 	if e.timeout > 0 {
 		defer ctx.WithTimeout(time.Duration(e.timeout) * time.Second)
 	}
-	//TODO: Handle ts.workdir to setup the module execution is the right working directory
-	//TODO: Handle an override of the logger
-	runner, err := e.New(ctx, v)
+	runner, err := e.New(ctx, v, l)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +60,7 @@ func (v *Venom) runTestStepExecutor(ctx TestContext, step TestStep, l Logger, e 
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
 	go func() {
-		result, err := runner.Run(ctx, l, step)
+		result, err := runner.Run(ctx, step)
 		if err != nil {
 			cherr <- err
 		} else {

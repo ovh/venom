@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"bytes"
 	"crypto/rand"
 	"fmt"
 	"io"
@@ -32,9 +31,7 @@ func rightPad(s string, padStr string, pLen int) string {
 
 // Dump dumps v as a map[string]interface{}.
 func Dump(v interface{}) (map[string]interface{}, error) {
-	w := new(bytes.Buffer)
-	e := dump.NewDefaultEncoder(w)
-
+	e := dump.NewDefaultEncoder()
 	e.ExtraFields.Len = true
 	e.ExtraFields.Type = true
 	e.ExtraFields.DetailedStruct = true

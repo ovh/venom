@@ -2,8 +2,11 @@ package venom
 
 import (
 	"context"
+	"fmt"
+	"regexp"
+	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/mitchellh/mapstructure"
 )
 
 //func (v *Venom) initTestCaseContext(ts *TestSuite, tc *TestCase) (TestCaseContext, error) {
@@ -119,6 +122,10 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
 	//	return
 	//}
 	//defer tcc.Close()
+	start := time.Now()
+	defer func() {
+		l.Debugf("End runTestCase (%.3f seconds)", time.Since(start).Seconds())
+	}()
 
 	if tc.Context == nil {
 		tc.Context = &ContextData{Type: "default"}
@@ -133,19 +140,32 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
 	if err != nil {
 		return err
 	}
+	ctx.SetWorkingDirectory(ts.WorkDir)
 
-	if _l, ok := l.(*logrus.Entry); ok {
-		l = _l.WithField("x.testcase", tc.Name)
-	}
-
-	tc.Vars = H{}
-	tc.Vars.AddAll(ts.Vars)
+	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.Name)
 
 	for stepNumber, stepIn := range tc.TestSteps {
+		l.Debugf("processing step %d", stepNumber)
 		if err := stepIn.Interpolate(stepNumber, tc.Vars); err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
 			break
+		}
+		l := LoggerWithField(l, "step", fmt.Sprintf("#%-2d", stepNumber))
+
+		assign, isAssign, err := ProcessVariableAssigments(tc.Name, tc.Vars, stepIn, l)
+		l.Debugf("is an assignment step ? %v", isAssign)
+
+		if err != nil {
+			tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
+		}
+		tc.Vars.AddAllWithPrefix(tc.Name, assign)
+
+		if isAssign {
+			if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
+				break
+			}
+			continue
 		}
 
 		res, assertRes, err := v.RunTestStep(ctx, tc.Name, stepNumber, stepIn, l)
@@ -155,7 +175,6 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
 
 		tc.Vars.AddAllWithPrefix(tc.Name, res.H())
 
-		//TODO check assertions /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		tc.Errors = append(tc.Errors, assertRes.errors...)
 		tc.Failures = append(tc.Failures, assertRes.failures...)
 		// if retry > 1 && (len(assertRes.failures) > 0 || len(assertRes.errors) > 0) {
@@ -165,8 +184,53 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
 		tc.Systemerr.Value += assertRes.systemerr
 
 		if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
+			l.Warnf("testcase failure: errors: %v, failures: %v", tc.Errors, tc.Failures)
 			break
 		}
+		l.Infof("step is a success")
 	}
 	return nil
+}
+
+func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logger) (H, bool, error) {
+	var stepAssignment AssignStep
+	var result = make(H)
+	if err := mapstructure.Decode(stepIn, &stepAssignment); err != nil {
+		l.Debugf("step is not a variables assignment step (%v)", err)
+		return nil, false, nil
+	}
+
+	if len(stepAssignment.Assignments) == 0 {
+		return nil, false, nil
+	}
+
+	for varname, assigment := range stepAssignment.Assignments {
+		varValue, has := tcVars[assigment.From]
+		if !has {
+			varValue, has = tcVars[tcName+"."+assigment.From]
+			if !has {
+				err := fmt.Errorf("%s reference not found in %v", assigment.From, tcVars)
+				l.Errorf("%v", err)
+				//tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
+				return nil, true, err
+			}
+		}
+		if assigment.Regex == "" {
+			l.Debugf("assign '%s' value '%s'", varname, varValue)
+			result.Add(varname, varValue)
+		} else {
+			regex, err := regexp.Compile(assigment.Regex)
+			if err != nil {
+				return nil, true, err
+			}
+			submatches := regex.FindStringSubmatch(varValue)
+			if len(submatches) == 0 {
+				result.Add(varname, "")
+				continue
+			}
+			l.Debugf("assign '%s' value '%s'", varname, submatches[1])
+			result.Add(varname, submatches[1])
+		}
+	}
+	return result, true, nil
 }
