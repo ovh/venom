@@ -1,7 +1,7 @@
 TARGET_DIR 							:= 	./dist
 IS_TEST 							:= $(filter test,$(MAKECMDGOALS))
 TARGET_OS 							:= 	$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), darwin linux freebsd))
-TARGET_ARCH 						:= 	$(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64 386))
+TARGET_ARCH 						:= 	$(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64))
 VERSION 							:= 	$(if ${CDS_SEMVER},${CDS_SEMVER},$(shell git describe)-snapshot)
 GITHASH 							:= 	$(if ${GIT_HASH},${GIT_HASH},$(shell git log -1 --format="%H"))
 BUILDTIME 							:= 	$(shell date "+%m/%d/%y-%H:%M:%S")

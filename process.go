@@ -20,7 +20,7 @@ func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 		return nil, fmt.Errorf("nothing to do")
 	}
 
-	v.logger.Debug("Starting venom...")
+	v.GetLogger().Debugf("Starting venom...")
 
 	filesPath, err := getFilesPath(path)
 	if err != nil {
@@ -44,7 +44,7 @@ func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 		for ts := range chanToRun {
 			parallels <- ts
 			go func(ts *TestSuite) {
-				tsLogger := v.logger.WithField("testsuite", ts.ShortName)
+				tsLogger := LoggerWithField(v.logger, "testsuite", ts.ShortName)
 				v.runTestSuite(ctx, ts, tsLogger)
 				chanEnd <- ts
 				<-parallels

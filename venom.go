@@ -35,7 +35,7 @@ func New() *Venom {
 type Venom struct {
 	LogLevel               string
 	LogOutput              io.Writer
-	logger                 *logrus.Logger
+	logger                 Logger
 	ConfigurationDirectory string
 	testsuites             []TestSuite
 	variables              H
@@ -66,22 +66,25 @@ func (v *Venom) init() error {
 		v.Parallel = 1
 	}
 
-	formatter := new(LogFormatter)
-	v.logger.Formatter = formatter
-	switch v.LogLevel {
-	case "debug":
-		v.logger.SetLevel(logrus.DebugLevel)
-	case "info":
-		v.logger.SetLevel(logrus.InfoLevel)
-	case "warn":
-		v.logger.SetLevel(logrus.WarnLevel)
-	default:
-		v.LogOutput = ioutil.Discard
-		v.logger.SetLevel(logrus.FatalLevel)
-		v.Display = new(cmd.Container)
-	}
+	logrusLogger, ok := v.logger.(*logrus.Logger)
+	if ok {
+		formatter := new(LogFormatter)
+		logrusLogger.Formatter = formatter
+		switch v.LogLevel {
+		case "debug":
+			logrusLogger.SetLevel(logrus.DebugLevel)
+		case "info":
+			logrusLogger.SetLevel(logrus.InfoLevel)
+		case "warn":
+			logrusLogger.SetLevel(logrus.WarnLevel)
+		default:
+			v.LogOutput = ioutil.Discard
+			logrusLogger.SetLevel(logrus.FatalLevel)
+			v.Display = new(cmd.Container)
+		}
 
-	v.logger.SetOutput(v.LogOutput)
+		logrusLogger.SetOutput(v.LogOutput)
+	}
 
 	return nil
 }
