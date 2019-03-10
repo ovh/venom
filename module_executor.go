@@ -3,7 +3,6 @@ package venom
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os/exec"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/phayes/freeport"
 	"gopkg.in/mcuadros/go-syslog.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type executorModule struct {
@@ -40,7 +40,7 @@ func (e executorModule) New(ctx context.Context, v *Venom, l Logger) (Executor, 
 	starter.logServerAddress = "0.0.0.0:" + strconv.Itoa(port)
 	starter.logServer.SetHandler(starter.logsHandler(ctx))
 	starter.logServer.SetFormat(syslog.Automatic)
-	l.Debugf("starting syslog server on %s", starter.logServerAddress)
+	l.Debugf("Starting syslog server on %s", starter.logServerAddress)
 	if err := starter.logServer.ListenUDP(starter.logServerAddress); err != nil {
 		return nil, err
 	}
@@ -54,8 +54,6 @@ func (e executorModule) New(ctx context.Context, v *Venom, l Logger) (Executor, 
 
 	go func(s *syslog.Server) {
 		<-ctx.Done()
-		log.Println("syslog server killed")
-
 		s.Kill()
 	}(starter.logServer)
 
@@ -70,6 +68,7 @@ func (e executorModule) GetDefaultAssertions(ctx TestContext) (*StepAssertions, 
 	cmd.Stdout = output
 	cmd.Stderr = output
 	// TODO: start the command in the right working directory
+	cmd.Dir = ctx.GetWorkingDirectory()
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("unable to start command: %v", err)
@@ -91,7 +90,7 @@ func (e executorModule) GetDefaultAssertions(ctx TestContext) (*StepAssertions, 
 
 	// Unmarshal the result
 	var res StepAssertions
-	if err := json.Unmarshal(btes, &res); err != nil {
+	if err := yaml.Unmarshal(btes, &res); err != nil {
 		return nil, fmt.Errorf("unable to parse module output: %v", err)
 	}
 	return &res, nil
@@ -127,8 +126,9 @@ func (e *executorStarter) Run(ctx TestContext, step TestStep) (ExecutorResult, e
 		return nil, fmt.Errorf("unable to open stdin: %v", err)
 	}
 
-	encoder := json.NewEncoder(stdin)
+	encoder := yaml.NewEncoder(stdin)
 	if err := encoder.Encode(step); err != nil {
+		e.l.Errorf("%#v", step)
 		return nil, fmt.Errorf("unable to write to stdin: %v", err)
 	}
 
@@ -140,7 +140,7 @@ func (e *executorStarter) Run(ctx TestContext, step TestStep) (ExecutorResult, e
 	cmd.Stdout = output
 	cmd.Stderr = output
 
-	e.l.Debugf("starting command %s", cmd.Path)
+	e.l.Infof("Executing command %s", cmd.Path)
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("unable to start command: %v", err)
@@ -158,7 +158,7 @@ func (e *executorStarter) Run(ctx TestContext, step TestStep) (ExecutorResult, e
 
 	// Unmarshal the result
 	var res ExecutorResult
-	if err := json.Unmarshal(btes, &res); err != nil {
+	if err := yaml.Unmarshal(btes, &res); err != nil {
 		return nil, fmt.Errorf("unable to parse module output: %v", err)
 	}
 
@@ -203,6 +203,8 @@ func (e *executorStarter) logsHandler(ctx context.Context) syslog.Handler {
 				msg = strings.TrimPrefix(msg, "\"")
 				msg = strings.TrimSuffix(msg, "\"")
 
+				msg = colorExecutor(msg)
+
 				switch level {
 				case "debug":
 					e.l.Debugf(msg)
@@ -217,8 +219,6 @@ func (e *executorStarter) logsHandler(ctx context.Context) syslog.Handler {
 				default:
 					log.Println(level, msg)
 				}
-
-				//TODO: remap to logrus
 			}
 		}
 	}()

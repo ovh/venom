@@ -27,21 +27,21 @@ type Headers map[string]string
 
 // Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
-	Method            string      `json:"method" yaml:"method"`
-	URL               string      `json:"url" yaml:"url"`
-	Path              string      `json:"path" yaml:"path"`
-	Body              string      `json:"body" yaml:"body"`
-	BodyFile          string      `json:"bodyfile" yaml:"bodyfile"`
-	MultipartForm     interface{} `json:"multipart_form" yaml:"multipart_form"`
-	Headers           Headers     `json:"headers" yaml:"headers"`
-	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
-	BasicAuthUser     string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
-	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
-	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
-	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
-	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
-	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
-	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
+	Method            string            `json:"method" yaml:"method"`
+	URL               string            `json:"url" yaml:"url"`
+	Path              string            `json:"path" yaml:"path"`
+	Body              string            `json:"body" yaml:"body"`
+	BodyFile          string            `json:"bodyfile" yaml:"bodyfile"`
+	MultipartForm     map[string]string `json:"multipart_form" yaml:"multipart_form" mapstructure:"multipart_form"`
+	Headers           Headers           `json:"headers" yaml:"headers"`
+	IgnoreVerifySSL   bool              `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
+	BasicAuthUser     string            `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
+	BasicAuthPassword string            `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
+	SkipHeaders       bool              `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
+	SkipBody          bool              `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
+	Proxy             string            `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
+	NoFollowRedirect  bool              `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
+	UnixSock          string            `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
 }
 
 // Result represents a step result
@@ -81,9 +81,6 @@ func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorR
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, fmt.Errorf("unable to decode step: %v", err)
 	}
-
-	// dirty: mapstructure doesn't like decoding map[interface{}]interface{}, let's force manually
-	e.MultipartForm = step["multipart_form"]
 
 	r := Result{Executor: e}
 
@@ -195,20 +192,8 @@ func (e Executor) getRequest(workdir string) (*http.Request, error) {
 			body = bytes.NewBuffer(temp)
 		}
 	} else if e.MultipartForm != nil {
-		form, ok := e.MultipartForm.(map[interface{}]interface{})
-		if !ok {
-			return nil, fmt.Errorf("'multipart_form' should be a map")
-		}
 		writer = multipart.NewWriter(body)
-		for k, v := range form {
-			key, ok := k.(string)
-			if !ok {
-				return nil, fmt.Errorf("'multipart_form' should be a map with keys as strings")
-			}
-			value, ok := v.(string)
-			if !ok {
-				return nil, fmt.Errorf("'multipart_form' should be a map with values as strings")
-			}
+		for key, value := range e.MultipartForm {
 			// Considering file will be prefixed by @ (since you could also post regular data in the body)
 			if strings.HasPrefix(value, "@") {
 				// todo: how can we be sure the @ is not the value we wanted to use ?

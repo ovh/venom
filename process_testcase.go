@@ -115,16 +115,52 @@ import (
 //	return vars, extractedVars, nil
 //}
 //
-func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
-	//tcc, err := v.initTestCaseContext(ts, tc)
-	//if err != nil {
-	//	tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
-	//	return
-	//}
-	//defer tcc.Close()
+
+func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite, l Logger) {
+	for i := range ts.TestCases {
+		tc := &ts.TestCases[i]
+		tc.ShortName = slug(tc.Name)
+		log := LoggerWithField(l, "testcase", tc.Name)
+		log.Infof("Starting testcase %d: %s [%s]", i+1, tc.ShortName, tc.Name)
+
+		if len(tc.Skipped) == 0 {
+			v.runTestCase(ctx, ts, tc, log)
+		}
+
+		// Push variables from the testcase in the testsuite
+		ts.Vars.AddAll(tc.Vars)
+
+		if len(tc.Failures) > 0 {
+			ts.Failures += len(tc.Failures)
+		}
+		if len(tc.Errors) > 0 {
+			ts.Errors += len(tc.Errors)
+		}
+		if len(tc.Skipped) > 0 {
+			ts.Skipped += len(tc.Skipped)
+		}
+
+		if v.StopOnFailure && (len(tc.Failures) > 0 || len(tc.Errors) > 0) {
+			// break TestSuite
+			return
+		}
+	}
+}
+
+func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase, l Logger) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var p = new(Progress)
+	go p.Display(ctx, v.Display)
+	p.testsuite = ts.Name
+	p.testcase = tc.Name
+	p.teststepTotal = len(tc.TestSteps)
+	p.runnnig = true
+
 	start := time.Now()
 	defer func() {
-		l.Debugf("End runTestCase (%.3f seconds)", time.Since(start).Seconds())
+		l.Infof("End testcase (%.3f seconds)", time.Since(start).Seconds())
 	}()
 
 	if tc.Context == nil {
@@ -136,30 +172,35 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
 		return err
 	}
 
-	ctx, err := ctxMod.New(context.Background(), tc.Context.TestContextValues)
+	tstCtx, err := ctxMod.New(ctx, tc.Context.TestContextValues)
 	if err != nil {
 		return err
 	}
-	ctx.SetWorkingDirectory(ts.WorkDir)
+	tstCtx.SetWorkingDirectory(ts.WorkDir)
 
 	tc.Vars = ts.Vars.Clone()
-	tc.Vars.Add("venom.testcase", tc.Name)
+	tc.Vars.Add("venom.testcase", tc.ShortName)
+	tc.Vars.Add("venom.datetime", time.Now().Format(time.RFC3339))
+	tc.Vars.Add("venom.timestamp", fmt.Sprintf("%d", time.Now().Unix()))
 
 	for stepNumber, stepIn := range tc.TestSteps {
-		l.Debugf("processing step %d", stepNumber)
-		if err := stepIn.Interpolate(stepNumber, tc.Vars); err != nil {
+		t0 := time.Now()
+
+		p.teststepNumber = stepNumber + 1
+
+		l.Debugf("Processing step #%d", stepNumber)
+		if err := stepIn.Interpolate(stepNumber, tc.Vars, l); err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
 			break
 		}
 		l := LoggerWithField(l, "step", fmt.Sprintf("#%-2d", stepNumber))
 
-		assign, isAssign, err := ProcessVariableAssigments(tc.Name, tc.Vars, stepIn, l)
-		l.Debugf("is an assignment step ? %v", isAssign)
+		assign, isAssign, err := ProcessVariableAssigments(tc.ShortName, tc.Vars, stepIn, l)
 
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
 		}
-		tc.Vars.AddAllWithPrefix(tc.Name, assign)
+		tc.Vars.AddAllWithPrefix(tc.ShortName, assign)
 
 		if isAssign {
 			if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
@@ -168,12 +209,12 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
 			continue
 		}
 
-		res, assertRes, err := v.RunTestStep(ctx, tc.Name, stepNumber, stepIn, l)
+		res, assertRes, err := v.RunTestStep(tstCtx, tc.Name, stepNumber, stepIn, l)
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
 		}
 
-		tc.Vars.AddAllWithPrefix(tc.Name, res.H())
+		tc.Vars.AddAllWithPrefix(tc.ShortName, res.H())
 
 		tc.Errors = append(tc.Errors, assertRes.errors...)
 		tc.Failures = append(tc.Failures, assertRes.failures...)
@@ -184,11 +225,18 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) error {
 		tc.Systemerr.Value += assertRes.systemerr
 
 		if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
-			l.Warnf("testcase failure: errors: %v, failures: %v", tc.Errors, tc.Failures)
+			l.Errorf("Testcase %s: errors: %v, failures: %v", colorFailure("FAILURE"), tc.Errors, tc.Failures)
 			break
 		}
-		l.Infof("step is a success")
+		l.Infof("End step with %s (%.3f seconds)", colorSuccess("SUCCESS"), time.Since(t0).Seconds())
 	}
+
+	// Update the progression display before exiting
+	p.runnnig = false
+	p.success = len(tc.Errors) == 0 && len(tc.Failures) == 0
+	// Sleep to let the display being refesh
+	time.Sleep(100 * time.Millisecond)
+
 	return nil
 }
 
@@ -196,7 +244,6 @@ func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logge
 	var stepAssignment AssignStep
 	var result = make(H)
 	if err := mapstructure.Decode(stepIn, &stepAssignment); err != nil {
-		l.Debugf("step is not a variables assignment step (%v)", err)
 		return nil, false, nil
 	}
 
@@ -205,6 +252,7 @@ func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logge
 	}
 
 	for varname, assigment := range stepAssignment.Assignments {
+		l.Debugf("Processing %s assignment", varname)
 		varValue, has := tcVars[assigment.From]
 		if !has {
 			varValue, has = tcVars[tcName+"."+assigment.From]
@@ -216,19 +264,21 @@ func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logge
 			}
 		}
 		if assigment.Regex == "" {
-			l.Debugf("assign '%s' value '%s'", varname, varValue)
+			l.Debugf("Assign '%s' value '%s'", varname, varValue)
 			result.Add(varname, varValue)
 		} else {
 			regex, err := regexp.Compile(assigment.Regex)
 			if err != nil {
+				l.Errorf("unable to compile regexp %s", assigment.Regex)
 				return nil, true, err
 			}
 			submatches := regex.FindStringSubmatch(varValue)
 			if len(submatches) == 0 {
+				l.Debugf("%s: '%v' doesn't match anything in '%s'", varname, regex, varValue)
 				result.Add(varname, "")
 				continue
 			}
-			l.Debugf("assign '%s' value '%s'", varname, submatches[1])
+			l.Debugf("Assign '%s' from regexp '%v', value '%s'", varname, regex, submatches[1])
 			result.Add(varname, submatches[1])
 		}
 	}

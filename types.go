@@ -165,6 +165,7 @@ type TestCase struct {
 	Errors    []Failure    `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
 	Failures  []Failure    `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
 	Name      string       `xml:"name,attr" json:"name" yaml:"name"`
+	ShortName string       `xml:"-" json:"-shortname" yaml:"shortname"`
 	Skipped   []Skipped    `xml:"skipped,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Status    string       `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
 	Systemout InnerResult  `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
@@ -231,7 +232,7 @@ func getAttrString(t map[string]interface{}, name string) string {
 	return out
 }
 
-func (t *TestStep) Interpolate(stepNumber int, vars H) error {
+func (t *TestStep) Interpolate(stepNumber int, vars H, l Logger) error {
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
 	s, err := yaml.Marshal(t)
 	if err != nil {
@@ -243,6 +244,7 @@ func (t *TestStep) Interpolate(stepNumber int, vars H) error {
 		if stepNumber >= 0 {
 			vars.Add("venom.teststep.number", strconv.Itoa(stepNumber))
 		}
+		l.Debugf("Interpolating teststep #%d '%+v'", stepNumber, t)
 		btes, err := interpolate.Do(string(sb), vars)
 		if err != nil {
 			return err

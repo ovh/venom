@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -10,20 +10,18 @@ import (
 	"strings"
 
 	"github.com/ovh/venom"
-
 	"github.com/ovh/venom/lib/cmd"
 )
 
 var (
 	commonFlags = []cmd.Flag{
 		{
-			Name:    "log",
-			Usage:   "Log Level : debug, info or warn",
-			Default: "warn",
+			Name:  "log",
+			Usage: "Log Level : debug, info or warn",
 			IsValid: func(s string) bool {
 				s = strings.ToLower(s)
 				s = strings.TrimSpace(s)
-				return s == "debug" || s == "info" || s == "warn"
+				return s == "" || s == "debug" || s == "info" || s == "warn"
 			},
 		}, {
 			Name:    _ConfigurationDir,
@@ -41,9 +39,9 @@ var (
 				Usage: "Enable memory / CPU Profiling with pprof",
 				Kind:  reflect.Bool,
 			}, {
-				Name:      "output-dir",
+				Name:      "report-dir",
 				ShortHand: "d",
-				Usage:     "Output directory: create tests results file inside this directory",
+				Usage:     "Test report directory: create tests results file inside this directory",
 			}, {
 				Name:      "var",
 				ShortHand: "v",
@@ -59,7 +57,7 @@ var (
 				Usage:     "Load variables environment variables",
 				Kind:      reflect.Bool,
 			}, {
-				Name:    "output-format",
+				Name:    "report-format",
 				Usage:   "Test report format: xml, yml, json or tap",
 				Kind:    reflect.String,
 				Default: "xml",
@@ -132,12 +130,14 @@ var runFunc = func(vals cmd.Values) *cmd.Error {
 		return err
 	}
 
+	v.StopOnFailure = vals.GetBool("stop-on-failure")
+
 	// Checks profiling
 	enableProfiling := vals.GetBool("profiling")
-	outputDir := vals.GetString("output-dir")
+	reportDir := vals.GetString("report-dir")
 	if enableProfiling {
-		filenameCPU := filepath.Join(outputDir, "pprof_cpu_profile.prof")
-		filenameMem := filepath.Join(outputDir, "pprof_mem_profile.prof")
+		filenameCPU := filepath.Join(reportDir, "pprof_cpu_profile.prof")
+		filenameMem := filepath.Join(reportDir, "pprof_mem_profile.prof")
 		fCPU, err := os.Create(filenameCPU)
 		if err != nil {
 			return cmd.NewError(129, "unable to create file %s: %v", filenameCPU, err)
@@ -164,13 +164,18 @@ var runFunc = func(vals cmd.Values) *cmd.Error {
 		return cmd.NewError(2, "venom intialization error: no module found in configuration directory")
 	}
 
-	tests, err := v.Process(vals.GetStringSlice("path"))
-
+	tests, err := v.Process(context.Background(), vals.GetStringSlice("path"))
 	if err != nil {
 		return cmd.NewError(1, "%v", err)
 	}
 
-	fmt.Println(tests)
+	v.GetLogger().Infof("Generating reports")
+	if err := v.GenerateReport(*tests); err != nil {
+		return cmd.NewError(2, "%v", err)
+	}
+
+	v.GetLogger().Infof("Enjoy your tests results")
+	_ = v.Output.Close()
 
 	return nil
 }

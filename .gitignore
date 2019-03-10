@@ -6,3 +6,4 @@ tests/.DS_Store
 vendor/
 dist/
 coverage.*
+*.dump

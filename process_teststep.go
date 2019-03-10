@@ -35,7 +35,6 @@ func (v *Venom) RunTestStep(ctx TestContext, tcName string, stepNumber int, step
 			l.Warnf("unable to get default assertions: %v", err)
 		}
 		assertRes = applyChecks(result, tcName, stepNumber, step, defaultAsserts)
-
 		if assertRes.ok {
 			break
 		}
