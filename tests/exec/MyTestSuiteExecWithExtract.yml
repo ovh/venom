@@ -3,6 +3,8 @@ version: "2"
 testcases:
 - name: testA
   steps:
+  - script: echo "starting"
+  - script: sleep 3
   - type: exec
     script: echo 'foo with a bar here'
     assertions:
@@ -13,7 +15,7 @@ testcases:
        from: result.systemout
       myvariable2:
        from: result.systemout
-       regex: foo with a /[a-z]+/ here
+       regex: foo with a ([a-z]+) here
 
 - name: testB
   steps:
@@ -23,15 +25,15 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemout ShouldContainSubstring bar
 
-- name: testC
-  steps:
-  - type: exec
-    script: echo {{.testA.myvariable2}}
-    assertions:
-    - result.code ShouldEqual 0
-    - result.systemout ShouldContainSubstring bar
-
-- name: sleep 1
-  steps:
-  - type: exec
-    script: sleep 1
+#- name: testC
+#  steps:
+#  - type: exec
+#    script: echo {{.testA.myvariable2}}
+#    assertions:
+#    - result.code ShouldEqual 0
+#    - result.systemout ShouldContainSubstring bar
+#
+#- name: sleep 1
+#  steps:
+#  - type: exec
+#    script: sleep 1

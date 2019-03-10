@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log/syslog"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	lsyslog "github.com/sirupsen/logrus/hooks/syslog"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/lib/cmd"
@@ -82,7 +82,7 @@ func Start(c Common) error {
 		}
 
 		var step venom.TestStep
-		if err := json.Unmarshal(input, &step); err != nil {
+		if err := yaml.Unmarshal(input, &step); err != nil {
 			return cmd.NewError(502, "unable to parse stdin: %v", err)
 		}
 
@@ -103,8 +103,7 @@ func Start(c Common) error {
 		if err != nil {
 			return cmd.NewError(502, "executor error: %v", err)
 		}
-		encoder := json.NewEncoder(os.Stdout)
-		encoder.SetIndent("", "  ")
+		encoder := yaml.NewEncoder(os.Stdout)
 		encoder.Encode(res)
 		return nil
 	}
@@ -130,7 +129,7 @@ func Start(c Common) error {
 		Name: "info",
 	}
 	info.Run = func(vals cmd.Values) *cmd.Error {
-		btes, err := json.MarshalIndent(c.Manifest(), "", "  ")
+		btes, err := yaml.Marshal(c.Manifest())
 		if err != nil {
 			return cmd.NewError(501, "unable to format manifest output: %v", err)
 		}
@@ -147,7 +146,7 @@ func Start(c Common) error {
 		if !ok {
 			return nil
 		}
-		btes, err := json.MarshalIndent(h.GetDefaultAssertions(), "", "  ")
+		btes, err := yaml.Marshal(h.GetDefaultAssertions())
 		if err != nil {
 			return cmd.NewError(501, "unable to format assertions output: %v", err)
 		}

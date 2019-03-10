@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,8 +9,10 @@ import (
 
 func Test_Process(t *testing.T) {
 	v := New()
-	r, err := v.Process([]string{"tests/*.yml"})
+	r, err := v.Process(context.Background(), []string{"tests/*.yml"})
 	assert.NoError(t, err)
-	assert.True(t, len(r.TestSuites) == len(v.testsuites), "not the right number of testsuites", len(r.TestSuites), len(v.testsuites))
-	assert.True(t, r.Total >= len(v.testsuites), "total seems wrong", r.Total, len(v.testsuites))
+	if err != nil {
+		assert.True(t, len(r.TestSuites) == len(v.testsuites), "not the right number of testsuites", len(r.TestSuites), len(v.testsuites))
+		assert.True(t, r.Total >= len(v.testsuites), "total seems wrong", r.Total, len(v.testsuites))
+	}
 }

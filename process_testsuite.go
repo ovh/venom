@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime/pprof"
@@ -9,11 +10,11 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-func (v *Venom) runTestSuite(ts *TestSuite, log Logger) {
+func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite, log Logger) {
 	if v.EnableProfiling {
 		var filename, filenameCPU, filenameMem string
-		if v.OutputDir != "" {
-			filename = v.OutputDir + "/"
+		if v.ReportDir != "" {
+			filename = v.ReportDir + "/"
 		}
 		filenameCPU = filename + "pprof_cpu_profile_" + ts.Filename + ".prof"
 		filenameMem = filename + "pprof_mem_profile_" + ts.Filename + ".prof"
@@ -30,17 +31,21 @@ func (v *Venom) runTestSuite(ts *TestSuite, log Logger) {
 	}
 
 	start := time.Now()
-	log.Debugf("Begin")
+	log.Infof("Starting test suite %s", ts.ShortName)
 	defer func() {
-		log.Debugf("End (%.3f seconds)", time.Since(start).Seconds())
+		log.Infof("End (%.3f seconds)", time.Since(start).Seconds())
 	}()
 
 	// init variables on testsuite level
-	ts.Vars = v.variables.Clone()
+	if ts.Vars == nil {
+		ts.Vars = H{}
+	}
+	ts.Vars.AddAll(v.variables)
 	ts.Vars.Add("venom.testsuite", ts.ShortName)
 	ts.Vars.Add("venom.testsuite.filename", ts.Filename)
 
 	for k, val := range ts.Vars {
+		log.Debugf("Interpolating variable '%s'='%s'", k, val)
 		newval, err := interpolate.Do(val, ts.Vars)
 		if err != nil {
 			v.logger.Errorf("interpolation error on %s: %v", val, err)
@@ -54,43 +59,19 @@ func (v *Venom) runTestSuite(ts *TestSuite, log Logger) {
 		totalSteps += len(tc.TestSteps)
 	}
 
-	v.runTestCases(ts, log)
+	v.runTestCases(ctx, ts, log)
 
 	elapsed := time.Since(start)
 
 	var o string
 	if ts.Failures > 0 || ts.Errors > 0 {
-		o = fmt.Sprintf("%s %s", "FAILURE", rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("%s %s", colorFailure("FAILURE"), rightPad(ts.Package, " ", 47))
 	} else {
-		o = fmt.Sprintf("%s %s", "SUCCESS", rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("%s %s", colorSuccess("SUCCESS"), rightPad(ts.Package, " ", 47))
 	}
-	o += fmt.Sprintf("%s", elapsed)
-	v.PrintFunc("%s\n", o)
-}
-
-func (v *Venom) runTestCases(ts *TestSuite, l Logger) {
-	for i := range ts.TestCases {
-		tc := &ts.TestCases[i]
-		log := LoggerWithField(l, "testcase", tc.Name)
-		if len(tc.Skipped) == 0 {
-			v.runTestCase(ts, tc, log)
-		}
-
-		if len(tc.Failures) > 0 {
-			ts.Failures += len(tc.Failures)
-		}
-		if len(tc.Errors) > 0 {
-			ts.Errors += len(tc.Errors)
-		}
-		if len(tc.Skipped) > 0 {
-			ts.Skipped += len(tc.Skipped)
-		}
-
-		if v.StopOnFailure && (len(tc.Failures) > 0 || len(tc.Errors) > 0) {
-			// break TestSuite
-			return
-		}
-	}
+	o += fmt.Sprintf("%.3f seconds", elapsed.Seconds())
+	fmt.Fprintln(v.Output, o)
+	log.Infof(o)
 }
 
 //Parse the suite to find unreplaced and extracted variables

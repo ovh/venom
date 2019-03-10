@@ -1,15 +1,20 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
 
 // Process runs tests suite and return a Tests result
-func (v *Venom) Process(path []string) (*Tests, error) {
+func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	if err := v.init(); err != nil {
 		return nil, err
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go v.Display.Display(ctx)
 
 	if len(path) == 0 {
 		return nil, fmt.Errorf("nothing to do")
@@ -40,7 +45,7 @@ func (v *Venom) Process(path []string) (*Tests, error) {
 			parallels <- ts
 			go func(ts *TestSuite) {
 				tsLogger := v.logger.WithField("testsuite", ts.ShortName)
-				v.runTestSuite(ts, tsLogger)
+				v.runTestSuite(ctx, ts, tsLogger)
 				chanEnd <- ts
 				<-parallels
 			}(ts)
@@ -52,7 +57,7 @@ func (v *Venom) Process(path []string) (*Tests, error) {
 	}
 
 	wg.Wait()
-
+	fmt.Println()
 	return testsResult, nil
 }
 

@@ -2,7 +2,6 @@ package venom
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 type VenomModuleManifest struct {
@@ -175,7 +176,7 @@ func getModuleManifest(moduleEntryPointPath string) (manifest VenomModuleManifes
 		return manifest, err
 	}
 
-	if err := json.Unmarshal(output, &manifest); err != nil {
+	if err := yaml.Unmarshal(output, &manifest); err != nil {
 		return manifest, fmt.Errorf("module error: unexpected output: %s: %v", string(output), err)
 	}
 

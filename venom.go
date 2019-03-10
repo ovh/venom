@@ -1,11 +1,13 @@
 package venom
 
 import (
-	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/ovh/venom/lib/cmd"
 )
 
 var (
@@ -19,36 +21,31 @@ var (
 
 func New() *Venom {
 	v := &Venom{
-		LogLevel:        "info",
 		LogOutput:       os.Stdout,
 		logger:          logrus.New(),
-		PrintFunc:       fmt.Printf,
 		variables:       map[string]string{},
 		EnableProfiling: false,
-		IgnoreVariables: []string{},
-		OutputFormat:    "xml",
+		ReportFormat:    "xml",
+		ReportDir:       ".",
+		Output:          NewOutput(os.Stdout),
 	}
 	return v
 }
 
 type Venom struct {
-	LogLevel  string
-	LogOutput io.Writer
-	logger    *logrus.Logger
-
+	LogLevel               string
+	LogOutput              io.Writer
+	logger                 *logrus.Logger
 	ConfigurationDirectory string
-
-	PrintFunc func(format string, a ...interface{}) (n int, err error)
-
-	testsuites      []TestSuite
-	variables       H
-	IgnoreVariables []string
-	Parallel        int
-
-	EnableProfiling bool
-	OutputFormat    string
-	OutputDir       string
-	StopOnFailure   bool
+	testsuites             []TestSuite
+	variables              H
+	StopOnFailure          bool
+	Parallel               int
+	EnableProfiling        bool
+	ReportFormat           string
+	ReportDir              string
+	Output                 io.WriteCloser
+	Display                *cmd.Container
 }
 
 func (v *Venom) GetLogger() Logger {
@@ -69,19 +66,19 @@ func (v *Venom) init() error {
 		v.Parallel = 1
 	}
 
-	v.logger = logrus.New()
 	formatter := new(LogFormatter)
 	v.logger.Formatter = formatter
-
 	switch v.LogLevel {
 	case "debug":
 		v.logger.SetLevel(logrus.DebugLevel)
 	case "info":
 		v.logger.SetLevel(logrus.InfoLevel)
-	case "error":
-		v.logger.SetLevel(logrus.ErrorLevel)
-	default:
+	case "warn":
 		v.logger.SetLevel(logrus.WarnLevel)
+	default:
+		v.LogOutput = ioutil.Discard
+		v.logger.SetLevel(logrus.FatalLevel)
+		v.Display = new(cmd.Container)
 	}
 
 	v.logger.SetOutput(v.LogOutput)
