@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sethgrid/curse"
+	"github.com/fsamin/curse"
 )
 
 type Container struct {
