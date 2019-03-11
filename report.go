@@ -57,7 +57,7 @@ func (v *Venom) GenerateReport(tests Tests) error {
 		}
 		fmt.Fprintln(v.Output) // new line to display files written
 		fmt.Fprintf(v.Output, "Generated report:  %s\n", colorPending(filename))
-		v.GetLogger().Infof("Generated report:  %s\n", colorPending(filename))
+		v.logger.Infof("Generated report:  %s\n", colorPending(filename))
 
 		for _, ts := range tests.TestSuites {
 			for _, tc := range ts.TestCases {
@@ -90,7 +90,7 @@ func (v *Venom) GenerateReport(tests Tests) error {
 						return fmt.Errorf("Error while creating file %s: %v", filename, err)
 					}
 					fmt.Fprintf(v.Output, "Generated dump:  %s\n", colorPending(filename))
-					v.GetLogger().Infof("Generated dump:  %s\n", colorPending(filename))
+					v.logger.Infof("Generated dump:  %s\n", colorPending(filename))
 				}
 			}
 		}

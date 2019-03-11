@@ -301,9 +301,14 @@ type Logger interface {
 }
 
 func LoggerWithField(l Logger, key string, i interface{}) Logger {
-	logrusLogger, ok := l.(*logrus.Entry)
+	logrusLogger, ok := l.(*logrus.Logger)
 	if ok {
 		return logrusLogger.WithField(key, i)
+	}
+
+	logrusEntry, ok := l.(*logrus.Entry)
+	if ok {
+		return logrusEntry.WithField(key, i)
 	}
 	return &LoggerWithPrefix{
 		parent:      l,

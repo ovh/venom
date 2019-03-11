@@ -20,7 +20,7 @@ func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 		return nil, fmt.Errorf("nothing to do")
 	}
 
-	v.GetLogger().Debugf("Starting venom...")
+	v.logger.Debugf("Starting venom...")
 
 	filesPath, err := getFilesPath(path)
 	if err != nil {

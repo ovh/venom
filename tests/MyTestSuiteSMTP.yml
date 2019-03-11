@@ -1,7 +1,7 @@
 name: TestSuite with SMTP Steps
 vars:
   smtpHost: 'localhost'
-  smtpPort: '25'
+  smtpPort: '1025'
 testcases:
 - name: TestCase SMTP
   steps:

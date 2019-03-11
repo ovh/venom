@@ -225,7 +225,6 @@ func (f *LogFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys [
 		if !isPrefix {
 			v := entry.Data[k]
 			fmt.Fprintf(b, " %s=%+v", levelColor(k), v)
-
 		}
 	}
 }

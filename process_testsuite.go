@@ -100,7 +100,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite, log Logger) {
 	fmt.Fprintln(v.Output, output)
 	if hasFailure {
 		for _, detail := range detailPerTestcase {
-			fmt.Fprint(v.Output, strings.Join(detail, "\n"))
+			fmt.Fprintln(v.Output, strings.Join(detail, "\n"))
 		}
 	}
 	log.Infof(output)

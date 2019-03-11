@@ -5,12 +5,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Process(t *testing.T) {
 	v := New()
-	v.logger = &TestLogger{t}
+	v.logger = logrus.New()
 	v.ConfigurationDirectory = filepath.Join("dist", "executors")
 	r, err := v.Process(context.Background(), []string{"tests/*.yml"})
 	assert.NoError(t, err)

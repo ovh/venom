@@ -1,5 +1,5 @@
 TARGET_DIR 							:= 	./dist
-IS_TEST 							:= $(filter test,$(MAKECMDGOALS))
+IS_TEST 							:= 	$(filter test,$(MAKECMDGOALS))
 TARGET_OS 							:= 	$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), darwin linux freebsd))
 TARGET_ARCH 						:= 	$(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64))
 VERSION 							:= 	$(if ${CDS_SEMVER},${CDS_SEMVER},$(shell git describe)-snapshot)
@@ -8,10 +8,10 @@ BUILDTIME 							:= 	$(shell date "+%m/%d/%y-%H:%M:%S")
 PREFIX								:=	$(if ${PREFIX}, ${PREFIX}, /usr/local)
 INSTALL_DIR							:=	$(if ${INSTALL_DIR}, ${INSTALL_DIR}, $(PREFIX)/bin/venom-$(VERSION))
 VENOM_DIR							:=	$(if $(VENOM_DIR), $(VENOM_DIR), $(HOME)/.venom.d/)
-GO_BUILD 							:= 	go build
-LDFLAGS 							= 	-ldflags "-X github.com/ovh/venom.Version=$(VERSION) -X github.com/ovh/venom.GOOS=$(GOOS) -X github.com/ovh/venom.GOARCH=$(GOARCH) -X github.com/ovh/venom.GITHASH=$(GITHASH) -X github.com/ovh/venom.BUILDTIME=$(BUILDTIME)"
-CORE 								:= 	cmd/venom
-EXECUTORS 							:= 	$(shell ls -d executors/*)
+GO_BUILD 							:=	go build
+LDFLAGS 							=	-ldflags "-X github.com/ovh/venom.Version=$(VERSION) -X github.com/ovh/venom.GOOS=$(GOOS) -X github.com/ovh/venom.GOARCH=$(GOARCH) -X github.com/ovh/venom.GITHASH=$(GITHASH) -X github.com/ovh/venom.BUILDTIME=$(BUILDTIME)"
+CORE 								:=	cmd/venom
+EXECUTORS 							:=	$(shell ls -d executors/*)
 IS_WINDOWS							= 	$(filter $(OS),windows)
 CORE_BINARIES 						=	$(addprefix $(TARGET_DIR)/, $(addsuffix _$(OS)_$(ARCH)$(if $(IS_WINDOWS),.exe), $(notdir $(CORE))))	
 CROSS_COMPILED_CORE_BINARIES 		= 	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(CORE_BINARIES)))
@@ -19,6 +19,8 @@ EXECUTORS_BINARIES 					= 	$(addprefix $(TARGET_DIR)/$(EXEC)/, $(addsuffix _$(OS
 CROSS_COMPILED_EXECUTORS_BINARIES 	=	$(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(foreach EXEC, $(EXECUTORS), $(EXECUTORS_BINARIES))))
 COMMON_FILES 						=	$(shell ls *.go lib/cmd/*.go)
 EXECUTOR_COMMON_FILES				=  	$(shell find lib/executor -type f -name "*.go" -print)
+TEST_START_SMTP := docker run -d --name fakesmtp -p 1025:25 -v /tmp/fakemail:/var/mail digiplant/fake-smtp
+TEST_KILL_SMTP := docker kill fakesmtp; docker rm fakesmtp || true
 
 define get_recursive_files
 $(shell find $(1) -type f -name "*.go" -print)
@@ -74,6 +76,11 @@ gomod:
 test: $(TARGET_DIR) $(CROSS_COMPILED_EXECUTORS_BINARIES) $(CROSS_COMPILED_CORE_BINARIES)
 	go test -v ./... -coverprofile coverage.out -coverpkg ./...
 	go tool cover -html coverage.out -o coverage.html
+
+integration: $(TARGET_DIR) $(CROSS_COMPILED_EXECUTORS_BINARIES) $(CROSS_COMPILED_CORE_BINARIES)
+	$(TEST_KILL_SMTP)
+	$(TEST_START_SMTP)
+	$(TARGET_DIR)/venom_$(shell go env GOOS)_$(shell go env GOARCH) run --configuration-dir $(TARGET_DIR)/executors tests/*.yml --log debug
 
 $(INSTALL_DIR)/%:	
 	$(info *** create $(INSTALL_DIR) directory)
