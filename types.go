@@ -176,6 +176,10 @@ type TestCase struct {
 	Vars      H            `xml:"-" json:"-" yaml:"vars"`
 }
 
+func (tc TestCase) HasFailureOrError() bool {
+	return len(tc.Failures) != 0 || len(tc.Errors) != 0
+}
+
 type AssignStep struct {
 	Assignments map[string]Assignment `json:"vars" yaml:"vars" mapstructure:"vars"`
 }
