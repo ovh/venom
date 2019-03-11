@@ -7,3 +7,4 @@ vendor/
 dist/
 coverage.*
 *.dump
+test_results.xml

@@ -2,6 +2,7 @@ package venom
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,7 @@ import (
 func Test_Process(t *testing.T) {
 	v := New()
 	v.logger = &TestLogger{t}
+	v.ConfigurationDirectory = filepath.Join("dist", "executors")
 	r, err := v.Process(context.Background(), []string{"tests/*.yml"})
 	assert.NoError(t, err)
 	if err == nil {

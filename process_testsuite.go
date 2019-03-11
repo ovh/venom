@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk/interpolate"
@@ -63,15 +64,46 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite, log Logger) {
 
 	elapsed := time.Since(start)
 
-	var o string
-	if ts.Failures > 0 || ts.Errors > 0 {
-		o = fmt.Sprintf("%s %s", colorFailure("FAILURE"), rightPad(ts.Package, " ", 47))
-	} else {
-		o = fmt.Sprintf("%s %s", colorSuccess("SUCCESS"), rightPad(ts.Package, " ", 47))
+	var output string
+	var detailPerTestcase [][]string
+	for _, tc := range ts.TestCases {
+		symbolStatus := "✓"
+		colorFunc := colorSuccess
+		if tc.HasFailureOrError() {
+			symbolStatus = "✗"
+			colorFunc = colorFailure
+		}
+
+		var detail []string
+		s := colorFunc(" "+symbolStatus+" "+tc.Name) + " [" + tc.ShortName + "]"
+		detail = append(detail, s)
+		for _, failure := range tc.Failures {
+			s := colorFailure("   - " + failure.Value)
+			detail = append(detail, s)
+		}
+		for _, err := range tc.Errors {
+			s := colorFailure("   - " + err.Value)
+			detail = append(detail, s)
+		}
+		detailPerTestcase = append(detailPerTestcase, detail)
 	}
-	o += fmt.Sprintf("%.3f seconds", elapsed.Seconds())
-	fmt.Fprintln(v.Output, o)
-	log.Infof(o)
+
+	var hasFailure bool
+	if ts.Failures > 0 || ts.Errors > 0 {
+		hasFailure = true
+		output = fmt.Sprintf("%s %s", colorFailure("FAILURE"), rightPad(ts.Package, " ", 47))
+	} else {
+		output = fmt.Sprintf("%s %s", colorSuccess("SUCCESS"), rightPad(ts.Package, " ", 47))
+	}
+
+	output += fmt.Sprintf("%.3f seconds", elapsed.Seconds())
+	fmt.Fprintln(v.Output, output)
+	if hasFailure {
+		for _, detail := range detailPerTestcase {
+			fmt.Fprint(v.Output, strings.Join(detail, "\n"))
+		}
+	}
+	log.Infof(output)
 }
 
 //Parse the suite to find unreplaced and extracted variables

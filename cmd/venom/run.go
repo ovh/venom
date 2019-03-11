@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -173,6 +174,8 @@ var runFunc = func(vals cmd.Values) *cmd.Error {
 	if err := v.GenerateReport(*tests); err != nil {
 		return cmd.NewError(2, "%v", err)
 	}
+
+	fmt.Println()
 
 	v.GetLogger().Infof("Enjoy your tests results")
 	_ = v.Output.Close()

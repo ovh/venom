@@ -15,7 +15,7 @@ testcases:
 - name: testB
   steps:
   - type: exec
-    script: echo 'XXX{{.testA.result.systemout}}YYY'
+    script: echo 'XXX{{.testa.result.systemout}}YYY'
     assertions:
     - result.code ShouldEqual 0
     - result.systemout ShouldEqual XXXhttp://api/fooYYY
