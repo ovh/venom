@@ -46,7 +46,7 @@ func (v *Venom) ListModules() ([]VenomModule, error) {
 		modulePath := filepath.Join(v.ConfigurationDirectory, dir.Name())
 		mod, err := getModule(modulePath)
 		if err != nil {
-			v.GetLogger().Errorf(err.Error())
+			v.logger.Errorf(err.Error())
 			continue
 		}
 		modList = append(modList, mod)
