@@ -16,15 +16,15 @@ import (
 
 // Executor represents a Test Exec
 type Executor struct {
-	WithTLS  bool   `json:"withtls,omitempty" yaml:"withtls,omitempty"`
-	Host     string `json:"host,omitempty" yaml:"host,omitempty"`
-	Port     int    `json:"port,omitempty" yaml:"port,omitempty"`
-	User     string `json:"user,omitempty" yaml:"user,omitempty"`
-	Password string `json:"password,omitempty" yaml:"password,omitempty"`
-	To       string `json:"to,omitempty" yaml:"to,omitempty"`
-	From     string `json:"from,omitempty" yaml:"from,omitempty"`
-	Subject  string `json:"subject,omitempty" yaml:"subject,omitempty"`
-	Body     string `json:"body,omitempty" yaml:"body,omitempty"`
+	WithTLS  bool   `json:"withtls,omitempty" yaml:"withtls,omitempty" mapstructure:"withtls"`
+	Host     string `json:"host,omitempty" yaml:"host,omitempty" mapstructure:"host"`
+	Port     string `json:"port,omitempty" yaml:"port,omitempty" mapstructure:"port"`
+	User     string `json:"user,omitempty" yaml:"user,omitempty" mapstructure:"user"`
+	Password string `json:"password,omitempty" yaml:"password,omitempty" mapstructure:"password"`
+	To       string `json:"to,omitempty" yaml:"to,omitempty" mapstructure:"to"`
+	From     string `json:"from,omitempty" yaml:"from,omitempty" mapstructure:"from"`
+	Subject  string `json:"subject,omitempty" yaml:"subject,omitempty" mapstructure:"subject"`
+	Body     string `json:"body,omitempty" yaml:"body,omitempty" mapstructure:"body"`
 }
 
 // Result represents a step result
@@ -58,7 +58,7 @@ func (e Executor) Manifest() venom.VenomModuleManifest {
 func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorResult, error) {
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to decode step: %v", err)
 	}
 
 	start := time.Now()
@@ -114,7 +114,7 @@ func (e *Executor) sendEmail() error {
 	}
 
 	// Connect to the SMTP Server
-	servername := fmt.Sprintf("%s:%d", e.Host, e.Port)
+	servername := fmt.Sprintf("%s:%s", e.Host, e.Port)
 
 	var c *smtp.Client
 	if e.WithTLS {

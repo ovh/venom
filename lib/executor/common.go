@@ -101,6 +101,7 @@ func Start(c Common) error {
 
 		res, err := c.Run(nil, step)
 		if err != nil {
+			Errorf("Error: %v", err)
 			return cmd.NewError(502, "executor error: %v", err)
 		}
 		encoder := yaml.NewEncoder(os.Stdout)
