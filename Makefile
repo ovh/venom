@@ -21,6 +21,8 @@ COMMON_FILES 						=	$(shell ls *.go lib/cmd/*.go)
 EXECUTOR_COMMON_FILES				=  	$(shell find lib/executor -type f -name "*.go" -print)
 TEST_START_SMTP := docker run -d --name fakesmtp -p 1025:25 -v /tmp/fakemail:/var/mail digiplant/fake-smtp
 TEST_KILL_SMTP := docker kill fakesmtp; docker rm fakesmtp || true
+TEST_START_KAFKA := docker network create kafka && docker run --net=kafka -d --name=zookeeper -e ZOOKEEPER_CLIENT_PORT=2181 confluentinc/cp-zookeeper:4.1.0 && docker run --net=kafka -d -p 9092:9092 --name=kafka -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 confluentinc/cp-kafka:4.1.0
+TEST_KILL_KAFKA :=  docker kill zookeeper; docker rm zookeeper; docker kill kafka; docker rm kafka; docker network rm kafka || true
 
 define get_recursive_files
 $(shell find $(1) -type f -name "*.go" -print)
@@ -80,6 +82,8 @@ test: $(TARGET_DIR) $(CROSS_COMPILED_EXECUTORS_BINARIES) $(CROSS_COMPILED_CORE_B
 integration: $(TARGET_DIR) $(CROSS_COMPILED_EXECUTORS_BINARIES) $(CROSS_COMPILED_CORE_BINARIES)
 	$(TEST_KILL_SMTP)
 	$(TEST_START_SMTP)
+	$(TEST_KILL_KAFKA)
+	$(TEST_START_KAFKA)
 	$(TARGET_DIR)/venom_$(shell go env GOOS)_$(shell go env GOARCH) run --configuration-dir $(TARGET_DIR)/executors tests/*.yml --log debug
 
 $(INSTALL_DIR)/%:	

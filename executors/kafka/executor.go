@@ -143,6 +143,9 @@ func (e Executor) produceMessages(workdir string) error {
 	producerCfg.Net.DialTimeout = 5 * time.Second
 	producerCfg.Producer.Return.Successes = true
 	producerCfg.Producer.Return.Errors = true
+
+	executor.Infof("Connecting Kafka cluster on adresses %v...", e.Addrs)
+
 	sp, err := sarama.NewSyncProducer(e.Addrs, producerCfg)
 	if err != nil {
 		return err
@@ -152,6 +155,7 @@ func (e Executor) produceMessages(workdir string) error {
 	messages := []*sarama.ProducerMessage{}
 
 	if e.MessagesFile != "" {
+		executor.Debugf("Preparing message from file %s", e.MessagesFile)
 		path := filepath.Join(workdir, string(e.MessagesFile))
 		if _, err = os.Stat(path); err == nil {
 			content, err := ioutil.ReadFile(path)
@@ -171,11 +175,13 @@ func (e Executor) produceMessages(workdir string) error {
 
 	for i := range e.Messages {
 		message := e.Messages[i]
+		executor.Debugf("Preparing message '%s'", message)
 		messages = append(messages, &sarama.ProducerMessage{
 			Topic: message.Topic,
 			Value: sarama.ByteEncoder([]byte(message.Value)),
 		})
 	}
+
 	return sp.SendMessages(messages)
 }
 
@@ -193,6 +199,8 @@ func (e Executor) consumeMessages() ([]Message, []interface{}, error) {
 	if strings.TrimSpace(e.InitialOffset) == "oldest" {
 		consumerConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 	}
+
+	executor.Infof("Connecting Kafka cluster on adresses %v...", e.Addrs)
 
 	consumer, err := cluster.NewConsumer(e.Addrs, e.GroupID, e.Topics, consumerConfig)
 	if err != nil {
