@@ -14,6 +14,72 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+const (
+	LogLevelDebug = "debug"
+	LogLevelInfo  = "info"
+	LogLevelWarn  = "warn"
+	LogLevelError = "error"
+	LogLevelFatal = "fatal"
+)
+
+//Logger is basically an interface for logrus.Entry
+type Logger interface {
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
+}
+
+func LoggerWithField(l Logger, key string, i interface{}) Logger {
+	logrusLogger, ok := l.(*logrus.Logger)
+	if ok {
+		return logrusLogger.WithField(key, i)
+	}
+
+	logrusEntry, ok := l.(*logrus.Entry)
+	if ok {
+		return logrusEntry.WithField(key, i)
+	}
+	return &LoggerWithPrefix{
+		parent:      l,
+		prefixKey:   key,
+		prefixValue: i,
+	}
+}
+
+type LoggerWithPrefix struct {
+	parent      Logger
+	prefixKey   string
+	prefixValue interface{}
+}
+
+func (l LoggerWithPrefix) Debugf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Debugf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Infof(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Infof(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Warnf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Warnf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Warningf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Warningf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Errorf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Errorf(s+"\t"+format, args...)
+}
+func (l LoggerWithPrefix) Fatalf(format string, args ...interface{}) {
+	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
+	l.parent.Fatalf(s+"\t"+format, args...)
+}
+
 type LogFormatter struct {
 	// Can be set to the override the default quoting character "
 	// with something else. For example: ', or `.

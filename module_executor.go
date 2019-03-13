@@ -120,6 +120,12 @@ func (e *executorStarter) Run(ctx TestContext, step TestStep) (ExecutorResult, e
 	cmd := exec.CommandContext(ctx, e.entrypoint, "execute", "--logger", e.logServerAddress, "--log-level", e.v.LogLevel)
 	cmd.Dir = ctx.GetWorkingDirectory()
 
+	// TODO Get the bag from the context and set it as environment variables
+	bag := ctx.Bag()
+	for k, v := range bag {
+		cmd.Env = append(cmd.Env, "VENOM_CTX_"+k+"="+v)
+	}
+
 	// Write in the stdin
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
