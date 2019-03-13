@@ -2,6 +2,7 @@ package venom
 
 import (
 	"context"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,13 @@ import (
 
 type TestLogger struct {
 	t *testing.T
+}
+
+var _ io.Writer = TestLogger{}
+
+func (t TestLogger) Write(btes []byte) (int, error) {
+	t.t.Logf(string(btes))
+	return len(btes), nil
 }
 
 func (t TestLogger) Debugf(format string, args ...interface{}) {

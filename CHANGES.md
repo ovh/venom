@@ -1,4 +1,4 @@
-# Breaking changes
+# Changes
 
 ## Relatives file paths
 
@@ -13,3 +13,7 @@
 ## Executor
 ### SMTP 
     All parameters are strings, including port
+
+
+# Variable Precedence
+VENOM_VAR_env < variable from file < variable from flag
