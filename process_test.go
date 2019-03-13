@@ -13,6 +13,7 @@ import (
 func Test_Process(t *testing.T) {
 	v := New()
 	v.logger = logrus.New()
+	v.logger.SetOutput(TestLogger{})
 	v.ConfigurationDirectory = filepath.Join("dist", "executors")
 	r, err := v.Process(context.Background(), []string{"tests/*.yml"})
 	assert.NoError(t, err)
