@@ -99,6 +99,7 @@ func Start(c Common) error {
 			Debugf(name+".Run> End (%.3f seconds)", time.Since(t0).Seconds())
 		}()
 
+		// TODO Set the context
 		res, err := c.Run(nil, step)
 		if err != nil {
 			Errorf("Error: %v", err)

@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"time"
@@ -116,7 +115,7 @@ import (
 //}
 //
 
-func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite, l Logger) {
+func (v *Venom) runTestCases(ctx TestContext, ts *TestSuite, l Logger) {
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
 		tc.ShortName = slug(tc.Name)
@@ -147,8 +146,8 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite, l Logger) {
 	}
 }
 
-func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase, l Logger) error {
-	ctx, cancel := context.WithCancel(ctx)
+func (v *Venom) runTestCase(ctx TestContext, ts *TestSuite, tc *TestCase, l Logger) error {
+	cancel := ctx.WithCancel()
 	defer cancel()
 
 	var p = new(Progress)
@@ -163,20 +162,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase, l 
 		l.Infof("End testcase (%.3f seconds)", time.Since(start).Seconds())
 	}()
 
-	if tc.Context == nil {
-		tc.Context = &ContextData{Type: "default"}
-	}
-
-	ctxMod, err := v.getContextModule(tc.Context.Type)
-	if err != nil {
-		return err
-	}
-
-	tstCtx, err := ctxMod.New(ctx, tc.Context.TestContextValues)
-	if err != nil {
-		return err
-	}
-	tstCtx.SetWorkingDirectory(ts.WorkDir)
+	// TODO Manage context
 
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.ShortName)
@@ -209,7 +195,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase, l 
 			continue
 		}
 
-		res, assertRes, err := v.RunTestStep(tstCtx, tc.Name, stepNumber, stepIn, l)
+		res, assertRes, err := v.RunTestStep(ctx, tc.Name, stepNumber, stepIn, l)
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
 		}

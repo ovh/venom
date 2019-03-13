@@ -9,23 +9,22 @@ import (
 
 type contextModule interface {
 	Manifest() VenomModuleManifest
-	New(ctx context.Context, values TestContextValues) (TestContext, error)
+	New(ctx context.Context, values H) (TestContext, error)
 }
 
 type commonContextModule struct{}
 
 func (e commonContextModule) Manifest() VenomModuleManifest {
-
 	return VenomModuleManifest{}
 }
 
-func (e commonContextModule) New(ctx context.Context, values TestContextValues) (TestContext, error) {
+func (e commonContextModule) New(ctx context.Context, values H) (TestContext, error) {
 	return &commonContext{Context: ctx, values: values}, nil
 }
 
 type commonContext struct {
 	context.Context
-	values           TestContextValues
+	values           H
 	workingDirectory string
 }
 
@@ -47,6 +46,15 @@ func (e *commonContext) RunCommand(cmd string, args ...interface{}) error {
 func (e *commonContext) WithTimeout(d time.Duration) (cancel context.CancelFunc) {
 	e.Context, cancel = context.WithTimeout(e.Context, d)
 	return cancel
+}
+
+func (e *commonContext) WithCancel() (cancel context.CancelFunc) {
+	e.Context, cancel = context.WithCancel(e.Context)
+	return cancel
+}
+
+func (e *commonContext) Bag() H {
+	return e.values
 }
 
 func (v *Venom) getContextModule(s string) (contextModule, error) {

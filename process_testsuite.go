@@ -44,7 +44,6 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite, log Logger) {
 	ts.Vars.AddAll(v.variables)
 	ts.Vars.Add("venom.testsuite", ts.ShortName)
 	ts.Vars.Add("venom.testsuite.filename", ts.Filename)
-
 	for k, val := range ts.Vars {
 		log.Debugf("Interpolating variable '%s'='%s'", k, val)
 		newval, err := interpolate.Do(val, ts.Vars)
@@ -55,17 +54,29 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite, log Logger) {
 		ts.Vars[k] = newval
 	}
 
-	totalSteps := 0
-	for _, tc := range ts.TestCases {
-		totalSteps += len(tc.TestSteps)
+	// Managing the test context
+	if ts.Context == nil {
+		ts.Context = &ContextData{Type: "default"}
 	}
+	ctxMod, err := v.getContextModule(ts.Context.Type)
+	if err != nil {
+		ts.Errors++
+	}
+	tstCtx, err := ctxMod.New(ctx, ts.Context.H)
+	if err != nil {
+		ts.Errors++
+	}
+	tstCtx.SetWorkingDirectory(ts.WorkDir)
 
-	//TODO Manage context
-
-	v.runTestCases(ctx, ts, log)
+	// Run the testcases
+	if err == nil {
+		ts.TestCases = nil
+		v.runTestCases(tstCtx, ts, log)
+	}
 
 	elapsed := time.Since(start)
 
+	// Display something nice
 	var output string
 	var detailPerTestcase [][]string
 	for _, tc := range ts.TestCases {

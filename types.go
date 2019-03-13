@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ovh/cds/sdk/interpolate"
 
 	yaml "gopkg.in/yaml.v2"
@@ -52,8 +50,6 @@ func (h *H) AddAllWithPrefix(p string, h2 H) {
 	}
 }
 
-type TestContextValues H
-
 // Aliases contains list of aliases
 type Aliases map[string]string
 
@@ -90,8 +86,10 @@ type TestContext interface {
 	Get(string) interface{}
 	RunCommand(cmd string, args ...interface{}) error
 	WithTimeout(d time.Duration) context.CancelFunc
+	WithCancel() context.CancelFunc
 	SetWorkingDirectory(string)
 	GetWorkingDirectory() string
+	Bag() H
 }
 
 //func (t TestContext) WithTimeout(d time.Duration) context.CancelFunc {
@@ -148,7 +146,7 @@ type TestSuite struct {
 
 type ContextData struct {
 	Type string `xml:"-" json:"-" yaml:"type,omitempty"`
-	TestContextValues
+	H
 }
 
 // Property represents a key/value pair used to define properties.
@@ -280,70 +278,4 @@ type Failure struct {
 // InnerResult is used by TestCase
 type InnerResult struct {
 	Value string `xml:",cdata" json:"value" yaml:"value"`
-}
-
-const (
-	LogLevelDebug = "debug"
-	LogLevelInfo  = "info"
-	LogLevelWarn  = "warn"
-	LogLevelError = "error"
-	LogLevelFatal = "fatal"
-)
-
-//Logger is basically an interface for logrus.Entry
-type Logger interface {
-	Debugf(format string, args ...interface{})
-	Infof(format string, args ...interface{})
-	Warnf(format string, args ...interface{})
-	Warningf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Fatalf(format string, args ...interface{})
-}
-
-func LoggerWithField(l Logger, key string, i interface{}) Logger {
-	logrusLogger, ok := l.(*logrus.Logger)
-	if ok {
-		return logrusLogger.WithField(key, i)
-	}
-
-	logrusEntry, ok := l.(*logrus.Entry)
-	if ok {
-		return logrusEntry.WithField(key, i)
-	}
-	return &LoggerWithPrefix{
-		parent:      l,
-		prefixKey:   key,
-		prefixValue: i,
-	}
-}
-
-type LoggerWithPrefix struct {
-	parent      Logger
-	prefixKey   string
-	prefixValue interface{}
-}
-
-func (l LoggerWithPrefix) Debugf(format string, args ...interface{}) {
-	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
-	l.parent.Debugf(s+"\t"+format, args...)
-}
-func (l LoggerWithPrefix) Infof(format string, args ...interface{}) {
-	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
-	l.parent.Infof(s+"\t"+format, args...)
-}
-func (l LoggerWithPrefix) Warnf(format string, args ...interface{}) {
-	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
-	l.parent.Warnf(s+"\t"+format, args...)
-}
-func (l LoggerWithPrefix) Warningf(format string, args ...interface{}) {
-	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
-	l.parent.Warningf(s+"\t"+format, args...)
-}
-func (l LoggerWithPrefix) Errorf(format string, args ...interface{}) {
-	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
-	l.parent.Errorf(s+"\t"+format, args...)
-}
-func (l LoggerWithPrefix) Fatalf(format string, args ...interface{}) {
-	s := fmt.Sprintf("%s=%v", l.prefixKey, l.prefixValue)
-	l.parent.Fatalf(s+"\t"+format, args...)
 }
