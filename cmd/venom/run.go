@@ -40,23 +40,29 @@ var (
 				Usage: "Enable memory / CPU Profiling with pprof",
 				Kind:  reflect.Bool,
 			}, {
-				Name:      "report-dir",
-				ShortHand: "d",
-				Usage:     "Test report directory: create tests results file inside this directory",
-			}, {
 				Name:      "var",
 				ShortHand: "v",
 				Usage:     "Variables",
 				Kind:      reflect.Slice,
 			}, {
-				Name:  "var-from-file",
+				Name:  "var-file",
 				Usage: "Load variables from json or yaml files",
 				Kind:  reflect.Slice,
 			}, {
-				Name:      "var-from-env",
+				Name:      "var-env",
 				ShortHand: "e",
 				Usage:     "Load variables environment variables",
 				Kind:      reflect.Bool,
+				Default:   "true",
+			}, {
+				Name:  "no-check-variables",
+				Usage: "Don't check variables before run",
+				Kind:  reflect.Bool,
+			}, {
+				Name:    "input",
+				Usage:   "Ask for input for variables if not directly set",
+				Kind:    reflect.Bool,
+				Default: "true",
 			}, {
 				Name:    "report-format",
 				Usage:   "Test report format: xml, yml, json or tap",
@@ -66,12 +72,12 @@ var (
 					return s == "xml" || s == "json" || s == "yml" || s == "tap"
 				},
 			}, {
+				Name:      "report-dir",
+				ShortHand: "d",
+				Usage:     "Test report directory: create tests results file inside this directory",
+			}, {
 				Name:  "stop-on-failure",
 				Usage: "Stop running Test Suite on first Test Case failure",
-				Kind:  reflect.Bool,
-			}, {
-				Name:  "no-check-variables",
-				Usage: "Don't check variables before run",
 				Kind:  reflect.Bool,
 			}, {
 				Name:  "no-strict",
@@ -127,9 +133,22 @@ func checkConfigurationDirectory(v *venom.Venom, vals cmd.Values) *cmd.Error {
 var runFunc = func(vals cmd.Values) *cmd.Error {
 	var v = venom.New()
 	v.LogLevel = vals.GetString("log")
+
 	if err := checkConfigurationDirectory(v, vals); err != nil {
 		return err
 	}
+
+	flags := vals.GetStringSlice("var")
+	varFiles := vals.GetStringSlice("var-file")
+	varEnv := vals.GetBool("var-env")
+	variables, err := buildVariableSet(flags, varFiles, varEnv)
+	if err != nil {
+		return cmd.NewError(129, "unable to load variabless: %v", err)
+	}
+	v.AddVariables(variables)
+
+	// TODO Parse to check variables
+	// Prompt for missing variables
 
 	v.StopOnFailure = vals.GetBool("stop-on-failure")
 
@@ -160,23 +179,27 @@ var runFunc = func(vals cmd.Values) *cmd.Error {
 	if err != nil {
 		return cmd.NewError(1, "venom intialization error: unable to list installed modules: %v", err)
 	}
-
 	if len(mods) == 0 {
 		return cmd.NewError(2, "venom intialization error: no module found in configuration directory")
 	}
 
+	// Venom Processing (the important stuff)
 	tests, err := v.Process(context.Background(), vals.GetStringSlice("path"))
 	if err != nil {
 		return cmd.NewError(1, "%v", err)
 	}
 
-	v.GetLogger().Infof("Generating reports")
-	if err := v.GenerateReport(*tests); err != nil {
-		return cmd.NewError(2, "%v", err)
+	// Generating reports
+	format := vals.GetString("report-format")
+	if format != "" {
+		v.GetLogger().Infof("Generating reports")
+		if err := v.GenerateReport(*tests, format); err != nil {
+			return cmd.NewError(2, "%v", err)
+		}
 	}
 
+	// Main output
 	fmt.Println()
-
 	v.GetLogger().Infof("Enjoy your tests results")
 	_ = v.Output.Close()
 
