@@ -23,10 +23,10 @@ func slug(s string) string {
 }
 
 // GenerateReport output result to sdtout, files...
-func (v *Venom) GenerateReport(tests Tests) error {
+func (v *Venom) GenerateReport(tests Tests, reportFormat string) error {
 	var data []byte
 	var err error
-	switch v.ReportFormat {
+	switch reportFormat {
 	case "json":
 		data, err = json.MarshalIndent(tests, "", "  ")
 		if err != nil {
@@ -51,7 +51,7 @@ func (v *Venom) GenerateReport(tests Tests) error {
 	}
 
 	if v.ReportDir != "" {
-		filename := v.ReportDir + "/test_results." + v.ReportFormat
+		filename := v.ReportDir + "/test_results." + reportFormat
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
 		}

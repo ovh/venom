@@ -25,7 +25,6 @@ func New() *Venom {
 		logger:          logrus.New(),
 		variables:       map[string]string{},
 		EnableProfiling: false,
-		ReportFormat:    "xml",
 		ReportDir:       ".",
 		Output:          NewOutput(os.Stdout),
 	}
@@ -42,7 +41,6 @@ type Venom struct {
 	StopOnFailure          bool
 	Parallel               int
 	EnableProfiling        bool
-	ReportFormat           string
 	ReportDir              string
 	Output                 io.WriteCloser
 	Display                *cmd.Container

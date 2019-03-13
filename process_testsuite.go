@@ -60,6 +60,8 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite, log Logger) {
 		totalSteps += len(tc.TestSteps)
 	}
 
+	//TODO Manage context
+
 	v.runTestCases(ctx, ts, log)
 
 	elapsed := time.Since(start)
