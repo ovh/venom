@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -44,7 +45,7 @@ func buildVariableSetFromFiles(files []string) (venom.H, error) {
 	for _, f := range files {
 		v, err := buildVariableSetFromFile(f)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to load variables from %s", f)
 		}
 		variables.AddAll(v)
 	}

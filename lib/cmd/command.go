@@ -52,9 +52,12 @@ func (v *Values) GetBool(s string) bool {
 	return strings.ToLower((*v)[s]) == "true" || strings.ToLower((*v)[s]) == "yes" || strings.ToLower((*v)[s]) == "y" || strings.ToLower((*v)[s]) == "1"
 }
 
-// GetStringSlice returns a string slice
+// GetStringSlice returns a string slice.
 func (v *Values) GetStringSlice(s string) []string {
-	res := strings.Split((*v)[s], "||")
+	if strings.TrimSpace(v.GetString(s)) == "" {
+		return nil
+	}
+	res := strings.Split(v.GetString(s), "||")
 	if len(res) == 1 && strings.Contains(res[0], ",") {
 		return strings.Split(res[0], ",")
 	}

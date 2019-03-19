@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -120,9 +121,10 @@ func (e *executorStarter) Run(ctx TestContext, step TestStep) (ExecutorResult, e
 	cmd := exec.CommandContext(ctx, e.entrypoint, "execute", "--logger", e.logServerAddress, "--log-level", e.v.LogLevel)
 	cmd.Dir = ctx.GetWorkingDirectory()
 
-	// TODO Get the bag from the context and set it as environment variables
 	bag := ctx.Bag()
+	cmd.Env = os.Environ()
 	for k, v := range bag {
+		e.l.Debugf("Setting context value: %s:%s", k, v)
 		cmd.Env = append(cmd.Env, "VENOM_CTX_"+k+"="+v)
 	}
 
