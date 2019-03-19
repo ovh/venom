@@ -1,4 +1,7 @@
 name: MyTestSuite
+context:
+  workingDirectory: $HOME
+  
 testcases:
 - name: testA
   steps:
@@ -8,8 +11,8 @@ testcases:
     - result.code ShouldEqual 0
     - result.timeseconds ShouldBeLessThan 1
 
-- name: read a json file from the same directory
+- name: unable to read a json file from the same directory
   steps:
   - script: cat testa.json
     assertions:
-    - result.systemoutjson.foo ShouldContainSubstring bar
+    - result.systemerr ShouldContainSubstring "No such file or directory"

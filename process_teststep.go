@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -48,8 +49,11 @@ func (v *Venom) getDefaultAssertions(ctx TestContext, e *executorModule) (*StepA
 }
 
 func (v *Venom) runTestStepExecutor(ctx TestContext, step TestStep, l Logger, e *executorModule) (ExecutorResult, error) {
+	stepCtx := ctx.(context.Context)
 	if e.timeout > 0 {
-		defer ctx.WithTimeout(time.Duration(e.timeout) * time.Second)
+		var cancel context.CancelFunc
+		stepCtx, cancel = context.WithTimeout(stepCtx, time.Duration(e.timeout)*time.Second)
+		defer cancel()
 	}
 	runner, err := e.New(ctx, v, l)
 	if err != nil {
@@ -72,7 +76,7 @@ func (v *Venom) runTestStepExecutor(ctx TestContext, step TestStep, l Logger, e 
 		return nil, err
 	case result := <-ch:
 		return result, nil
-	case <-ctx.Done():
+	case <-stepCtx.Done():
 		return nil, fmt.Errorf("Timeout after %d second(s)", e.timeout)
 	}
 }

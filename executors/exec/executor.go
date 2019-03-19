@@ -69,6 +69,14 @@ func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorR
 
 	scriptContent := e.Script
 
+	// Get the working directory from the context
+	wd := ctx.Bag().Get("workingDirectory")
+	// Or fallback to current working directory
+	if wd == "" {
+		wd, _ = os.Getwd()
+	}
+	wd = os.ExpandEnv(wd)
+
 	// Default shell is sh
 	shell := "/bin/sh"
 	var opts []string
@@ -132,8 +140,7 @@ func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorR
 
 	cmd := exec.Command(shell, opts...)
 	executor.Debugf("teststep exec '%s %s'", shell, strings.Join(opts, " "))
-	wd, _ := os.Getwd()
-
+	executor.Infof("working directory: %s", wd)
 	cmd.Dir = wd
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

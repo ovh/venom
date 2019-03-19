@@ -56,21 +56,22 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite, log Logger) {
 
 	// Managing the test context
 	if ts.Context == nil {
-		ts.Context = &ContextData{Type: "default"}
+		ts.Context = &H{"type": "default"}
 	}
-	ctxMod, err := v.getContextModule(ts.Context.Type)
+	ctxMod, err := v.getContextModule(ts.Context.Get("type"))
 	if err != nil {
+		v.logger.Errorf("unable to start context module: %v", err)
 		ts.Errors++
 	}
-	tstCtx, err := ctxMod.New(ctx, ts.Context.H)
+	tstCtx, err := ctxMod.New(ctx, *ts.Context)
 	if err != nil {
+		v.logger.Errorf("unable to start context: %v", err)
 		ts.Errors++
 	}
 	tstCtx.SetWorkingDirectory(ts.WorkDir)
 
 	// Run the testcases
 	if err == nil {
-		ts.TestCases = nil
 		v.runTestCases(tstCtx, ts, log)
 	}
 

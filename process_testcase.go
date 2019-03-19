@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"time"
@@ -123,7 +124,9 @@ func (v *Venom) runTestCases(ctx TestContext, ts *TestSuite, l Logger) {
 		log.Infof("Starting testcase %d: %s [%s]", i+1, tc.ShortName, tc.Name)
 
 		if len(tc.Skipped) == 0 {
-			v.runTestCase(ctx, ts, tc, log)
+			if err := v.runTestCase(ctx, ts, tc, log); err != nil {
+				tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
+			}
 		}
 
 		// Push variables from the testcase in the testsuite
@@ -147,11 +150,11 @@ func (v *Venom) runTestCases(ctx TestContext, ts *TestSuite, l Logger) {
 }
 
 func (v *Venom) runTestCase(ctx TestContext, ts *TestSuite, tc *TestCase, l Logger) error {
-	cancel := ctx.WithCancel()
+	displayCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	var p = new(Progress)
-	go p.Display(ctx, v.Display)
+	go p.Display(displayCtx, v.Display)
 	p.testsuite = ts.Name
 	p.testcase = tc.Name
 	p.teststepTotal = len(tc.TestSteps)
@@ -162,7 +165,16 @@ func (v *Venom) runTestCase(ctx TestContext, ts *TestSuite, tc *TestCase, l Logg
 		l.Infof("End testcase (%.3f seconds)", time.Since(start).Seconds())
 	}()
 
-	// TODO Manage context
+	if tc.Context != nil {
+		modCtx, err := v.getContextModule(tc.Context.Get("type"))
+		if err != nil {
+			return fmt.Errorf("unable to get context module: %v", err)
+		}
+		ctx, err = modCtx.New(ctx, ctx.Bag())
+		if err != nil {
+			return fmt.Errorf("unable to get context: %v", err)
+		}
+	}
 
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.ShortName)
