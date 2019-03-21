@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/pkg/errors"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -79,7 +80,7 @@ type TestContext interface {
 	context.Context
 	SetWorkingDirectory(string)
 	GetWorkingDirectory() string
-	Bag() H
+	Bag() HH
 }
 
 // ExecutorWithDefaultAssertions define default assertions on a Eexcutor
@@ -125,7 +126,7 @@ type TestSuite struct {
 	Timestamp  string     `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
 	Vars       H          `xml:"-" json:"-" yaml:"vars"`
 	WorkDir    string     `xml:"-" json:"-" yaml:"-"`
-	Context    *H         `xml:"-" json:"-" yaml:"context,omitempty"`
+	Context    HH         `xml:"-" json:"-" yaml:"context,omitempty"`
 }
 
 // Property represents a key/value pair used to define properties.
@@ -149,7 +150,7 @@ type TestCase struct {
 	Systemerr InnerResult `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
 	Time      string      `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
 	TestSteps []TestStep  `xml:"-" hcl:"step" json:"steps" yaml:"steps"`
-	Context   *H          `xml:"-" json:"-" yaml:"context,omitempty"`
+	Context   HH          `xml:"-" json:"-" yaml:"context,omitempty"`
 	Vars      H           `xml:"-" json:"-" yaml:"vars"`
 }
 
@@ -258,3 +259,114 @@ type Failure struct {
 type InnerResult struct {
 	Value string `xml:",cdata" json:"value" yaml:"value"`
 }
+
+type HH map[string]interface{}
+
+// Get returns string from default context.
+func (h HH) Get(key string) string {
+	return fmt.Sprintf("%v", h[key])
+}
+
+// GetString returns string from default context.
+func (h HH) GetString(key string) (string, error) {
+	if h[key] == nil {
+		return "", NotFound(key)
+	}
+	result, ok := h[key].(string)
+	if !ok {
+		return "", InvalidArgument(key)
+	}
+	return result, nil
+}
+
+// GetFloat returns float64 from default context.
+func (h HH) GetFloat(key string) (float64, error) {
+	if h[key] == nil {
+		return 0, NotFound(key)
+	}
+	result, ok := h[key].(float64)
+	if !ok {
+		return 0, InvalidArgument(key)
+	}
+	return result, nil
+}
+
+// GetInt returns int from default context.
+func (h HH) GetInt(key string) (int, error) {
+	res, err := h.GetFloat(key)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(res), nil
+}
+
+// GetBool returns bool from default context.
+func (h HH) GetBool(key string) (bool, error) {
+	if h[key] == nil {
+		return false, NotFound(key)
+	}
+	result, ok := h[key].(bool)
+	if !ok {
+		return false, InvalidArgument(key)
+	}
+	return result, nil
+}
+
+// GetStringSlice returns string slice from default context.
+func (h HH) GetStringSlice(key string) ([]string, error) {
+	if h[key] == nil {
+		return nil, NotFound(key)
+	}
+
+	stringSlice, ok := h[key].([]string)
+	if ok {
+		return stringSlice, nil
+	}
+
+	slice, ok := h[key].([]interface{})
+	if !ok {
+		return nil, InvalidArgument(key)
+	}
+
+	res := make([]string, len(slice))
+
+	for k, v := range slice {
+		s, ok := v.(string)
+		if !ok {
+			return nil, errors.New("cannot cast to string")
+		}
+
+		res[k] = s
+	}
+
+	return res, nil
+}
+
+// GetComplex unmarshal argument in struct from default context.
+func (h HH) GetComplex(key string, arg interface{}) error {
+	if h[key] == nil {
+		return NotFound(key)
+	}
+
+	val, err := yaml.Marshal(h[key])
+	if err != nil {
+		return err
+	}
+
+	err = yaml.Unmarshal(val, arg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *HH) Add(k string, v interface{}) {
+	(*h)[k] = v
+}
+
+// NotFound is error returned when trying to get missing argument
+func NotFound(key string) error { return fmt.Errorf("missing context argument '%s'", key) }
+
+// InvalidArgument is error returned when trying to cast argument with wrong type
+func InvalidArgument(key string) error { return fmt.Errorf("invalid context argument type '%s'", key) }

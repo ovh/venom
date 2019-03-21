@@ -8,7 +8,7 @@ import (
 
 type contextModule interface {
 	Manifest() VenomModuleManifest
-	New(ctx context.Context, values H) (TestContext, error)
+	New(ctx context.Context, values HH) (TestContext, error)
 	ExecutorSupported() []string
 }
 
@@ -25,7 +25,7 @@ func (e commonContextModule) Manifest() VenomModuleManifest {
 	return VenomModuleManifest{}
 }
 
-func (e commonContextModule) New(ctx context.Context, values H) (TestContext, error) {
+func (e commonContextModule) New(ctx context.Context, values HH) (TestContext, error) {
 	return &commonContext{Context: ctx, values: values}, nil
 }
 
@@ -35,7 +35,7 @@ func (e commonContextModule) ExecutorSupported() []string {
 
 type commonContext struct {
 	context.Context
-	values           H
+	values           HH
 	workingDirectory string
 }
 
@@ -46,6 +46,6 @@ func (e *commonContext) GetWorkingDirectory() string {
 	return e.workingDirectory
 }
 
-func (e *commonContext) Bag() H {
+func (e *commonContext) Bag() HH {
 	return e.values
 }

@@ -12,7 +12,7 @@ var _ venom.TestContext = new(executorContext)
 
 type executorContext struct {
 	context.Context
-	bag              venom.H
+	bag              venom.HH
 	workingDirectory string
 }
 
@@ -20,7 +20,7 @@ func NewContextFromEnv() venom.TestContext {
 	wd, _ := os.Getwd()
 	ctx := executorContext{
 		Context:          context.Background(),
-		bag:              venom.H{},
+		bag:              venom.HH{},
 		workingDirectory: wd,
 	}
 
@@ -39,7 +39,7 @@ func NewContextFromEnv() venom.TestContext {
 	return &ctx
 }
 
-func (e *executorContext) Bag() venom.H {
+func (e *executorContext) Bag() venom.HH {
 	return e.bag
 }
 

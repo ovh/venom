@@ -123,7 +123,8 @@ func (e *executorStarter) Run(ctx TestContext, step TestStep) (ExecutorResult, e
 
 	bag := ctx.Bag()
 	cmd.Env = os.Environ()
-	for k, v := range bag {
+	for k := range bag {
+		v := bag.Get(k)
 		e.l.Debugf("Setting context value: %s:%s", k, v)
 		cmd.Env = append(cmd.Env, "VENOM_CTX_"+k+"="+v)
 	}
