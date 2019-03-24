@@ -17,6 +17,7 @@ require (
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/ovh/cds v0.0.0-20190301154426-3e86268e70a7
+	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.8.1
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362

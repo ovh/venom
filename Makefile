@@ -58,8 +58,8 @@ $(CROSS_COMPILED_CORE_BINARIES): $(COMMON_FILES) $(call get_recursive_files, $(C
 	$(info *** building core binary $@)
 	@$(MAKE) --no-print-directory  gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@ PACKAGE=$(CORE)
 
-$(CROSS_COMPILED_EXECUTORS_BINARIES): $(COMMON_FILES) $(EXECUTOR_COMMON_FILES) $(call get_recursive_files, $@)
-	$(info *** building executor binary $@ from package $(call get_executor_path_from_binary_file,$@))
+$(CROSS_COMPILED_EXECUTORS_BINARIES): $(COMMON_FILES) $(EXECUTOR_COMMON_FILES) $(call get_recursive_files, $(EXECUTORS))
+	$(info *** building executor binary $@ from package $(call get_executor_path_from_binary_file,$$@))
 	@$(MAKE) --no-print-directory  gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@ PACKAGE=$(call get_executor_path_from_binary_file,$@)
 
 gobuild:
