@@ -129,8 +129,9 @@ func connectToHost(u, pass, key, host string) (*ssh.Client, *ssh.Session, error)
 	}
 
 	sshConfig := &ssh.ClientConfig{
-		User: u,
-		Auth: auth,
+		User:            u,
+		Auth:            auth,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
 	//If host doen't contain port, set the default port
