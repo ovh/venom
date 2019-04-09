@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"regexp"
@@ -19,17 +20,18 @@ var imapSafeLogMask = imap.LogNone
 
 // Executor represents a Test Exec
 type Executor struct {
-	IMAPHost        string `json:"imaphost,omitempty" yaml:"imaphost,omitempty"`
-	IMAPPort        string `json:"imapport,omitempty" yaml:"imapport,omitempty"`
-	IMAPUser        string `json:"imapuser,omitempty" yaml:"imapuser,omitempty"`
-	IMAPPassword    string `json:"imappassword,omitempty" yaml:"imappassword,omitempty"`
-	MBox            string `json:"mbox,omitempty" yaml:"mbox,omitempty"`
-	MBoxOnSuccess   string `json:"mboxonsuccess,omitempty" yaml:"mboxonsuccess,omitempty"`
-	DeleteOnSuccess bool   `json:"deleteonsuccess,omitempty" yaml:"deleteonsuccess,omitempty"`
-	SearchFrom      string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
-	SearchTo        string `json:"searchto,omitempty" yaml:"searchto,omitempty"`
-	SearchSubject   string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
-	SearchBody      string `json:"searchbody,omitempty" yaml:"searchbody,omitempty"`
+	IMAPHost           string `json:"imaphost,omitempty" yaml:"imaphost,omitempty"`
+	IMAPPort           string `json:"imapport,omitempty" yaml:"imapport,omitempty"`
+	IMAPUser           string `json:"imapuser,omitempty" yaml:"imapuser,omitempty"`
+	IMAPPassword       string `json:"imappassword,omitempty" yaml:"imappassword,omitempty"`
+	InsecureSkipVerify bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
+	MBox               string `json:"mbox,omitempty" yaml:"mbox,omitempty"`
+	MBoxOnSuccess      string `json:"mboxonsuccess,omitempty" yaml:"mboxonsuccess,omitempty"`
+	DeleteOnSuccess    bool   `json:"deleteonsuccess,omitempty" yaml:"deleteonsuccess,omitempty"`
+	SearchFrom         string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
+	SearchTo           string `json:"searchto,omitempty" yaml:"searchto,omitempty"`
+	SearchSubject      string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
+	SearchBody         string `json:"searchbody,omitempty" yaml:"searchbody,omitempty"`
 }
 
 // Mail contains an analyzed mail
@@ -59,7 +61,7 @@ func (Executor) ZeroValueResult() venom.ExecutorResult {
 
 // GetDefaultAssertions return default assertions for type exec
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return &venom.StepAssertions{Assertions: []string{"result.err ShouldNotExist"}}
+	return &venom.StepAssertions{Assertions: []string{"result.err ShouldNotBeEmpty"}}
 }
 
 func (e Executor) Manifest() venom.VenomModuleManifest {
@@ -101,10 +103,10 @@ func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorR
 
 func (e *Executor) getMail() (*Mail, error) {
 	if e.SearchFrom == "" && e.SearchSubject == "" && e.SearchBody == "" && e.SearchTo == "" {
-		return nil, fmt.Errorf("you have to use one of searchfrom, searchto, searchsubject or subjectbody parameters.")
+		return nil, fmt.Errorf("you have to use one of searchfrom, searchto, searchsubject or subjectbody parameters")
 	}
 
-	c, errc := connect(e.IMAPHost, e.IMAPPort, e.IMAPUser, e.IMAPPassword)
+	c, errc := connect(e.IMAPHost, e.IMAPPort, e.IMAPUser, e.IMAPPassword, e.InsecureSkipVerify)
 	if errc != nil {
 		return nil, fmt.Errorf("Error while connecting:%s", errc.Error())
 	}
@@ -217,7 +219,7 @@ func (m *Mail) delete(c *imap.Client) error {
 	return nil
 }
 
-func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error) {
+func connect(host, port, imapUsername, imapPassword string, insecureSkipVerify bool) (*imap.Client, error) {
 	if !strings.Contains(host, ":") {
 		if port == "" {
 			port = ":993"
@@ -226,20 +228,25 @@ func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error
 		}
 	}
 
-	c, errd := imap.DialTLS(host+port, nil)
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: insecureSkipVerify,
+		ServerName:         host,
+	}
+
+	c, errd := imap.DialTLS(host+port, tlsconfig)
 	if errd != nil {
-		return nil, fmt.Errorf("Unable to dial: %s", errd)
+		return nil, fmt.Errorf("Unable to dial: %v", errd)
 	}
 
 	if c.Caps["STARTTLS"] {
 		if _, err := check(c.StartTLS(nil)); err != nil {
-			return nil, fmt.Errorf("Unable to start TLS: %s\n", err)
+			return nil, fmt.Errorf("unable to start TLS: %v", err)
 		}
 	}
 
 	c.SetLogMask(imapSafeLogMask)
 	if _, err := check(c.Login(imapUsername, imapPassword)); err != nil {
-		return nil, fmt.Errorf("Unable to login: %s", err)
+		return nil, fmt.Errorf("Unable to login: %v", err)
 	}
 	c.SetLogMask(imapLogMask)
 

@@ -68,8 +68,9 @@ func extract(rsp imap.Response) (*Mail, error) {
 	executor.Debugf("Mail Content-Transfer-Encoding is %s ", encoding)
 
 	contentType, params, err := mime.ParseMediaType(mmsg.Header.Get("Content-Type"))
+	// it's not a problem if there is an error on decoding content-type here
 	if err != nil {
-		return nil, fmt.Errorf("Error while reading Content-Type:%s", err)
+		executor.Debugf("error while reading Content-Type:%s - ignoring this error", err)
 	}
 	if contentType == "multipart/mixed" || contentType == "multipart/alternative" {
 		if boundary, ok := params["boundary"]; ok {

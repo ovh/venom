@@ -22,7 +22,7 @@ testcases:
     searchsubject: 'Title of mail with *'
     searchbody: '.*a body content.*'
     assertions:
-    - result.err ShouldNotExist
+    - result.err ShouldNotBeEmpty
 ```
 
 * imaphost: imap host
@@ -35,6 +35,7 @@ testcases:
 * searchbody: optional
 * mbox: optional, default is INBOX
 * mboxonsuccess: optional. If not empty, move found mail (matching criteria) to another mbox.
+* insecureSkipVerify, default false
 
 Input must contain at least one of searchfrom, searchto, searchsubject or searchbody.
 
@@ -47,5 +48,5 @@ Input must contain at least one of searchfrom, searchto, searchsubject or search
 ## Default assertion
 
 ```yaml
-result.err ShouldNotExist
+result.err ShouldNotBeEmpty
 ```
