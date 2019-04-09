@@ -264,7 +264,11 @@ type HH map[string]interface{}
 
 // Get returns string from default context.
 func (h HH) Get(key string) string {
-	return fmt.Sprintf("%v", h[key])
+	val, has := h[key]
+	if !has {
+		return ""
+	}
+	return fmt.Sprintf("%v", val)
 }
 
 // GetString returns string from default context.

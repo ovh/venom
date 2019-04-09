@@ -62,9 +62,12 @@ $(CROSS_COMPILED_EXECUTORS_BINARIES): $(COMMON_FILES) $(EXECUTOR_COMMON_FILES) $
 	$(info *** building executor binary $@ from package $(call get_executor_path_from_binary_file,$$@))
 	@$(MAKE) --no-print-directory  gobuild GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@ PACKAGE=$(call get_executor_path_from_binary_file,$@)
 
-gobuild:
+gobuild: vendor
 	$(info ... Package: $(PACKAGE) OS: $(GOOS) ARCH: $(GOARCH) -> $(OUTPUT))
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) $(LDFLAGS) -o $(OUTPUT) $(abspath $(PACKAGE))
+
+vendor:
+	@$(MAKE) --no-print-directory gomod
 
 gomodclean: vendor
 	@echo "removing vendor directory... " && rm -rf vendor

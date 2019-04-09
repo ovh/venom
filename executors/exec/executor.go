@@ -192,9 +192,13 @@ func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorR
 
 	if err := cmd.Start(); err != nil {
 		result.Err = err.Error()
-		result.Code = "127"
-		executor.Debugf(err.Error())
-		return venom.Dump(e)
+		if cmd.ProcessState != nil {
+			result.Code = strconv.Itoa(cmd.ProcessState.ExitCode())
+		} else {
+			result.Code = "127"
+		}
+		executor.Infof(err.Error())
+		return venom.Dump(result)
 	}
 
 	_ = <-outchan
