@@ -37,8 +37,8 @@ type Executor struct {
 	Service              string                 `json:"service" yaml:"service"`
 	Method               string                 `json:"method" yaml:"method"`
 	Plaintext            bool                   `json:"plaintext,omitempty" yaml:"plaintext,omitempty"`
-	JsonDefaultFields    bool                   `json:"default_field" yaml:"default_field"`
-	IncludeTextSeparator bool                   `json:"include_test_separator" yaml:"include_test_separator"`
+	JsonDefaultFields    bool                   `json:"default_fields" yaml:"default_fields"`
+	IncludeTextSeparator bool                   `json:"include_text_separator" yaml:"include_text_separator"`
 	Data                 map[string]interface{} `json:"data" yaml:"data"`
 	Headers              map[string]string      `json:"headers" yaml:"headers"`
 	ConnectTimeout       *int64                 `json:"connect_timeout" yaml:"connect_timeout"`
