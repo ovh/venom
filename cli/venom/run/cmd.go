@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/hcl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
@@ -22,6 +22,7 @@ import (
 
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
+	"github.com/ovh/venom/executors/grpc"
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/kafka"
@@ -88,6 +89,7 @@ var Cmd = &cobra.Command{
 		v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 		v.RegisterExecutor(redis.Name, redis.New())
 		v.RegisterExecutor(kafka.Name, kafka.New())
+		v.RegisterExecutor(grpc.Name, grpc.New())
 
 		// Register Context
 		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
