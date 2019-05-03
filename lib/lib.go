@@ -1,14 +1,14 @@
 package venom
 
 import (
-	"testing"
-
 	"encoding/json"
+	"testing"
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
 	redisctx "github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
+	"github.com/ovh/venom/executors/grpc"
 
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
@@ -80,6 +80,7 @@ func TestCase(t *testing.T, name string, variables map[string]string) *T {
 	v.RegisterExecutor(ssh.Name, ssh.New())
 	v.RegisterExecutor(web.Name, web.New())
 	v.RegisterExecutor(redis.Name, redis.New())
+	v.RegisterExecutor(grpc.Name, grpc.New())
 
 	v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
 	v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
