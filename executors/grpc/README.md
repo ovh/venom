@@ -27,6 +27,8 @@ In your yaml file, you can use:
   - data optional: data to marshal to json and send as a request
   - headers optional: data to send as additional headers
   - connect_timeout optional: The maximum time, in seconds, to wait for connection to be established. Defaults to 10 seconds.
+  - default_fields optional: whether json formatter should emit default fields
+  - include_text_separator optional: when protobuf string formatter is invoked to format multiple messages, all messages after the first one will be prefixed with character (0x1E).
 ```
 
 Example:
@@ -49,18 +51,6 @@ testcases:
     - result.code ShouldEqual 0
     - result.bodyjson.foo ShouldEqual bar
 
-```
-
-Multiline script:
-
-```yaml
-name: Title of TestSuite
-testcases:
-- name: multiline script
-  steps:
-  - script: |
-            echo "Foo" \
-            echo "Bar"
 ```
 
 ## Output
