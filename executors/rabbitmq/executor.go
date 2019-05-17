@@ -195,7 +195,7 @@ func (e Executor) publishMessages(workdir string, l venom.Logger) error {
 	l.Debugf("Message to send: %d", len(e.Messages))
 	for i := range e.Messages {
 		deliveryMode := amqp.Persistent
-		if e.Messages[i].Persistent == false {
+		if !e.Messages[i].Persistent {
 			deliveryMode = amqp.Transient
 		}
 		err = ch.Publish(
