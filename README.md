@@ -50,6 +50,7 @@ Flags:
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
 * **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
+* **rabbitmq**: https://github.com/ovh/venom/tree/master/executors/rabbitmq
 
 ## TestSuite files
 
