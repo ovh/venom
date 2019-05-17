@@ -94,16 +94,16 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result := Result{Executor: e}
 
 	// Default values
-	if len(e.Addrs) == 0 {
+	if e.Addrs == "" {
 		e.Addrs = "amqp:/localhost:5672"
 	}
-	if len(e.User) == 0 {
+	if e.User == "" {
 		e.User = "guest"
 	}
-	if len(e.Password) == 0 {
+	if e.Password == "" {
 		e.Password = "guest"
 	}
-	if len(e.ExchangeType) == 0 {
+	if e.ExchangeType == "" {
 		e.ExchangeType = amqp.ExchangeFanout
 	}
 	if e.MessageLimit == 0 {
@@ -124,7 +124,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			return nil, err
 		}
 	} else {
-		return nil, fmt.Errorf("ClientType must be publisher or subscriber")
+		return nil, fmt.Errorf("clientType must be publisher or subscriber")
 	}
 
 	elapsed := time.Since(start)
@@ -159,7 +159,7 @@ func (e Executor) publishMessages(workdir string, l venom.Logger) error {
 
 	// If an exchange if defined
 	routingKey := e.RoutingKey
-	if len(e.Exchange) > 0 {
+	if e.Exchange != "" {
 		err = ch.ExchangeDeclare(
 			e.Exchange,     // name
 			e.ExchangeType, // type
@@ -174,7 +174,7 @@ func (e Executor) publishMessages(workdir string, l venom.Logger) error {
 		}
 		l.Debugf("exchange declared '%s' '%s'", e.Exchange, e.ExchangeType)
 	} else {
-		if len(e.QName) == 0 {
+		if e.QName == "" {
 			return fmt.Errorf("QName is mandatory")
 		}
 		routingKey = e.QName
@@ -257,7 +257,7 @@ func (e Executor) consumeMessages(l venom.Logger) ([]string, []interface{}, []in
 	l.Debugf("Q declated '%s'", q.Name)
 
 	// If an exchange if defined
-	if len(e.Exchange) > 0 {
+	if e.Exchange != "" {
 		err = ch.ExchangeDeclare(
 			e.Exchange,     // name
 			e.ExchangeType, // type
