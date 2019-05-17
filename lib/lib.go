@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ovh/venom"
-	defaultctx "github.com/ovh/venom/context/default"
+	"github.com/ovh/venom/context/default"
 	redisctx "github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
 	"github.com/ovh/venom/executors/grpc"
@@ -225,3 +225,4 @@ func (p P) WithHeaders(headers http.Headers) P {
 	p["headers"] = headers
 	return p
 }
+
