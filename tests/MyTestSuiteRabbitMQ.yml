@@ -1,0 +1,40 @@
+name: TestSuite RabbitMQ
+vars:
+  addrs: 'amqp://localhost:5672'
+  user: 
+  password: 
+  qName: test
+  exchange: 
+  routingKey: 
+
+
+testcases:
+  - name: RabbitMQ publish testcase
+    steps:
+      - type: rabbitmq
+        addrs: "{{.addrs}}"
+        user: "{{.user}}"
+        password: "{{.password}}"
+        clientType: publisher
+        qName: "{{.qName}}"
+        durable: true
+        exchange: "{{.exchange}}"
+        routingKey: "{{.routingKey}}"
+        messageLimit: 1
+        messages: 
+          - value: '{"a": "b"}'
+  - name: RabbitMQ subscribe testcase
+    steps:
+      - type: rabbitmq
+        addrs: "{{.addrs}}"
+        user: "{{.user}}"
+        password: "{{.password}}"
+        clientType: subscriber
+        qName: "{{.qName}}"
+        durable: true
+        exchange: "{{.exchange}}"
+        routingKey: "{{.routingKey}}"
+        messageLimit: 1
+        assertions: 
+          - result.bodyjson.bodyjson0.a ShouldEqual b
+        

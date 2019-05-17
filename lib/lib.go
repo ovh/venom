@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/context/default"
+	defaultctx "github.com/ovh/venom/context/default"
 	redisctx "github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
 	"github.com/ovh/venom/executors/grpc"
