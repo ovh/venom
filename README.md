@@ -305,6 +305,7 @@ venom run --format=xml --output-dir="."
 * ShouldHappenWithin
 * ShouldNotHappenWithin
 * ShouldBeChronological
+* ShouldNotExist
 
 Most assertion keywords documentation can be found on [smartystreets/assertions README](https://github.com/smartystreets/assertions/blob/master/README.md#usage).
 
