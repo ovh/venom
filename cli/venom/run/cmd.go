@@ -16,8 +16,8 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/context/default"
-	"github.com/ovh/venom/context/redis"
+	defaultctx "github.com/ovh/venom/context/default"
+	redisctx "github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
 
 	"github.com/ovh/venom/executors/dbfixtures"
@@ -30,6 +30,7 @@ import (
 	"github.com/ovh/venom/executors/readfile"
 	"github.com/ovh/venom/executors/redis"
 	"github.com/ovh/venom/executors/smtp"
+	"github.com/ovh/venom/executors/sql"
 	"github.com/ovh/venom/executors/ssh"
 	"github.com/ovh/venom/executors/web"
 )
@@ -90,6 +91,7 @@ var Cmd = &cobra.Command{
 		v.RegisterExecutor(redis.Name, redis.New())
 		v.RegisterExecutor(kafka.Name, kafka.New())
 		v.RegisterExecutor(grpc.Name, grpc.New())
+		v.RegisterExecutor(sql.Name, sql.New())
 
 		// Register Context
 		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
