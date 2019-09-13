@@ -98,7 +98,8 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 			return fmt.Errorf("unsupported test suite file extension: %q", ext)
 		}
 		if err != nil {
-			return fmt.Errorf("Error while unmarshal file %s err: %v", f, err)
+			log.Info("Skipping invalid venom testsuite ", f)
+			continue
 		}
 
 		ts.ShortName = ts.Name

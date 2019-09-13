@@ -131,8 +131,8 @@ func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
 	wg := sync.WaitGroup{}
 	testsResult := &Tests{}
 
-	wg.Add(len(filesPath))
-	chanToRun := make(chan *TestSuite, len(filesPath)+1)
+	wg.Add(len(v.testsuites))
+	chanToRun := make(chan *TestSuite, len(v.testsuites)+1)
 
 	go v.computeStats(testsResult, chanEnd, &wg)
 	go func() {
