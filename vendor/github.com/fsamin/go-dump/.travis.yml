@@ -1,0 +1,13 @@
+language: go
+
+go:
+  - 1.8.x
+  - 1.9.x
+  - 1.10.x
+  - tip
+  - master
+
+script:
+  - go get -t
+  - go test
+  - go build

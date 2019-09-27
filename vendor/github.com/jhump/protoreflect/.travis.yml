@@ -1,0 +1,21 @@
+language: go
+sudo: false
+
+matrix:
+  include:
+    - go: "1.9"
+    - go: "1.10"
+      env: VET=1
+    - go: "1.11"
+      env: GO111MODULE=off
+    - go: "1.11"
+      env: GO111MODULE=on
+    - go: tip
+
+# accomodate forks
+before_install:
+  - mkdir -p $TRAVIS_BUILD_DIR $GOPATH/src/github.com/jhump
+  - test ! -d $GOPATH/src/github.com/jhump/protoreflect && mv $TRAVIS_BUILD_DIR $GOPATH/src/github.com/jhump/protoreflect || true
+
+script:
+  - if [[ "$VET" = 1 ]]; then make; else make deps test; fi

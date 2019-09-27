@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	"github.com/smartystreets/assertions"
 )
@@ -36,8 +38,8 @@ type assertionsApplied struct {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
-	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions)
+func applyChecks(executorResult *ExecutorResult, ts TestSuite, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+	res := applyAssertions(*executorResult, ts, tc, stepNumber, step, defaultAssertions)
 	if !res.ok {
 		return res
 	}
@@ -51,7 +53,7 @@ func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, st
 	return res
 }
 
-func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+func applyAssertions(executorResult ExecutorResult, ts TestSuite, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -73,7 +75,7 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, executorResult)
+		errs, fails := check(ts, tc, stepNumber, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -95,7 +97,28 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
-func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
+func getLastValidResultFromPath(path string, r ExecutorResult) (string, string) {
+	tokens := strings.Split(path, ".")
+
+	for i := len(tokens); i >= 0; i-- {
+		newPath := strings.Join(tokens[:i], ".")
+		if res, ok := r[newPath]; ok {
+			encodedData, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				return fmt.Sprintf("%+v", res), newPath
+			}
+			return string(encodedData), newPath
+		}
+	}
+
+	encodedData, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v", r), "."
+	}
+	return string(encodedData), "."
+}
+
+func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
 		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
@@ -106,7 +129,21 @@ func check(tc TestCase, stepNumber int, assertion string, executorResult Executo
 		if assert[1] == "ShouldNotExist" {
 			return nil, nil
 		}
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult))}, nil
+
+		data, path := getLastValidResultFromPath(assert[0], executorResult)
+		return &Failure{
+			Value: fmt.Sprintf(
+				color.YellowString(
+					"Failure in %q\nIn test case %q, at step %d\nCould not access %q in assertion %q.\nThis is what we have at %q:\n",
+					ts.Filename,
+					tc.Name,
+					stepNumber,
+					assert[0],
+					assertion,
+					path,
+				) + RemoveNotPrintableChar(data) + "\n",
+			),
+		}, nil
 	} else if assert[1] == "ShouldNotExist" {
 		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual))}, nil
 	}
