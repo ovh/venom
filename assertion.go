@@ -1,8 +1,10 @@
 package venom
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -119,13 +121,18 @@ func getLastValidResultFromPath(path string, r ExecutorResult) (string, string) 
 }
 
 func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
+	lineNumberSuffix := ""
+	if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+		lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+	}
+
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
 		return &Failure{
 			Value: fmt.Sprintf(
 				color.YellowString(
 					"Failure in %q\nIn test case %q, at step %d\nInvalid assertion %q length should be greater than 2\n",
-					ts.Filename,
+					ts.Filename+lineNumberSuffix,
 					tc.Name,
 					stepNumber,
 					RemoveNotPrintableChar(assertion),
@@ -145,7 +152,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			Value: fmt.Sprintf(
 				color.YellowString(
 					"Failure in %q\nIn test case %q, at step %d\nCould not access %q in assertion %q.\nThis is what we have at %q:\n",
-					ts.Filename,
+					ts.Filename+lineNumberSuffix,
 					tc.Name,
 					stepNumber,
 					RemoveNotPrintableChar(assert[0]),
@@ -164,7 +171,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			Value: fmt.Sprintf(
 				color.YellowString(
 					"Failure in %q\nIn test case %q, at step %d\nIn assertion %q, key %q should not exist.\nThis is what we have at %q:\n",
-					ts.Filename,
+					ts.Filename+lineNumberSuffix,
 					tc.Name,
 					stepNumber,
 					RemoveNotPrintableChar(assertion),
@@ -181,7 +188,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			Value: fmt.Sprintf(
 				color.YellowString(
 					"Failure in %q\nIn test case %q, at step %d\nMethod %q in assertion %q is not supported\n",
-					ts.Filename,
+					ts.Filename+lineNumberSuffix,
 					tc.Name,
 					stepNumber,
 					RemoveNotPrintableChar(assert[1]),
@@ -203,7 +210,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			prefix = fmt.Sprintf(
 				color.YellowString(
 					"Failure in %q\nIn test case %q, at step %d\nAssertion %q failed",
-					ts.Filename,
+					ts.Filename+lineNumberSuffix,
 					tc.Name,
 					stepNumber,
 					RemoveNotPrintableChar(assertion),
@@ -354,4 +361,45 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 		return time.ParseDuration(val)
 	}
 	return val, nil
+}
+
+func findLineNumber(filename, testcase string, stepNumber int, assertion string) (int, error) {
+	countLine := 0
+	file, err := os.Open(filename)
+	if err != nil {
+		return countLine, err
+	}
+	defer file.Close()
+
+	lineFound := false
+	testcaseFound := false
+	countStep := 1
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		countLine++
+		line := scanner.Text()
+		if !testcaseFound && strings.Contains(line, testcase) {
+			testcaseFound = true
+			continue
+		}
+		if countStep < stepNumber && strings.Contains(line, "type") {
+			countStep++
+			continue
+		}
+		if countStep == stepNumber && strings.Contains(line, assertion) {
+			lineFound = true
+			break
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return countLine, err
+	}
+
+	if !lineFound {
+		return 0, nil
+	}
+
+	return countLine, nil
 }
