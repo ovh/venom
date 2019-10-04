@@ -105,9 +105,9 @@ func getLastValidResultFromPath(path string, r ExecutorResult) (string, string) 
 		if res, ok := r[newPath]; ok {
 			encodedData, err := json.MarshalIndent(res, "", "  ")
 			if err != nil {
-				return fmt.Sprintf("%+v", res), newPath
+				return RemoveNotPrintableChar(fmt.Sprintf("%+v", res)), RemoveNotPrintableChar(newPath)
 			}
-			return string(encodedData), newPath
+			return RemoveNotPrintableChar(string(encodedData)), RemoveNotPrintableChar(newPath)
 		}
 	}
 
@@ -121,7 +121,17 @@ func getLastValidResultFromPath(path string, r ExecutorResult) (string, string) 
 func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
+		return &Failure{
+			Value: fmt.Sprintf(
+				color.YellowString(
+					"Failure in %q\nIn test case %q, at step %d\nInvalid assertion %q length should be greater than 2\n",
+					ts.Filename,
+					tc.Name,
+					stepNumber,
+					RemoveNotPrintableChar(assertion),
+				),
+			),
+		}, nil
 	}
 
 	actual, ok := executorResult[assert[0]]
@@ -138,19 +148,47 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 					ts.Filename,
 					tc.Name,
 					stepNumber,
-					assert[0],
-					assertion,
+					RemoveNotPrintableChar(assert[0]),
+					RemoveNotPrintableChar(assertion),
 					path,
-				) + RemoveNotPrintableChar(data) + "\n",
+				) + data + "\n",
 			),
 		}, nil
 	} else if assert[1] == "ShouldNotExist" {
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual))}, nil
+		paths := strings.Split(assert[0], ".")
+		if len(paths) > 0 {
+			paths = paths[:len(paths)-1]
+		}
+		data, path := getLastValidResultFromPath(strings.Join(paths, "."), executorResult)
+		return &Failure{
+			Value: fmt.Sprintf(
+				color.YellowString(
+					"Failure in %q\nIn test case %q, at step %d\nIn assertion %q, key %q should not exist.\nThis is what we have at %q:\n",
+					ts.Filename,
+					tc.Name,
+					stepNumber,
+					RemoveNotPrintableChar(assertion),
+					RemoveNotPrintableChar(assert[0]),
+					path,
+				) + data + "\n",
+			),
+		}, nil
 	}
 
 	f, ok := assertMap[assert[1]]
 	if !ok {
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("Method not found '%s'", assert[1]))}, nil
+		return &Failure{
+			Value: fmt.Sprintf(
+				color.YellowString(
+					"Failure in %q\nIn test case %q, at step %d\nMethod %q in assertion %q is not supported\n",
+					ts.Filename,
+					tc.Name,
+					stepNumber,
+					RemoveNotPrintableChar(assert[1]),
+					RemoveNotPrintableChar(assertion),
+				),
+			),
+		}, nil
 	}
 	args := make([]interface{}, len(assert[2:]))
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
@@ -162,12 +200,20 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 	if out != "" {
 		var prefix string
 		if stepNumber >= 0 {
-			prefix = fmt.Sprintf("testcase %s / step n°%d / assertion: %s", tc.Name, stepNumber, assertion)
+			prefix = fmt.Sprintf(
+				color.YellowString(
+					"Failure in %q\nIn test case %q, at step %d\nAssertion %q failed",
+					ts.Filename,
+					tc.Name,
+					stepNumber,
+					RemoveNotPrintableChar(assertion),
+				),
+			)
 		} else {
 			// venom used as lib
-			prefix = fmt.Sprintf("assertion: %s", assertion)
+			prefix = RemoveNotPrintableChar(fmt.Sprintf("assertion: %s", assertion))
 		}
-		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n"), Result: executorResult}
+		return nil, &Failure{Value: prefix + "\n" + RemoveNotPrintableChar(out) + "\n", Result: executorResult}
 	}
 	return nil, nil
 }
@@ -295,7 +341,7 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 	case uint32:
 		return strconv.ParseUint(val, 10, 32)
 	case uint64:
-		strconv.ParseUint(val, 10, 64)
+		return strconv.ParseUint(val, 10, 64)
 	case float32:
 		iVal, err := strconv.ParseFloat(val, 32)
 		return float32(iVal), err

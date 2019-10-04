@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	dump "github.com/fsamin/go-dump"
 	tap "github.com/mndrix/tap-go"
@@ -28,6 +29,8 @@ func slug(s string) string {
 func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 	var data []byte
 	var err error
+	v.outputResume(tests, elapsed)
+	cleanOutputColors(&tests)
 	switch v.OutputFormat {
 	case "json":
 		data, err = json.MarshalIndent(tests, "", "  ")
@@ -51,8 +54,6 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		}
 		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 	}
-
-	v.outputResume(tests, elapsed)
 
 	if v.OutputDir != "" {
 		v.PrintFunc("\n") // new line to display files written
@@ -174,4 +175,30 @@ func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
 		len(tests.TestSuites),
 		totalTestCases,
 	)
+}
+
+func cleanOutputColors(tests *Tests) {
+	testSuites := make([]TestSuite, 0, len(tests.TestSuites))
+	for _, testSuite := range tests.TestSuites {
+		testCases := make([]TestCase, 0, len(testSuite.TestCases))
+		for _, testCase := range testSuite.TestCases {
+			failures := make([]Failure, 0, len(testCase.Failures))
+			for _, failure := range testCase.Failures {
+				failure.Value = stripansi.Strip(failure.Value)
+				failures = append(failures, failure)
+			}
+			testCase.Failures = failures
+
+			errors := make([]Failure, 0, len(testCase.Errors))
+			for _, err := range testCase.Errors {
+				err.Value = stripansi.Strip(err.Value)
+				errors = append(errors, err)
+			}
+			testCase.Errors = errors
+			testCases = append(testCases, testCase)
+		}
+		testSuite.TestCases = testCases
+		testSuites = append(testSuites, testSuite)
+	}
+	tests.TestSuites = testSuites
 }

@@ -10,6 +10,14 @@
   version = "v1.18.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:66a87baf099221f7deecf7a3ee301e437d9d93ef3be0bc92645e71400c2e9d31"
+  name = "github.com/acarl005/stripansi"
+  packages = ["."]
+  pruneopts = ""
+  revision = "5a71ef0e047df0427e87a79f27009029921f1f9b"
+
+[[projects]]
   digest = "1:6da5545112f73dbad12895d25e39818c1c3e8040ebba488d4d3fe43bc8685eb6"
   name = "github.com/bsm/sarama-cluster"
   packages = ["."]
@@ -260,6 +268,38 @@
   packages = ["ovh"]
   pruneopts = ""
   revision = "498310cd1182ebfb928a6acb71b3ad93f56c2d4f"
+
+[[projects]]
+  digest = "1:2ce1e797a944c3608fbb98c2dce5f08e7b0ab2c2086c882a4200de8876ad65b6"
+  name = "github.com/ovh/venom"
+  packages = [
+    ".",
+    "cli",
+    "cli/venom/run",
+    "cli/venom/template",
+    "cli/venom/update",
+    "cli/venom/version",
+    "context/default",
+    "context/redis",
+    "context/webctx",
+    "executors",
+    "executors/dbfixtures",
+    "executors/exec",
+    "executors/grpc",
+    "executors/http",
+    "executors/imap",
+    "executors/kafka",
+    "executors/ovhapi",
+    "executors/readfile",
+    "executors/redis",
+    "executors/smtp",
+    "executors/ssh",
+    "executors/web",
+    "lib",
+  ]
+  pruneopts = ""
+  revision = "670c0b7a9352fadbd61fe59f66121965f586e645"
+  version = "v0.26.0"
 
 [[projects]]
   digest = "1:e0f6fd66d4a28cc7075afc924383d6437cc7c1cc248960dbecfd070c0957bccf"
@@ -543,6 +583,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Shopify/sarama",
+    "github.com/acarl005/stripansi",
     "github.com/bsm/sarama-cluster",
     "github.com/fatih/color",
     "github.com/fsamin/go-dump",
@@ -561,6 +602,29 @@
     "github.com/mitchellh/mapstructure",
     "github.com/mndrix/tap-go",
     "github.com/ovh/go-ovh/ovh",
+    "github.com/ovh/venom",
+    "github.com/ovh/venom/cli",
+    "github.com/ovh/venom/cli/venom/run",
+    "github.com/ovh/venom/cli/venom/template",
+    "github.com/ovh/venom/cli/venom/update",
+    "github.com/ovh/venom/cli/venom/version",
+    "github.com/ovh/venom/context/default",
+    "github.com/ovh/venom/context/redis",
+    "github.com/ovh/venom/context/webctx",
+    "github.com/ovh/venom/executors",
+    "github.com/ovh/venom/executors/dbfixtures",
+    "github.com/ovh/venom/executors/exec",
+    "github.com/ovh/venom/executors/grpc",
+    "github.com/ovh/venom/executors/http",
+    "github.com/ovh/venom/executors/imap",
+    "github.com/ovh/venom/executors/kafka",
+    "github.com/ovh/venom/executors/ovhapi",
+    "github.com/ovh/venom/executors/readfile",
+    "github.com/ovh/venom/executors/redis",
+    "github.com/ovh/venom/executors/smtp",
+    "github.com/ovh/venom/executors/ssh",
+    "github.com/ovh/venom/executors/web",
+    "github.com/ovh/venom/lib",
     "github.com/pkg/errors",
     "github.com/rubenv/sql-migrate",
     "github.com/sclevine/agouti",
