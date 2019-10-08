@@ -11,7 +11,7 @@ testcases:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
-    - result.bodyjson.apis.apis0.path ShouldEqual /services
+    - result.bodyjson.apis.apis0.path ShouldEqual /analytics
 
 - name: POST http testcase
   steps:
