@@ -65,9 +65,5 @@
   name = "github.com/pkg/errors"
 
 [[constraint]]
-  name = "gopkg.in/gorp.v1"
-  version = "1.7.1"
-
-[[constraint]]
   name = "github.com/fullstorydev/grpcurl"
   version = "1.2.1"
