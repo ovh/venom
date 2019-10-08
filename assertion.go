@@ -129,14 +129,12 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
 		return &Failure{
-			Value: fmt.Sprintf(
-				color.YellowString(
-					"Failure in %q\nIn test case %q, at step %d\nInvalid assertion %q length should be greater than 2\n",
-					ts.Filename+lineNumberSuffix,
-					tc.Name,
-					stepNumber,
-					RemoveNotPrintableChar(assertion),
-				),
+			Value: color.YellowString(
+				"Failure in %q\nIn test case %q, at step %d\nInvalid assertion %q length should be greater than 2\n",
+				ts.Filename+lineNumberSuffix,
+				tc.Name,
+				stepNumber,
+				RemoveNotPrintableChar(assertion),
 			),
 		}, nil
 	}
@@ -185,15 +183,13 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 	f, ok := assertMap[assert[1]]
 	if !ok {
 		return &Failure{
-			Value: fmt.Sprintf(
-				color.YellowString(
-					"Failure in %q\nIn test case %q, at step %d\nMethod %q in assertion %q is not supported\n",
-					ts.Filename+lineNumberSuffix,
-					tc.Name,
-					stepNumber,
-					RemoveNotPrintableChar(assert[1]),
-					RemoveNotPrintableChar(assertion),
-				),
+			Value: color.YellowString(
+				"Failure in %q\nIn test case %q, at step %d\nMethod %q in assertion %q is not supported\n",
+				ts.Filename+lineNumberSuffix,
+				tc.Name,
+				stepNumber,
+				RemoveNotPrintableChar(assert[1]),
+				RemoveNotPrintableChar(assertion),
 			),
 		}, nil
 	}
@@ -207,14 +203,12 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 	if out != "" {
 		var prefix string
 		if stepNumber >= 0 {
-			prefix = fmt.Sprintf(
-				color.YellowString(
-					"Failure in %q\nIn test case %q, at step %d\nAssertion %q failed",
-					ts.Filename+lineNumberSuffix,
-					tc.Name,
-					stepNumber,
-					RemoveNotPrintableChar(assertion),
-				),
+			prefix = color.YellowString(
+				"Failure in %q\nIn test case %q, at step %d\nAssertion %q failed",
+				ts.Filename+lineNumberSuffix,
+				tc.Name,
+				stepNumber,
+				RemoveNotPrintableChar(assertion),
 			)
 		} else {
 			// venom used as lib
