@@ -188,13 +188,6 @@ func cleanOutputColors(tests *Tests) {
 				failures = append(failures, failure)
 			}
 			testCase.Failures = failures
-
-			errors := make([]Failure, 0, len(testCase.Errors))
-			for _, err := range testCase.Errors {
-				err.Value = stripansi.Strip(err.Value)
-				errors = append(errors, err)
-			}
-			testCase.Errors = errors
 			testCases = append(testCases, testCase)
 		}
 		testSuite.TestCases = testCases
