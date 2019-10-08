@@ -11,6 +11,38 @@ const (
 	DetailsHigh = "high"
 )
 
+type H map[string]string
+
+func (h H) Clone() H {
+	var h2 = make(H, len(h))
+	h2.AddAll(h)
+	return h2
+}
+
+func (h *H) Add(k, v string) {
+	(*h)[k] = v
+}
+
+func (h *H) AddWithPrefix(p, k, v string) {
+	(*h)[p+"."+k] = v
+}
+
+func (h *H) AddAll(h2 H) {
+	for k, v := range h2 {
+		h.Add(k, v)
+	}
+}
+
+func (h H) Get(k string) string {
+	return (h)[k]
+}
+
+func (h *H) AddAllWithPrefix(p string, h2 H) {
+	for k, v := range h2 {
+		h.AddWithPrefix(p, k, v)
+	}
+}
+
 // Aliases contains list of aliases
 type Aliases map[string]string
 
@@ -163,4 +195,13 @@ type Logger interface {
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Fatalf(format string, args ...interface{})
+}
+
+type AssignStep struct {
+	Assignments map[string]Assignment `json:"vars" yaml:"vars" mapstructure:"vars"`
+}
+
+type Assignment struct {
+	From  string `json:"from" yaml:"from"`
+	Regex string `json:"regex" yaml:"regex"`
 }
