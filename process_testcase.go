@@ -60,6 +60,11 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 			for k := range dumpE {
 				extractedVars = append(extractedVars, tc.Name+"."+k)
+				if strings.HasSuffix(k, "__type__") && dumpE[k] == "Map" {
+					// go-dump doesnt dump the map name, here is a workaround
+					k = strings.TrimSuffix(k, "__type__")
+					extractedVars = append(extractedVars, tc.Name+"."+k)
+				}
 			}
 		}
 
@@ -70,7 +75,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 		for k, v := range dumpE {
 			if strings.HasPrefix(k, "vars.") {
-				extractedVars = append(extractedVars, tc.Name+"."+strings.Split(k[5:], ".")[0])
+				s := tc.Name + "." + strings.Split(k[5:], ".")[0]
+				extractedVars = append(extractedVars, s)
+
 				continue
 			}
 			if strings.HasPrefix(k, "extracts.") {
@@ -99,8 +106,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 
+				s := varRegEx.FindString(v)
+
 				for i := 0; i < len(extractedVars); i++ {
-					s := varRegEx.FindString(v)
 					prefix := "{{." + extractedVars[i]
 					if strings.HasPrefix(s, prefix) {
 						found = true
@@ -108,7 +116,6 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 				if !found {
-					s := varRegEx.FindString(v)
 					s = strings.Replace(s, "{{.", "", -1)
 					s = strings.Replace(s, "}}", "", -1)
 					vars = append(vars, s)
@@ -173,13 +180,18 @@ func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logge
 		return nil, false, nil
 	}
 
+	var tcVarsKeys []string
+	for k := range tcVars {
+		tcVarsKeys = append(tcVarsKeys, k)
+	}
+
 	for varname, assigment := range stepAssignment.Assignments {
 		l.Debugf("Processing %s assignment", varname)
 		varValue, has := tcVars[assigment.From]
 		if !has {
 			varValue, has = tcVars[tcName+"."+assigment.From]
 			if !has {
-				err := fmt.Errorf("%s reference not found in %v", assigment.From, tcVars)
+				err := fmt.Errorf("%s reference not found in %s", assigment.From, strings.Join(tcVarsKeys, "\n"))
 				l.Errorf("%v", err)
 				return nil, true, err
 			}
