@@ -101,12 +101,17 @@ func check(tc TestCase, stepNumber int, assertion string, executorResult Executo
 		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
 	}
 
+	var executorResultKeys []string
+	for k := range executorResult {
+		executorResultKeys = append(executorResultKeys, k)
+	}
+
 	actual, ok := executorResult[assert[0]]
 	if !ok {
 		if assert[1] == "ShouldNotExist" {
 			return nil, nil
 		}
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult))}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' does not exist in result of executor: %v", assert[0], executorResultKeys))}, nil
 	} else if assert[1] == "ShouldNotExist" {
 		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual))}, nil
 	}
