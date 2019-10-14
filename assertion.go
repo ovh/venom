@@ -122,12 +122,11 @@ func getLastValidResultFromPath(path string, r ExecutorResult) (string, string) 
 
 func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
 	lineNumberSuffix := ""
-	if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
-		lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
-	}
-
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
 		return &Failure{
 			Value: color.YellowString(
 				"Failure in %q\nIn test case %q, at step %d\nInvalid assertion %q length should be greater than 2\n",
@@ -144,7 +143,9 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 		if assert[1] == "ShouldNotExist" {
 			return nil, nil
 		}
-
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
 		data, path := getLastValidResultFromPath(assert[0], executorResult)
 		return &Failure{
 			Value: fmt.Sprintf(
@@ -160,6 +161,9 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			),
 		}, nil
 	} else if assert[1] == "ShouldNotExist" {
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
 		paths := strings.Split(assert[0], ".")
 		if len(paths) > 0 {
 			paths = paths[:len(paths)-1]
@@ -182,6 +186,9 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 
 	f, ok := assertMap[assert[1]]
 	if !ok {
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
 		return &Failure{
 			Value: color.YellowString(
 				"Failure in %q\nIn test case %q, at step %d\nMethod %q in assertion %q is not supported\n",
@@ -201,6 +208,9 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 	out := f(actual, args...)
 
 	if out != "" {
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
 		var prefix string
 		if stepNumber >= 0 {
 			prefix = color.YellowString(
@@ -214,7 +224,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			// venom used as lib
 			prefix = RemoveNotPrintableChar(fmt.Sprintf("assertion: %s", assertion))
 		}
-		return nil, &Failure{Value: prefix + "\n" + RemoveNotPrintableChar(out) + "\n", Result: executorResult}
+		return nil, &Failure{Value: prefix + "\n" + out + "\n", Result: executorResult}
 	}
 	return nil, nil
 }
@@ -367,21 +377,33 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 
 	lineFound := false
 	testcaseFound := false
-	countStep := 1
+	commentBlock := false
+	countStep := 0
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		countLine++
-		line := scanner.Text()
+		line := strings.Trim(scanner.Text(), " ")
+		if strings.HasPrefix(line, "/*") {
+			commentBlock = true
+			continue
+		}
+		if strings.HasPrefix(line, "*/") {
+			commentBlock = false
+			continue
+		}
+		if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") || commentBlock {
+			continue
+		}
 		if !testcaseFound && strings.Contains(line, testcase) {
 			testcaseFound = true
 			continue
 		}
-		if countStep < stepNumber && strings.Contains(line, "type") {
+		if testcaseFound && countStep <= stepNumber && strings.Contains(line, "type") {
 			countStep++
 			continue
 		}
-		if countStep == stepNumber && strings.Contains(line, assertion) {
+		if testcaseFound && countStep > stepNumber && strings.Contains(line, assertion) {
 			lineFound = true
 			break
 		}
