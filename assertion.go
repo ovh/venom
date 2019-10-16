@@ -1,13 +1,17 @@
 package venom
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	"github.com/smartystreets/assertions"
 )
@@ -36,8 +40,8 @@ type assertionsApplied struct {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
-	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions)
+func applyChecks(executorResult *ExecutorResult, ts TestSuite, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+	res := applyAssertions(*executorResult, ts, tc, stepNumber, step, defaultAssertions)
 	if !res.ok {
 		return res
 	}
@@ -51,7 +55,7 @@ func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, st
 	return res
 }
 
-func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+func applyAssertions(executorResult ExecutorResult, ts TestSuite, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -73,7 +77,7 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, executorResult)
+		errs, fails := check(ts, tc, stepNumber, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -95,10 +99,43 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
-func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
+func getLastValidResultFromPath(path string, r ExecutorResult) (string, string) {
+	tokens := strings.Split(path, ".")
+
+	for i := len(tokens); i >= 0; i-- {
+		newPath := strings.Join(tokens[:i], ".")
+		if res, ok := r[newPath]; ok {
+			encodedData, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				return RemoveNotPrintableChar(fmt.Sprintf("%+v", res)), RemoveNotPrintableChar(newPath)
+			}
+			return RemoveNotPrintableChar(string(encodedData)), RemoveNotPrintableChar(newPath)
+		}
+	}
+
+	encodedData, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v", r), "."
+	}
+	return string(encodedData), "."
+}
+
+func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
+	lineNumberSuffix := ""
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
+		return &Failure{
+			Value: color.YellowString(
+				"Failure in %q\nIn test case %q, at step %d\nInvalid assertion %q length should be greater than 2\n",
+				ts.Filename+lineNumberSuffix,
+				tc.Name,
+				stepNumber,
+				RemoveNotPrintableChar(assertion),
+			),
+		}, nil
 	}
 
 	var executorResultKeys []string
@@ -111,14 +148,64 @@ func check(tc TestCase, stepNumber int, assertion string, executorResult Executo
 		if assert[1] == "ShouldNotExist" {
 			return nil, nil
 		}
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' does not exist in result of executor: %v", assert[0], executorResultKeys))}, nil
+
+    if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
+		data, path := getLastValidResultFromPath(assert[0], executorResult)
+		return &Failure{
+			Value: fmt.Sprintf(
+				color.YellowString(
+					"Failure in %q\nIn test case %q, at step %d\nCould not access %q in assertion %q.\nThis is what we have at %q:\n",
+					ts.Filename+lineNumberSuffix,
+					tc.Name,
+					stepNumber,
+					RemoveNotPrintableChar(assert[0]),
+					RemoveNotPrintableChar(assertion),
+					path,
+				) + data + "\n",
+			),
+		}, nil
+
 	} else if assert[1] == "ShouldNotExist" {
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual))}, nil
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
+		paths := strings.Split(assert[0], ".")
+		if len(paths) > 0 {
+			paths = paths[:len(paths)-1]
+		}
+		data, path := getLastValidResultFromPath(strings.Join(paths, "."), executorResult)
+		return &Failure{
+			Value: fmt.Sprintf(
+				color.YellowString(
+					"Failure in %q\nIn test case %q, at step %d\nIn assertion %q, key %q should not exist.\nThis is what we have at %q:\n",
+					ts.Filename+lineNumberSuffix,
+					tc.Name,
+					stepNumber,
+					RemoveNotPrintableChar(assertion),
+					RemoveNotPrintableChar(assert[0]),
+					path,
+				) + data + "\n",
+			),
+		}, nil
 	}
 
 	f, ok := assertMap[assert[1]]
 	if !ok {
-		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("Method not found '%s'", assert[1]))}, nil
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
+		return &Failure{
+			Value: color.YellowString(
+				"Failure in %q\nIn test case %q, at step %d\nMethod %q in assertion %q is not supported\n",
+				ts.Filename+lineNumberSuffix,
+				tc.Name,
+				stepNumber,
+				RemoveNotPrintableChar(assert[1]),
+				RemoveNotPrintableChar(assertion),
+			),
+		}, nil
 	}
 	args := make([]interface{}, len(assert[2:]))
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
@@ -128,14 +215,23 @@ func check(tc TestCase, stepNumber int, assertion string, executorResult Executo
 	out := f(actual, args...)
 
 	if out != "" {
+		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
+		}
 		var prefix string
 		if stepNumber >= 0 {
-			prefix = fmt.Sprintf("testcase %s / step n°%d / assertion: %s", tc.Name, stepNumber, assertion)
+			prefix = color.YellowString(
+				"Failure in %q\nIn test case %q, at step %d\nAssertion %q failed",
+				ts.Filename+lineNumberSuffix,
+				tc.Name,
+				stepNumber,
+				RemoveNotPrintableChar(assertion),
+			)
 		} else {
 			// venom used as lib
-			prefix = fmt.Sprintf("assertion: %s", assertion)
+			prefix = RemoveNotPrintableChar(fmt.Sprintf("assertion: %s", assertion))
 		}
-		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n"), Result: executorResult}
+		return nil, &Failure{Value: prefix + "\n" + out + "\n", Result: executorResult}
 	}
 	return nil, nil
 }
@@ -263,7 +359,7 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 	case uint32:
 		return strconv.ParseUint(val, 10, 32)
 	case uint64:
-		strconv.ParseUint(val, 10, 64)
+		return strconv.ParseUint(val, 10, 64)
 	case float32:
 		iVal, err := strconv.ParseFloat(val, 32)
 		return float32(iVal), err
@@ -276,4 +372,57 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 		return time.ParseDuration(val)
 	}
 	return val, nil
+}
+
+func findLineNumber(filename, testcase string, stepNumber int, assertion string) (int, error) {
+	countLine := 0
+	file, err := os.Open(filename)
+	if err != nil {
+		return countLine, err
+	}
+	defer file.Close()
+
+	lineFound := false
+	testcaseFound := false
+	commentBlock := false
+	countStep := 0
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		countLine++
+		line := strings.Trim(scanner.Text(), " ")
+		if strings.HasPrefix(line, "/*") {
+			commentBlock = true
+			continue
+		}
+		if strings.HasPrefix(line, "*/") {
+			commentBlock = false
+			continue
+		}
+		if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") || commentBlock {
+			continue
+		}
+		if !testcaseFound && strings.Contains(line, testcase) {
+			testcaseFound = true
+			continue
+		}
+		if testcaseFound && countStep <= stepNumber && strings.Contains(line, "type") {
+			countStep++
+			continue
+		}
+		if testcaseFound && countStep > stepNumber && strings.Contains(line, assertion) {
+			lineFound = true
+			break
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return countLine, err
+	}
+
+	if !lineFound {
+		return 0, nil
+	}
+
+	return countLine, nil
 }
