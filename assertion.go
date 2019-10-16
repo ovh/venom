@@ -138,12 +138,18 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 		}, nil
 	}
 
+	var executorResultKeys []string
+	for k := range executorResult {
+		executorResultKeys = append(executorResultKeys, k)
+	}
+
 	actual, ok := executorResult[assert[0]]
 	if !ok {
 		if assert[1] == "ShouldNotExist" {
 			return nil, nil
 		}
-		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+
+    if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
 			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
 		}
 		data, path := getLastValidResultFromPath(assert[0], executorResult)
@@ -160,6 +166,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 				) + data + "\n",
 			),
 		}, nil
+
 	} else if assert[1] == "ShouldNotExist" {
 		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
 			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)

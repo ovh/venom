@@ -8,6 +8,7 @@ It can also output xUnit results files.
 ## Command Line
 
 Install with:
+
 ```bash
 $ go get github.com/ovh/venom
 $ go install github.com/ovh/venom/cli/venom
@@ -55,7 +56,6 @@ Flags:
 
 * Run `venom template`
 * Examples: https://github.com/ovh/cds/tree/master/tests
-
 
 
 ### Example:
@@ -130,7 +130,7 @@ testcases:
 
 ```
 
-Extract variable from results and reuse it in step after
+Extract variable on the fly from results and reuse it in step after
 
 ```yaml
 name: MyTestSuite
@@ -139,8 +139,10 @@ testcases:
   steps:
   - type: exec
     script: echo 'foo with a bar here'
-    extracts:
-      result.systemout: foo with a {{myvariable=[a-z]+}} here
+    vars:
+      myvariable:
+        from: result.systemout
+        regex: foo with a ([a-z]+) here
 
 - name: testB
   steps:

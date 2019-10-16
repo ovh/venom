@@ -1,10 +1,12 @@
 package venom
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/fsamin/go-dump"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -58,6 +60,11 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 			for k := range dumpE {
 				extractedVars = append(extractedVars, tc.Name+"."+k)
+				if strings.HasSuffix(k, "__type__") && dumpE[k] == "Map" {
+					// go-dump doesnt dump the map name, here is a workaround
+					k = strings.TrimSuffix(k, "__type__")
+					extractedVars = append(extractedVars, tc.Name+"."+k)
+				}
 			}
 		}
 
@@ -67,6 +74,12 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 		}
 
 		for k, v := range dumpE {
+			if strings.HasPrefix(k, "vars.") {
+				s := tc.Name + "." + strings.Split(k[5:], ".")[0]
+				extractedVars = append(extractedVars, s)
+
+				continue
+			}
 			if strings.HasPrefix(k, "extracts.") {
 				for _, extractVar := range extractPattern.FindAllString(v, -1) {
 					varname := extractVar[2:strings.Index(extractVar, "=")]
@@ -93,8 +106,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 
+				s := varRegEx.FindString(v)
+
 				for i := 0; i < len(extractedVars); i++ {
-					s := varRegEx.FindString(v)
 					prefix := "{{." + extractedVars[i]
 					if strings.HasPrefix(s, prefix) {
 						found = true
@@ -102,7 +116,6 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 				if !found {
-					s := varRegEx.FindString(v)
 					s = strings.Replace(s, "{{.", "", -1)
 					s = strings.Replace(s, "}}", "", -1)
 					vars = append(vars, s)
@@ -145,5 +158,62 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) {
 		if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
 			break
 		}
+
+		assign, _, err := ProcessVariableAssigments(tc.Name, ts.Templater.Values, stepIn, l)
+		if err != nil {
+			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
+			break
+		}
+
+		ts.Templater.Add(tc.Name, assign)
 	}
+}
+
+func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logger) (H, bool, error) {
+	var stepAssignment AssignStep
+	var result = make(H)
+	if err := mapstructure.Decode(stepIn, &stepAssignment); err != nil {
+		return nil, false, nil
+	}
+
+	if len(stepAssignment.Assignments) == 0 {
+		return nil, false, nil
+	}
+
+	var tcVarsKeys []string
+	for k := range tcVars {
+		tcVarsKeys = append(tcVarsKeys, k)
+	}
+
+	for varname, assigment := range stepAssignment.Assignments {
+		l.Debugf("Processing %s assignment", varname)
+		varValue, has := tcVars[assigment.From]
+		if !has {
+			varValue, has = tcVars[tcName+"."+assigment.From]
+			if !has {
+				err := fmt.Errorf("%s reference not found in %s", assigment.From, strings.Join(tcVarsKeys, "\n"))
+				l.Errorf("%v", err)
+				return nil, true, err
+			}
+		}
+		if assigment.Regex == "" {
+			l.Debugf("Assign '%s' value '%s'", varname, varValue)
+			result.Add(varname, varValue)
+		} else {
+			regex, err := regexp.Compile(assigment.Regex)
+			if err != nil {
+				l.Errorf("unable to compile regexp %s", assigment.Regex)
+				return nil, true, err
+			}
+			submatches := regex.FindStringSubmatch(varValue)
+			if len(submatches) == 0 {
+				l.Debugf("%s: '%v' doesn't match anything in '%s'", varname, regex, varValue)
+				result.Add(varname, "")
+				continue
+			}
+			l.Debugf("Assign '%s' from regexp '%v', values '%v'", varname, regex, submatches)
+			result.Add(varname, submatches[len(submatches)-1])
+		}
+	}
+	return result, true, nil
 }
