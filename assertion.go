@@ -40,8 +40,8 @@ type assertionsApplied struct {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, ts TestSuite, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
-	res := applyAssertions(*executorResult, ts, tc, stepNumber, step, defaultAssertions)
+func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions)
 	if !res.ok {
 		return res
 	}
@@ -55,7 +55,7 @@ func applyChecks(executorResult *ExecutorResult, ts TestSuite, tc TestCase, step
 	return res
 }
 
-func applyAssertions(executorResult ExecutorResult, ts TestSuite, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -77,7 +77,7 @@ func applyAssertions(executorResult ExecutorResult, ts TestSuite, tc TestCase, s
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(ts, tc, stepNumber, assertion, executorResult)
+		errs, fails := check(tc, stepNumber, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -120,17 +120,17 @@ func getLastValidResultFromPath(path string, r ExecutorResult) (string, string) 
 	return string(encodedData), "."
 }
 
-func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
+func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
 	lineNumberSuffix := ""
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
-		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+		if lineNumber, err := findLineNumber(tc.Classname, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
 			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
 		}
 		return &Failure{
 			Value: color.YellowString(
 				"Failure in %q\nIn test case %q, at step %d\nInvalid assertion %q length should be greater than 2\n",
-				ts.Filename+lineNumberSuffix,
+				tc.Classname+lineNumberSuffix,
 				tc.Name,
 				stepNumber,
 				RemoveNotPrintableChar(assertion),
@@ -149,7 +149,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			return nil, nil
 		}
 
-    if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+		if lineNumber, err := findLineNumber(tc.Classname, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
 			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
 		}
 		data, path := getLastValidResultFromPath(assert[0], executorResult)
@@ -157,7 +157,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			Value: fmt.Sprintf(
 				color.YellowString(
 					"Failure in %q\nIn test case %q, at step %d\nCould not access %q in assertion %q.\nThis is what we have at %q:\n",
-					ts.Filename+lineNumberSuffix,
+					tc.Classname+lineNumberSuffix,
 					tc.Name,
 					stepNumber,
 					RemoveNotPrintableChar(assert[0]),
@@ -168,7 +168,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 		}, nil
 
 	} else if assert[1] == "ShouldNotExist" {
-		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+		if lineNumber, err := findLineNumber(tc.Classname, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
 			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
 		}
 		paths := strings.Split(assert[0], ".")
@@ -180,7 +180,7 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 			Value: fmt.Sprintf(
 				color.YellowString(
 					"Failure in %q\nIn test case %q, at step %d\nIn assertion %q, key %q should not exist.\nThis is what we have at %q:\n",
-					ts.Filename+lineNumberSuffix,
+					tc.Classname+lineNumberSuffix,
 					tc.Name,
 					stepNumber,
 					RemoveNotPrintableChar(assertion),
@@ -193,13 +193,13 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 
 	f, ok := assertMap[assert[1]]
 	if !ok {
-		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+		if lineNumber, err := findLineNumber(tc.Classname, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
 			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
 		}
 		return &Failure{
 			Value: color.YellowString(
 				"Failure in %q\nIn test case %q, at step %d\nMethod %q in assertion %q is not supported\n",
-				ts.Filename+lineNumberSuffix,
+				tc.Classname+lineNumberSuffix,
 				tc.Name,
 				stepNumber,
 				RemoveNotPrintableChar(assert[1]),
@@ -215,14 +215,14 @@ func check(ts TestSuite, tc TestCase, stepNumber int, assertion string, executor
 	out := f(actual, args...)
 
 	if out != "" {
-		if lineNumber, err := findLineNumber(ts.Filename, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
+		if lineNumber, err := findLineNumber(tc.Classname, tc.Name, stepNumber, assertion); err == nil && lineNumber > 0 {
 			lineNumberSuffix = fmt.Sprintf(":%d", lineNumber)
 		}
 		var prefix string
 		if stepNumber >= 0 {
 			prefix = color.YellowString(
 				"Failure in %q\nIn test case %q, at step %d\nAssertion %q failed",
-				ts.Filename+lineNumberSuffix,
+				tc.Classname+lineNumberSuffix,
 				tc.Name,
 				stepNumber,
 				RemoveNotPrintableChar(assertion),

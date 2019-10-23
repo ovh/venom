@@ -82,6 +82,7 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 func (v *Venom) runTestCases(ts *TestSuite, l Logger) {
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
+		tc.Classname = ts.Filename
 		if len(tc.Skipped) == 0 {
 			v.runTestCase(ts, tc, l)
 		}
