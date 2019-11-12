@@ -175,6 +175,12 @@ Builtin variables:
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
 
+Venom templating
+
+Beside venom variables, it is possible to use templating functions:
+
+* expandEnv : {{expandEnv <filename>}}, rewrites the named faile and replaces ${var} or $var in the string according to the values of the current environment variables. References to undefined variables are replaced by the empty string. You can use it a script step for instance: `script: cat {{expandEnv ./myFile}}`. 
+
 ### Testsuite Versions
 
 #### Version 2
