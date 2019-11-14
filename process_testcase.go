@@ -108,6 +108,10 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 				s := varRegEx.FindString(v)
 
+				if strings.HasPrefix(s, "{{expandEnv ") {
+					continue
+				}
+
 				for i := 0; i < len(extractedVars); i++ {
 					prefix := "{{." + extractedVars[i]
 					if strings.HasPrefix(s, prefix) {

@@ -3,6 +3,9 @@ package venom
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -61,7 +64,7 @@ func (tmpl *Templater) ApplyOnStep(stepNumber int, step TestStep) (TestStep, err
 	return t, nil
 }
 
-//ApplyOnMap executes the template on a context
+// ApplyOnMap executes the template on a context
 // return true if there is an variable replaced
 func (tmpl *Templater) ApplyOnMap(mapStringInterface map[string]interface{}) (bool, map[string]interface{}, error) {
 	var t map[string]interface{}
@@ -88,13 +91,32 @@ func (tmpl *Templater) ApplyOnMap(mapStringInterface map[string]interface{}) (bo
 	return applied, t, nil
 }
 
+var expandEnvRegEx = regexp.MustCompile("{{expandEnv (.*)}}")
+
 func (tmpl *Templater) apply(in []byte) (bool, []byte) {
+	out := string(in)
+
+	if expandEnvRegEx.MatchString(out) {
+		capture := expandEnvRegEx.FindAllStringSubmatch(out, -1)[0]
+		if len(capture) > 0 {
+			filename := capture[1]
+			fileStat, _ := os.Stat(filename)
+			fileContent, _ := ioutil.ReadFile(filename)
+			if len(fileContent) != 0 {
+				newFileContent := os.ExpandEnv(string(fileContent))
+				err := ioutil.WriteFile(filename, []byte(newFileContent), fileStat.Mode().Perm())
+				if err == nil {
+					out = strings.Replace(out, capture[0], filename, -1)
+				}
+			}
+		}
+	}
+
 	tmpl.Add("", map[string]string{
 		"venom.datetime":  time.Now().Format(time.RFC3339),
 		"venom.timestamp": fmt.Sprintf("%d", time.Now().Unix()),
 	})
 	var applied bool
-	out := string(in)
 	for k, v := range tmpl.Values {
 		applied = true
 		var buffer bytes.Buffer
