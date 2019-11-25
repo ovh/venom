@@ -29,12 +29,13 @@ func New() venom.Executor {
 // Executor is a venom executor that can load
 // fixtures in many databases, using YAML schemas.
 type Executor struct {
-	Files      []string `json:"files" yaml:"files"`
-	Folder     string   `json:"folder" yaml:"folder"`
-	Database   string   `json:"database" yaml:"database"`
-	DSN        string   `json:"dsn" yaml:"dsn"`
-	Schemas    []string `json:"schemas" yaml:"schemas"`
-	Migrations string   `json:"migrations" yaml:"migrations"`
+	Files           []string `json:"files" yaml:"files"`
+	Folder          string   `json:"folder" yaml:"folder"`
+	Database        string   `json:"database" yaml:"database"`
+	DSN             string   `json:"dsn" yaml:"dsn"`
+	Schemas         []string `json:"schemas" yaml:"schemas"`
+	Migrations      string   `json:"migrations" yaml:"migrations"`
+	MigrationsTable string   `json:"migrationsTable" yaml:"migrationsTable"`
 }
 
 // Result represents a step result.
@@ -77,6 +78,9 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	} else if e.Migrations != "" {
 		l.Debugf("loading migrations from folder %s\n", e.Migrations)
 
+		if e.MigrationsTable != "" {
+			migrate.SetTable(e.MigrationsTable)
+		}
 		dir := path.Join(workdir, e.Migrations)
 		migrations := &migrate.FileMigrationSource{
 			Dir: dir,
