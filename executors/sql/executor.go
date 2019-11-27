@@ -29,7 +29,7 @@ func New() venom.Executor {
 // Executor is a venom executor can execute SQL queries
 type Executor struct {
 	File     string   `json:"file,omitempty" yaml:"file,omitempty"`
-	Commands []string `json:"commands,omitempy" yaml:"commands,omitempty"`
+	Commands []string `json:"commands,omitempty" yaml:"commands,omitempty"`
 	Driver   string   `json:"driver" yaml:"driver"`
 	DSN      string   `json:"dsn" yaml:"dsn"`
 }
