@@ -13,11 +13,11 @@ import (
 	"github.com/hashicorp/hcl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/context/default"
-	"github.com/ovh/venom/context/redis"
+	defaultctx "github.com/ovh/venom/context/default"
+	redisctx "github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
 
 	"github.com/ovh/venom/executors/dbfixtures"
@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/kafka"
 	"github.com/ovh/venom/executors/ovhapi"
+	"github.com/ovh/venom/executors/rabbitmq"
 	"github.com/ovh/venom/executors/readfile"
 	"github.com/ovh/venom/executors/redis"
 	"github.com/ovh/venom/executors/smtp"
@@ -90,6 +91,7 @@ var Cmd = &cobra.Command{
 		v.RegisterExecutor(redis.Name, redis.New())
 		v.RegisterExecutor(kafka.Name, kafka.New())
 		v.RegisterExecutor(grpc.Name, grpc.New())
+		v.RegisterExecutor(rabbitmq.Name, rabbitmq.New())
 
 		// Register Context
 		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
