@@ -49,7 +49,16 @@ testcases:
     method: GetAllFoos
     assertions:
     - result.code ShouldEqual 0
-    - result.bodyjson.foo ShouldEqual bar
+    - result.systemoutjson.foo ShouldEqual bar
+  - type: grpc
+    url: serverUrlWithoutHttp:8090
+    plaintext: true # skip TLS
+    stream: foo.json
+    service: coolService.api
+    method: StreamAllFoos
+    assertions:
+    - result.code ShouldEqual 0
+    - result.err ShouldBeEmpty
 
 ```
 
@@ -58,7 +67,9 @@ testcases:
 ```yaml
 executor
 systemout
+systemoutjson
 systemerr
+systemerrjson
 err
 code
 timeseconds
@@ -71,3 +82,27 @@ timehuman
 - result.systemout: Standard Output of executed script
 - result.systemerr: Error Output of executed script
 - result.code: Exit Code
+
+## Streaming
+
+Stream JSON file must be an a array of chunks. For instance, if your proto message is:
+
+```
+message BodyChunk {
+  bytes Foo = 1;
+}
+```
+
+then, you json file must be:
+
+```json
+[
+  {
+    "Foo": "first part of stream"
+  },
+  {
+    "Foo": "second part of stream"
+  }
+]
+```
+

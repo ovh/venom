@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"strconv"
 	"time"
 
@@ -31,11 +33,21 @@ func New() venom.Executor {
 	return &Executor{}
 }
 
+type chunk map[string]interface{}
+
+type chunkSender struct {
+	data          io.Reader
+	requestData   grpcurl.RequestSupplier
+	requestParser grpcurl.RequestParser
+	formatter     grpcurl.Formatter
+}
+
 // Executor represents a Test Exec
 type Executor struct {
 	Url                  string                 `json:"url" yaml:"url"`
 	Service              string                 `json:"service" yaml:"service"`
 	Method               string                 `json:"method" yaml:"method"`
+	Stream               string                 `json:"stream,omitempty" yaml:"stream,omitempty"`
 	Plaintext            bool                   `json:"plaintext,omitempty" yaml:"plaintext,omitempty"`
 	JsonDefaultFields    bool                   `json:"default_fields" yaml:"default_fields"`
 	IncludeTextSeparator bool                   `json:"include_text_separator" yaml:"include_text_separator"`
@@ -84,6 +96,7 @@ func (c *customHandler) OnReceiveResponse(msg proto.Message) {
 
 // OnReceiveTrailers is called when response trailers and final RPC status have been received.
 func (c *customHandler) OnReceiveTrailers(stat *status.Status, met metadata.MD) {
+
 	if err := stat.Err(); err != nil {
 		c.target.Systemerr = err.Error()
 	}
@@ -113,12 +126,6 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	headers := make([]string, len(e.Headers))
 	for k, v := range e.Headers {
 		headers = append(headers, fmt.Sprintf("%s: %s", k, v))
-	}
-
-	// prepare data
-	data, err := json.Marshal(e.Data)
-	if err != nil {
-		return nil, fmt.Errorf("runGrpcurl: Cannot marshal request data: %s\n", err)
 	}
 
 	result := Result{Executor: e}
@@ -168,49 +175,194 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		cc = dial()
 	}
 
-	// prepare request and send
-	in := bytes.NewReader(data)
-	rf, formatter, err := grpcurl.RequestParserAndFormatterFor(
-		grpcurl.FormatJSON,
-		descSource,
-		e.JsonDefaultFields,
-		e.IncludeTextSeparator,
-		in,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("dailed to construct request parser and formatter %s", err)
+	var in io.Reader
+
+	if e.Stream == "" {
+		// prepare data
+		data, err := json.Marshal(e.Data)
+		if err != nil {
+			return nil, fmt.Errorf("runGrpcurl: Cannot marshal request data: %s\n", err)
+		}
+
+		// prepare request and send
+		in = bytes.NewReader(data)
+
+		rf, formatter, err := grpcurl.RequestParserAndFormatterFor(
+			grpcurl.FormatJSON,
+			descSource,
+			e.JsonDefaultFields,
+			e.IncludeTextSeparator,
+			in,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to construct request parser and formatter %s", err)
+		}
+
+		handle, err := sendData(
+			ctx,
+			descSource,
+			formatter,
+			&result,
+			cc,
+			e.Service+"/"+e.Method,
+			headers,
+			rf.Next,
+			start,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error invoking method %s", err)
+		}
+
+		if handle.err != nil {
+			result.Err = handle.err.Error()
+		}
+
+		result.SystemoutJSON, result.SystemerrJSON = parseOut(result)
+
+		return executors.Dump(result)
+
+	} else {
+
+		// Opening json file
+		// If proto message type is:
+		//     message BodyChunk {
+		//         bytes Foo = 1;
+		//     }
+		// the JSON file must be:
+		// [
+		//   {
+		//     "Foo": "Chunk 1"
+		//   },
+		//   {
+		//     "Foo": "Chunk 2"
+		//   },
+		// ]
+
+		dat, err := ioutil.ReadFile(e.Stream)
+		if err != nil {
+			return nil, fmt.Errorf("runGrpcurl: file %s could not be open %s", e.Stream, err)
+		}
+
+		chunks := []chunk{}
+		err = json.Unmarshal(dat, &chunks)
+		if err != nil {
+			return nil, fmt.Errorf("runGrpcurl: file content could not be read %s", err)
+		}
+
+		senders := make([]chunkSender, len(chunks)+1)
+
+		for i, chunk := range chunks {
+			data, err := json.Marshal(chunk)
+			if err != nil {
+				return nil, fmt.Errorf("runGrpcurl: Cannot marshal chunk #%d: %s", i, err)
+			}
+
+			in := bytes.NewReader(data)
+
+			// prepare request and send
+			senders[i] = chunkSender{
+				data: in,
+				// requestData: ,
+			}
+
+			rf, formatter, err := grpcurl.RequestParserAndFormatterFor(
+				grpcurl.FormatJSON,
+				descSource,
+				e.JsonDefaultFields,
+				e.IncludeTextSeparator,
+				in,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to construct request parser and formatter %s", err)
+			}
+
+			senders[i] = chunkSender{
+				data:          in,
+				requestData:   rf.Next,
+				requestParser: rf,
+				formatter:     formatter,
+			}
+
+		}
+
+		senders[len(chunks)] = chunkSender{
+			data:          bytes.NewReader([]byte{}),
+			requestData:   func(proto.Message) error { return io.EOF },
+			requestParser: nil,
+			formatter:     func(proto.Message) (string, error) { return "", nil },
+		}
+
+		for i, sender := range senders {
+			handle, err := sendData(
+				ctx,
+				descSource,
+				sender.formatter,
+				&result,
+				cc,
+				e.Service+"/"+e.Method,
+				headers,
+				sender.requestData,
+				start,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("#%d error invoking method %s", i, err)
+			}
+
+			if handle.err != nil {
+				result.Err = handle.err.Error()
+			}
+
+			//result.SystemoutJSON, result.SystemoutJSON = parseOut(result)
+		}
+
+		result.SystemoutJSON, result.SystemerrJSON = parseOut(result)
+
 	}
 
+	return executors.Dump(result)
+}
+
+func sendData(
+	ctx context.Context,
+	descSource grpcurl.DescriptorSource,
+	formatter grpcurl.Formatter,
+	result *Result,
+	cc *grpc.ClientConn,
+	methodName string,
+	headers []string,
+	requestData grpcurl.RequestSupplier,
+	start time.Time,
+) (customHandler, error) {
 	// prepare custom handler to handle response
 	handle := customHandler{
 		formatter,
-		&result,
+		result,
 		nil,
 	}
 
 	// invoke the gRPC
-	err = grpcurl.InvokeRPC(ctx, descSource, cc, e.Service+"/"+e.Method, append(headers), &handle, rf.Next)
-	if err != nil {
-		return nil, fmt.Errorf("error invoking method %s", err)
-	}
+	err := grpcurl.InvokeRPC(ctx, descSource, cc, methodName, append(headers), &handle, requestData)
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = elapsed.String()
 
-	if handle.err != nil {
-		result.Err = handle.err.Error()
-	}
+	return handle, err
+}
+
+func parseOut(result Result) (interface{}, interface{}) {
+	var outJSON interface{}
+	var errJSON interface{}
 
 	// parse stdout as JSON
 	var outJSONArray []interface{}
 	if err := json.Unmarshal([]byte(result.Systemout), &outJSONArray); err != nil {
 		outJSONMap := map[string]interface{}{}
 		if err2 := json.Unmarshal([]byte(result.Systemout), &outJSONMap); err2 == nil {
-			result.SystemoutJSON = outJSONMap
+			outJSON = outJSONMap
 		}
 	} else {
-		result.SystemoutJSON = outJSONArray
+		outJSON = outJSONArray
 	}
 
 	// parse stderr output as JSON
@@ -218,11 +370,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	if err := json.Unmarshal([]byte(result.Systemout), &errJSONArray); err != nil {
 		errJSONMap := map[string]interface{}{}
 		if err2 := json.Unmarshal([]byte(result.Systemout), &errJSONMap); err2 == nil {
-			result.SystemoutJSON = errJSONMap
+			errJSON = errJSONMap
 		}
 	} else {
-		result.SystemoutJSON = errJSONArray
+		errJSON = errJSONArray
 	}
 
-	return executors.Dump(result)
+	return outJSON, errJSON
 }
