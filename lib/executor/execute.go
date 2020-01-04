@@ -41,7 +41,10 @@ func getExecutorFunc(c Common) func(vals cmd.Values) *cmd.Error {
 			return cmd.NewError(502, "executor error: %v", err)
 		}
 		encoder := yaml.NewEncoder(os.Stdout)
-		encoder.Encode(res)
+		if err := encoder.Encode(res); err != nil {
+			Errorf("Error: %v", err)
+			return cmd.NewError(502, "executor encode error: %v", err)
+		}
 		return nil
 	}
 }

@@ -31,9 +31,6 @@ func (c *Container) Display(ctx context.Context) {
 	c.screenWidth = width
 	c.startingLine = line
 
-	if c == nil {
-		return
-	}
 	refresh := time.NewTicker(100 * time.Millisecond)
 	for {
 		select {

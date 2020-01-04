@@ -247,7 +247,7 @@ func ExitOnError(err error, helpFunc ...func() error) {
 	}
 
 	for _, f := range helpFunc {
-		f()
+		f() //nolint:errcheck
 	}
 
 	OSExit(code)

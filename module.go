@@ -165,11 +165,9 @@ loop:
 	return mod, err
 }
 
-func getModuleManifest(moduleEntryPointPath string) (manifest VenomModuleManifest, err error) {
+func getModuleManifest(moduleEntryPointPath string) (VenomModuleManifest, error) {
+	var manifest VenomModuleManifest
 	cmd := exec.CommandContext(context.Background(), moduleEntryPointPath, "info") // nolint
-	if err != nil {
-		return manifest, err
-	}
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

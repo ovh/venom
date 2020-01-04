@@ -49,13 +49,15 @@ func (e executorModule) New(ctx context.Context, v *Venom, l Logger) (Executor, 
 		return nil, err
 	}
 	go func(s *syslog.Server) {
-		s.Boot()
+		if err := s.Boot(); err != nil {
+			l.Errorf("Error on starting syslog server: %s", err)
+		}
 		s.Wait()
 	}(starter.logServer)
 
 	go func(s *syslog.Server) {
 		<-ctx.Done()
-		s.Kill()
+		s.Kill() //nolint
 	}(starter.logServer)
 
 	return &starter, nil
