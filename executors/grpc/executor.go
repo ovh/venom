@@ -1,4 +1,4 @@
-package grpc
+package main
 
 import (
 	"bytes"
@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/executors"
 )
 
 // Name for test exec
@@ -33,11 +32,11 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Url                  string                 `json:"url" yaml:"url"`
+	URL                  string                 `json:"url" yaml:"url"`
 	Service              string                 `json:"service" yaml:"service"`
 	Method               string                 `json:"method" yaml:"method"`
 	Plaintext            bool                   `json:"plaintext,omitempty" yaml:"plaintext,omitempty"`
-	JsonDefaultFields    bool                   `json:"default_fields" yaml:"default_fields"`
+	JSONDefaultFields    bool                   `json:"default_fields" yaml:"default_fields"`
 	IncludeTextSeparator bool                   `json:"include_text_separator" yaml:"include_text_separator"`
 	Data                 map[string]interface{} `json:"data" yaml:"data"`
 	Headers              map[string]string      `json:"headers" yaml:"headers"`
@@ -61,6 +60,25 @@ type customHandler struct {
 	formatter grpcurl.Formatter
 	target    *Result
 	err       error
+}
+
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := venom.Dump(Result{})
+	return r
+}
+
+// GetDefaultAssertions return default assertions for type exec
+func (Executor) GetDefaultAssertions() *venom.StepAssertions {
+	return &venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
+}
+
+func (e Executor) Manifest() venom.VenomModuleManifest {
+	return venom.VenomModuleManifest{
+		Name:    "grpc",
+		Type:    "executor",
+		Version: venom.Version,
+	}
 }
 
 // OnResolveMethod is called with a descriptor of the method that is being invoked.
@@ -90,19 +108,8 @@ func (c *customHandler) OnReceiveTrailers(stat *status.Status, met metadata.MD) 
 	c.target.Code = strconv.Itoa(int(uint32(stat.Code())))
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
-func (Executor) ZeroValueResult() venom.ExecutorResult {
-	r, _ := executors.Dump(Result{})
-	return r
-}
-
-// GetDefaultAssertions return default assertions for type exec
-func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return &venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
-}
-
 // Run execute TestStep of type exec
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorResult, error) {
 	// decode test
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -118,13 +125,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	// prepare data
 	data, err := json.Marshal(e.Data)
 	if err != nil {
-		return nil, fmt.Errorf("runGrpcurl: Cannot marshal request data: %s\n", err)
+		return nil, fmt.Errorf("cannot marshal request data: %s\n", err)
 	}
 
 	result := Result{Executor: e}
 	start := time.Now()
-
-	ctx := context.Background()
 
 	// prepare dial function
 	dial := func() *grpc.ClientConn {
@@ -135,7 +140,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		ctx, cancel := context.WithTimeout(ctx, dialTime)
 		defer cancel()
 		var creds credentials.TransportCredentials
-		cc, err := grpcurl.BlockingDial(ctx, "tcp", e.Url, creds)
+		cc, err := grpcurl.BlockingDial(ctx, "tcp", e.URL, creds)
 		if err != nil {
 			return nil
 		}
@@ -173,7 +178,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	rf, formatter, err := grpcurl.RequestParserAndFormatterFor(
 		grpcurl.FormatJSON,
 		descSource,
-		e.JsonDefaultFields,
+		e.JSONDefaultFields,
 		e.IncludeTextSeparator,
 		in,
 	)
@@ -224,5 +229,5 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		result.SystemoutJSON = errJSONArray
 	}
 
-	return executors.Dump(result)
+	return venom.Dump(result)
 }
