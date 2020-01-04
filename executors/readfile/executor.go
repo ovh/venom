@@ -38,7 +38,12 @@ type Result struct {
 
 // ZeroValueResult return an empty implemtation of this executor result
 func (Executor) ZeroValueResult() venom.ExecutorResult {
-	r, _ := venom.Dump(Result{})
+	r, _ := venom.Dump(Result{
+		Md5sum:  make(map[string]string),
+		Size:    make(map[string]int64),
+		ModTime: make(map[string]int64),
+		Mod:     make(map[string]string),
+	})
 	return r
 }
 
