@@ -33,7 +33,7 @@ var (
 
 	runCmd = cmd.Cmd{
 		Name: "run",
-		Desc: "Run your test integrations",
+		Desc: "Run your integration tests",
 		Flags: []cmd.Flag{
 			{
 				Name:  "profiling",

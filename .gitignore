@@ -8,3 +8,4 @@ dist/
 coverage.*
 *.dump
 test_results.xml
+cmd/venom/venom

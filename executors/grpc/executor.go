@@ -125,7 +125,7 @@ func (Executor) Run(ctx venom.TestContext, step venom.TestStep) (venom.ExecutorR
 	// prepare data
 	data, err := json.Marshal(e.Data)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal request data: %s\n", err)
+		return nil, fmt.Errorf("cannot marshal request data: %s", err)
 	}
 
 	result := Result{Executor: e}
