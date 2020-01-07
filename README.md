@@ -7,12 +7,8 @@ It can also output xUnit results files.
 
 ## Command Line
 
-Install with:
+Download latest release from https://github.com/ovh/venom/releases
 
-```bash
-$ go get github.com/ovh/venom
-$ go install github.com/ovh/venom/cli/venom
-```
 
 ```bash
 $ venom run -h
