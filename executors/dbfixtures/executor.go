@@ -30,13 +30,14 @@ func New() venom.Executor {
 // Executor is a venom executor that can load
 // fixtures in many databases, using YAML schemas.
 type Executor struct {
-	Files           []string `json:"files" yaml:"files"`
-	Folder          string   `json:"folder" yaml:"folder"`
-	Database        string   `json:"database" yaml:"database"`
-	DSN             string   `json:"dsn" yaml:"dsn"`
-	Schemas         []string `json:"schemas" yaml:"schemas"`
-	Migrations      string   `json:"migrations" yaml:"migrations"`
-	MigrationsTable string   `json:"migrationsTable" yaml:"migrationsTable"`
+	Files              []string `json:"files" yaml:"files"`
+	Folder             string   `json:"folder" yaml:"folder"`
+	Database           string   `json:"database" yaml:"database"`
+	DSN                string   `json:"dsn" yaml:"dsn"`
+	Schemas            []string `json:"schemas" yaml:"schemas"`
+	Migrations         string   `json:"migrations" yaml:"migrations"`
+	MigrationsTable    string   `json:"migrationsTable" yaml:"migrationsTable"`
+	SkipResetSequences bool     `json:"skipResetSequences" yaml:"skipResetSequences"`
 }
 
 // Result represents a step result.
@@ -95,7 +96,7 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	}
 
 	// Load fixtures in the databases.
-	if err = loadFixtures(db, e.Files, e.Folder, getDialect(e.Database), l, workdir); err != nil {
+	if err = loadFixtures(db, e.Files, e.Folder, getDialect(e.Database, e.SkipResetSequences), l, workdir); err != nil {
 		return nil, err
 	}
 	r := Result{Executor: e}
@@ -162,10 +163,20 @@ func loadFixtures(db *sql.DB, files []string, folder string, dialect func(*fixtu
 	return nil
 }
 
-func getDialect(name string) func(*fixtures.Loader) error {
+func getDialect(name string, skipResetSequences bool) func(*fixtures.Loader) error {
 	switch name {
 	case "postgres":
-		return fixtures.Dialect("postgresql")
+		return func(l *fixtures.Loader) error {
+			if err := fixtures.Dialect("postgresql")(l); err != nil {
+				return err
+			}
+			if skipResetSequences {
+				if err := fixtures.SkipResetSequences()(l); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
 	case "mysql":
 		return fixtures.Dialect("mysql")
 	}

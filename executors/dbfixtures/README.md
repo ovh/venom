@@ -14,6 +14,7 @@ In your yaml file, you declare tour step like this
   - schemas optional
   - migrations optional
   - migrationsTable optional
+  - skipResetSequences optional
   - files optional
   - folder optional
  ```
@@ -22,6 +23,7 @@ In your yaml file, you declare tour step like this
 - `files` parameter is only used as a fallback if `folder` is not used.
 - `migrations` is a folder path that contains SQL migrations files that can be used to initialize the database, instead of a list of schemas. **Note that if `schemas` is not empty, it will have precedence and migrations files will be ignored.**
 - `migrationsTable` is the table used to store the migration version.
+- `skipResetSequences` is only used for PostgreSQL database, it control whether index should be reset (default) or not
 
 Example usage (_mysql_):
 ```yaml
