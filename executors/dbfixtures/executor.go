@@ -6,9 +6,10 @@ import (
 	"io/ioutil"
 	"path"
 
+	fixtures "github.com/go-testfixtures/testfixtures/v3"
 	"github.com/mitchellh/mapstructure"
 	migrate "github.com/rubenv/sql-migrate"
-	fixtures "gopkg.in/testfixtures.v2"
+
 	// SQL drivers.
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -81,6 +82,7 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 		if e.MigrationsTable != "" {
 			migrate.SetTable(e.MigrationsTable)
 		}
+
 		dir := path.Join(workdir, e.Migrations)
 		migrations := &migrate.FileMigrationSource{
 			Dir: dir,
@@ -91,11 +93,9 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 		}
 		l.Debugf("applied %d migrations\n", n)
 	}
+
 	// Load fixtures in the databases.
-	// Bu default the package refuse to load if the database
-	// does not contains test to avoid wiping a production db.
-	fixtures.SkipDatabaseNameCheck(true)
-	if err = loadFixtures(db, e.Files, e.Folder, databaseHelper(e.Database), l, workdir); err != nil {
+	if err = loadFixtures(db, e.Files, e.Folder, getDialect(e.Database), l, workdir); err != nil {
 		return nil, err
 	}
 	r := Result{Executor: e}
@@ -117,15 +117,21 @@ func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 // loadFixtures loads the fixtures in the database.
 // It gives priority to the fixtures files found in folder,
 // and switch to the list of files if no folder was specified.
-func loadFixtures(db *sql.DB, files []string, folder string, helper fixtures.Helper, l venom.Logger, workdir string) error {
+func loadFixtures(db *sql.DB, files []string, folder string, dialect func(*fixtures.Loader) error, l venom.Logger, workdir string) error {
 	if folder != "" {
 		l.Debugf("loading fixtures from folder %s\n", path.Join(workdir, folder))
+		loader, err := fixtures.New(
+			// By default the package refuse to load if the database
+			// does not contains "test" to avoid wiping a production db.
+			fixtures.DangerousSkipTestDatabaseCheck(),
+			fixtures.Database(db),
+			fixtures.Directory(path.Join(workdir, folder)),
+			dialect)
 
-		c, err := fixtures.NewFolder(db, helper, path.Join(workdir, folder))
 		if err != nil {
-			return fmt.Errorf("failed to create folder context: %v", err)
+			return fmt.Errorf("failed to create folder loader: %v", err)
 		}
-		if err = c.Load(); err != nil {
+		if err = loader.Load(); err != nil {
 			return fmt.Errorf("failed to load fixtures from folder %s: %v", path.Join(workdir, folder), err)
 		}
 		return nil
@@ -135,11 +141,18 @@ func loadFixtures(db *sql.DB, files []string, folder string, helper fixtures.Hel
 		for i := range files {
 			files[i] = path.Join(workdir, files[i])
 		}
-		c, err := fixtures.NewFiles(db, helper, files...)
+		loader, err := fixtures.New(
+			// By default the package refuse to load if the database
+			// does not contains "test" to avoid wiping a production db.
+			fixtures.DangerousSkipTestDatabaseCheck(),
+			fixtures.Database(db),
+			fixtures.Files(files...),
+			dialect)
+
 		if err != nil {
-			return fmt.Errorf("failed to create files context: %v", err)
+			return fmt.Errorf("failed to create files loader: %v", err)
 		}
-		if err = c.Load(); err != nil {
+		if err = loader.Load(); err != nil {
 			return fmt.Errorf("failed to load fixtures from files: %v", err)
 		}
 		return nil
@@ -149,12 +162,12 @@ func loadFixtures(db *sql.DB, files []string, folder string, helper fixtures.Hel
 	return nil
 }
 
-func databaseHelper(name string) fixtures.Helper {
+func getDialect(name string) func(*fixtures.Loader) error {
 	switch name {
 	case "postgres":
-		return &fixtures.PostgreSQL{}
+		return fixtures.Dialect("postgresql")
 	case "mysql":
-		return &fixtures.MySQL{}
+		return fixtures.Dialect("mysql")
 	}
 	return nil
 }

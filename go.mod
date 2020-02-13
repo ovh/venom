@@ -7,7 +7,6 @@ require (
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
-	github.com/denisenkom/go-mssqldb v0.0.0-20191001013358-cfbb681360f0 // indirect
 	github.com/eapache/go-resiliency v1.1.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
@@ -16,7 +15,8 @@ require (
 	github.com/fsamin/go-dump v1.0.8
 	github.com/fullstorydev/grpcurl v1.4.0
 	github.com/garyburd/redigo v1.6.0
-	github.com/go-sql-driver/mysql v1.3.1-0.20180308100310-1a676ac6e4dc
+	github.com/go-sql-driver/mysql v1.4.1
+	github.com/go-testfixtures/testfixtures/v3 v3.1.1
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/golang/protobuf v1.3.1
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
@@ -25,12 +25,12 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/jhump/protoreflect v1.5.0
-	github.com/lib/pq v0.0.0-20180327071824-d34b9ff171c2
+	github.com/jmoiron/sqlx v1.2.0
+	github.com/lib/pq v1.3.0
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mattn/go-oci8 v0.0.0-20191007070605-96a3284b269c // indirect
 	github.com/mattn/go-shellwords v1.0.3
-	github.com/mattn/go-sqlite3 v1.11.0 // indirect
 	github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
@@ -48,6 +48,7 @@ require (
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0 // indirect
+	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
 	github.com/stretchr/testify v1.3.0
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b
 	github.com/ziutek/mymysql v1.5.4 // indirect
@@ -57,5 +58,5 @@ require (
 	gopkg.in/gorp.v1 v1.7.1 // indirect
 	gopkg.in/ini.v1 v1.34.0 // indirect
 	gopkg.in/testfixtures.v2 v2.4.3
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.2.7
 )

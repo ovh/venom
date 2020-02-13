@@ -2,7 +2,7 @@
 
 Step to load fixtures into **MySQL** and **PostgreSQL** databases.
 
-It use the package `testfixtures.v2` under the hood: https://github.com/go-testfixtures/testfixtures
+It use the package `testfixtures/v3` under the hood: https://github.com/go-testfixtures/testfixtures
 Please read its documentation for further details about the parameters of this executor, especially `folder` and `files`, and how you should write the fixtures.
 
 ## Input
