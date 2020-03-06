@@ -16,7 +16,7 @@ const Name = "web"
 const (
 	Width   = "width"
 	Height  = "height"
-	Driver  = "driver"
+	Driver  = "driver" // Possible values: chrome, phantomjs, gecko
 	Args    = "args"
 	Timeout = "timeout"
 	Debug   = "debug"
@@ -64,6 +64,8 @@ func (tcc *WebTestCaseContext) Init() error {
 					"args": args,
 				},
 			}))
+	case "gecko":
+		tcc.wd = agouti.GeckoDriver()
 	default:
 		tcc.wd = agouti.PhantomJS()
 	}
