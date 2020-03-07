@@ -110,6 +110,25 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	} else if e.Action.Wait != 0 {
 		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
+
+	// Select frame
+	} else if e.Action.SelectFrame != nil {
+		s, err := findOne(ctx.Page, e.Action.SelectFrame.Find, r)
+		if err != nil {
+			return nil, err
+		}
+		if elements, errElements := s.Elements(); errElements == nil {
+			if errSelectFrame := ctx.Page.Session().Frame(elements[0]); errSelectFrame != nil {
+				return nil, errSelectFrame
+			}
+		} else {
+			return nil, errElements
+		}
+	// Select root frame
+	} else if ( e.Action.SelectRootFrame ) {
+		if err := ctx.Page.SwitchToRootFrame(); err != nil {
+			return nil, err
+		}
 	}
 
 	// take a screenshot
