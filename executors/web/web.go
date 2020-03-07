@@ -110,6 +110,19 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	} else if e.Action.Wait != 0 {
 		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
+
+	// Select
+	} else if e.Action.Select != nil {
+		s, err := findOne(ctx.Page, e.Action.Select.Find, r)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.Select(e.Action.Select.Value); err != nil {
+			return nil, err
+		}
+		if e.Action.Select.Wait != 0 {
+			time.Sleep(time.Duration(e.Action.Select.Wait) * time.Second)
+		}
 	}
 
 	// take a screenshot

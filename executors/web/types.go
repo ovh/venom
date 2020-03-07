@@ -7,6 +7,7 @@ type Action struct {
 	Find     string    `yaml:"find,omitempty"`
 	Navigate *Navigate `yaml:"navigate,omitempty"`
 	Wait     int64     `yaml:"wait,omitempty"`
+	Select 	 *Select   `yaml:"select,omitempty"`
 }
 
 // Fill represents informations needed to fill input/textarea
@@ -24,4 +25,11 @@ type Click struct {
 type Navigate struct {
 	Url   string `yaml:"url,omitempty"`
 	Reset bool   `yaml:"reset,omitempty"`
+}
+
+// Select represents informations needed to select an option
+type Select struct {
+	Find  string `yaml:"find,omitempty"`
+	Value string `yaml:"value,omitempty"`
+	Wait  int64 `yaml:"wait,omitempty"`
 }
