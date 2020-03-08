@@ -70,19 +70,37 @@ type TestCaseContext interface {
 	Init() error
 	Close() error
 	SetTestCase(tc TestCase)
+	GetTestSuite() TestSuite
+	SetTestSuite(ts TestSuite)
 	GetName() string
 }
 
 // CommonTestCaseContext represents a Default TestCase Context
 type CommonTestCaseContext struct {
 	TestCaseContext
-	TestCase TestCase
-	Name     string
+	TestCase  TestCase
+	TestSuite TestSuite
+	Name      string
+}
+
+// GetTestCase get testcase in context
+func (tcc *CommonTestCaseContext) GetTestCase() TestCase {
+	return tcc.TestCase
 }
 
 // SetTestCase set testcase in context
 func (tcc *CommonTestCaseContext) SetTestCase(tc TestCase) {
 	tcc.TestCase = tc
+}
+
+// GetTestSuite get testsuite in context
+func (tcc *CommonTestCaseContext) GetTestSuite() TestSuite {
+	return tcc.TestSuite
+}
+
+// SetTestSuite set testsuite in context
+func (tcc *CommonTestCaseContext) SetTestSuite(ts TestSuite) {
+	tcc.TestSuite = ts
 }
 
 // GetName Get the context name

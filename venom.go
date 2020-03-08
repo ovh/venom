@@ -105,8 +105,9 @@ func (v *Venom) RegisterTestCaseContext(name string, tcc TestCaseContext) {
 
 // ContextWrap initializes a context for a testcase
 // no type -> parent context
-func (v *Venom) ContextWrap(tc *TestCase) (TestCaseContext, error) {
+func (v *Venom) ContextWrap(tc *TestCase, ts *TestSuite) (TestCaseContext, error) {
 	if tc.Context == nil {
+		v.contexts["default"].SetTestSuite(*ts)
 		return v.contexts["default"], nil
 	}
 	var typeName string
@@ -115,9 +116,11 @@ func (v *Venom) ContextWrap(tc *TestCase) (TestCaseContext, error) {
 	}
 
 	if typeName == "" {
+		v.contexts["default"].SetTestSuite(*ts)
 		return v.contexts["default"], nil
 	}
 	v.contexts[typeName].SetTestCase(*tc)
+	v.contexts[typeName].SetTestSuite(*ts)
 	return v.contexts[typeName], nil
 }
 

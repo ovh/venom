@@ -16,7 +16,7 @@ func (v *Venom) initTestCaseContext(ts *TestSuite, tc *TestCase) (TestCaseContex
 	if errContext != nil {
 		return nil, errContext
 	}
-	tcc, errContext := v.ContextWrap(tc)
+	tcc, errContext := v.ContextWrap(tc, ts)
 	if errContext != nil {
 		return nil, errContext
 	}

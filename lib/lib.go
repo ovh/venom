@@ -108,7 +108,7 @@ func TestCase(t *testing.T, name string, variables map[string]string) *T {
 func (t *T) Do(teststepParams P) R {
 	ts := t.ts
 	tc := t.tc
-	tcc, errContext := t.v.ContextWrap(tc)
+	tcc, errContext := t.v.ContextWrap(tc, ts)
 	if errContext != nil {
 		t.Error(errContext)
 		return nil
@@ -227,4 +227,3 @@ func (p P) WithHeaders(headers http.Headers) P {
 	p["headers"] = headers
 	return p
 }
-

@@ -95,7 +95,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	r := Result{Executor: e}
 
-	req, err := e.getRequest(workdir)
+	req, err := e.getRequest(testCaseContext, workdir)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 }
 
 // getRequest returns the request correctly set for the current executor
-func (e Executor) getRequest(workdir string) (*http.Request, error) {
+func (e Executor) getRequest(testCaseContext venom.TestCaseContext, workdir string) (*http.Request, error) {
 	path := fmt.Sprintf("%s%s", e.URL, e.Path)
 	method := e.Method
 	if method == "" {
@@ -199,7 +199,11 @@ func (e Executor) getRequest(workdir string) (*http.Request, error) {
 			if err != nil {
 				return nil, err
 			}
-			body = bytes.NewBuffer(temp)
+			tempString := string(temp)
+			for key, value := range testCaseContext.GetTestSuite().Vars {
+				tempString = strings.Replace((tempString), "{{."+key+"}}", value.(string), -1)
+			}
+			body = bytes.NewBufferString(tempString)
 		}
 	} else if e.MultipartForm != nil {
 		form, ok := e.MultipartForm.(map[interface{}]interface{})
