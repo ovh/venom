@@ -46,6 +46,48 @@ testcases:
 
 ```
 
+ConfirmPopup and CancelPopup actions allow you to manipulate modal dialog initialized by the alert and confirm javascript statement.
+These two actions have one boolean parameter and the parameter value must be true to activate the action.
+These actions are not compatible with PhantomJS driver.
+
+Example:
+
+```yaml
+name: TestSuite Popup
+testcases:
+- name: TestCase Popup 
+  context:
+    type: web
+    driver: chrome
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://javascript.info/alert-prompt-confirm
+  - action:
+      click:
+        find: article > div:nth-child(3) > div:nth-child(8) a[data-action='run']
+        wait: 1
+  - action:
+      ConfirmPopup: true
+  - action:
+      click:
+        find: article > div:nth-child(3) > div:nth-child(26) a[data-action='run']
+        wait: 1
+  - action:
+      ConfirmPopup: true
+  - action:
+      ConfirmPopup: true
+  - action:
+      click:
+        find: article > div:nth-child(3) > div:nth-child(26) a[data-action='run']
+        wait: 1
+  - action:
+      CancelPopup: true
+  - action:
+      ConfirmPopup: true
+```
+
 ## Output
 
 * result.url
