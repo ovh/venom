@@ -7,7 +7,7 @@ type Action struct {
 	Find     string    `yaml:"find,omitempty"`
 	Navigate *Navigate `yaml:"navigate,omitempty"`
 	Wait     int64     `yaml:"wait,omitempty"`
-	Select 	 *Select   `yaml:"select,omitempty"`
+	Select   *Select   `yaml:"select,omitempty"`
 }
 
 // Fill represents informations needed to fill input/textarea
@@ -29,7 +29,7 @@ type Navigate struct {
 
 // Select represents informations needed to select an option
 type Select struct {
-	Find  string `yaml:"find,omitempty"`
-	Value string `yaml:"value,omitempty"`
-	Wait  int64 `yaml:"wait,omitempty"`
+	Find string `yaml:"find,omitempty"`
+	Text string `yaml:"text,omitempty"`
+	Wait int64  `yaml:"wait,omitempty"`
 }

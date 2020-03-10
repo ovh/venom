@@ -46,6 +46,38 @@ testcases:
 
 ```
 
+Select statement allow to manipulate select web element
+Select statement have 3 parameters
+* find: CSS selector to identify the select web element
+* text: Text to use to selection the option
+* wait: optionnal parameter to wait after the statement (in seconds)
+Example
+
+```yaml
+name: TestSuite Select
+testcases:
+- name: TestCase Select 
+  context:
+    type: web
+    driver: phantomjs
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://html.com/tags/select/
+  - action:
+      select:
+        find: article[id='post-289'] select
+        text: 'Andean flamingo'
+        wait: 1
+    screenshot: selectAndean.png
+  - action:
+      select:
+        find: article[id='post-289'] select
+        text: 'American flamingo'
+    screenshot: selectAmerican.png
+```
+
 ## Output
 
 * result.url
