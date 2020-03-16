@@ -151,6 +151,24 @@ testcases:
     - result.systemout ShouldContainSubstring bar
 ```
 
+Using functions to use random or unique numbers
+
+```yaml
+name: testSuiteFunction
+vars:
+  Uuid: 'UUID()'
+  RandomID: RandomID()
+  UniqueID: UniqueID()
+testcases:
+- name: testCaseFunction
+  steps:
+  - type: exec
+    script: echo '{{.Uuid}}'
+  - script: 'echo {{.RandomID}}'
+  - script: 'echo {{.UniqueID}}'
+  - script: 'echo UniqueID()'
+```
+
 Builtin venom variables
 
 ```yaml

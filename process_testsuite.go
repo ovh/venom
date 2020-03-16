@@ -2,13 +2,16 @@ package venom
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/fsamin/go-dump"
+	guuid "github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -42,6 +45,11 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 	ts.Templater.Add("", d)
 	ts.Templater.Add("", map[string]string{"venom.testsuite": ts.ShortName})
 	ts.Templater.Add("", map[string]string{"venom.testsuite.filename": ts.Filename})
+
+	// Functions
+	ts.Templater.AddFunction("UUID", v.generateUUID)
+	ts.Templater.AddFunction("UniqueID", v.generateUniqueID)
+	ts.Templater.AddFunction("RandomID", v.generateRandomID)
 
 	// we apply templater on current vars only
 	for index := 0; index < 10; index++ {
@@ -154,4 +162,26 @@ func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
 	}
 
 	return vars, extractsVars, nil
+}
+
+// Generate UUID
+func (v *Venom) generateUUID() string {
+	return guuid.New().String()
+}
+
+// Generate unique ID
+func (v *Venom) generateUniqueID() string {
+	id := time.Now().Format("2006-02-02 15:04:05.000000000")
+	id = strings.Replace(id, "-", "", -1)
+	id = strings.Replace(id, " ", "", -1)
+	id = strings.Replace(id, ":", "", -1)
+	id = strings.Replace(id, ".", "", -1)
+	return id
+}
+
+// Generate random ID
+func (v *Venom) generateRandomID() string {
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	return strconv.Itoa(r1.Intn(100))
 }

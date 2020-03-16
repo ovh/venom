@@ -12,9 +12,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Define a type to venom function
+type VenomFunction func() string
+
 // Templater contains templating values on a testsuite
 type Templater struct {
-	Values map[string]string
+	Values    map[string]string
+	Functions map[string]VenomFunction
 }
 
 func newTemplater(inputValues map[string]string) *Templater {
@@ -40,6 +44,14 @@ func (tmpl *Templater) Add(prefix string, values map[string]string) {
 	}
 }
 
+// Add a function to templater
+func (tmpl *Templater) AddFunction(name string, function VenomFunction) {
+	if tmpl.Functions == nil {
+		tmpl.Functions = make(map[string]VenomFunction)
+	}
+	tmpl.Functions[name] = function
+}
+
 //ApplyOnStep executes the template on a test step
 func (tmpl *Templater) ApplyOnStep(stepNumber int, step TestStep) (TestStep, error) {
 	// Using yaml to encode/decode, it generates map[interface{}]interface{} typed data that json does not like
@@ -55,6 +67,14 @@ func (tmpl *Templater) ApplyOnStep(stepNumber int, step TestStep) (TestStep, err
 		}
 		_, sb = tmpl.apply(s)
 	}
+
+	// Apply functions
+	body := string(sb)
+	for k, v := range tmpl.Functions {
+		functionName := k + "()"
+		body = strings.Replace(body, functionName, v(), -1)
+	}
+	sb = []byte(body)
 
 	var t TestStep
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
@@ -83,6 +103,14 @@ func (tmpl *Templater) ApplyOnMap(mapStringInterface map[string]interface{}) (bo
 	if strings.Contains(string(s), "{{") {
 		applied, sb = tmpl.apply(s)
 	}
+
+	// Apply functions
+	body := string(sb)
+	for k, v := range tmpl.Functions {
+		functionName := k + "()"
+		body = strings.Replace(body, functionName, v(), -1)
+	}
+	sb = []byte(body)
 
 	if err := yaml.Unmarshal([]byte(sb), &t); err != nil {
 		return applied, nil, fmt.Errorf("templater> Error while unmarshal: %s, content:%s", err, sb)

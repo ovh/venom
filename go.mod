@@ -59,4 +59,5 @@ require (
 	gopkg.in/ini.v1 v1.34.0 // indirect
 	gopkg.in/testfixtures.v2 v2.4.3
 	gopkg.in/yaml.v2 v2.2.7
+	github.com/google/uuid v1.1.1
 )
