@@ -89,7 +89,6 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 			out = tmp
 		}
 
-		err = nil
 		switch ext := filepath.Ext(f); ext {
 		case ".hcl":
 			err = hcl.Unmarshal(out, &ts)
@@ -99,11 +98,7 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 			return fmt.Errorf("unsupported test suite file extension: %q", ext)
 		}
 		if err != nil {
-			if len(filesPath) == 1 {
-				return err
-			}
-			log.Infof("skipping invalid venom testsuite %s: %v", f, err)
-			continue
+			return fmt.Errorf("%s is an invalid venom test suite err:%s", f, err)
 		}
 
 		ts.ShortName = ts.Name
