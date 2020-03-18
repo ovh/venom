@@ -36,8 +36,8 @@ type Result struct {
 	TimeHuman   string   `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 	Title       string   `json:"title,omitempty" yaml:"title,omitempty"`
 	URL         string   `json:"url,omitempty" yaml:"url,omitempty"`
-	Text		string	 `json:"text,omitempty" yaml:"text,omitempty"`
-	Value		string	 `json:"value,omitempty" yaml:"value,omitempty"`
+	Text        string   `json:"text,omitempty" yaml:"text,omitempty"`
+	Value       string   `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -92,7 +92,6 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 				}
 			}
 		}
-
 	} else if e.Action.Find != "" {
 		s, err := find(ctx.Page, e.Action.Find, r)
 		if err != nil {
@@ -134,6 +133,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			if err := ctx.Page.CancelPopup(); err != nil {
 				return nil, err
 			}
+		}
 	} else if e.Action.Select != nil {
 		s, err := findOne(ctx.Page, e.Action.Select.Find, r)
 		if err != nil {
@@ -144,6 +144,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 		if e.Action.Select.Wait != 0 {
 			time.Sleep(time.Duration(e.Action.Select.Wait) * time.Second)
+		}
 	} else if e.Action.UploadFile != nil {
 		s, err := find(ctx.Page, e.Action.UploadFile.Find, r)
 		if err != nil {
@@ -156,7 +157,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 		if e.Action.UploadFile.Wait != 0 {
 			time.Sleep(time.Duration(e.Action.UploadFile.Wait) * time.Second)
-	
+		}
 	} else if e.Action.SelectFrame != nil {
 		s, err := findOne(ctx.Page, e.Action.SelectFrame.Find, r)
 		if err != nil {
@@ -169,9 +170,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		} else {
 			return nil, errElements
 		}
-	} else if ( e.Action.SelectRootFrame ) {
+	} else if e.Action.SelectRootFrame {
 		if err := ctx.Page.SwitchToRootFrame(); err != nil {
-	} else if ( e.Action.NextWindow ) {
+			return nil, err
+		}
+	} else if e.Action.NextWindow {
 		if err := ctx.Page.NextWindow(); err != nil {
 			return nil, err
 		}
