@@ -9,6 +9,7 @@ type Action struct {
 	Wait     int64     `yaml:"wait,omitempty"`
 	SelectFrame *SelectFrame `yaml:"selectFrame,omitempty"`
 	SelectRootFrame bool `yaml:"selectRootFrame,omitempty"`
+	NextWindow bool	   `yaml:"nextWindow,omitempty"`
 }
 
 // Fill represents informations needed to fill input/textarea

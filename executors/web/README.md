@@ -88,6 +88,34 @@ testcases:
     - result.find ShouldEqual 1
 ```
 
+Next Window action allow you to change the current window
+Next Window have one boolean parameter, this parameter must be true
+Example:
+
+```yaml
+name: TestSuite NextWindow
+testcases:
+- name: TestCase NextWindow 
+  context:
+    type: web
+    driver: chrome
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://javascript.info/popup-windows
+  - action:
+      click:
+        find: article > div:nth-child(3) > div:nth-child(17) a[data-action='run']
+        wait: 4
+    screenshot: beforeNextWindow.png
+  - action:
+      nextWindow: true
+    screenshot: resultNextWindow.png
+    assertions:
+      - result.url ShouldStartWith https://www.google.com
+```
+
 ## Output
 
 * result.url
