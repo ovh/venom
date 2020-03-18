@@ -7,6 +7,8 @@ type Action struct {
 	Find     string    `yaml:"find,omitempty"`
 	Navigate *Navigate `yaml:"navigate,omitempty"`
 	Wait     int64     `yaml:"wait,omitempty"`
+	SelectFrame *SelectFrame `yaml:"selectFrame,omitempty"`
+	SelectRootFrame bool `yaml:"selectRootFrame,omitempty"`
 	NextWindow bool	   `yaml:"nextWindow,omitempty"`
 }
 
@@ -25,4 +27,9 @@ type Click struct {
 type Navigate struct {
 	Url   string `yaml:"url,omitempty"`
 	Reset bool   `yaml:"reset,omitempty"`
+}
+
+// SelectFrame represents informations needed to select the frame
+type SelectFrame struct {
+	Find string  `yaml:"find,omitempty"`
 }
