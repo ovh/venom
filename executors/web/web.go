@@ -36,6 +36,8 @@ type Result struct {
 	TimeHuman   string   `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 	Title       string   `json:"title,omitempty" yaml:"title,omitempty"`
 	URL         string   `json:"url,omitempty" yaml:"url,omitempty"`
+	Text		string	 `json:"text,omitempty" yaml:"text,omitempty"`
+	Value		string	 `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -92,9 +94,20 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 
 	} else if e.Action.Find != "" {
-		_, err := find(ctx.Page, e.Action.Find, r)
+		s, err := find(ctx.Page, e.Action.Find, r)
 		if err != nil {
 			return nil, err
+		} else if s != nil {
+			if count, errCount := s.Count(); errCount == nil && count == 1 {
+				if elements, errElements := s.Elements(); errElements == nil {
+					if text, errText := elements[0].GetText(); errText == nil {
+						r.Text = text
+					}
+					if value, errValue := elements[0].GetAttribute("value"); errValue == nil {
+						r.Value = value
+					}
+				}
+			}
 		}
 	} else if e.Action.Navigate != nil {
 		if err := ctx.Page.Navigate(e.Action.Navigate.Url); err != nil {
@@ -110,20 +123,57 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	} else if e.Action.Wait != 0 {
 		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
-
-	// Confirm Popup
 	} else if e.Action.ConfirmPopup {
 		if ctx.TestCase.Context["driver"] != "phantomjs" {
 			if err := ctx.Page.ConfirmPopup(); err != nil {
 				return nil, err
 			}
 		}
-	// Cancel popup
 	} else if e.Action.CancelPopup {
 		if ctx.TestCase.Context["driver"] != "phantomjs" {
 			if err := ctx.Page.CancelPopup(); err != nil {
 				return nil, err
 			}
+	} else if e.Action.Select != nil {
+		s, err := findOne(ctx.Page, e.Action.Select.Find, r)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.Select(e.Action.Select.Text); err != nil {
+			return nil, err
+		}
+		if e.Action.Select.Wait != 0 {
+			time.Sleep(time.Duration(e.Action.Select.Wait) * time.Second)
+	} else if e.Action.UploadFile != nil {
+		s, err := find(ctx.Page, e.Action.UploadFile.Find, r)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range e.Action.UploadFile.Files {
+			if err := s.UploadFile(f); err != nil {
+				return nil, err
+			}
+		}
+		if e.Action.UploadFile.Wait != 0 {
+			time.Sleep(time.Duration(e.Action.UploadFile.Wait) * time.Second)
+	
+	} else if e.Action.SelectFrame != nil {
+		s, err := findOne(ctx.Page, e.Action.SelectFrame.Find, r)
+		if err != nil {
+			return nil, err
+		}
+		if elements, errElements := s.Elements(); errElements == nil {
+			if errSelectFrame := ctx.Page.Session().Frame(elements[0]); errSelectFrame != nil {
+				return nil, errSelectFrame
+			}
+		} else {
+			return nil, errElements
+		}
+	} else if ( e.Action.SelectRootFrame ) {
+		if err := ctx.Page.SwitchToRootFrame(); err != nil {
+	} else if ( e.Action.NextWindow ) {
+		if err := ctx.Page.NextWindow(); err != nil {
+			return nil, err
 		}
 	}
 
