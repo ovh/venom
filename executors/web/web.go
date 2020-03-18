@@ -110,6 +110,10 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	} else if e.Action.Wait != 0 {
 		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
+	} else if ( e.Action.NextWindow ) {
+		if err := ctx.Page.NextWindow(); err != nil {
+			return nil, err
+		}
 	}
 
 	// take a screenshot

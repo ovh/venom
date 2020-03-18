@@ -7,6 +7,7 @@ type Action struct {
 	Find     string    `yaml:"find,omitempty"`
 	Navigate *Navigate `yaml:"navigate,omitempty"`
 	Wait     int64     `yaml:"wait,omitempty"`
+	NextWindow bool	   `yaml:"nextWindow,omitempty"`
 }
 
 // Fill represents informations needed to fill input/textarea
