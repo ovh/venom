@@ -123,6 +123,20 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	} else if e.Action.Wait != 0 {
 		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
+
+	// Upload files
+	} else if e.Action.UploadFile != nil {
+		s, err := find(ctx.Page, e.Action.UploadFile.Find, r)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range e.Action.UploadFile.Files {
+			if err := s.UploadFile(f); err != nil {
+				return nil, err
+			}
+		}
+		if e.Action.UploadFile.Wait != 0 {
+			time.Sleep(time.Duration(e.Action.UploadFile.Wait) * time.Second)
 	
 	} else if e.Action.SelectFrame != nil {
 		s, err := findOne(ctx.Page, e.Action.SelectFrame.Find, r)

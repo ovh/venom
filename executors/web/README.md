@@ -116,6 +116,32 @@ testcases:
       - result.url ShouldStartWith https://www.google.com
 ```
 
+Upload file actiow allow you to upload file with file input web component
+Example:
+
+```yaml
+name: TestSuiteUploadFile
+testcases:
+- name: TestCaseUploadFile
+  context:
+    type: web
+    driver: chrome
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_input_type_file
+  - action:
+      selectFrame:
+        find: iframe[id='iframeResult']
+  - action:
+      uploadFile:
+        find: form:nth-child(3) input#myfile
+        files:
+        - myFile.png
+    screenshot: "result.png"
+```
+
 ## Output
 
 * result.url
