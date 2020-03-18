@@ -102,6 +102,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	for k, v := range e.Headers {
 		req.Header.Set(k, v)
+		if strings.ToLower(k) == "host" {
+			req.Host = v
+		}
 	}
 
 	tr := &http.Transport{
