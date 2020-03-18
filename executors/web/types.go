@@ -7,6 +7,7 @@ type Action struct {
 	Find     string    `yaml:"find,omitempty"`
 	Navigate *Navigate `yaml:"navigate,omitempty"`
 	Wait     int64     `yaml:"wait,omitempty"`
+	Select   *Select   `yaml:"select,omitempty"`
 	UploadFile *UploadFile `yaml:"uploadFile,omitempty"`
 	SelectFrame *SelectFrame `yaml:"selectFrame,omitempty"`
 	SelectRootFrame bool `yaml:"selectRootFrame,omitempty"`
@@ -30,6 +31,13 @@ type Click struct {
 type Navigate struct {
 	Url   string `yaml:"url,omitempty"`
 	Reset bool   `yaml:"reset,omitempty"`
+}
+
+// Select represents informations needed to select an option
+type Select struct {
+	Find string `yaml:"find,omitempty"`
+	Text string `yaml:"text,omitempty"`
+	Wait int64  `yaml:"wait,omitempty"`
 }
 
 // UploadFile represents informations needed to upload files
