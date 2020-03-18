@@ -7,6 +7,8 @@ type Action struct {
 	Find     string    `yaml:"find,omitempty"`
 	Navigate *Navigate `yaml:"navigate,omitempty"`
 	Wait     int64     `yaml:"wait,omitempty"`
+	ConfirmPopup bool  `yaml:"confirmPopup,omitempty"`
+	CancelPopup bool   `yaml:"cancelPopup,omitempty"`
 	Select   *Select   `yaml:"select,omitempty"`
 	UploadFile *UploadFile `yaml:"uploadFile,omitempty"`
 	SelectFrame *SelectFrame `yaml:"selectFrame,omitempty"`

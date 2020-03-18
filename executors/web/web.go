@@ -123,6 +123,17 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	} else if e.Action.Wait != 0 {
 		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
+	} else if e.Action.ConfirmPopup {
+		if ctx.TestCase.Context["driver"] != "phantomjs" {
+			if err := ctx.Page.ConfirmPopup(); err != nil {
+				return nil, err
+			}
+		}
+	} else if e.Action.CancelPopup {
+		if ctx.TestCase.Context["driver"] != "phantomjs" {
+			if err := ctx.Page.CancelPopup(); err != nil {
+				return nil, err
+			}
 	} else if e.Action.Select != nil {
 		s, err := findOne(ctx.Page, e.Action.Select.Find, r)
 		if err != nil {
@@ -158,7 +169,6 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		} else {
 			return nil, errElements
 		}
-	// Select root frame
 	} else if ( e.Action.SelectRootFrame ) {
 		if err := ctx.Page.SwitchToRootFrame(); err != nil {
 	} else if ( e.Action.NextWindow ) {
@@ -174,18 +184,23 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	}
 
-	// get page title
-	title, err := ctx.Page.Title()
-	if err != nil {
-		return nil, err
+	// Get page title (Check the absence of popup before the page title collect to avoid error)
+	if _, err := ctx.Page.PopupText(); err != nil {
+		title, err := ctx.Page.Title()
+		if err != nil {
+			return nil, err
+		}
+		r.Title = title
 	}
-	r.Title = title
 
-	url, errU := ctx.Page.URL()
-	if errU != nil {
-		return nil, fmt.Errorf("Cannot get URL: %s", errU)
+	// Get page url (Check the absence of popup before the page url collect to avoid error)
+	if _, err := ctx.Page.PopupText(); err != nil {
+		url, errU := ctx.Page.URL()
+		if errU != nil {
+			return nil, fmt.Errorf("Cannot get URL: %s", errU)
+		}
+		r.URL = url
 	}
-	r.URL = url
 
 	elapsed := time.Since(start)
 	r.TimeSeconds = elapsed.Seconds()
