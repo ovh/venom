@@ -68,7 +68,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	// Check action to realise
 	if e.Action.Click != nil {
-		s, err := find(testCaseContext, ctx.Page, e.Action.Click.Find, r)
+		s, err := find(testCaseContext, l, ctx.Page, e.Action.Click.Find, r)
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	} else if e.Action.Fill != nil {
 		for _, f := range e.Action.Fill {
-			s, err := findOne(testCaseContext, ctx.Page, f.Find, r)
+			s, err := findOne(testCaseContext, l, ctx.Page, f.Find, r)
 			if err != nil {
 				return nil, err
 			}
@@ -94,7 +94,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			}
 		}
 	} else if e.Action.Find != "" {
-		s, err := find(testCaseContext, ctx.Page, e.Action.Find, r)
+		s, err := find(testCaseContext, l, ctx.Page, e.Action.Find, r)
 		if err != nil {
 			return nil, err
 		} else if s != nil {
@@ -136,7 +136,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			}
 		}
 	} else if e.Action.Select != nil {
-		s, err := findOne(testCaseContext, ctx.Page, e.Action.Select.Find, r)
+		s, err := findOne(testCaseContext, l, ctx.Page, e.Action.Select.Find, r)
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +147,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			time.Sleep(time.Duration(e.Action.Select.Wait) * time.Second)
 		}
 	} else if e.Action.UploadFile != nil {
-		s, err := find(testCaseContext, ctx.Page, e.Action.UploadFile.Find, r)
+		s, err := find(testCaseContext, l, ctx.Page, e.Action.UploadFile.Find, r)
 		if err != nil {
 			return nil, err
 		}
@@ -160,7 +160,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			time.Sleep(time.Duration(e.Action.UploadFile.Wait) * time.Second)
 		}
 	} else if e.Action.SelectFrame != nil {
-		s, err := findOne(testCaseContext, ctx.Page, e.Action.SelectFrame.Find, r)
+		s, err := findOne(testCaseContext, l, ctx.Page, e.Action.SelectFrame.Find, r)
 		if err != nil {
 			return nil, err
 		}
@@ -213,15 +213,15 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	return executors.Dump(r)
 }
 
-func find(testCaseContext venom.TestCaseContext, page *agouti.Page, search string, r *Result) (*agouti.Selection, error) {
+func find(testCaseContext venom.TestCaseContext, logger venom.Logger, page *agouti.Page, search string, r *Result) (*agouti.Selection, error) {
 	s := page.Find(search)
 	if s == nil {
-		generateHtmlFile(testCaseContext, page)
+		generateHtmlFile(testCaseContext, logger, page)
 		return nil, fmt.Errorf("Cannot find element %s", search)
 	}
 	nbElement, errC := s.Count()
 	if errC != nil {
-		generateHtmlFile(testCaseContext, page)
+		generateHtmlFile(testCaseContext, logger, page)
 		if !strings.Contains(errC.Error(), "element not found") {
 			return nil, fmt.Errorf("Cannot count element %s: %s", search, errC)
 		}
@@ -231,31 +231,34 @@ func find(testCaseContext venom.TestCaseContext, page *agouti.Page, search strin
 	return s, nil
 }
 
-func findOne(testCaseContext venom.TestCaseContext, page *agouti.Page, search string, r *Result) (*agouti.Selection, error) {
+func findOne(testCaseContext venom.TestCaseContext, logger venom.Logger, page *agouti.Page, search string, r *Result) (*agouti.Selection, error) {
 	s := page.Find(search)
 	if s == nil {
-		generateHtmlFile(testCaseContext, page)
+		generateHtmlFile(testCaseContext, logger, page)
 		return nil, fmt.Errorf("Cannot find element %s", search)
 	}
 	nbElement, errC := s.Count()
 	if errC != nil {
-		generateHtmlFile(testCaseContext, page)
+		generateHtmlFile(testCaseContext, logger, page)
 		return nil, fmt.Errorf("Cannot find element %s: %s", search, errC)
 	}
 	if nbElement != 1 {
-		generateHtmlFile(testCaseContext, page)
+		generateHtmlFile(testCaseContext, logger, page)
 		return nil, fmt.Errorf("Find %d elements", nbElement)
 	}
 	return s, nil
 }
 
 // Generate an HTML file in error case to identify clearly the error
-func generateHtmlFile(context venom.TestCaseContext, page *agouti.Page) {
-	fmt.Printf("GenerateHtmlFile ...\n")
+func generateHtmlFile(context venom.TestCaseContext, logger venom.Logger, page *agouti.Page) {
 	html, err := page.HTML()
 	if err == nil {
 		fileName := context.GetName() + ".html"
-		fmt.Printf("Error during an element selection, the content of the HTML page is saved in %s\n", fileName)
-		ioutil.WriteFile(fileName, []byte(html), 0644)
+		logger.Infof("Error during an element selection, the content of the HTML page is saved in %s\n", fileName)
+		if errSave := ioutil.WriteFile(fileName, []byte(html), 0644); errSave != nil {
+			logger.Errorf("Cannot save html page in %s: %s\n", fileName, errSave)
+		}
+	} else {
+		logger.Errorf("Cannot get html page: %s\n", err)
 	}
 }
