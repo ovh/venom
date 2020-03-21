@@ -216,6 +216,42 @@ testcases:
       ConfirmPopup: true
 ```
 
+History actions allow you to manipulate browser history actions. The following action are available:
+* back
+* refresh
+* forward
+
+Example:
+
+```yaml
+name: TestSuiteNavigationHistory
+testcases:
+- name: TestCaseNavigationHistory
+  context:
+    type: web
+    driver: chrome
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://www.google.com
+  - action:
+        fill:
+        - find: input[name='q']
+          text: ovh venom github
+    screenshot: search.png
+  - action:
+        click:
+            find: div[jsname='VlcLAe'] input[name='btnK']
+            wait: 2
+  - action:
+        historyAction: back
+  - action:
+        historyAction: refresh
+  - action:
+        historyAction: forward
+```
+
 ## Output
 
 * result.url
