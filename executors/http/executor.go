@@ -59,6 +59,7 @@ type Result struct {
 	TimeHuman   string      `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 	StatusCode  int         `json:"statuscode,omitempty" yaml:"statuscode,omitempty"`
 	Body        string      `json:"body,omitempty" yaml:"body,omitempty"`
+	CompactBody string      `json:"compactbody,omitempty" yaml:"compactbody,omitempty"`
 	BodyJSON    interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
 	Headers     Headers     `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
@@ -165,6 +166,12 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 				}
 			} else {
 				r.BodyJSON = bodyJSONArray
+			}
+
+			var compactBody bytes.Buffer
+			err = json.Compact(&compactBody, bb)
+			if err == nil {
+				r.CompactBody = compactBody.String()
 			}
 		}
 	}

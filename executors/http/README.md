@@ -79,6 +79,7 @@ result.timeseconds
 result.timehuman
 result.statuscode
 result.body
+result.compactbody
 result.bodyjson
 result.headers
 result.error
@@ -89,6 +90,7 @@ result.error
 - result.executor.executor.multipartform: multipartform if exists
 - result.err: if exists, this field contains error
 - result.body: body of HTTP response
+- result.compactbody: compacted body of HTTP response if it's a json
 - result.bodyjson: body of HTTP response if it's a json. You can access json data as result.bodyjson.yourkey for example. Note that json keys are lowercased automatically (eg. use result.bodyjson.yourkey, not result.bodyjson.YourKey)
 - result.headers: headers of HTTP response
 - result.statuscode: Status Code of HTTP response
