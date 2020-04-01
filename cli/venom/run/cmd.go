@@ -132,14 +132,6 @@ var Cmd = &cobra.Command{
 			variables = append(variables, os.Environ()...)
 		}
 
-		for _, a := range variables {
-			t := strings.SplitN(a, "=", 2)
-			if len(t) < 2 {
-				continue
-			}
-			mapvars[t[0]] = strings.Join(t[1:], "")
-		}
-
 		for _, f := range varFiles {
 			if f == "" {
 				continue
@@ -166,6 +158,14 @@ var Cmd = &cobra.Command{
 			for key, value := range varFileMap {
 				mapvars[key] = value
 			}
+		}
+
+		for _, a := range variables {
+			t := strings.SplitN(a, "=", 2)
+			if len(t) < 2 {
+				continue
+			}
+			mapvars[t[0]] = strings.Join(t[1:], "")
 		}
 
 		v.AddVariables(mapvars)
