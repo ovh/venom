@@ -22,6 +22,7 @@ func New() *Venom {
 		EnableProfiling: false,
 		IgnoreVariables: []string{},
 		OutputFormat:    "xml",
+		NoCheckYAML:     false,
 	}
 	return v
 }
@@ -43,6 +44,7 @@ type Venom struct {
 	OutputFormat    string
 	OutputDir       string
 	StopOnFailure   bool
+	NoCheckYAML     bool
 }
 
 func (v *Venom) AddVariables(variables map[string]string) {

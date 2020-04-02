@@ -50,6 +50,7 @@ var (
 	parallel        int
 	stopOnFailure   bool
 	enableProfiling bool
+	noCheckYAML     bool
 	v               *venom.Venom
 )
 
@@ -66,6 +67,7 @@ func init() {
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	Cmd.PersistentFlags().BoolVarP(&enableProfiling, "profiling", "", false, "Enable Mem / CPU Profile with pprof")
+	Cmd.PersistentFlags().BoolVarP(&noCheckYAML, "no-check-yml", "", false, "Don't check YML files before run and ignore invalid venom suite")
 }
 
 // Cmd run
@@ -107,6 +109,7 @@ var Cmd = &cobra.Command{
 		v.OutputFormat = format
 		v.Parallel = parallel
 		v.StopOnFailure = stopOnFailure
+		v.NoCheckYAML = noCheckYAML
 
 		if v.EnableProfiling {
 			var filename, filenameCPU, filenameMem string
