@@ -109,6 +109,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: e.IgnoreVerifySSL},
+		Proxy:           http.ProxyFromEnvironment,
 	}
 
 	if len(e.UnixSock) > 0 {
