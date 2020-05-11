@@ -41,7 +41,7 @@ var (
 	variables       []string
 	exclude         []string
 	format          string
-	varFile         string
+	varFiles        []string
 	withEnv         bool
 	logLevel        string
 	outputDir       string
@@ -55,7 +55,7 @@ var (
 
 func init() {
 	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
-	Cmd.Flags().StringVarP(&varFile, "var-from-file", "", "", "--var-from-file filename.yaml : hcl|json|yaml, must contains map[string]string'")
+	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: hcl|json|yaml, must contains map[string]string'")
 	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
@@ -140,13 +140,13 @@ var Cmd = &cobra.Command{
 			mapvars[t[0]] = strings.Join(t[1:], "")
 		}
 
-		if varFile != "" {
+		for _, f := range varFiles {
 			varFileMap := make(map[string]string)
-			bytes, err := ioutil.ReadFile(varFile)
+			bytes, err := ioutil.ReadFile(f)
 			if err != nil {
 				log.Fatal(err)
 			}
-			switch filepath.Ext(varFile) {
+			switch filepath.Ext(f) {
 			case ".hcl":
 				err = hcl.Unmarshal(bytes, &varFileMap)
 			case ".json":

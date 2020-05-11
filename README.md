@@ -30,7 +30,7 @@ Flags:
       --stop-on-failure        Stop running Test Suite on first Test Case failure
       --strict                 Exit with an error code if one test fails
       --var strings            --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file string   --var-from-file filename.yaml : hcl|json|yaml, must contains map[string]string'
+      --var-from-file strings  --var-from-file filename.yaml --var-from-file filename2.yaml : hcl|json|yaml, must contains map[string]string'
 ```
 
 ## Executors

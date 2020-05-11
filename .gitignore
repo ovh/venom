@@ -1,5 +1,6 @@
 .idea
 .vscode
+cli/venom/bin
 venom
 tests/pprof*
 tests/.DS_Store
