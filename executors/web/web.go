@@ -178,6 +178,23 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		if err := ctx.Page.NextWindow(); err != nil {
 			return nil, err
 		}
+	} else if e.Action.HistoryAction != "" {
+		switch strings.ToLower(e.Action.HistoryAction) {
+		case "back":
+			if err := ctx.Page.Back(); err != nil {
+				return nil, err
+			}
+		case "refresh":
+			if err := ctx.Page.Refresh(); err != nil {
+				return nil, err
+			}
+		case "forward":
+			if err := ctx.Page.Forward(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("History action '%s' is invalid", e.Action.HistoryAction)
+		}
 	}
 
 	// take a screenshot
