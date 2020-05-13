@@ -141,6 +141,9 @@ var Cmd = &cobra.Command{
 		}
 
 		for _, f := range varFiles {
+			if f == "" {
+				continue
+			}
 			varFileMap := make(map[string]string)
 			bytes, err := ioutil.ReadFile(f)
 			if err != nil {
