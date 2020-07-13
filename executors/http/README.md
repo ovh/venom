@@ -89,9 +89,16 @@ result.error
 - result.executor.executor.multipartform: multipartform if exists
 - result.err: if exists, this field contains error
 - result.body: body of HTTP response
-- result.bodyjson: body of HTTP response if it's a json. You can access json data as result.bodyjson.yourkey for example. Note that json keys are lowercased automatically (eg. use result.bodyjson.yourkey, not result.bodyjson.YourKey)
+- result.bodyjson: body of HTTP response if it's a JSON. You can access json data as result.bodyjson.yourkey for example.
 - result.headers: headers of HTTP response
 - result.statuscode: Status Code of HTTP response
+
+### JSON keys
+
+JSON keys are lowercased automatically (eg. use `result.bodyjson.yourkey`, not
+`result.bodyjson.YourKey`).
+
+On top of that, if a JSON key contains special characters, they will be translate to underscores.
 
 ### JSON arrays
 
