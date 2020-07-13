@@ -93,6 +93,14 @@ result.error
 - result.headers: headers of HTTP response
 - result.statuscode: Status Code of HTTP response
 
+### JSON arrays
+
+When a HTTP response contains a JSON array, you have to use following syntax
+to access specific key of an array: `result.bodyjson.array_name.array_name_index_in_array.key`
+
+Example if you want to get value of `path` key of *second* element in `apis` array: `result.bodyjson.apis.apis1.path`
+
+
 ## Default assertion
 
 ```yaml
