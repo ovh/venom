@@ -157,6 +157,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 				return nil, errr
 			}
 			r.Body = string(bb)
+			l.Debugf("http.Response.Body (%q)", r.Body)
 
 			bodyJSONArray := []interface{}{}
 			if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
@@ -167,6 +168,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			} else {
 				r.BodyJSON = bodyJSONArray
 			}
+			l.Debugf("http.Response.BodyJSON (%q)", r.BodyJSON)
 		}
 	}
 
@@ -175,9 +177,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		for k, v := range resp.Header {
 			r.Headers[k] = v[0]
 		}
+		l.Debugf("http.Response.Headers (%q)", r.Headers)
 	}
 
 	r.StatusCode = resp.StatusCode
+	l.Debugf("http.Response.Status.Code (%d)", r.StatusCode)
 
 	return executors.Dump(r)
 }
