@@ -175,7 +175,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	if !e.SkipHeaders {
 		r.Headers = make(map[string]string)
 		for k, v := range resp.Header {
-			r.Headers[k] = v[0]
+			if strings.ToLower(k) == "set-cookie" {
+				r.Headers[k] = strings.Join(v[:], "; ")
+			} else {
+				r.Headers[k] = v[0]
+			}
 		}
 		l.Debugf("http.Response.Headers (%q)", r.Headers)
 	}
