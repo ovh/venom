@@ -7,7 +7,8 @@ It can also output xUnit results files.
 
 ## Command Line
 
-Download latest release from https://github.com/ovh/venom/releases
+Download latest binary release from https://github.com/ovh/venom/releases  
+or just go get it ```go get -u github.com/ovh/venom/cli/venom```
 
 
 ```bash
