@@ -72,6 +72,16 @@ func init() {
 var Cmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run Tests",
+	Long: `
+$ venom run *.yml
+
+# to have more information about what's wrong on a test,
+# you can use the output-dir. *.dump files will be created
+# in this directory, with a lot of useful debug lines:
+
+$ venom run *.yml --output-dir=results
+
+Notice that variables initialized with -var-from-file argument can be overrided with -var argument.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			path = append(path, ".")
