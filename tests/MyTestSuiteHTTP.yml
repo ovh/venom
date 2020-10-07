@@ -11,7 +11,7 @@ testcases:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
-    - result.bodyjson.apis.apis0.path ShouldEqual /analytics
+    - result.bodyjson.apis.apis0.path ShouldEqual /allDom
 
 - name: POST http testcase
   steps:
@@ -69,7 +69,7 @@ testcases:
     skip_body: true
     skip_headers: true
     assertions:
-      - result.statuscode ShouldEqual 500
+      - result.statuscode ShouldEqual 405
       - result.body ShouldBeEmpty
       - result.headers ShouldBeEmpty
 
