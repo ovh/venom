@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -281,14 +282,14 @@ var assertMap = map[string]func(actual interface{}, expected ...interface{}) str
 	"ShouldBeTrue":                 assertions.ShouldBeTrue,
 	"ShouldBeFalse":                assertions.ShouldBeFalse,
 	"ShouldBeZeroValue":            assertions.ShouldBeZeroValue,
-	"ShouldBeGreaterThan":          assertions.ShouldBeGreaterThan,
-	"ShouldBeGreaterThanOrEqualTo": assertions.ShouldBeGreaterThanOrEqualTo,
-	"ShouldBeLessThan":             assertions.ShouldBeLessThan,
-	"ShouldBeLessThanOrEqualTo":    assertions.ShouldBeLessThanOrEqualTo,
-	"ShouldBeBetween":              assertions.ShouldBeBetween,
-	"ShouldNotBeBetween":           assertions.ShouldNotBeBetween,
-	"ShouldBeBetweenOrEqual":       assertions.ShouldBeBetweenOrEqual,
-	"ShouldNotBeBetweenOrEqual":    assertions.ShouldNotBeBetweenOrEqual,
+	"ShouldBeGreaterThan":          ShouldBeGreaterThan,
+	"ShouldBeGreaterThanOrEqualTo": ShouldBeGreaterThanOrEqualTo,
+	"ShouldBeLessThan":             ShouldBeLessThan,
+	"ShouldBeLessThanOrEqualTo":    ShouldBeLessThanOrEqualTo,
+	"ShouldBeBetween":              ShouldBeBetween,
+	"ShouldNotBeBetween":           ShouldNotBeBetween,
+	"ShouldBeBetweenOrEqual":       ShouldBeBetweenOrEqual,
+	"ShouldNotBeBetweenOrEqual":    ShouldNotBeBetweenOrEqual,
 	"ShouldContain":                assertions.ShouldContain,
 	"ShouldNotContain":             assertions.ShouldNotContain,
 	"ShouldContainKey":             assertions.ShouldContainKey,
@@ -425,4 +426,79 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 	}
 
 	return countLine, nil
+}
+
+func ShouldBeGreaterThan(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldBeGreaterThan(actualNewValue, expectedNewValue...)
+}
+
+func ShouldBeGreaterThanOrEqualTo(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldBeGreaterThanOrEqualTo(actualNewValue, expectedNewValue...)
+}
+
+func ShouldBeLessThan(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldBeLessThan(actualNewValue, expectedNewValue...)
+}
+
+func ShouldBeLessThanOrEqualTo(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldBeLessThanOrEqualTo(actualNewValue, expectedNewValue...)
+}
+
+func ShouldBeBetween(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldBeBetween(actualNewValue, expectedNewValue...)
+}
+
+func ShouldNotBeBetween(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldNotBeBetween(actualNewValue, expectedNewValue...)
+}
+
+func ShouldBeBetweenOrEqual(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldBeBetweenOrEqual(actualNewValue, expectedNewValue...)
+}
+
+func ShouldNotBeBetweenOrEqual(actual interface{}, expected ...interface{}) string {
+	actualNewValue := parseStringToInt(actual)
+	expectedNewValue := parseStringArrayToIntArray(expected...)
+	return assertions.ShouldNotBeBetweenOrEqual(actualNewValue, expectedNewValue...)
+}
+
+func parseStringToInt(stringValue interface{}) interface{} {
+	stringNewValue := stringValue
+	value := fmt.Sprintf("%v", stringValue)
+	value = strings.ReplaceAll(value, "\r", "")
+	integerValue, err := strconv.Atoi(value)
+	if err == nil {
+		stringNewValue = integerValue
+	}
+	return stringNewValue
+}
+
+func parseStringArrayToIntArray(stringArrayValue ...interface{}) []interface{} {
+	stringArrayNewValue := stringArrayValue
+	valueType := reflect.ValueOf(stringArrayValue)
+	if valueType.Kind() == reflect.Slice {
+		if valueType.Len() == 1 {
+			value := parseStringToInt(valueType.Index(0))
+			stringArrayNewValue = []interface{}{value}
+		} else if valueType.Len() == 2 {
+			lower := parseStringToInt(valueType.Index(0))
+			upper := parseStringToInt(valueType.Index(1))
+			stringArrayNewValue = []interface{}{lower, upper}
+		}
+	}
+	return stringArrayNewValue
 }
