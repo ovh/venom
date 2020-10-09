@@ -70,12 +70,12 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 	var o string
 	if ts.Failures > 0 || ts.Errors > 0 {
 		red := color.New(color.FgRed).SprintFunc()
-		o = fmt.Sprintf("%s %s", red("FAILURE"), rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("%s %s", red("FAILURE"), ts.Package)
 	} else {
 		green := color.New(color.FgGreen).SprintFunc()
-		o = fmt.Sprintf("%s %s", green("SUCCESS"), rightPad(ts.Package, " ", 47))
+		o = fmt.Sprintf("%s %s", green("SUCCESS"), ts.Package)
 	}
-	o += fmt.Sprintf("%s", elapsed)
+	o += fmt.Sprintf(" %s", elapsed)
 	v.PrintFunc("%s\n", o)
 }
 

@@ -41,7 +41,7 @@ var (
 	variables       []string
 	exclude         []string
 	format          string
-	varFile         string
+	varFiles        []string
 	withEnv         bool
 	logLevel        string
 	outputDir       string
@@ -55,7 +55,7 @@ var (
 
 func init() {
 	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
-	Cmd.Flags().StringVarP(&varFile, "var-from-file", "", "", "--var-from-file filename.yaml : hcl|json|yaml, must contains map[string]string'")
+	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: hcl|json|yaml, must contains map[string]string'")
 	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
@@ -72,6 +72,16 @@ func init() {
 var Cmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run Tests",
+	Long: `
+$ venom run *.yml
+
+# to have more information about what's wrong on a test,
+# you can use the output-dir. *.dump files will be created
+# in this directory, with a lot of useful debug lines:
+
+$ venom run *.yml --output-dir=results
+
+Notice that variables initialized with -var-from-file argument can be overrided with -var argument.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			path = append(path, ".")
@@ -132,21 +142,16 @@ var Cmd = &cobra.Command{
 			variables = append(variables, os.Environ()...)
 		}
 
-		for _, a := range variables {
-			t := strings.SplitN(a, "=", 2)
-			if len(t) < 2 {
+		for _, f := range varFiles {
+			if f == "" {
 				continue
 			}
-			mapvars[t[0]] = strings.Join(t[1:], "")
-		}
-
-		if varFile != "" {
 			varFileMap := make(map[string]string)
-			bytes, err := ioutil.ReadFile(varFile)
+			bytes, err := ioutil.ReadFile(f)
 			if err != nil {
 				log.Fatal(err)
 			}
-			switch filepath.Ext(varFile) {
+			switch filepath.Ext(f) {
 			case ".hcl":
 				err = hcl.Unmarshal(bytes, &varFileMap)
 			case ".json":
@@ -163,6 +168,14 @@ var Cmd = &cobra.Command{
 			for key, value := range varFileMap {
 				mapvars[key] = value
 			}
+		}
+
+		for _, a := range variables {
+			t := strings.SplitN(a, "=", 2)
+			if len(t) < 2 {
+				continue
+			}
+			mapvars[t[0]] = strings.Join(t[1:], "")
 		}
 
 		v.AddVariables(mapvars)

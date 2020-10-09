@@ -13,6 +13,7 @@ In your yaml file, you can use:
   - with_sasl_handshaked optional
   - user optional
   - password optional
+  - kafka_version optional, defaut is 0.10.2.0
 
   - client_type mandator: producer or consumer
 
@@ -27,6 +28,7 @@ In your yaml file, you can use:
   # for producer client type:
   - messages
   - messages_file
+  
 
 ```
 
@@ -47,7 +49,7 @@ testcases:
     user: "{{.kafkaUser}}"
     password: "{{.kafkaPwd}}"
     addrs:
-      - "{{.kafkaHost}}:{{kafkaPort}}"
+      - "{{.kafkaHost}}:{{.kafkaPort}}"
     messages:
     - topic: test-topic
       value: '{"hello":"bar"}'
@@ -62,7 +64,7 @@ testcases:
     messageLimit: 1
     groupID: venom
     addrs:
-      - "{{.kafkaHost}}:{{kafkaPort}}"
+      - "{{.kafkaHost}}:{{.kafkaPort}}"
     topics:
       - test-topic
     assertions:

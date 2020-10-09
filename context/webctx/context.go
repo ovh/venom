@@ -18,6 +18,7 @@ const (
 	Height  = "height"
 	Driver  = "driver" // Possible values: chrome, phantomjs, gecko
 	Args    = "args"
+	Prefs   = "prefs"
 	Timeout = "timeout"
 	Debug   = "debug"
 )
@@ -55,15 +56,24 @@ func (tcc *WebTestCaseContext) Init() error {
 			}
 		}
 	}
+	prefs := map[string]interface{}{}
+	if _, ok := tcc.TestCase.Context[Prefs]; ok {
+		switch tcc.TestCase.Context[Prefs].(type) {
+		case map[interface{}]interface{}:
+			for k, v := range tcc.TestCase.Context[Prefs].(map[interface{}]interface{}) {
+				prefs[k.(string)] = v
+			}
+		default:
+			return fmt.Errorf("%s are not a map[string]interface{}: %v (%T)", Prefs, tcc.TestCase.Context[Prefs], tcc.TestCase.Context[Prefs])
+		}
+	}
 
 	switch driver {
 	case "chrome":
-		tcc.wd = agouti.ChromeDriver(agouti.Desired(
-			agouti.Capabilities{
-				"chromeOptions": map[string][]string{
-					"args": args,
-				},
-			}))
+		tcc.wd = agouti.ChromeDriver(
+			agouti.ChromeOptions("args", args),
+			agouti.ChromeOptions("prefs", prefs),
+		)
 	case "gecko":
 		tcc.wd = agouti.GeckoDriver()
 	default:
