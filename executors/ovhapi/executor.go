@@ -59,9 +59,8 @@ func (Executor) ZeroValueResult() venom.ExecutorResult {
 }
 
 // GetDefaultAssertions return default assertions for this executor
-// Optional
-func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.statuscode ShouldEqual 200"}}
+func (Executor) GetDefaultAssertions() *venom.StepAssertions {
+	return &venom.StepAssertions{Assertions: []string{"result.statuscode ShouldEqual 200"}}
 }
 
 // Run execute TestStep

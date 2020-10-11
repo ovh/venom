@@ -358,7 +358,7 @@ type Result struct {
 
 // GetDefaultAssertions return default assertions for this executor
 // Optional
-func (Executor) GetDefaultAssertions() venom.StepAssertions {
+func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 	return venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
 }
 
