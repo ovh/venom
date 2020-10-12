@@ -78,8 +78,8 @@ func (Executor) ZeroValueResult() venom.ExecutorResult {
 }
 
 // GetDefaultAssertions return default assertions for type exec
-func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
+func (Executor) GetDefaultAssertions() *venom.StepAssertions {
+	return &venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
 }
 
 // Run execute TestStep of type exec
