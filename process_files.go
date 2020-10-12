@@ -63,6 +63,9 @@ func getFilesPath(path []string, exclude []string) (filePaths []string, err erro
 	}
 
 	sort.Strings(filePaths)
+	if len(filePaths) == 0 {
+		return nil, fmt.Errorf("no yml file selected")
+	}
 	return filePaths, nil
 }
 
