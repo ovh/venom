@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/mattn/go-zglob"
@@ -143,15 +144,13 @@ func (e *Executor) readfile(workdir string) (Result, error) {
 
 	result.Content = content
 
-	bodyJSONArray := []interface{}{}
-	if err := json.Unmarshal([]byte(content), &bodyJSONArray); err != nil {
-		bodyJSONMap := map[string]interface{}{}
-		if err2 := json.Unmarshal([]byte(content), &bodyJSONMap); err2 == nil {
-			result.ContentJSON = bodyJSONMap
-		}
-	} else {
-		result.ContentJSON = bodyJSONArray
+	var m interface{}
+	decoder := json.NewDecoder(strings.NewReader(string(content)))
+	decoder.UseNumber()
+	if err := decoder.Decode(&m); err == nil {
+		result.ContentJSON = m
 	}
+
 	result.Md5sum = md5sum
 	result.Size = size
 	result.ModTime = modtime
