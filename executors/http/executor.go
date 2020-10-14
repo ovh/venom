@@ -157,14 +157,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			}
 			r.Body = string(bb)
 
-			bodyJSONArray := []interface{}{}
-			if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
-				bodyJSONMap := map[string]interface{}{}
-				if err2 := json.Unmarshal(bb, &bodyJSONMap); err2 == nil {
-					r.BodyJSON = bodyJSONMap
-				}
-			} else {
-				r.BodyJSON = bodyJSONArray
+			var m interface{}
+			decoder := json.NewDecoder(strings.NewReader(string(bb)))
+			decoder.UseNumber()
+			if err := decoder.Decode(&m); err == nil {
+				r.BodyJSON = m
 			}
 		}
 	}
