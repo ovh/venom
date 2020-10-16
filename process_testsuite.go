@@ -75,8 +75,8 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		green := color.New(color.FgGreen).SprintFunc()
 		o = fmt.Sprintf("%s %s", green("SUCCESS"), ts.Package)
 	}
-	o += fmt.Sprintf(" %s", elapsed)
-	v.PrintFunc("%s\n", o)
+	o += fmt.Sprintf("\t%.2fs", elapsed.Seconds())
+	v.PrintFunc("%v\n", o)
 }
 
 func (v *Venom) runTestCases(ts *TestSuite, l Logger) {

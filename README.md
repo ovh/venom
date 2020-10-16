@@ -314,7 +314,7 @@ venom run --format=xml --output-dir="."
 * ShouldBeChronological
 * ShouldNotExist
 
-Most assertion keywords documentation can be found on [smartystreets/assertions README](https://github.com/smartystreets/assertions/blob/master/README.md#usage).
+Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
 
 ### Write your executor
 

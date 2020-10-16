@@ -2,6 +2,8 @@ package venom
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 
@@ -11,6 +13,11 @@ import (
 func (v *Venom) init() error {
 	v.testsuites = []TestSuite{}
 	switch v.LogLevel {
+	case "disable":
+		v.LogOutput = ioutil.Discard
+		log.SetLevel(log.WarnLevel)
+		log.SetOutput(v.LogOutput)
+		return nil
 	case "debug":
 		log.SetLevel(log.DebugLevel)
 	case "info":
@@ -19,6 +26,12 @@ func (v *Venom) init() error {
 		log.SetLevel(log.WarnLevel)
 	default:
 		log.SetLevel(log.WarnLevel)
+	}
+
+	var err error
+	v.LogOutput, err = os.OpenFile("venom.log", os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+	if err != nil {
+		return fmt.Errorf("unable to write log file: %v", err)
 	}
 
 	log.SetOutput(v.LogOutput)

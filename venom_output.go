@@ -61,7 +61,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
 		}
-		v.PrintFunc("File %s is written\n", filename)
+		v.PrintFunc("Writing file %s\n", filename)
 
 		for _, ts := range tests.TestSuites {
 			for _, tc := range ts.TestCases {
@@ -165,16 +165,6 @@ func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
 			}
 		}
 	}
-
-	v.PrintFunc("Total:%d Duration:%s\nOK:%d\nKO:%d\nSkipped:%d\nTestSuite:%d\nTestCase:%d\n",
-		tests.Total,
-		elapsed,
-		tests.TotalOK,
-		tests.TotalKO,
-		tests.TotalSkipped,
-		len(tests.TestSuites),
-		totalTestCases,
-	)
 }
 
 func cleanOutputColors(tests *Tests) {
