@@ -19,7 +19,6 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/jhump/protoreflect v1.5.0
 	github.com/jmoiron/sqlx v1.2.0
-	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-shellwords v1.0.3
@@ -34,8 +33,9 @@ require (
 	github.com/rubenv/sql-migrate v0.0.0-20180217203553-081fe17d19ff
 	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible
 	github.com/sirupsen/logrus v1.7.0
-	github.com/smartystreets/assertions v1.2.0
+	github.com/smartystreets/assertions v1.2.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
+	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0 // indirect
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71

@@ -1,6 +1,10 @@
 package venom
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+
+	"github.com/fatih/color"
+)
 
 const (
 	// DetailsLow prints only summary results
@@ -176,10 +180,46 @@ type Skipped struct {
 
 // Failure contains data related to a failed test.
 type Failure struct {
+	TestcaseClassname  string `xml:"-" json:"-" yaml:"-"`
+	TestcaseName       string `xml:"-" json:"-" yaml:"-"`
+	TestcaseLineNumber int    `xml:"-" json:"-" yaml:"-"`
+	StepNumber         int    `xml:"-" json:"-" yaml:"-"`
+	Assertion          string `xml:"-" json:"-" yaml:"-"`
+	Error              error  `xml:"-" json:"-" yaml:"-"`
+
 	Value   string         `xml:",cdata" json:"value" yaml:"value,omitempty"`
 	Result  ExecutorResult `xml:"-" json:"-" yaml:"-"`
 	Type    string         `xml:"type,attr,omitempty" json:"type" yaml:"type,omitempty"`
 	Message string         `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
+}
+
+func newFailure(tc TestCase, stepNumber int, assertion string, err error, res ExecutorResult) *Failure {
+	var lineNumber int
+	lineNumber, _ = findLineNumber(tc.Classname, tc.Name, stepNumber, assertion)
+
+	value := color.YellowString(`	Failure in %q:%d
+	Testcase %q, at step %d
+	Assertion %q failed. %v`,
+		tc.Classname,
+		lineNumber,
+		tc.Name,
+		stepNumber,
+		RemoveNotPrintableChar(assertion),
+		err,
+	)
+
+	var failure = Failure{
+		TestcaseClassname:  tc.Classname,
+		TestcaseName:       tc.Name,
+		TestcaseLineNumber: lineNumber,
+		StepNumber:         stepNumber,
+		Assertion:          assertion,
+		Result:             res,
+		Error:              err,
+		Value:              value,
+	}
+
+	return &failure
 }
 
 // InnerResult is used by TestCase

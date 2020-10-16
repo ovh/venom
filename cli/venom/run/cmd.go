@@ -63,7 +63,7 @@ func init() {
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
 	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
-	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info or warn")
+	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info, warn or disable")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	Cmd.PersistentFlags().BoolVarP(&enableProfiling, "profiling", "", false, "Enable Mem / CPU Profile with pprof")
 }
