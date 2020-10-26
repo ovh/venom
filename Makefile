@@ -1,3 +1,5 @@
+include linting.mk
+
 .PHONY: all
 all: deps lint build test
 
