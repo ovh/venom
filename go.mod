@@ -1,6 +1,6 @@
 module github.com/ovh/venom
 
-go 1.13
+go 1.15
 
 require (
 	github.com/Shopify/sarama v1.27.2
@@ -18,7 +18,9 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/jhump/protoreflect v1.7.0
 	github.com/jmoiron/sqlx v1.2.0
+	github.com/landoop/schema-registry v0.0.0-20190327143759-50a5701c1891
 	github.com/lib/pq v1.8.0
+	github.com/linkedin/goavro/v2 v2.9.8
 	github.com/mattn/go-shellwords v1.0.10
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mattn/go-zglob v0.0.3
