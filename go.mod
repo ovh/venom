@@ -1,6 +1,6 @@
 module github.com/ovh/venom
 
-go 1.13
+go 1.15
 
 require (
 	github.com/Shopify/sarama v1.27.2
@@ -19,15 +19,14 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/jhump/protoreflect v1.7.0
 	github.com/jmoiron/sqlx v1.2.0
-	github.com/kyoh86/richgo v0.3.3 // indirect
-	github.com/kyoh86/xdg v1.2.0 // indirect
+	github.com/landoop/schema-registry v0.0.0-20190327143759-50a5701c1891
 	github.com/lib/pq v1.8.0
+	github.com/linkedin/goavro/v2 v2.9.8
 	github.com/mattn/go-shellwords v1.0.10
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mattn/go-zglob v0.0.3
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
-	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
@@ -43,13 +42,11 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.6.1
-	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
-	github.com/wacul/ptr v1.0.0 // indirect
-	github.com/wadey/gocovmerge v0.0.0-20160331181800-b5bfa59ec0ad // indirect
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b
 	golang.org/x/crypto v0.0.0-20201112155050-0c6587e931a9
+	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
 	golang.org/x/sys v0.0.0-20201118182958-a01c418693c7 // indirect
-	golang.org/x/tools v0.0.0-20201118215654-4d9c4f8a78b0 // indirect
 	google.golang.org/grpc v1.30.0
 	gopkg.in/yaml.v2 v2.3.0
 )
