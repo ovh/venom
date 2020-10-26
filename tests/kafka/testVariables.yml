@@ -1,0 +1,5 @@
+  kafkaHost: 'localhost'
+  kafkaPort: '9092'
+  kafkaUser: ''
+  kafkaPwd: ''
+  kafkaSchemaRegistryHost: 'localhost:8081'
