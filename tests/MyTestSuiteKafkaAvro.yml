@@ -19,6 +19,7 @@ testcases:
       - "{{.kafkaHost}}:{{.kafkaPort}}"
     messages:
     - topic: test-topic
+      key: '{"id":1}'
       value: '{"hello":"bar"}'
   - type: kafka
     clientType: consumer
@@ -35,5 +36,6 @@ testcases:
     topics:
       - test-topic
     assertions:
+    - result.messagesjson.messagesjson0.key.hello ShouldEqual 1
     - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
     - result.messages.__len__ ShouldEqual 1

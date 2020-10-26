@@ -1,0 +1,43 @@
+{
+  "type" : "record",
+  "name" : "Message",
+  "namespace" : "com.example.serializer",
+  "fields" : [ {
+    "name" : "headers",
+    "type" : {
+      "type" : "array",
+      "items" : {
+        "type" : "record",
+        "name" : "Header",
+        "fields" : [ {
+          "name" : "key",
+          "type" : "bytes"
+        }, {
+          "name" : "value",
+          "type" : "bytes"
+        } ]
+      }
+    }
+  }, {
+    "name" : "timestamp",
+    "type" : {
+      "type" : "long",
+      "logicalType" : "timestamp-millis"
+    }
+  }, {
+    "name" : "value",
+    "type" : "bytes"
+  }, {
+    "name" : "key",
+    "type" : "bytes"
+  }, {
+    "name" : "topic",
+    "type" : "string"
+  }, {
+    "name" : "partition",
+    "type" : "int"
+  }, {
+    "name" : "offset",
+    "type" : "long"
+  } ]
+}

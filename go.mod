@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/Shopify/sarama v1.27.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/actgardner/gogen-avro v6.1.0+incompatible
 	github.com/fatih/color v1.9.0
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fullstorydev/grpcurl v1.4.0
@@ -19,6 +20,7 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/jhump/protoreflect v1.5.0
 	github.com/jmoiron/sqlx v1.2.0
+	github.com/landoop/schema-registry v0.0.0-20190327143759-50a5701c1891
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-shellwords v1.0.3
@@ -29,6 +31,7 @@ require (
 	github.com/onsi/ginkgo v1.10.2 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/ovh/go-ovh v0.0.0-20180328085145-498310cd1182
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v0.0.0-20180217203553-081fe17d19ff
 	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible

@@ -1,0 +1,12 @@
+{
+  "type" : "record",
+  "name" : "Header",
+  "namespace" : "io.ninety.kafka.s3.serializer",
+  "fields" : [ {
+    "name" : "key",
+    "type" : "bytes"
+  }, {
+    "name" : "value",
+    "type" : "bytes"
+  } ]
+}

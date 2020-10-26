@@ -1,0 +1,16 @@
+@namespace("com.example.serializer")
+protocol Serialize {
+  record Header {
+    bytes key;
+    bytes value;
+  }
+  record Message {
+    array<Header> headers;
+    timestamp_ms timestamp;
+    bytes value;
+    bytes key;
+    string topic;
+    int partition;
+    long offset;
+  }
+}

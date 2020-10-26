@@ -28,7 +28,6 @@ In your yaml file, you can use:
   # for producer client type:
   - messages
   - messages_file
-  
 
 ```
 

@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,57 +15,86 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/executors"
+	"github.com/ovh/venom/executors/kafka/avro"
 )
 
 // Name of executor
 const Name = "kafka"
+
+const (
+	defaultExecutorTimeoutMs  = 5000
+	defaultProducerMaxRetries = 10
+	defaultDialTimeout        = 10 * time.Second
+)
+
+type consumerEncoding string
+
+const (
+	jsonEncoding = consumerEncoding("JSON")
+	avroEncoding = consumerEncoding("AVRO")
+)
+
+var mapConsumerEncoding = map[string]consumerEncoding{
+	"":     jsonEncoding,
+	"AVRO": avroEncoding,
+	"JSON": jsonEncoding,
+}
+
+type consumeFunc = func(message *sarama.ConsumerMessage) (Message, interface{})
 
 // New returns a new Executor
 func New() venom.Executor {
 	return &Executor{}
 }
 
-//Message represents the object sended or received from kafka
+// Message represents the object sended or received from kafka
 type Message struct {
 	Topic string
+	Key   string
 	Value string
 }
 
-//MessageJSON represents the object sended or received from kafka
+// MessageJSON represents the object sended or received from kafka
 type MessageJSON struct {
 	Topic string
+	Key   interface{}
 	Value interface{}
 }
 
 // Executor represents a Test Exec
 type Executor struct {
-	Addrs              []string `json:"addrs,omitempty" yaml:"addrs,omitempty"`
-	WithTLS            bool     `json:"with_tls,omitempty" yaml:"withTLS,omitempty"`
-	WithSASL           bool     `json:"with_sasl,omitempty" yaml:"withSASL,omitempty"`
-	WithSASLHandshaked bool     `json:"with_sasl_handshaked,omitempty" yaml:"withSASLHandshaked,omitempty"`
-	User               string   `json:"user,omitempty" yaml:"user,omitempty"`
-	Password           string   `json:"password,omitempty" yaml:"password,omitempty"`
+	Addrs []string `json:"addrs,omitempty" yaml:"addrs,omitempty"`
+	// Registry schema address
+	SchemaRegistryAddr string `json:"schema_registry_addr,omitempty" yaml:"schemaRegistryAddr,omitempty"`
+	WithTLS            bool   `json:"with_tls,omitempty" yaml:"withTLS,omitempty"`
+	WithSASL           bool   `json:"with_sasl,omitempty" yaml:"withSASL,omitempty"`
+	WithSASLHandshaked bool   `json:"with_sasl_handshaked,omitempty" yaml:"withSASLHandshaked,omitempty"`
+	User               string `json:"user,omitempty" yaml:"user,omitempty"`
+	Password           string `json:"password,omitempty" yaml:"password,omitempty"`
 
-	//ClientType must be "consumer" or "producer"
+	// ClientType must be "consumer" or "producer"
 	ClientType string `json:"client_type,omitempty" yaml:"clientType,omitempty"`
 
-	//Used when ClientType is consumer
+	// Used when ClientType is consumer
 	GroupID string   `json:"group_id,omitempty" yaml:"groupID,omitempty"`
 	Topics  []string `json:"topics,omitempty" yaml:"topics,omitempty"`
-	//Represents the timeout for reading messages. In Milliseconds. Default 5000
+	// Represents the timeout for reading messages. In Milliseconds. Default 5000
 	Timeout int64 `json:"timeout,omitempty" yaml:"timeout,omitempty"`
-	//Represents the limit of message will be read. After limit, consumer stop read message
+	// Represents the limit of message will be read. After limit, consumer stop read message
 	MessageLimit int `json:"message_limit,omitempty" yaml:"messageLimit,omitempty"`
-	//InitialOffset represents the initial offset for the consumer. Possible value : newest, oldest. default: newest
+	// InitialOffset represents the initial offset for the consumer. Possible value : newest, oldest. default: newest
 	InitialOffset string `json:"initial_offset,omitempty" yaml:"initialOffset,omitempty"`
-	//MarkOffset allows to mark offset when consuming message
+	// MarkOffset allows to mark offset when consuming message
 	MarkOffset bool `json:"mark_offset,omitempty" yaml:"markOffset,omitempty"`
 
-	//Used when ClientType is producer
-	//Messages represents the message sended by producer
+	// Only one of JSON or Avro are currently supported
+	ConsumerEncoding string `json:"consumer_encoding,omitempty" yaml:"consumerEncoding,omitempty"`
+
+	// Used when ClientType is producer
+	// Messages represents the message sended by producer
 	Messages []Message `json:"messages,omitempty" yaml:"messages,omitempty"`
 
-	//MessagesFile represents the messages into the file sended by producer (messages field would be ignored)
+	// MessagesFile represents the messages into the file sended by producer (messages field would be ignored)
 	MessagesFile string `json:"messages_file,omitempty" yaml:"messages_file,omitempty"`
 
 	// Kafka version, default is 0.10.2.0
@@ -103,7 +133,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result := Result{Executor: e}
 
 	if e.Timeout == 0 {
-		e.Timeout = 5000
+		e.Timeout = defaultExecutorTimeoutMs
 	}
 	if e.ClientType == "producer" {
 		err := e.produceMessages(workdir)
@@ -130,7 +160,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 func (e Executor) produceMessages(workdir string) error {
 	if len(e.Messages) == 0 && e.MessagesFile == "" {
-		return fmt.Errorf("At least messages or messagesFile property must be setted")
+		return fmt.Errorf("Either one of `messages` or `messagesFile` field must be set")
 	}
 
 	config, err := e.getKafkaConfig()
@@ -139,7 +169,7 @@ func (e Executor) produceMessages(workdir string) error {
 	}
 
 	config.Producer.RequiredAcks = sarama.WaitForLocal
-	config.Producer.Retry.Max = 10
+	config.Producer.Retry.Max = defaultProducerMaxRetries
 	config.Producer.Return.Successes = true
 
 	sp, err := sarama.NewSyncProducer(e.Addrs, config)
@@ -172,9 +202,11 @@ func (e Executor) produceMessages(workdir string) error {
 		message := e.Messages[i]
 		messages = append(messages, &sarama.ProducerMessage{
 			Topic: message.Topic,
+			Key:   sarama.ByteEncoder([]byte(message.Key)),
 			Value: sarama.ByteEncoder([]byte(message.Value)),
 		})
 	}
+
 	return sp.SendMessages(messages)
 }
 
@@ -193,18 +225,24 @@ func (e Executor) consumeMessages(l venom.Logger) ([]Message, []interface{}, err
 
 	consumerGroup, err := sarama.NewConsumerGroup(e.Addrs, e.GroupID, config)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error instanciate consumer err:%s", err)
+		return nil, nil, fmt.Errorf("error instanciate consumer err: %w", err)
 	}
 
 	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, time.Duration(e.Timeout)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout)*time.Millisecond)
+	defer cancel()
 
 	// Track errors
 	go func() {
 		for err := range consumerGroup.Errors() {
-			l.Errorf("error on consume:%s", err)
+			l.Errorf("error on consume: %w", err)
 		}
 	}()
+
+	encoding, ok := mapConsumerEncoding[e.ConsumerEncoding]
+	if !ok {
+		encoding = mapConsumerEncoding[""]
+	}
 
 	h := &handler{
 		messages:     []Message{},
@@ -212,10 +250,11 @@ func (e Executor) consumeMessages(l venom.Logger) ([]Message, []interface{}, err
 		markOffset:   e.MarkOffset,
 		messageLimit: e.MessageLimit,
 		logger:       l,
+		encoding:     encoding,
 	}
 
 	if err := consumerGroup.Consume(ctx, e.Topics, h); err != nil {
-		l.Errorf("error on consume:%s", err)
+		l.Errorf("error on consume: %w", err)
 	}
 
 	return h.messages, h.messagesJSON, nil
@@ -228,16 +267,15 @@ func (e Executor) getKafkaConfig() (*sarama.Config, error) {
 	config.Net.SASL.User = e.User
 	config.Net.SASL.Password = e.Password
 	config.Consumer.Return.Errors = true
-	config.Net.DialTimeout = 10 * time.Second
+	config.Net.DialTimeout = defaultDialTimeout
+	config.Version = sarama.V0_10_2_0
 
 	if e.KafkaVersion != "" {
 		kafkaVersion, err := sarama.ParseKafkaVersion(e.KafkaVersion)
 		if err != nil {
-			return config, fmt.Errorf("error parsing Kafka version %v err:%s", kafkaVersion, err)
+			return config, fmt.Errorf("error parsing Kafka version %v err: %w", kafkaVersion, err)
 		}
 		config.Version = kafkaVersion
-	} else {
-		config.Version = sarama.V0_10_2_0
 	}
 
 	return config, nil
@@ -250,6 +288,7 @@ type handler struct {
 	markOffset   bool
 	messageLimit int
 	logger       venom.Logger
+	encoding     consumerEncoding
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
@@ -265,30 +304,15 @@ func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
 func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
-		h.messages = append(h.messages, Message{
-			Topic: message.Topic,
-			Value: string(message.Value),
-		})
-		messageJSONArray := []MessageJSON{}
-		if err := json.Unmarshal(message.Value, &messageJSONArray); err != nil {
-			messageJSONMap := map[string]interface{}{}
-			if err2 := json.Unmarshal(message.Value, &messageJSONMap); err2 == nil {
-				h.messagesJSON = append(h.messagesJSON, MessageJSON{
-					Topic: message.Topic,
-					Value: messageJSONMap,
-				})
-			} else {
-				h.messagesJSON = append(h.messagesJSON, MessageJSON{
-					Topic: message.Topic,
-					Value: string(message.Value),
-				})
-			}
-		} else {
-			h.messagesJSON = append(h.messagesJSON, MessageJSON{
-				Topic: message.Topic,
-				Value: messageJSONArray,
-			})
+		var mapConsumeConsumeFunc = map[consumerEncoding]consumeFunc{
+			jsonEncoding: h.consumeJSON,
+			avroEncoding: h.consumeAvro,
 		}
+		consumeFunc := mapConsumeConsumeFunc[h.encoding]
+		msg, msgJSON := consumeFunc(message)
+		h.messages = append(h.messages, msg)
+		h.messagesJSON = append(h.messagesJSON, msgJSON)
+
 		if h.markOffset {
 			session.MarkMessage(message, "")
 		}
@@ -299,4 +323,90 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 		session.MarkMessage(message, "delivered")
 	}
 	return nil
+}
+
+func (h *handler) consumeJSON(message *sarama.ConsumerMessage) (Message, interface{}) {
+	msg := Message{
+		Topic: message.Topic,
+		Key:   string(message.Key),
+		Value: string(message.Value),
+	}
+	msgJSON := MessageJSON{
+		Topic: message.Topic,
+	}
+
+	// unmarshall the message.Value
+	listMessageJSON := []MessageJSON{}
+	// try to unmarshall into an array
+	if err := json.Unmarshal(message.Value, &listMessageJSON); err != nil {
+		// try to unmarshall into a map
+		mapMessageJSON := map[string]interface{}{}
+		if err2 := json.Unmarshal(message.Value, &mapMessageJSON); err2 != nil {
+			// try to unmarshall into a string
+			msgJSON.Value = string(message.Value)
+		} else {
+			msgJSON.Value = mapMessageJSON
+		}
+	} else {
+		msgJSON.Value = listMessageJSON
+	}
+
+	// unmarshall the message.Key
+	listMessageJSON = []MessageJSON{}
+	// try to unmarshall into an array
+	if err := json.Unmarshal(message.Key, &listMessageJSON); err != nil {
+		// try to unmarshall into a map
+		mapMessageJSON := map[string]interface{}{}
+		if err2 := json.Unmarshal(message.Key, &mapMessageJSON); err2 != nil {
+			// try to unmarshall into a string
+			msgJSON.Key = string(message.Key)
+		} else {
+			msgJSON.Key = mapMessageJSON
+		}
+	} else {
+		msgJSON.Key = listMessageJSON
+	}
+
+	return msg, msgJSON
+}
+
+func (h *handler) consumeAvro(message *sarama.ConsumerMessage) (Message, interface{}) {
+
+	// _, schemaID := getMessageByte(message.Value)
+
+	kMsg := avro.NewMessage()
+	err := kMsg.FromKafka(message)
+	if err != nil {
+		h.logger.Errorf(
+			"error getting Avro msg from Sarama msg: %w. Topic: %s, Partition: %s, Offset: %d",
+			err,
+			message.Topic,
+			message.Partition,
+			message.Offset,
+		)
+	}
+	buffer := bytes.NewBuffer(nil)
+	err = kMsg.Serialize(buffer)
+	if err != nil {
+		h.logger.Errorf(
+			"error avro serialize: %w. Topic: %s, Partition: %s, Offset: %d",
+			err,
+			message.Topic,
+			message.Partition,
+			message.Offset,
+		)
+	}
+
+	msg := Message{
+		Topic: message.Topic,
+		Key:   string(kMsg.Key),
+		Value: string(kMsg.Value),
+	}
+	msgJSON := MessageJSON{
+		Topic: message.Topic,
+		Key:   string(kMsg.Key),
+		Value: string(kMsg.Value),
+	}
+
+	return msg, msgJSON
 }
