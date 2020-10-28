@@ -34,7 +34,7 @@ func getURLArtifactFromGithub() string {
 	}
 
 	if *release.TagName == venom.Version {
-		cli.Exit("you already have the latest release:", *release.TagName)
+		cli.Exit(fmt.Sprintf("you already have the latest release: %s", *release.TagName))
 	}
 
 	if len(release.Assets) > 0 {

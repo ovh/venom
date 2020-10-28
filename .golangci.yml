@@ -1,0 +1,76 @@
+# options for analysis running
+run:
+  # default concurrency is a available CPU number
+  concurrency: 4
+
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  deadline: 2m
+
+  # modules-download-mode: vendor
+
+# all available settings of specific linters
+linters-settings:
+  exclude: vendor # skip vendor folder
+
+  errcheck:
+    # report about not checking of errors in type assetions: `a := b.(MyStruct)`;
+    check-type-assertions: true
+    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
+    check-blank: true
+  govet:
+    # report about shadowed variables
+    check-shadowing: true
+  gocyclo:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 15
+  lll:
+    # max line length, lines longer will be reported. Default is 120.
+    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
+    line-length: 200
+  unused:
+    # treat code as a program (not a library) and report unused exported identifiers
+    check-exported: false
+  unparam:
+    # Inspect exported functions, default is false. Set to true if no external program/library imports your code.
+    check-exported: true
+  nakedret:
+    # make an issue if func has more lines of code than this setting and it has naked returns
+    max-func-lines: 60
+  prealloc:
+    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
+    simple: true
+    range-loops: true # Report preallocation suggestions on range loops
+    for-loops: false # Report preallocation suggestions on for loops
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - errcheck
+    - gocyclo
+    - structcheck
+    - varcheck
+    - ineffassign
+    - deadcode
+    - golint
+    - interfacer
+    - unconvert
+    - goconst
+    - gocyclo
+    - staticcheck
+    - unused
+    - gosimple
+    - dupl
+    - gofmt
+    - gosec
+    - lll
+    - megacheck
+    - gocritic
+  fast: false
+
+issues:
+  # Independently from option `exclude` we use default exclude patterns,
+  # it can be disabled by this option. To list all
+  # excluded by default patterns execute `golangci-lint run --help`.
+  # Default value for this option is true.
+  exclude-use-default: true
