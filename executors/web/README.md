@@ -10,7 +10,14 @@ Venom allows you to navigate into it and execute actions.
 * Action (https://github.com/ovh/venom/tree/master/executors/web/types.go)
 * Format
 
-Parameters `debug` (default: false) and `timeout` (default: 180 seconds) are optional.
+Web context allows you to configure the browser used for navigation. All parameters are optional:
+* width: Width of the browser page
+* height: Height of the browser page
+* driver: `chrome`, `gecko` or `phantomjs` (default: `phantomjs`)
+* args: List of arguments for `chrome` driver (see [here](https://peter.sh/experiments/chromium-command-line-switches/))
+* prefs: List of user preferences for `chrome` driver, using dot notation (see [here](http://www.chromium.org/administrators/configuring-other-preferences) and [here](https://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/pref_names.cc?view=markup))
+* timeout: Timeout in seconds (default: 180)
+* debug: Boolean enabling the debug mode of the web driver (default: false)
 
 ```yaml
 name: TestSuite Web
@@ -21,6 +28,11 @@ testcases:
     width: 1920
     height: 1080
     driver: phantomjs
+    args:
+    - 'browser-test'
+    prefs:
+      profile.default_content_settings.popups: 0
+      profile.default_content_setting_values.notifications: 1
     timeout: 60
     debug: true
   steps:
@@ -216,6 +228,42 @@ testcases:
       ConfirmPopup: true
 ```
 
+History actions allow you to manipulate browser history actions. The following action are available:
+* back
+* refresh
+* forward
+
+Example:
+
+```yaml
+name: TestSuiteNavigationHistory
+testcases:
+- name: TestCaseNavigationHistory
+  context:
+    type: web
+    driver: chrome
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://www.google.com
+  - action:
+        fill:
+        - find: input[name='q']
+          text: ovh venom github
+    screenshot: search.png
+  - action:
+        click:
+            find: div[jsname='VlcLAe'] input[name='btnK']
+            wait: 2
+  - action:
+        historyAction: back
+  - action:
+        historyAction: refresh
+  - action:
+        historyAction: forward
+```
+
 ## Output
 
 * result.url
@@ -223,3 +271,61 @@ testcases:
 * result.timehuman
 * result.title
 * result.find
+
+
+## Chrome
+This section describe some features specifics to chrome browser
+
+### CI
+To include chrome driver tests in your integration pipeline your must execute chrome in headless mode.
+
+Example
+```yaml
+name: TestSuite Web
+testcases:
+- name: Test disable same site security
+  context:
+    type: web
+    width: 1920
+    height: 1080
+    driver: chrome
+    args:
+    - 'headless'
+    timeout: 60
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://www.google.fr
+```
+
+
+### Flags
+
+In chrome, you can enable or disable experimentals features to test the behaviour of upcoming features.
+You can do it manually with chrome://flags url with chrome browser.
+In venom, to enable a feature add an argument instance enable-features.
+To disable a feature, add an argument instance disable-features
+
+Example
+```yaml
+name: TestSuite Web
+testcases:
+- name: Test disable same site security
+  context:
+    type: web
+    width: 1920
+    height: 1080
+    driver: chrome
+    args:
+    - 'disable-features=SameSiteByDefaultCookies'
+    - 'enable-features=CookiesWithoutSameSiteMustBeSecure'
+    timeout: 60
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://samesite-sandbox.glitch.me/
+  - action:
+      wait: 5
+```
