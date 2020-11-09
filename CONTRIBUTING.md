@@ -10,7 +10,7 @@ pay attention to a few things:
 
 ## Coding and documentation Style:
 
-- Code must be formated with `go fmt`
+- Code must be formatted with `go fmt`
 - Code must pass `go vet`
 - Code must pass `golint`
 
@@ -19,12 +19,12 @@ pay attention to a few things:
 The contributions should be GitHub Pull Requests. The guidelines are the same
 as the patch submission for the Linux kernel except for the DCO which
 is defined below. The guidelines are defined in the
-'SubmittingPatches' file, available in the directory 'Documentation'
+'submitting-patches' file, available in the directory path 'Documentation/process'
 of the Linux kernel source tree.
 
 It can be accessed online too:
 
-https://www.kernel.org/doc/Documentation/SubmittingPatches
+https://www.kernel.org/doc/Documentation/process/submitting-patches.rst
 
 You can submit your patches via GitHub
 

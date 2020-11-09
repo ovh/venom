@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/inconshreveable/go-update"
+	"github.com/ovh/venom"
 	"github.com/ovh/venom/cli"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +31,10 @@ func getURLArtifactFromGithub() string {
 	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "ovh", "venom")
 	if err != nil {
 		cli.Exit("Repositories.GetLatestRelease returned error: %v\n%v", err, resp.Body)
+	}
+
+	if *release.TagName == venom.Version {
+		cli.Exit(fmt.Sprintf("you already have the latest release: %s", *release.TagName))
 	}
 
 	if len(release.Assets) > 0 {

@@ -63,12 +63,15 @@ func getFilesPath(path []string, exclude []string) (filePaths []string, err erro
 	}
 
 	sort.Strings(filePaths)
+	if len(filePaths) == 0 {
+		return nil, fmt.Errorf("no yml file selected")
+	}
 	return filePaths, nil
 }
 
 func (v *Venom) readFiles(filesPath []string) (err error) {
 	for _, f := range filesPath {
-		log.Info("Reading", f)
+		log.Info("Reading ", f)
 		dat, err := ioutil.ReadFile(f)
 		if err != nil {
 			return fmt.Errorf("Error while reading file %s err:%s", f, err)
@@ -99,11 +102,7 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 			return fmt.Errorf("unsupported test suite file extension: %q", ext)
 		}
 		if err != nil {
-			if len(filesPath) == 1 {
-				return err
-			}
-			log.Infof("skipping invalid venom testsuite %s: %v", f, err)
-			continue
+			return fmt.Errorf("Error while unmarshal file %s err: %v", f, err)
 		}
 
 		ts.ShortName = ts.Name

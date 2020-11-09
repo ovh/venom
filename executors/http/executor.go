@@ -71,9 +71,8 @@ func (Executor) ZeroValueResult() venom.ExecutorResult {
 }
 
 // GetDefaultAssertions return default assertions for this executor
-// Optional
-func (Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.statuscode ShouldEqual 200"}}
+func (Executor) GetDefaultAssertions() *venom.StepAssertions {
+	return &venom.StepAssertions{Assertions: []string{"result.statuscode ShouldEqual 200"}}
 }
 
 // Run execute TestStep
@@ -109,6 +108,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: e.IgnoreVerifySSL},
+		Proxy:           http.ProxyFromEnvironment,
 	}
 
 	if len(e.UnixSock) > 0 {
@@ -156,6 +156,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 				return nil, errr
 			}
 			r.Body = string(bb)
+			l.Debugf("http.Response.Body (%q)", r.Body)
 
 			bodyJSONArray := []interface{}{}
 			if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
@@ -166,17 +167,24 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			} else {
 				r.BodyJSON = bodyJSONArray
 			}
+			l.Debugf("http.Response.BodyJSON (%q)", r.BodyJSON)
 		}
 	}
 
 	if !e.SkipHeaders {
 		r.Headers = make(map[string]string)
 		for k, v := range resp.Header {
-			r.Headers[k] = v[0]
+			if strings.ToLower(k) == "set-cookie" {
+				r.Headers[k] = strings.Join(v[:], "; ")
+			} else {
+				r.Headers[k] = v[0]
+			}
 		}
+		l.Debugf("http.Response.Headers (%q)", r.Headers)
 	}
 
 	r.StatusCode = resp.StatusCode
+	l.Debugf("http.Response.Status.Code (%d)", r.StatusCode)
 
 	return executors.Dump(r)
 }
