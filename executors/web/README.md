@@ -228,7 +228,7 @@ testcases:
       ConfirmPopup: true
 ```
 
-History actions allow you to manipulate browser history actions. The following action are available:
+History actions allow you to manipulate browser history actions. The following actions are available:
 * back
 * refresh
 * forward
@@ -274,10 +274,10 @@ testcases:
 
 
 ## Chrome
-This section describe some features specifics to chrome browser
+This section describes some features specific to the Chrome browser
 
 ### CI
-To include chrome driver tests in your integration pipeline your must execute chrome in headless mode.
+If you want to include Chrome Driver tests in your integration pipeline, you must execute Chrome in headless mode.
 
 Example
 ```yaml
@@ -302,10 +302,10 @@ testcases:
 
 ### Flags
 
-In chrome, you can enable or disable experimentals features to test the behaviour of upcoming features.
-You can do it manually with chrome://flags url with chrome browser.
-In venom, to enable a feature add an argument instance enable-features.
-To disable a feature, add an argument instance disable-features
+In Chrome, you can turn experimental features on or off to test the behavior of upcoming features.
+You can do this manually with chrome://flags url with Chrome browser.
+In Venom, to enable a feature, add an instance of the enable-features argument.
+To disable a feature, add a disable-features argument instance
 
 Example
 ```yaml
