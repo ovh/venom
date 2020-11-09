@@ -14,6 +14,12 @@ import (
 	// Postgres driver
 	_ "github.com/lib/pq"
 
+	// Oracle
+	_ "github.com/sijms/go-ora"
+
+	// ODBC
+	_ "github.com/alexbrainman/odbc"
+
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/executors"
 )

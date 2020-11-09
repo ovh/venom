@@ -6,6 +6,7 @@ require (
 	github.com/Shopify/sarama v1.18.0
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/alexbrainman/odbc v0.0.0-20200426075526-f0492dfa1575
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
 	github.com/eapache/go-resiliency v1.1.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
@@ -43,6 +44,7 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20180217203553-081fe17d19ff
 	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible
+	github.com/sijms/go-ora v0.0.0-20201108135513-712ea4f3d160
 	github.com/sirupsen/logrus v1.4.2
 	github.com/smartystreets/assertions v1.0.1
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
