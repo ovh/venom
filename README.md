@@ -35,6 +35,12 @@ Flags:
       --var-from-file strings  --var-from-file filename.yaml --var-from-file filename2.yaml : hcl|json|yaml, must contains map[string]string'
 ```
 
+## Docker image
+
+A docker image is available.
+```bash
+  docker run -it --rm -v $(pwd):/tests run /tests/testsuite.yaml
+```
 ## Executors
 
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
