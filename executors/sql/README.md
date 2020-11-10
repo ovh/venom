@@ -1,6 +1,10 @@
 # Venom - Executor SQL
 
-Step to execute SQL queries into **MySQL** and **PostgreSQL** databases.
+Step to execute SQL queries into databases:
+* **MySQL**
+* **PostgreSQL**
+* **Oracle**
+* **SQL Server** or other database compatible with ODBC system
 
 It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retreive rows as a list of map[string]interface{}
 
@@ -9,7 +13,7 @@ It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to ret
 In your yaml file, you declare tour step like this
 
 ```yaml
-  - driver mandatory [mysql/postgres]
+  - driver mandatory [mysql/postgres/oracle/odbc]
   - dsn mandatory
   - commands optional
   - file optional
@@ -18,10 +22,9 @@ In your yaml file, you declare tour step like this
 - `commands` is a list of SQL queries.
 - `file` parameter is only used as a fallback if `commands` is not used.
 
-Example usage (_mysql_):
+Example usage (_mysql_, _oracle_, _SQLServer_):
 
 ```yaml
-
 name: Title of TestSuite
 testcases:
 
@@ -38,10 +41,26 @@ testcases:
           - result.queries.queries0.rows.rows0.name ShouldEqual Jack
           - result.queries.queries1.rows.rows0.age ShouldEqual 21
 
+  - name: Oracle
+    steps:
+      - type: sql
+        driver: oracle
+        dsn: "oracle://system:oracle@localhost:49161/XE"
+        commands:
+          - select * from v$version
+
+  - name: SQL Server ODBC (ODBC Driver must be install)
+    steps:
+      - type: sql
+        driver: odbc
+        dsn: Driver={SQL Server};Server=localhost,1433;UID=sa;PWD=Example_1234;
+        commands:
+          - SELECT @@VERSION
 ```
 
-```yaml
+Example with a query file:
 
+```yaml
 name: Title of TestSuite
 testcases:
 
@@ -63,3 +82,5 @@ This executor uses the following SQL drivers:
 
 - _MySQL_: https://github.com/go-sql-driver/mysql
 - _PostgreSQL_: https://github.com/lib/pq
+- _Oracle_: https://github.com/sijms/go-ora
+- _ODBC_: https://github.com/alexbrainman/odbc

@@ -5,6 +5,10 @@ go 1.13
 require (
 	github.com/Shopify/sarama v1.27.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/alexbrainman/odbc v0.0.0-20200426075526-f0492dfa1575
+	github.com/bsm/sarama-cluster v2.1.15+incompatible
+	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
+	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.9.0
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fullstorydev/grpcurl v1.4.0
@@ -32,6 +36,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v0.0.0-20180217203553-081fe17d19ff
 	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible
+	github.com/sijms/go-ora v0.0.0-20201108135513-712ea4f3d160
 	github.com/sirupsen/logrus v1.7.0
 	github.com/smartystreets/assertions v1.2.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
