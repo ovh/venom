@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	cluster "github.com/bsm/sarama-cluster"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/executors"
@@ -66,6 +66,9 @@ type Executor struct {
 
 	//MessagesFile represents the messages into the file sended by producer (messages field would be ignored)
 	MessagesFile string `json:"messages_file,omitempty" yaml:"messages_file,omitempty"`
+
+	// Kafka version, default is 0.10.2.0
+	KafkaVersion string `json:"kafka_version,omitempty" yaml:"kafka_version,omitempty"`
 }
 
 // Result represents a step result.
@@ -126,22 +129,20 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 }
 
 func (e Executor) produceMessages(workdir string) error {
-
 	if len(e.Messages) == 0 && e.MessagesFile == "" {
 		return fmt.Errorf("At least messages or messagesFile property must be setted")
 	}
 
-	producerCfg := sarama.NewConfig()
-	producerCfg.Net.TLS.Enable = e.WithTLS // Enable TLS anyway
-	producerCfg.Net.SASL.Enable = e.WithSASL
-	producerCfg.Net.SASL.User = e.User
-	producerCfg.Net.SASL.Password = e.Password
-	producerCfg.Producer.RequiredAcks = sarama.WaitForLocal
-	producerCfg.Producer.Retry.Max = 10
-	producerCfg.Net.DialTimeout = 5 * time.Second
-	producerCfg.Producer.Return.Successes = true
-	producerCfg.Producer.Return.Errors = true
-	sp, err := sarama.NewSyncProducer(e.Addrs, producerCfg)
+	config, err := e.getKafkaConfig()
+	if err != nil {
+		return err
+	}
+
+	config.Producer.RequiredAcks = sarama.WaitForLocal
+	config.Producer.Retry.Max = 10
+	config.Producer.Return.Successes = true
+
+	sp, err := sarama.NewSyncProducer(e.Addrs, config)
 	if err != nil {
 		return err
 	}
@@ -182,67 +183,120 @@ func (e Executor) consumeMessages(l venom.Logger) ([]Message, []interface{}, err
 		return nil, nil, fmt.Errorf("You must provide topics")
 	}
 
-	consumerConfig := cluster.NewConfig()
-	consumerConfig.Net.TLS.Enable = e.WithTLS
-	consumerConfig.Net.SASL.Enable = e.WithSASL
-	consumerConfig.Net.SASL.User = e.User
-	consumerConfig.Net.SASL.Password = e.Password
-
-	if strings.TrimSpace(e.InitialOffset) == "oldest" {
-		consumerConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
-	}
-
-	consumer, err := cluster.NewConsumer(e.Addrs, e.GroupID, e.Topics, consumerConfig)
+	config, err := e.getKafkaConfig()
 	if err != nil {
 		return nil, nil, err
 	}
-	defer consumer.Close()
-
-	timeout := time.Duration(e.Timeout) * time.Millisecond
-
-	messages := []Message{}
-	messagesJSON := []interface{}{}
-
-reading:
-	for {
-		select {
-		case message := <-consumer.Messages():
-			messages = append(messages, Message{
-				Topic: message.Topic,
-				Value: string(message.Value),
-			})
-			messageJSONArray := []MessageJSON{}
-			if err := json.Unmarshal(message.Value, &messageJSONArray); err != nil {
-				messageJSONMap := map[string]interface{}{}
-				if err2 := json.Unmarshal(message.Value, &messageJSONMap); err2 == nil {
-					messagesJSON = append(messagesJSON, MessageJSON{
-						Topic: message.Topic,
-						Value: messageJSONMap,
-					})
-				} else {
-					messagesJSON = append(messagesJSON, MessageJSON{
-						Topic: message.Topic,
-						Value: string(message.Value),
-					})
-				}
-			} else {
-				messagesJSON = append(messagesJSON, MessageJSON{
-					Topic: message.Topic,
-					Value: messageJSONArray,
-				})
-			}
-			if e.MarkOffset {
-				consumer.MarkOffset(message, "")
-			}
-			if e.MessageLimit > 0 && len(messages) >= e.MessageLimit {
-				break reading
-			}
-		case <-time.After(timeout):
-			l.Infof("Timeout reached")
-			break reading
-		}
+	if strings.TrimSpace(e.InitialOffset) == "oldest" {
+		config.Consumer.Offsets.Initial = sarama.OffsetOldest
 	}
 
-	return messages, messagesJSON, nil
+	consumerGroup, err := sarama.NewConsumerGroup(e.Addrs, e.GroupID, config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error instanciate consumer err:%s", err)
+	}
 
+	ctx := context.Background()
+	ctx, _ = context.WithTimeout(ctx, time.Duration(e.Timeout)*time.Millisecond)
+
+	// Track errors
+	go func() {
+		for err := range consumerGroup.Errors() {
+			l.Errorf("error on consume:%s", err)
+		}
+	}()
+
+	h := &handler{
+		messages:     []Message{},
+		messagesJSON: []interface{}{},
+		markOffset:   e.MarkOffset,
+		messageLimit: e.MessageLimit,
+		logger:       l,
+	}
+
+	if err := consumerGroup.Consume(ctx, e.Topics, h); err != nil {
+		l.Errorf("error on consume:%s", err)
+	}
+
+	return h.messages, h.messagesJSON, nil
+}
+
+func (e Executor) getKafkaConfig() (*sarama.Config, error) {
+	config := sarama.NewConfig()
+	config.Net.TLS.Enable = e.WithTLS
+	config.Net.SASL.Enable = e.WithSASL
+	config.Net.SASL.User = e.User
+	config.Net.SASL.Password = e.Password
+	config.Consumer.Return.Errors = true
+	config.Net.DialTimeout = 10 * time.Second
+
+	if e.KafkaVersion != "" {
+		kafkaVersion, err := sarama.ParseKafkaVersion(e.KafkaVersion)
+		if err != nil {
+			return config, fmt.Errorf("error parsing Kafka version %v err:%s", kafkaVersion, err)
+		}
+		config.Version = kafkaVersion
+	} else {
+		config.Version = sarama.V0_10_2_0
+	}
+
+	return config, nil
+}
+
+// handler represents a Sarama consumer group consumer
+type handler struct {
+	messages     []Message
+	messagesJSON []interface{}
+	markOffset   bool
+	messageLimit int
+	logger       venom.Logger
+}
+
+// Setup is run at the beginning of a new session, before ConsumeClaim
+func (h *handler) Setup(s sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
+func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+// ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
+func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for message := range claim.Messages() {
+		h.messages = append(h.messages, Message{
+			Topic: message.Topic,
+			Value: string(message.Value),
+		})
+		messageJSONArray := []MessageJSON{}
+		if err := json.Unmarshal(message.Value, &messageJSONArray); err != nil {
+			messageJSONMap := map[string]interface{}{}
+			if err2 := json.Unmarshal(message.Value, &messageJSONMap); err2 == nil {
+				h.messagesJSON = append(h.messagesJSON, MessageJSON{
+					Topic: message.Topic,
+					Value: messageJSONMap,
+				})
+			} else {
+				h.messagesJSON = append(h.messagesJSON, MessageJSON{
+					Topic: message.Topic,
+					Value: string(message.Value),
+				})
+			}
+		} else {
+			h.messagesJSON = append(h.messagesJSON, MessageJSON{
+				Topic: message.Topic,
+				Value: messageJSONArray,
+			})
+		}
+		if h.markOffset {
+			session.MarkMessage(message, "")
+		}
+		if h.messageLimit > 0 && len(h.messages) >= h.messageLimit {
+			h.logger.Infof("message limit reached")
+			return nil
+		}
+		session.MarkMessage(message, "delivered")
+	}
+	return nil
 }
