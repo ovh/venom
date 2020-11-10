@@ -6,13 +6,11 @@ require (
 	github.com/Shopify/sarama v1.27.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/alexbrainman/odbc v0.0.0-20200426075526-f0492dfa1575
-	github.com/bsm/sarama-cluster v2.1.15+incompatible
-	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
-	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.9.0
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fullstorydev/grpcurl v1.4.0
 	github.com/garyburd/redigo v1.6.0
+	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/go-testfixtures/testfixtures/v3 v3.1.1
 	github.com/gobuffalo/packr v1.30.1 // indirect
