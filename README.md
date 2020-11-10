@@ -8,8 +8,9 @@ It can also output xUnit results files.
 ## Command Line
 
 Download latest binary release from https://github.com/ovh/venom/releases  
-or just go get it ```go get -u github.com/ovh/venom/cli/venom```
 
+If you want to go get it with: ```go get -u github.com/ovh/venom/cli/venom```, please
+check the dependencies in §Hacking section.
 
 ```bash
 $ venom run -h
@@ -445,20 +446,21 @@ func (tcc *DefaultTestCaseContext) Close() error {
 
 Methods SetTestCase and GetName are implemented by CommonTestCaseContext
 
-# Dependencies
-
-Individual packages were updated using the rough procedure:
-
-1. `dep ensure`
-2. `dep ensure -update ${PACKAGE}`
-3. `dep prune`
-4. `go build`
-
-
 # Hacking
 
 You've developed a new cool feature? Fixed an annoying bug? We'd be happy
 to hear from you! Make sure to read [CONTRIBUTING.md](./CONTRIBUTING.md) before.
+
+```bash
+
+$ make build
+
+# if you have this error: fatal error: 'sql.h' file not found, you have to install the odbc driver.
+# you probably have to install odbc driver, see documentation at. https://github.com/alexbrainman/odbc/wiki
+
+# example on osx with custom user installation of homebrew:
+# $ CGO_CFLAGS="-I$HOME/homebrew/Cellar/unixodbc/2.3.9/include" CGO_LDFLAGS="-L$HOME/homebrew/lib" make build
+```
 
 # License
 
