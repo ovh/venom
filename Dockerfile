@@ -8,7 +8,7 @@ COPY . .
 RUN go build -a -installsuffix cgo -ldflags "-X github.com/ovh/venom.Version=$(git describe)" -o /go/bin ./...
 RUN chmod a+rx /go/bin/venom
 
-FROM debian:buster-slim 
+FROM debian:buster-slim
 
 RUN apt-get update && \
     apt-get install -y unixodbc && \
@@ -16,4 +16,13 @@ RUN apt-get update && \
 
 COPY --from=build /go/bin/venom /opt/venom
 
-ENTRYPOINT ["/opt/venom"]
+# Default volume for tests output and logs
+VOLUME /outputs
+
+#Default volume for tests suite
+VOLUME /testsuite
+WORKDIR /testsuite
+
+ENTRYPOINT ["/opt/venom" ]
+
+CMD [ "run", "--output-dir", "/outputs"]
