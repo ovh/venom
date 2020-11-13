@@ -1,0 +1,29 @@
+name: SMTP & IMAP testsuite
+vars:
+  smtpHost: 'localhost'
+  smtpPort: "1025"
+  imapHost: 'localhost'
+  imapPort: "1143"
+testcases:
+- name: test-imap-and-smtp
+  steps:
+  - type: smtp
+    withtls: false
+    timeout: 10
+    host: "{{.smtpHost}}"
+    port: "{{.smtpPort}}"
+    to: test1@venom.ovh
+    from: test1@venom.ovh
+    subject: Title of mail
+    body: body of mail
+  - type: imap
+    withouttls: true
+    imaphost: "{{.imapHost}}"
+    imapPort: "{{.imapPort}}"
+    imapuser: address@example.org
+    imappassword: pass
+    mbox: INBOX
+    mboxifsuccess: venomProcessed
+    searchsubject: Title .*
+    assertions:
+    - result.err ShouldNotBeNil

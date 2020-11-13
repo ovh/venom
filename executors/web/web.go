@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/webctx"
-	"github.com/ovh/venom/executors"
 )
 
 // Name of executor
@@ -42,17 +42,16 @@ type Result struct {
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
-func (Executor) ZeroValueResult() venom.ExecutorResult {
-	r, _ := executors.Dump(Result{})
-	return r
+func (Executor) ZeroValueResult() interface{} {
+	return Result{}
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
-	var ctx *webctx.WebTestCaseContext
+func (Executor) Run(ctx context.Context, testCaseContext venom.TestCaseContext, step venom.TestStep, workdir string) (interface{}, error) {
+	var tcc *webctx.WebTestCaseContext
 	switch testCaseContext.(type) {
 	case *webctx.WebTestCaseContext:
-		ctx = testCaseContext.(*webctx.WebTestCaseContext)
+		tcc = testCaseContext.(*webctx.WebTestCaseContext)
 	default:
 		return nil, fmt.Errorf("Web executor need a Web context")
 	}
@@ -65,10 +64,10 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		return nil, err
 	}
 
-	result, err := e.runAction(l, ctx.Page)
+	result, err := e.runAction(ctx, tcc.Page)
 	if err != nil {
-		if errg := generateErrorHTMLFile(l, ctx.Page, ctx.Name); errg != nil {
-			l.Warnf("Error while generate HTML file: %v", errg)
+		if errg := generateErrorHTMLFile(ctx, tcc.Page, tcc.Name); errg != nil {
+			venom.Warn(ctx, "Error while generate HTML file: %v", errg)
 			return nil, err
 		}
 		return nil, err
@@ -76,18 +75,18 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	// take a screenshot
 	if e.Screenshot != "" {
-		if err := ctx.Page.Screenshot(e.Screenshot); err != nil {
+		if err := tcc.Page.Screenshot(e.Screenshot); err != nil {
 			return nil, err
 		}
-		if err := generateErrorHTMLFile(l, ctx.Page, ctx.Name); err != nil {
-			l.Warnf("Error while generate HTML file: %v", err)
+		if err := generateErrorHTMLFile(ctx, tcc.Page, tcc.Name); err != nil {
+			venom.Warn(ctx, "Error while generate HTML file: %v", err)
 			return nil, err
 		}
 	}
 
 	// Get page title (Check the absence of popup before the page title collect to avoid error)
-	if _, err := ctx.Page.PopupText(); err != nil {
-		title, err := ctx.Page.Title()
+	if _, err := tcc.Page.PopupText(); err != nil {
+		title, err := tcc.Page.Title()
 		if err != nil {
 			return nil, err
 		}
@@ -95,8 +94,8 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	// Get page url (Check the absence of popup before the page url collect to avoid error)
-	if _, err := ctx.Page.PopupText(); err != nil {
-		url, errU := ctx.Page.URL()
+	if _, err := tcc.Page.PopupText(); err != nil {
+		url, errU := tcc.Page.URL()
 		if errU != nil {
 			return nil, fmt.Errorf("Cannot get URL: %s", errU)
 		}
@@ -105,12 +104,12 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = fmt.Sprintf("%s", elapsed)
+	result.TimeHuman = elapsed.String()
 
-	return executors.Dump(result)
+	return result, nil
 }
 
-func (e Executor) runAction(l venom.Logger, page *agouti.Page) (*Result, error) {
+func (e Executor) runAction(ctx context.Context, page *agouti.Page) (*Result, error) {
 	r := &Result{Executor: e}
 	if e.Action.Click != nil {
 		s, err := find(page, e.Action.Click.Find, r)
@@ -273,12 +272,12 @@ func findOne(page *agouti.Page, search string, r *Result) (*agouti.Selection, er
 }
 
 // generateErrorHTMLFile generates an HTML file in error case to identify clearly the error
-func generateErrorHTMLFile(logger venom.Logger, page *agouti.Page, name string) error {
+func generateErrorHTMLFile(ctx context.Context, page *agouti.Page, name string) error {
 	html, err := page.HTML()
 	if err != nil {
 		return err
 	}
 	filename := name + ".dump.html"
-	logger.Infof("Content of the HTML page is saved in %s", filename)
+	venom.Info(ctx, "Content of the HTML page is saved in %s", filename)
 	return ioutil.WriteFile(filename, []byte(html), 0644)
 }

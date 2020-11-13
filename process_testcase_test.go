@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 )
 
 func TestProcessVariableAssigments(t *testing.T) {
-
+	initTestLogger(t)
 	assign := AssignStep{}
 	assign.Assignments = make(map[string]Assignment)
 	assign.Assignments["assignVar"] = Assignment{
@@ -23,14 +24,9 @@ func TestProcessVariableAssigments(t *testing.T) {
 	b, _ := yaml.Marshal(assign)
 	t.Log("\n" + string(b))
 
-	var stepIn TestStep
-	assert.NoError(t, yaml.Unmarshal(b, &stepIn))
+	tcVars := H{"here.some.value": "this is the \nvalue"}
 
-	tcVars := H{
-		"here.some.value": "this is the \nvalue",
-	}
-
-	result, is, err := ProcessVariableAssigments("", tcVars, stepIn, TestLogger{t})
+	result, is, err := ProcessVariableAssigments(context.TODO(), "", tcVars, b)
 	assert.True(t, is)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -42,7 +38,7 @@ func TestProcessVariableAssigments(t *testing.T) {
 script: echo 'foo'
 `)
 	assert.NoError(t, yaml.Unmarshal(b, &wrongStepIn))
-	result, is, err = ProcessVariableAssigments("", tcVars, wrongStepIn, TestLogger{t})
+	result, is, err = ProcessVariableAssigments(context.TODO(), "", tcVars, b)
 	assert.False(t, is)
 	assert.NoError(t, err)
 	assert.Nil(t, result)

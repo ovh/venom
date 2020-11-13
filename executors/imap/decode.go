@@ -2,6 +2,7 @@ package imap
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
@@ -12,9 +13,8 @@ import (
 	"mime/quotedprintable"
 	"net/mail"
 
-	"github.com/yesnault/go-imap/imap"
-
 	"github.com/ovh/venom"
+	"github.com/yesnault/go-imap/imap"
 )
 
 func decodeHeader(msg *mail.Message, headerName string) (string, error) {
@@ -32,7 +32,7 @@ func hash(in string) string {
 	return fmt.Sprintf("%x", h2.Sum(nil))
 }
 
-func extract(rsp imap.Response, l venom.Logger) (*Mail, error) {
+func extract(ctx context.Context, rsp imap.Response) (*Mail, error) {
 	tm := &Mail{}
 
 	header := imap.AsBytes(rsp.MessageInfo().Attrs["RFC822.HEADER"])
@@ -66,7 +66,7 @@ func extract(rsp imap.Response, l venom.Logger) (*Mail, error) {
 	case "base64":
 		r = base64.NewDecoder(base64.StdEncoding, r)
 	}
-	l.Debugf("Mail Content-Transfer-Encoding is %s ", encoding)
+	venom.Debug(ctx, "Mail Content-Transfer-Encoding is %s ", encoding)
 
 	contentType, params, err := mime.ParseMediaType(mmsg.Header.Get("Content-Type"))
 	if err != nil {
@@ -81,12 +81,12 @@ func extract(rsp imap.Response, l venom.Logger) (*Mail, error) {
 					continue
 				}
 				if errm != nil {
-					l.Debugf("Error while read Part:%s", err)
+					venom.Debug(ctx, "Error while read Part:%s", err)
 					break
 				}
 				slurp, errm := ioutil.ReadAll(p)
 				if errm != nil {
-					l.Debugf("Error while ReadAll Part:%s", err)
+					venom.Debug(ctx, "Error while ReadAll Part:%s", err)
 					continue
 				}
 				tm.Body = string(slurp)

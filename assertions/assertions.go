@@ -406,8 +406,6 @@ func ShouldBeBetween(actual interface{}, expected ...interface{}) error {
 // It ensures that the actual value is NOT between both bounds.
 func ShouldNotBeBetween(actual interface{}, expected ...interface{}) error {
 	if err := ShouldBeBetween(actual, expected...); err != nil {
-		fmt.Printf("%T %v\n", err, err)
-
 		if _, ok := err.(*AssertionError); ok {
 			return err
 		}

@@ -15,7 +15,7 @@ testcases:
   - type: smtp
     withtls: true
     host: localhost
-    port: 465
+    port: "465"
     user: yourSMTPUsername
     password: yourSMTPPassword
     to: destinationa@yourdomain.com,destinationb@yourdomain.com

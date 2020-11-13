@@ -1,8 +1,9 @@
 package run
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,10 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/hcl"
+	yml "github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/venom"
 	defaultctx "github.com/ovh/venom/context/default"
@@ -37,12 +37,11 @@ import (
 )
 
 var (
-	path            []string
-	variables       []string
-	exclude         []string
-	format          string
-	varFiles        []string
-	withEnv         bool
+	path      []string
+	variables []string
+	format    string
+	varFiles  []string
+	//withEnv         bool
 	logLevel        string
 	outputDir       string
 	strict          bool
@@ -56,9 +55,7 @@ var (
 func init() {
 	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: hcl|json|yaml, must contains map[string]string'")
-	Cmd.Flags().StringSliceVarP(&exclude, "exclude", "", []string{""}, "--exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
-	Cmd.Flags().BoolVarP(&withEnv, "env", "", true, "Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests")
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
@@ -110,7 +107,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterTestCaseContext(webctx.Name, webctx.New())
 		v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		v.EnableProfiling = enableProfiling
 		v.LogLevel = logLevel
 		v.OutputDir = outputDir
@@ -119,17 +116,15 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.StopOnFailure = stopOnFailure
 
 		if v.EnableProfiling {
-			var filename, filenameCPU, filenameMem string
-			if v.OutputDir != "" {
-				filename = v.OutputDir + "/"
+			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
+			if err != nil {
+				log.Errorf("error while create profile file %v", err)
 			}
-			filenameCPU = filename + "pprof_cpu_profile.prof"
-			filenameMem = filename + "pprof_mem_profile.prof"
-			fCPU, errCPU := os.Create(filenameCPU)
-			fMem, errMem := os.Create(filenameMem)
-			if errCPU != nil || errMem != nil {
-				log.Errorf("error while create profile file for root process CPU:%v MEM:%v", errCPU, errMem)
-			} else {
+			fMem, err := os.Create(filepath.Join(v.OutputDir, "pprof_mem_profile.prof"))
+			if err != nil {
+				log.Errorf("error while create profile file %v", err)
+			}
+			if fCPU != nil && fMem != nil {
 				pprof.StartCPUProfile(fCPU)
 				p := pprof.Lookup("heap")
 				defer p.WriteTo(fMem, 1)
@@ -137,69 +132,96 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 			}
 		}
 
-		mapvars := make(map[string]string)
-		if withEnv {
-			variables = append(variables, os.Environ()...)
-		}
-
+		var readers = []io.Reader{}
 		for _, f := range varFiles {
 			if f == "" {
 				continue
 			}
-			varFileMap := make(map[string]string)
-			bytes, err := ioutil.ReadFile(f)
+			fi, err := os.Open(f)
 			if err != nil {
-				log.Fatal(err)
+				return fmt.Errorf("unable to open var-file %s: %v", f, err)
 			}
-			switch filepath.Ext(f) {
-			case ".hcl":
-				err = hcl.Unmarshal(bytes, &varFileMap)
-			case ".json":
-				err = json.Unmarshal(bytes, &varFileMap)
-			case ".yaml", ".yml":
-				err = yaml.Unmarshal(bytes, &varFileMap)
-			default:
-				log.Fatal("unsupported varFile format")
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			for key, value := range varFileMap {
-				mapvars[key] = value
-			}
+			defer fi.Close()
+			readers = append(readers, fi)
 		}
 
-		for _, a := range variables {
-			t := strings.SplitN(a, "=", 2)
-			if len(t) < 2 {
-				continue
-			}
-			mapvars[t[0]] = strings.Join(t[1:], "")
+		mapvars, err := readInitialVariables(variables, readers, os.Environ())
+		if err != nil {
+			return err
 		}
-
 		v.AddVariables(mapvars)
 
 		start := time.Now()
 
 		if !noCheckVars {
-			if err := v.Parse(path, exclude); err != nil {
-				log.Fatal(err)
+			if err := v.Parse(path); err != nil {
+				fmt.Println(err)
+				os.Exit(2)
+				return err
 			}
 		}
 
-		tests, err := v.Process(path, exclude)
+		tests, err := v.Process(context.Background(), path)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			os.Exit(2)
+			return err
 		}
 
 		elapsed := time.Since(start)
 		if err := v.OutputResult(*tests, elapsed); err != nil {
-			fmt.Fprintf(os.Stderr, err.Error())
-			os.Exit(1)
+			fmt.Println(err)
+			os.Exit(2)
+			return err
 		}
 		if strict && tests.TotalKO > 0 {
 			os.Exit(2)
 		}
+
+		return nil
 	},
+}
+
+func readInitialVariables(argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
+	var cast = func(vS string) interface{} {
+		var v interface{}
+		_ = yml.Unmarshal([]byte(vS), &v) // ignore errors
+		return v
+	}
+
+	var result = map[string]interface{}{}
+	for _, env := range environ {
+		if strings.HasPrefix(env, "VENOM_VAR_") {
+			tuple := strings.Split(env, "=")
+			k := strings.TrimPrefix(tuple[0], "VENOM_VAR_")
+			result[k] = cast(tuple[1])
+		}
+	}
+
+	for _, r := range argVarsFiles {
+		var tmpResult = map[string]interface{}{}
+		btes, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+		if err := yml.Unmarshal(btes, &tmpResult); err != nil {
+			return nil, err
+		}
+		for k, v := range tmpResult {
+			result[k] = v
+		}
+	}
+
+	for _, arg := range argsVars {
+		if arg == "" {
+			continue
+		}
+		tuple := strings.Split(arg, "=")
+		if len(tuple) != 2 {
+			return nil, fmt.Errorf("invalid variable declaration: %v", arg)
+		}
+		result[tuple[0]] = cast(tuple[1])
+	}
+
+	return result, nil
 }

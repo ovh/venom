@@ -1,13 +1,17 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	nested "github.com/antonfisher/nested-logrus-formatter"
+	"github.com/gosimple/slug"
+	"github.com/sirupsen/logrus"
 )
 
 func (v *Venom) init() error {
@@ -15,36 +19,50 @@ func (v *Venom) init() error {
 	switch v.LogLevel {
 	case "disable":
 		v.LogOutput = ioutil.Discard
-		log.SetLevel(log.WarnLevel)
-		log.SetOutput(v.LogOutput)
+		logrus.SetLevel(logrus.WarnLevel)
+		logrus.SetOutput(v.LogOutput)
 		return nil
 	case "debug":
-		log.SetLevel(log.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	case "info":
-		log.SetLevel(log.InfoLevel)
+		logrus.SetLevel(logrus.InfoLevel)
 	case "error":
-		log.SetLevel(log.WarnLevel)
+		logrus.SetLevel(logrus.WarnLevel)
 	default:
-		log.SetLevel(log.WarnLevel)
+		logrus.SetLevel(logrus.WarnLevel)
+	}
+
+	if err := os.MkdirAll(v.OutputDir, os.FileMode(0755)); err != nil {
+		return fmt.Errorf("unable to create output dir: %v", err)
 	}
 
 	var err error
-	v.LogOutput, err = os.OpenFile("venom.log", os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+	var logFile = filepath.Join(v.OutputDir, "venom.log")
+	_ = os.RemoveAll(logFile)
+	v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
 	if err != nil {
 		return fmt.Errorf("unable to write log file: %v", err)
 	}
 
-	log.SetOutput(v.LogOutput)
+	logrus.SetOutput(v.LogOutput)
+	logrus.SetFormatter(&nested.Formatter{
+		HideKeys:    true,
+		FieldsOrder: []string{"testsuite", "testcase", "step", "executor"},
+	})
+	logger = logrus.NewEntry(logrus.StandardLogger())
+
+	slug.Lowercase = false
+
 	return nil
 }
 
 // Parse parses tests suite to check context and variables
-func (v *Venom) Parse(path []string, exclude []string) error {
+func (v *Venom) Parse(path []string) error {
 	if err := v.init(); err != nil {
 		return err
 	}
 
-	filesPath, err := getFilesPath(path, exclude)
+	filesPath, err := getFilesPath(path)
 	if err != nil {
 		return err
 	}
@@ -57,11 +75,15 @@ func (v *Venom) Parse(path []string, exclude []string) error {
 	extractedVars := []string{}
 	for i := range v.testsuites {
 		ts := &v.testsuites[i]
-		log.Info("Parsing testsuite ", ts.Package)
+		ts.Vars.Add("venom.testsuite", ts.Name)
+
+		Info(context.Background(), "Parsing testsuite %s : %+v", ts.Package, ts.Vars)
 		tvars, textractedVars, err := v.parseTestSuite(ts)
 		if err != nil {
 			return err
 		}
+
+		Debug(context.TODO(), "ts(%s).Vars: %+v", ts.Package, ts.Vars)
 		for k := range ts.Vars {
 			textractedVars = append(textractedVars, k)
 		}
@@ -125,12 +147,12 @@ func (v *Venom) Parse(path []string, exclude []string) error {
 }
 
 // Process runs tests suite and return a Tests result
-func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
+func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	if err := v.init(); err != nil {
 		return nil, err
 	}
 
-	filesPath, err := getFilesPath(path, exclude)
+	filesPath, err := getFilesPath(path)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +174,7 @@ func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
 		for ts := range chanToRun {
 			parallels <- ts
 			go func(ts *TestSuite) {
-				v.runTestSuite(ts)
+				v.runTestSuite(ctx, ts)
 				chanEnd <- ts
 				<-parallels
 			}(ts)
@@ -183,9 +205,4 @@ func (v *Venom) computeStats(testsResult *Tests, chanEnd <-chan *TestSuite, wg *
 		testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
 		wg.Done()
 	}
-}
-
-func rightPad(s string, padStr string, pLen int) string {
-	o := s + strings.Repeat(padStr, pLen)
-	return o[0:pLen]
 }

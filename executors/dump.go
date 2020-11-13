@@ -11,6 +11,7 @@ func Dump(v interface{}) (map[string]interface{}, error) {
 	e.ExtraFields.Type = true
 	e.ExtraFields.DetailedStruct = true
 	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 
 	return e.ToMap(v)

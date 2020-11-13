@@ -1,21 +1,24 @@
 package venom
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/fsamin/go-dump"
-	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
+	"github.com/ghodss/yaml"
+	"github.com/gosimple/slug"
+	"github.com/ovh/cds/sdk/interpolate"
 )
 
 func (v *Venom) initTestCaseContext(ts *TestSuite, tc *TestCase) (TestCaseContext, error) {
 	var errContext error
-	_, tc.Context, errContext = ts.Templater.ApplyOnMap(tc.Context)
+	/*_, tc.Context, errContext = ts.Templater.ApplyOnMap(tc.Context)
 	if errContext != nil {
 		return nil, errContext
-	}
+	}*/
 	tcc, errContext := v.ContextWrap(tc)
 	if errContext != nil {
 		return nil, errContext
@@ -36,28 +39,36 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	}
 	defer tcc.Close()
 
+	dvars, err := dump.ToStringMap(tc.Vars)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	vars := []string{}
 	extractedVars := []string{}
 
-	for stepNumber, stepIn := range tc.TestSteps {
-		step, erra := ts.Templater.ApplyOnStep(stepNumber, stepIn)
-		if erra != nil {
-			return nil, nil, erra
-		}
-
-		exec, err := v.WrapExecutor(step, tcc)
+	for _, rawStep := range tc.RawTestSteps {
+		content, err := interpolate.Do(string(rawStep), dvars)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		withZero, ok := exec.executor.(executorWithZeroValueResult)
-		if ok {
-			defaultResult := withZero.ZeroValueResult()
+		var step TestStep
+		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
+			return nil, nil, err
+		}
+
+		_, exec, err := v.GetExecutorRunner(context.Background(), step, tc.Vars)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		defaultResult := exec.ZeroValueResult()
+		if defaultResult != nil {
 			dumpE, err := dump.ToStringMap(defaultResult, dump.WithDefaultLowerCaseFormatter())
 			if err != nil {
 				return nil, nil, err
 			}
-
 			for k := range dumpE {
 				extractedVars = append(extractedVars, tc.Name+"."+k)
 				if strings.HasSuffix(k, "__type__") && dumpE[k] == "Map" {
@@ -77,23 +88,11 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 			if strings.HasPrefix(k, "vars.") {
 				s := tc.Name + "." + strings.Split(k[5:], ".")[0]
 				extractedVars = append(extractedVars, s)
-
 				continue
 			}
 			if strings.HasPrefix(k, "extracts.") {
-				for _, extractVar := range extractPattern.FindAllString(v, -1) {
-					varname := extractVar[2:strings.Index(extractVar, "=")]
-					var found bool
-					for i := 0; i < len(extractedVars); i++ {
-						if extractedVars[i] == varname {
-							found = true
-							break
-						}
-					}
-					if !found {
-						extractedVars = append(extractedVars, tc.Name+"."+varname)
-					}
-				}
+				s := tc.Name + "." + strings.Split(k[9:], ".")[0]
+				extractedVars = append(extractedVars, s)
 				continue
 			}
 
@@ -107,11 +106,6 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 				}
 
 				s := varRegEx.FindString(v)
-
-				if strings.HasPrefix(s, "{{expandEnv ") {
-					continue
-				}
-
 				for i := 0; i < len(extractedVars); i++ {
 					prefix := "{{." + extractedVars[i]
 					if strings.HasPrefix(s, prefix) {
@@ -131,53 +125,124 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	return vars, extractedVars, nil
 }
 
-func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) {
+func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	tcc, err := v.initTestCaseContext(ts, tc)
 	if err != nil {
-		tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
+		tc.AppendError(err)
 		return
 	}
 	defer tcc.Close()
 
-	if _l, ok := l.(*logrus.Entry); ok {
-		l = _l.WithField("x.testcase", tc.Name)
+	ctx = context.WithValue(ctx, ContextKey("testcase"), tc.Name)
+	tc.Vars = ts.Vars.Clone()
+	tc.Name = slug.Make(tc.Name)
+	tc.Vars.Add("venom.testcase", tc.Name)
+	tc.Vars.AddAll(ts.ComputedVars)
+	tc.ComputedVars = H{}
+
+	for k, v := range tc.Vars {
+		Debug(ctx, "running testCase with variable %s: %+v", k, v)
 	}
 
-	ts.Templater.Add("", map[string]string{"venom.testcase": tc.Name})
-	for stepNumber, stepIn := range tc.TestSteps {
-		step, erra := ts.Templater.ApplyOnStep(stepNumber, stepIn)
-		if erra != nil {
-			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(erra.Error())})
-			break
-		}
+	Debug(ctx, "Starting testcase")
+	defer Debug(ctx, "Ending testcase")
 
-		e, err := v.WrapExecutor(step, tcc)
+	for stepNumber, rawStep := range tc.RawTestSteps {
+		stepVars := tc.Vars.Clone()
+		stepVars.Add("venom.teststep.number", stepNumber)
+
+		vars, err := dump.ToStringMap(stepVars)
 		if err != nil {
-			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
-			break
+			Error(ctx, "unable to dump testcase vars: %v", err)
+			tc.AppendError(err)
+			return
 		}
 
-		v.RunTestStep(tcc, e, ts, tc, stepNumber, step, l)
-
-		if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
-			break
+		for k, v := range vars {
+			content, err := interpolate.Do(v, vars)
+			if err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to interpolate variable %q: %v", v, err)
+				return
+			}
+			vars[k] = content
 		}
 
-		assign, _, err := ProcessVariableAssigments(tc.Name, ts.Templater.Values, stepIn, l)
+		var content string
+		for i := 0; i < 10; i++ {
+			content, err = interpolate.Do(string(rawStep), vars)
+			if err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to interpolate step: %v", err)
+				return
+			}
+			if !strings.Contains(content, "{{") {
+				break
+			}
+		}
+
+		Info(ctx, "Step #%d content is: %q", stepNumber, content)
+
+		var step TestStep
+		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
+			tc.AppendError(err)
+			Error(ctx, "unable to unmarshal step: %v", err)
+			return
+		}
+
+		tc.testSteps = append(tc.testSteps, step)
+		var e ExecutorRunner
+		ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
 		if err != nil {
-			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
+			tc.AppendError(err)
+			Error(ctx, "unable to get executor: %v", err)
 			break
 		}
 
-		ts.Templater.Add(tc.Name, assign)
+		v.RunTestStep(ctx, tcc, e, ts, tc, stepNumber, step)
+
+		tc.testSteps = append(tc.testSteps, step)
+
+		var hasFailed bool
+		if len(tc.Failures) > 0 {
+			for _, f := range tc.Failures {
+				Warning(ctx, "%v", f)
+			}
+			hasFailed = true
+		}
+
+		if len(tc.Errors) > 0 {
+			Error(ctx, "Errors: ")
+			for _, e := range tc.Errors {
+				Error(ctx, "%v", e)
+			}
+			hasFailed = true
+		}
+
+		if hasFailed {
+			break
+		}
+
+		allVars := tc.Vars.Clone()
+		allVars.AddAll(tc.ComputedVars.Clone())
+
+		assign, _, err := ProcessVariableAssigments(ctx, tc.Name, allVars, rawStep)
+		if err != nil {
+			tc.AppendError(err)
+			Error(ctx, "unable to process variable assignments: %v", err)
+			break
+		}
+
+		tc.ComputedVars.AddAll(assign)
 	}
 }
 
-func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logger) (H, bool, error) {
+func ProcessVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
 	var stepAssignment AssignStep
 	var result = make(H)
-	if err := mapstructure.Decode(stepIn, &stepAssignment); err != nil {
-		return nil, false, nil
+	if err := yaml.Unmarshal(rawStep, &stepAssignment); err != nil {
+		Error(ctx, "unable to parse assignements (%s): %v", string(rawStep), err)
+		return nil, false, err
 	}
 
 	if len(stepAssignment.Assignments) == 0 {
@@ -190,32 +255,38 @@ func ProcessVariableAssigments(tcName string, tcVars H, stepIn TestStep, l Logge
 	}
 
 	for varname, assigment := range stepAssignment.Assignments {
-		l.Debugf("Processing %s assignment", varname)
+		Debug(ctx, "Processing %s assignment", varname)
 		varValue, has := tcVars[assigment.From]
 		if !has {
 			varValue, has = tcVars[tcName+"."+assigment.From]
 			if !has {
 				err := fmt.Errorf("%s reference not found in %s", assigment.From, strings.Join(tcVarsKeys, "\n"))
-				l.Errorf("%v", err)
+				Info(ctx, "%v", err)
 				return nil, true, err
 			}
 		}
 		if assigment.Regex == "" {
-			l.Debugf("Assign '%s' value '%s'", varname, varValue)
+			Info(ctx, "Assign '%s' value '%s'", varname, varValue)
 			result.Add(varname, varValue)
 		} else {
 			regex, err := regexp.Compile(assigment.Regex)
 			if err != nil {
-				l.Errorf("unable to compile regexp %s", assigment.Regex)
+				Warn(ctx, "unable to compile regexp %s", assigment.Regex)
 				return nil, true, err
 			}
-			submatches := regex.FindStringSubmatch(varValue)
-			if len(submatches) == 0 {
-				l.Debugf("%s: '%v' doesn't match anything in '%s'", varname, regex, varValue)
+			varValueS, ok := varValue.(string)
+			if !ok {
+				Warn(ctx, "%s is not a string value", varname)
 				result.Add(varname, "")
 				continue
 			}
-			l.Debugf("Assign '%s' from regexp '%v', values '%v'", varname, regex, submatches)
+			submatches := regex.FindStringSubmatch(varValueS)
+			if len(submatches) == 0 {
+				Warn(ctx, "%s: '%v' doesn't match anything in '%s'", varname, regex, varValue)
+				result.Add(varname, "")
+				continue
+			}
+			Info(ctx, "Assign '%s' from regexp '%v', values '%v'", varname, regex, submatches)
 			result.Add(varname, submatches[len(submatches)-1])
 		}
 	}

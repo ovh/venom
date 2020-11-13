@@ -1,6 +1,7 @@
 package imap
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -11,7 +12,6 @@ import (
 	"github.com/yesnault/go-imap/imap"
 
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/executors"
 )
 
 // Name for test imap
@@ -51,18 +51,16 @@ type Mail struct {
 
 // Result represents a step result
 type Result struct {
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
-	Err         string   `json:"error" yaml:"error"`
-	Subject     string   `json:"subject,omitempty" yaml:"subject,omitempty"`
-	Body        string   `json:"body,omitempty" yaml:"body,omitempty"`
-	TimeSeconds float64  `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
+	Err         string  `json:"error" yaml:"error"`
+	Subject     string  `json:"subject,omitempty" yaml:"subject,omitempty"`
+	Body        string  `json:"body,omitempty" yaml:"body,omitempty"`
+	TimeSeconds float64 `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	TimeHuman   string  `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
-func (Executor) ZeroValueResult() venom.ExecutorResult {
-	r, _ := executors.Dump(Result{})
-	return r
+func (Executor) ZeroValueResult() interface{} {
+	return Result{}
 }
 
 // GetDefaultAssertions return default assertions for type exec
@@ -71,7 +69,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, tcc venom.TestCaseContext, step venom.TestStep, workdir string) (interface{}, error) {
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -79,8 +77,8 @@ func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestSt
 
 	start := time.Now()
 
-	result := Result{Executor: e}
-	find, errs := e.getMail(l)
+	result := Result{}
+	find, errs := e.getMail(ctx)
 	if errs != nil {
 		result.Err = errs.Error()
 	}
@@ -93,13 +91,12 @@ func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestSt
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = fmt.Sprintf("%s", elapsed)
-	result.Executor.IMAPPassword = "****hidden****" // do not output password
+	result.TimeHuman = elapsed.String()
 
-	return executors.Dump(result)
+	return result, nil
 }
 
-func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
+func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 	if e.SearchFrom == "" && e.SearchSubject == "" && e.SearchBody == "" && e.SearchTo == "" {
 		return nil, fmt.Errorf("You have to use one of searchfrom, searchto, searchsubject or subjectbody parameters.")
 	}
@@ -123,22 +120,22 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 		return nil, fmt.Errorf("Error while queryCount:%s", err.Error())
 	}
 
-	l.Debugf("count messages:%d", count)
+	venom.Debug(ctx, "count messages:%d", count)
 
 	if count == 0 {
 		return nil, errors.New("No message to fetch")
 	}
 
-	messages, err := fetch(c, box, count, l)
+	messages, err := fetch(ctx, c, box, count)
 	if err != nil {
 		return nil, fmt.Errorf("Error while feching messages:%s", err.Error())
 	}
 	defer c.Close(false)
 
 	for _, msg := range messages {
-		m, erre := extract(msg, l)
+		m, erre := extract(ctx, msg)
 		if erre != nil {
-			l.Warnf("Cannot extract the content of the mail: %s", erre)
+			venom.Warn(ctx, "Cannot extract the content of the mail: %s", erre)
 			continue
 		}
 
@@ -149,12 +146,12 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 
 		if found {
 			if e.DeleteOnSuccess {
-				l.Debugf("Delete message %s", m.UID)
+				venom.Debug(ctx, "Delete message %s", m.UID)
 				if err := m.delete(c); err != nil {
 					return nil, err
 				}
 			} else if e.MBoxOnSuccess != "" {
-				l.Debugf("Move to %s", e.MBoxOnSuccess)
+				venom.Debug(ctx, "Move to %s", e.MBoxOnSuccess)
 				if err := m.move(c, e.MBoxOnSuccess); err != nil {
 					return nil, err
 				}
@@ -246,10 +243,10 @@ func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error
 	return c, nil
 }
 
-func fetch(c *imap.Client, box string, nb uint32, l venom.Logger) ([]imap.Response, error) {
-	l.Debugf("call Select")
+func fetch(ctx context.Context, c *imap.Client, box string, nb uint32) ([]imap.Response, error) {
+	venom.Debug(ctx, "call Select")
 	if _, err := c.Select(box, false); err != nil {
-		l.Errorf("Error with select %s", err.Error())
+		venom.Error(ctx, "Error with select %s", err.Error())
 		return []imap.Response{}, err
 	}
 
@@ -257,7 +254,7 @@ func fetch(c *imap.Client, box string, nb uint32, l venom.Logger) ([]imap.Respon
 
 	cmd, err := c.Fetch(seqset, "ENVELOPE", "RFC822.HEADER", "RFC822.TEXT", "UID")
 	if err != nil {
-		l.Errorf("Error with fetch:%s", err)
+		venom.Error(ctx, "Error with fetch:%s", err)
 		return []imap.Response{}, err
 	}
 
@@ -273,7 +270,7 @@ func fetch(c *imap.Client, box string, nb uint32, l venom.Logger) ([]imap.Respon
 		cmd.Data = nil
 		c.Data = nil
 	}
-	l.Debugf("Nb messages fetch:%d", len(messages))
+	venom.Debug(ctx, "Nb messages fetch:%d", len(messages))
 	return messages, nil
 }
 

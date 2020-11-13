@@ -6,31 +6,21 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"reflect"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	dump "github.com/fsamin/go-dump"
+	"github.com/gosimple/slug"
 	tap "github.com/mndrix/tap-go"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
-var regexpSlug = regexp.MustCompile("[^a-z0-9]+")
-
-func slug(s string) string {
-	return strings.Trim(regexpSlug.ReplaceAllString(strings.ToLower(s), "-"), "-")
-}
-
 // OutputResult output result to sdtout, files...
 func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 	var data []byte
 	var err error
-	v.outputResume(tests, elapsed)
-	cleanOutputColors(&tests)
 	switch v.OutputFormat {
 	case "json":
 		data, err = json.MarshalIndent(tests, "", "  ")
@@ -66,7 +56,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		for _, ts := range tests.TestSuites {
 			for _, tc := range ts.TestCases {
 				for _, f := range tc.Failures {
-					filename := v.OutputDir + "/" + slug(ts.ShortName) + "." + slug(tc.Name) + ".dump"
+					filename := v.OutputDir + "/" + slug.Make(ts.ShortName) + "." + slug.Make(tc.Name) + ".dump"
 
 					sdump := &bytes.Buffer{}
 					dumpEncoder := dump.NewEncoder(sdump)
@@ -77,7 +67,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 					dumpEncoder.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 
 					//Try to pretty print only the result
-					var smartPrinted bool
+					/*var smartPrinted bool
 					for k, v := range f.Result {
 						if k == "result" && reflect.TypeOf(v).Kind() != reflect.String {
 							dumpEncoder.Fdump(v)
@@ -88,11 +78,11 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 					//If not succeed print all the stuff
 					if !smartPrinted {
 						dumpEncoder.Fdump(f.Result)
-					}
+					}*/
 
 					output := f.Value + "\n ------ Result: \n" + sdump.String() + "\n ------ Variables:\n"
-					for k, v := range ts.Templater.Values {
-						output += fmt.Sprintf("%s:%s\n", k, v)
+					for k, v := range ts.Vars {
+						output += fmt.Sprintf("%s:%v\n", k, v)
 					}
 					if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
 						return fmt.Errorf("Error while creating file %s: %v", filename, err)
@@ -141,7 +131,7 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
+func (v *Venom) outputResume(tests Tests) {
 	red := color.New(color.FgRed).SprintFunc()
 	totalTestCases := 0
 	totalTestSteps := 0
@@ -149,7 +139,7 @@ func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
 	for _, t := range tests.TestSuites {
 		totalTestCases += len(t.TestCases)
 		for _, tc := range t.TestCases {
-			totalTestSteps += len(tc.TestSteps)
+			totalTestSteps += len(tc.testSteps)
 		}
 
 		if t.Failures > 0 || t.Errors > 0 {
@@ -165,6 +155,32 @@ func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
 			}
 		}
 	}
+}
+
+func (v *Venom) printTestsuiteOutput(ts TestSuite) {
+	var hasFailed = ts.Failures > 0 || ts.Errors > 0
+
+	var output string
+	if hasFailed {
+		red := color.New(color.FgRed).SprintFunc()
+		output = fmt.Sprintf("%s %q (from %s)", red("FAILURE"), ts.Name, ts.Package)
+	} else {
+		green := color.New(color.FgGreen).SprintFunc()
+		output = fmt.Sprintf("%s %q (from %s)", green("SUCCESS"), ts.Name, ts.Package)
+	}
+	v.PrintFunc("%v\n", output)
+
+	if hasFailed {
+		for _, tc := range ts.TestCases {
+			for _, f := range tc.Failures {
+				v.PrintFunc("%s\n", f.Value)
+			}
+			for _, f := range tc.Errors {
+				v.PrintFunc("%s\n", f.Value)
+			}
+		}
+	}
+
 }
 
 func cleanOutputColors(tests *Tests) {

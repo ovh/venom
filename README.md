@@ -20,7 +20,6 @@ Usage:
 
 Flags:
       --env                    Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
-      --exclude strings        --exclude filaA.yaml --exclude filaB.yaml --exclude fileC*.yaml
       --format string          --format:yaml, json, xml, tap (default "xml")
   -h, --help                   help for run
       --log string             Log Level : debug, info or warn (default "warn")
@@ -174,18 +173,11 @@ Builtin variables:
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
 
-Venom templating
-
-Beside venom variables, it is possible to use templating functions:
-
-* expandEnv : {{expandEnv <filename>}}, rewrites the named file and replaces ${var} or $var in the string according to the values of the current environment variables. References to undefined variables are replaced by the empty string. You can use it a script step for instance: `script: cat {{expandEnv ./myFile}}`. 
-
 ### Testsuite Versions
 
 #### Version 2
 
 On this new version, venom use the testsuite folder as the basepath instead of location of venom execution.
-
 
 Considering this workspace:
 
@@ -363,7 +355,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (interface{}, error) {
 
 	// transform step to Executor Instance
 	var e Executor

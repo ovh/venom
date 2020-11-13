@@ -1,0 +1,39 @@
+name: Kafka testsuite
+version: "2"
+vars:
+  kafkaHost: 'localhost'
+  kafkaPort: '9092'
+  kafkaUser: ''
+  kafkaPwd: ''
+testcases:
+- name: Kafka test
+  description: Test kafka
+  steps:
+  - type: kafka
+    clientType: producer
+    withSASL: false
+    withTLS: false
+    user: "{{.kafkaUser}}"
+    password: "{{.kafkaPwd}}"
+    addrs:
+      - "{{.kafkaHost}}:{{.kafkaPort}}"
+    messages:
+    - topic: test-topic
+      value: '{"hello":"bar"}'
+  - type: kafka
+    clientType: consumer
+    withTLS: false
+    withSASL: false
+    user: "{{.kafkaUser}}"
+    password: "{{.kafkaPwd}}"
+    markOffset: true
+    initialOffset: oldest
+    messageLimit: 1
+    groupID: venom
+    addrs:
+      - "{{.kafkaHost}}:{{.kafkaPort}}"
+    topics:
+      - test-topic
+    assertions:
+    - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
+    - result.messages.__len__ ShouldEqual 1

@@ -1,34 +1,28 @@
+define docker_run
+	docker run --name venom-$(2) -d $(3) $(1) > venom-$2.cid
+endef
+
+venom-postgres.cid:
+	$(call docker_run,postgres,postgres,-p 15432:5432 -e POSTGRES_PASSWORD=venom -e POSTGRES_USER=venom -e POSTGRES_DB=venom)
+venom-mysql.cid:
+	$(call docker_run,mysql/mysql-server,mysql,-p 13306:3306 -e MYSQL_PASSWORD=venom -e MYSQL_USER=venom -e MYSQL_DATABASE=venom)
+venom-redis.cid:
+	$(call docker_run,redis,redis,-p 16379:6379)
+venom-imap.cid:
+	$(call docker_run,antespi/docker-imap-devel,imap,-p 1025:25 -p 1143:143 -p 1993:993 -e MAILNAME=example.org -e MAIL_ADDRESS=address@example.org -e MAIL_PASS=pass)
+venom-kafka.cid:
+	$(call docker_run,spotify/kafka,kafka,-p 2181:2181 -p 9092:9092 -e ADVERTISED_HOST=$(shell hostname) -e ADVERTISED_PORT=9092)
+venom-rabbit.cid:
+	$(call docker_run,rabbitmq,rabbitmq,-p 5672:5672 -p 15672:15672)
+venom-sshd.cid:
+	$(call docker_run,ghcr.io/linuxserver/openssh-server,sshd,-p 2222:2222 -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e PUBLIC_KEY="$(shell cat ~/.ssh/id_rsa.pub)" -e USER_NAME=venom )
+
+start-test-stack: venom-postgres.cid venom-mysql.cid venom-redis.cid venom-imap.cid venom-kafka.cid venom-rabbit.cid venom-sshd.cid
+
+stop-test-stack:
+	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid
+
+run-test: 
+	@(cd ../cli/venom; go build && ./venom run --stop-on-failure  --log debug ../../tests/*.yml)
 
 
-
-TEST_REDIS_PORT =  $(if ${VENOM_TEST_REDIS_PORT},${VENOM_TEST_REDIS_PORT},6379)
-TEST_REDIS_START = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-venom registry.ovh.net/official/redis:3.2.5
-
-TEST_PG_PORT = $(if ${VENOM_TEST_PG_PORT},${VENOM_TEST_PG_PORT},5432)
-TEST_PG_START = docker run -d -p $(TEST_PG_PORT):5432 -e POSTGRES_PASSWORD=venom -e POSTGRES_USER=venom -e POSTGRES_DB=venom --name pg-venom postgres
-
-TEST_MYSQL_PORT =  $(if ${VENOM_TEST_MYSQL_PORT},${VENOM_TEST_MYSQL_PORT},3306)
-TEST_MYSQL_START = docker run -d -p $(TEST_MYSQL_PORT):3306 -e MYSQL_PASSWORD=venom -e MYSQL_USER=venom -e MYSQL_DATABASE=venom --name mysql-venom mysql/mysql-server
-
-
-TEST_REDIS_HOST =  $(if ${VENOM_TEST_REDIS_HOST},${VENOM_TEST_REDIS_HOST},localhost)
-TEST_MYSQL_HOST =  $(if ${VENOM_TEST_MYSQL_HOST},${VENOM_TEST_MYSQL_HOST},localhost)
-TEST_PG_HOST = $(if ${VENOM_TEST_PG_HOST},${VENOM_TEST_PG_HOST},localhost)
-
-
-
-test-docker-start:
-	$(TEST_REDIS_START)
-	$(TEST_PG_START)
-	$(TEST_MYSQL_START)
-	@sleep 15
-
-clean:
-	docker stop redis-venom; docker rm redis-venom; exit 0
-	docker stop mysql-venom; docker rm mysql-venom; exit 0
-	docker stop pg-venom; docker rm pg-venom; exit 0
-	docker stop smtp-venom; docker rm smtp-venom; exit 0
-
-
-test: clean test-docker-start
-	venom run . --var redisHost=localhost --var smtpPort=${TEST__SMTP_PORT} --var redisPort=${TEST_REDIS_PORT} --var mysqlHost=localhost --var mysqlPort=${TEST_MYSQL_PORT} --var pgHost=localhost --var pgPort=${TEST_PG_PORT} --exclude MyTestSuiteWeb.yml --exclude MyTestSuiteSMTP.yml --exclude MyTestSuiteImap.yml --exclude MyTestSuiteSSH.yml * --details high

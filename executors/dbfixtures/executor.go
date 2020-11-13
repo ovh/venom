@@ -1,6 +1,7 @@
 package dbfixtures
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +16,6 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/executors"
 )
 
 // Name of the executor.
@@ -46,13 +46,13 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
+func (e Executor) Run(ctx context.Context, testCaseContext venom.TestCaseContext, step venom.TestStep, workdir string) (interface{}, error) {
 	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 	// Connect to the database and ping it.
-	l.Debugf("connecting to database %s, %s\n", e.Database, e.DSN)
+	venom.Debug(ctx, "connecting to database %s, %s\n", e.Database, e.DSN)
 
 	db, err := sql.Open(e.Database, e.DSN)
 	if err != nil {
@@ -67,7 +67,7 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	// if the argument is specified.
 	if len(e.Schemas) != 0 {
 		for _, s := range e.Schemas {
-			l.Debugf("loading schema from file %s\n", s)
+			venom.Debug(ctx, "loading schema from file %s\n", s)
 			s = path.Join(workdir, s)
 			sbytes, errs := ioutil.ReadFile(s)
 			if errs != nil {
@@ -78,7 +78,7 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 			}
 		}
 	} else if e.Migrations != "" {
-		l.Debugf("loading migrations from folder %s\n", e.Migrations)
+		venom.Debug(ctx, "loading migrations from folder %s\n", e.Migrations)
 
 		if e.MigrationsTable != "" {
 			migrate.SetTable(e.MigrationsTable)
@@ -92,22 +92,21 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 		if errMigrate != nil {
 			return nil, fmt.Errorf("failed to apply up migrations: %s", errMigrate)
 		}
-		l.Debugf("applied %d migrations\n", n)
+		venom.Debug(ctx, "applied %d migrations\n", n)
 	}
 
 	// Load fixtures in the databases.
-	if err = loadFixtures(db, e.Files, e.Folder, getDialect(e.Database, e.SkipResetSequences), l, workdir); err != nil {
+	if err = loadFixtures(ctx, db, e.Files, e.Folder, getDialect(e.Database, e.SkipResetSequences), workdir); err != nil {
 		return nil, err
 	}
 	r := Result{Executor: e}
 
-	return executors.Dump(r)
+	return r, nil
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
-func (Executor) ZeroValueResult() venom.ExecutorResult {
-	r, _ := executors.Dump(Result{})
-	return r
+func (Executor) ZeroValueResult() interface{} {
+	return Result{}
 }
 
 // GetDefaultAssertions return the default assertions of the executor.
@@ -118,9 +117,9 @@ func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 // loadFixtures loads the fixtures in the database.
 // It gives priority to the fixtures files found in folder,
 // and switch to the list of files if no folder was specified.
-func loadFixtures(db *sql.DB, files []string, folder string, dialect func(*fixtures.Loader) error, l venom.Logger, workdir string) error {
+func loadFixtures(ctx context.Context, db *sql.DB, files []string, folder string, dialect func(*fixtures.Loader) error, workdir string) error {
 	if folder != "" {
-		l.Debugf("loading fixtures from folder %s\n", path.Join(workdir, folder))
+		venom.Debug(ctx, "loading fixtures from folder %s\n", path.Join(workdir, folder))
 		loader, err := fixtures.New(
 			// By default the package refuse to load if the database
 			// does not contains "test" to avoid wiping a production db.
@@ -138,7 +137,7 @@ func loadFixtures(db *sql.DB, files []string, folder string, dialect func(*fixtu
 		return nil
 	}
 	if len(files) != 0 {
-		l.Debugf("loading fixtures from files: %v\n", files)
+		venom.Debug(ctx, "loading fixtures from files: %v\n", files)
 		for i := range files {
 			files[i] = path.Join(workdir, files[i])
 		}
@@ -158,7 +157,7 @@ func loadFixtures(db *sql.DB, files []string, folder string, dialect func(*fixtu
 		}
 		return nil
 	}
-	l.Debugf("neither files or folder parameter was used\n")
+	venom.Debug(ctx, "neither files or folder parameter was used\n")
 
 	return nil
 }
