@@ -1,22 +1,14 @@
-FROM golang:1.15-buster as build
-
-RUN apt-get update && \
-    apt-get install -y unixodbc unixodbc-dev
-
-WORKDIR /go/src/venom
-COPY . .
-RUN go build -a -installsuffix cgo -ldflags "-X github.com/ovh/venom.Version=$(git describe)" -o /go/bin ./...
-RUN chmod a+rx /go/bin/venom
-
 FROM debian:buster-slim
 
 RUN apt-get update && \
-    apt-get install -y unixodbc && \
+    apt-get install -y curl unixodbc && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /go/bin/venom /opt/venom
+RUN LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/venom/releases | grep tag_name | head -n 1 | cut -d '"' -f 4) && \
+    todl=$(curl -s https://api.github.com/repos/ovh/venom/releases | grep ${LAST_RELEASE} | grep browser_download_url | grep -E 'venom.linux-amd64' | cut -d '"' -f 4) && \
+    curl -s $todl -L -o /opt/venom && \
+    chmod +x /opt/venom
 
-# Default volume for tests output and logs
 VOLUME /outputs
 
 #Default volume for tests suite
