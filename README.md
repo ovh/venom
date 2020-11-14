@@ -7,7 +7,7 @@ It can also output xUnit results files.
 
 ## Command Line
 
-Download latest binary release from https://github.com/ovh/venom/releases  
+Download latest binary release from https://github.com/ovh/venom/releases
 
 If you want to go get it with: ```go get -u github.com/ovh/venom/cli/venom```, please
 check the dependencies in §Hacking section.
@@ -39,7 +39,7 @@ Flags:
 
 A docker image is available.
 ```bash
-  docker run -it --rm -v $(pwd):/tests run /tests/testsuite.yaml
+  docker run -it --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
 ```
 ## Executors
 
@@ -185,7 +185,7 @@ Venom templating
 
 Beside venom variables, it is possible to use templating functions:
 
-* expandEnv : {{expandEnv <filename>}}, rewrites the named file and replaces ${var} or $var in the string according to the values of the current environment variables. References to undefined variables are replaced by the empty string. You can use it a script step for instance: `script: cat {{expandEnv ./myFile}}`. 
+* expandEnv : {{expandEnv <filename>}}, rewrites the named file and replaces ${var} or $var in the string according to the values of the current environment variables. References to undefined variables are replaced by the empty string. You can use it a script step for instance: `script: cat {{expandEnv ./myFile}}`.
 
 ### Testsuite Versions
 
