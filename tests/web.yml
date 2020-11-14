@@ -1,25 +1,41 @@
 name: TestSuite Web
-testcases:
-- name: TestCase Get URL and check title
-  context:
-    type: web
+vars:
+  web:
+    driver: phamtomjs
     width: 1920
     height: 1080
+    # driver: chrome
+    # args:
+    #   - "--headless"
+    #   - "--no-sandbox"
+    #   - "--disable-dev-shm-usage"
+    #   - "--disable-gpu"
+    #   - "--whitelisted-ips"
+    #   - "--detach"
+testcases:
+- name: TestCase Get URL and check title
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://www.google.fr
     assertions:
     - result.title ShouldEqual Google
-  - action:
+
+  - type: web
+    action:
       find: input[name="q"]
     assertions:
      - result.find ShouldEqual 1
-  - action:
+
+  - type: web
+    action:
       fill:
       - find: input[name="q"]
         text: "venom runabove"
-  - action:
+        
+  - type: web
+    action:
       click:
         find: input[value="Recherche Google"]
         wait: 1

@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/acarl005/stripansi"
 	"github.com/fatih/color"
 	dump "github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
@@ -131,73 +130,26 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (v *Venom) outputResume(tests Tests) {
-	red := color.New(color.FgRed).SprintFunc()
-	totalTestCases := 0
-	totalTestSteps := 0
-	v.PrintFunc("\n")
-	for _, t := range tests.TestSuites {
-		totalTestCases += len(t.TestCases)
-		for _, tc := range t.TestCases {
-			totalTestSteps += len(tc.testSteps)
-		}
-
-		if t.Failures > 0 || t.Errors > 0 {
-			v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
-
-			for _, tc := range t.TestCases {
-				for _, f := range tc.Failures {
-					v.PrintFunc("%s\n", f.Value)
-				}
-				for _, f := range tc.Errors {
-					v.PrintFunc("%s\n", f.Value)
-				}
-			}
-		}
-	}
-}
-
 func (v *Venom) printTestsuiteOutput(ts TestSuite) {
+	var red = color.New(color.FgRed).SprintFunc()
+	var green = color.New(color.FgGreen).SprintFunc()
 	var hasFailed = ts.Failures > 0 || ts.Errors > 0
-
 	var output string
 	if hasFailed {
-		red := color.New(color.FgRed).SprintFunc()
 		output = fmt.Sprintf("%s %q (from %s)", red("FAILURE"), ts.Name, ts.Package)
 	} else {
-		green := color.New(color.FgGreen).SprintFunc()
 		output = fmt.Sprintf("%s %q (from %s)", green("SUCCESS"), ts.Name, ts.Package)
 	}
 	v.PrintFunc("%v\n", output)
-
 	if hasFailed {
 		for _, tc := range ts.TestCases {
 			for _, f := range tc.Failures {
-				v.PrintFunc("%s\n", f.Value)
+				v.PrintFunc("%s\n", red(f.Value))
 			}
 			for _, f := range tc.Errors {
-				v.PrintFunc("%s\n", f.Value)
+				v.PrintFunc("%s\n", red(f.Value))
 			}
 		}
 	}
 
-}
-
-func cleanOutputColors(tests *Tests) {
-	testSuites := make([]TestSuite, 0, len(tests.TestSuites))
-	for _, testSuite := range tests.TestSuites {
-		testCases := make([]TestCase, 0, len(testSuite.TestCases))
-		for _, testCase := range testSuite.TestCases {
-			failures := make([]Failure, 0, len(testCase.Failures))
-			for _, failure := range testCase.Failures {
-				failure.Value = stripansi.Strip(failure.Value)
-				failures = append(failures, failure)
-			}
-			testCase.Failures = failures
-			testCases = append(testCases, testCase)
-		}
-		testSuite.TestCases = testCases
-		testSuites = append(testSuites, testSuite)
-	}
-	tests.TestSuites = testSuites
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/fsamin/go-dump"
 	"github.com/spf13/cast"
 )
 
@@ -20,7 +21,6 @@ func New() *Venom {
 		LogOutput:       os.Stdout,
 		PrintFunc:       fmt.Printf,
 		executors:       map[string]Executor{},
-		contexts:        map[string]TestCaseContext{},
 		variables:       map[string]interface{}{},
 		EnableProfiling: false,
 		IgnoreVariables: []string{},
@@ -35,7 +35,6 @@ type Venom struct {
 
 	PrintFunc func(format string, a ...interface{}) (n int, err error)
 	executors map[string]Executor
-	contexts  map[string]TestCaseContext
 
 	testsuites      []TestSuite
 	variables       H
@@ -61,7 +60,7 @@ func (v *Venom) RegisterExecutor(name string, e Executor) {
 
 // WrapExecutor initializes a test by name
 // no type -> exec is default
-func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, vars H) (context.Context, ExecutorRunner, error) {
+func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context.Context, ExecutorRunner, error) {
 	name, _ := t.StringValue("type")
 	if name == "" {
 		name = "exec"
@@ -79,6 +78,11 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, vars H) (cont
 		return nil, nil, err
 	}
 
+	vars, err := dump.ToStringMap(h)
+	if err != nil {
+		return ctx, nil, err
+	}
+
 	for k, v := range vars {
 		ctx = context.WithValue(ctx, ContextKey("var."+k), v)
 	}
@@ -90,32 +94,14 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, vars H) (cont
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
 
-// RegisterTestCaseContext new register TestCaseContext
-func (v *Venom) RegisterTestCaseContext(name string, tcc TestCaseContext) {
-	v.contexts[name] = tcc
-}
-
-// ContextWrap initializes a context for a testcase
-// no type -> parent context
-func (v *Venom) ContextWrap(tc *TestCase) (TestCaseContext, error) {
-	if tc.Context == nil {
-		return v.contexts["default"], nil
-	}
-	var typeName string
-	if itype, ok := tc.Context["type"]; ok {
-		typeName = fmt.Sprintf("%s", itype)
-	}
-
-	if typeName == "" {
-		return v.contexts["default"], nil
-	}
-	v.contexts[typeName].SetTestCase(*tc)
-	return v.contexts[typeName], nil
-}
-
 func StringVarFromCtx(ctx context.Context, varname string) string {
 	i := ctx.Value(ContextKey("var." + varname))
 	return cast.ToString(i)
+}
+
+func StringSliceVarFromCtx(ctx context.Context, varname string) []string {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToStringSlice(i)
 }
 
 func IntVarFromCtx(ctx context.Context, varname string) int {
@@ -131,4 +117,14 @@ func BoolVarFromCtx(ctx context.Context, varname string) bool {
 func VarFromCtx(ctx context.Context, varname string) interface{} {
 	i := ctx.Value(ContextKey("var." + varname))
 	return i
+}
+
+func StringMapInterfaceVarFromCtx(ctx context.Context, varname string) map[string]interface{} {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToStringMap(i)
+}
+
+func StringMapStringVarFromCtx(ctx context.Context, varname string) map[string]string {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToStringMapString(i)
 }

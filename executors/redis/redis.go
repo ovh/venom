@@ -50,7 +50,7 @@ func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, testCaseContext venom.TestCaseContext, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
 	dialURL := venom.StringVarFromCtx(ctx, "redis.dialURL")
 	if dialURL == "" {
 		return nil, fmt.Errorf("missing redis.dialURL variable")
@@ -126,7 +126,6 @@ func sliceStringToSliceInterface(args []string) []interface{} {
 }
 
 func handleRedisResponse(res interface{}, err error) interface{} {
-	var r interface{}
 	switch p := res.(type) {
 	case []interface{}:
 		var result = []string{}
@@ -135,15 +134,11 @@ func handleRedisResponse(res interface{}, err error) interface{} {
 			k, _ := redis.String(u, err)
 			result = append(result, k)
 		}
-		r = result
+		return result
 	default:
-		var result = []string{}
 		t, _ := redis.String(res, err)
-		result = append(result, t)
-		r = t
+		return t
 	}
-
-	return r
 }
 
 func file2lines(filePath string) ([]string, error) {

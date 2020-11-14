@@ -13,32 +13,10 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-func (v *Venom) initTestCaseContext(ts *TestSuite, tc *TestCase) (TestCaseContext, error) {
-	var errContext error
-	/*_, tc.Context, errContext = ts.Templater.ApplyOnMap(tc.Context)
-	if errContext != nil {
-		return nil, errContext
-	}*/
-	tcc, errContext := v.ContextWrap(tc)
-	if errContext != nil {
-		return nil, errContext
-	}
-	if err := tcc.Init(); err != nil {
-		return nil, err
-	}
-	return tcc, nil
-}
-
 var varRegEx, _ = regexp.Compile("{{.*}}")
 
 //Parse the testcase to find unreplaced and extracted variables
 func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
-	tcc, err := v.initTestCaseContext(ts, tc)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer tcc.Close()
-
 	dvars, err := dump.ToStringMap(tc.Vars)
 	if err != nil {
 		return nil, nil, err
@@ -126,13 +104,6 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 }
 
 func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
-	tcc, err := v.initTestCaseContext(ts, tc)
-	if err != nil {
-		tc.AppendError(err)
-		return
-	}
-	defer tcc.Close()
-
 	ctx = context.WithValue(ctx, ContextKey("testcase"), tc.Name)
 	tc.Vars = ts.Vars.Clone()
 	tc.Name = slug.Make(tc.Name)
@@ -141,11 +112,13 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	tc.ComputedVars = H{}
 
 	for k, v := range tc.Vars {
-		Debug(ctx, "running testCase with variable %s: %+v", k, v)
+		Debug(ctx, "Running testCase with variable %s: %+v", k, v)
 	}
 
 	Debug(ctx, "Starting testcase")
 	defer Debug(ctx, "Ending testcase")
+
+	var knowExecutors = map[string]struct{}{}
 
 	for stepNumber, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
@@ -182,7 +155,6 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 		}
 
 		Info(ctx, "Step #%d content is: %q", stepNumber, content)
-
 		var step TestStep
 		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
 			tc.AppendError(err)
@@ -199,7 +171,24 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 			break
 		}
 
-		v.RunTestStep(ctx, tcc, e, ts, tc, stepNumber, step)
+		_, known := knowExecutors[e.Name()]
+		if !known {
+			knowExecutors[e.Name()] = struct{}{}
+			ctx, err = e.Setup(ctx, tc.Vars)
+			if err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to setup executor: %v", err)
+				break
+			}
+			defer func(ctx context.Context) {
+				if err := e.TearDown(ctx); err != nil {
+					tc.AppendError(err)
+					Error(ctx, "unable to teardown executor: %v", err)
+				}
+			}(ctx)
+		}
+
+		v.RunTestStep(ctx, e, ts, tc, stepNumber, step)
 
 		tc.testSteps = append(tc.testSteps, step)
 

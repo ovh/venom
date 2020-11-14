@@ -16,9 +16,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/venom"
-	defaultctx "github.com/ovh/venom/context/default"
-	redisctx "github.com/ovh/venom/context/redis"
-	"github.com/ovh/venom/context/webctx"
 
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
@@ -37,11 +34,10 @@ import (
 )
 
 var (
-	path      []string
-	variables []string
-	format    string
-	varFiles  []string
-	//withEnv         bool
+	path            []string
+	variables       []string
+	format          string
+	varFiles        []string
 	logLevel        string
 	outputDir       string
 	strict          bool
@@ -54,7 +50,7 @@ var (
 
 func init() {
 	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
-	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: hcl|json|yaml, must contains map[string]string'")
+	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
@@ -101,11 +97,6 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterExecutor(grpc.Name, grpc.New())
 		v.RegisterExecutor(rabbitmq.Name, rabbitmq.New())
 		v.RegisterExecutor(sql.Name, sql.New())
-
-		// Register Context
-		v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
-		v.RegisterTestCaseContext(webctx.Name, webctx.New())
-		v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		v.EnableProfiling = enableProfiling

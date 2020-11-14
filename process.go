@@ -32,8 +32,10 @@ func (v *Venom) init() error {
 		logrus.SetLevel(logrus.WarnLevel)
 	}
 
-	if err := os.MkdirAll(v.OutputDir, os.FileMode(0755)); err != nil {
-		return fmt.Errorf("unable to create output dir: %v", err)
+	if v.OutputDir != "" {
+		if err := os.MkdirAll(v.OutputDir, os.FileMode(0755)); err != nil {
+			return fmt.Errorf("unable to create output dir: %v", err)
+		}
 	}
 
 	var err error

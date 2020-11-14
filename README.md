@@ -173,77 +173,6 @@ Builtin variables:
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
 
-### Testsuite Versions
-
-#### Version 2
-
-On this new version, venom use the testsuite folder as the basepath instead of location of venom execution.
-
-Considering this workspace:
-
-```yaml
-
-tests/
-   testsuiteA/
-      testsuite.yml
-      testa.json
-```
-
-On version 1
-
-```yaml
-
-name: TestSuite Read File
-testcases:
-- name: TestCase Read File
-  steps:
-  - type: readfile
-    path: testa.json
-    assertions:
-      - result.contentjson.foo ShouldEqual bar
-```
-
-If you execute ```venom run *``` into *tests/* folder, venom will try to find testa.json on tests/testa.json and will failed.
-You must execute venom on the testsuite dir.
-
-On version 2, venom use as basepath the testsuite file. So no matter where you execute venom command, testa.json will be found.
-
-To specify the version 2, add *version* property on the testsuite:
-
-```yaml
-
-version: "2"
-name: TestSuite Read File
-testcases:
-- name: TestCase Read File
-  steps:
-  - type: readfile
-    path: testa.json
-    assertions:
-      - result.contentjson.foo ShouldEqual bar
-```
-
-
-## RUN Venom locally on CDS Integration Tests
-
-```bash
-cd $GOPATH/src/github.com/ovh/cds/tests
-venom run --var cdsro='cds -f $HOME/.cds/it.user.ro.json' --var cds='cds -f $HOME/.cds/it.user.rw.json' --parallel=5
-```
-
-## RUN Venom with file var
-
-vars.yaml :
-```yaml
-cdsro: 'cds -f $HOME/.cds/it.user.ro.json'
-cds: 'cds -f $HOME/.cds/it.user.rw.json'
-```
-
-```bash
-cd $GOPATH/src/github.com/ovh/cds/tests
-venom run --var-from-file vars.yaml --parallel=5
-```
-
 ## RUN Venom, with an export xUnit
 
 ```bash
@@ -317,7 +246,7 @@ An executor have to implement this interface
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(ctx context.Content, venom.Logger, TestStep) (ExecutorResult, error)
+	Run(ctx context.Content, TestStep) (interface{}, error)
 }
 ```
 
@@ -345,7 +274,6 @@ type Result struct {
 	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
 	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
 	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for this executor
@@ -355,8 +283,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (interface{}, error) {
-
+func (Executor)	Run(context.Context, TestStep, string) (interface{}, error) {
 	// transform step to Executor Instance
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -374,77 +301,14 @@ func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (i
 		Code:    ouputCode, // return Output Code
 		Command: e.Command, // return Command executed
 		Systemout: systemout, // return Output string
-		Executor: e, // return executor, useful for display Executor context in failure
 	}
 
-	return dump.ToMap(r)
+	return r
 }
 
 ```
 
 Feel free to open a Pull Request with your executors.
-
-
-## TestCase Context
-
-TestCase Context allows you to inject data in all steps.
-
-Define a context is optional, but can be useful to keep data between test steps on a testcase.
-
-### Write your TestCase Context
-
-A TestCase Context has to implement this interface
-
-```go
-
-type TestCaseContext interface {
-	Init() error
-	Close() error
-	SetTestCase(tc TestCase)
-	GetName() string
-}
-```
-
-Example
-
-```go
-// Context Type name
-const Name = "default"
-
-// New returns a new TestCaseContext
-func New() venom.TestCaseContext {
-	ctx := &DefaultTestCaseContext{}
-	ctx.Name = Name
-	return ctx
-}
-
-// DefaultTestCaseContext represents the context of a testcase
-type DefaultTestCaseContext struct {
-	venom.CommonTestCaseContext
-	datas map[string]interface{}
-}
-
-// Init Initialize the context
-func (tcc *DefaultTestCaseContext) Init() error {
-	return nil
-}
-
-// Close the context
-func (tcc *DefaultTestCaseContext) Close() error {
-	return nil
-}
-```
-
-Methods SetTestCase and GetName are implemented by CommonTestCaseContext
-
-# Dependencies
-
-Individual packages were updated using the rough procedure:
-
-1. `dep ensure`
-2. `dep ensure -update ${PACKAGE}`
-3. `dep prune`
-4. `go build`
 
 
 # Hacking

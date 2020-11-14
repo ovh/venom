@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,7 +15,6 @@ import (
 	"github.com/ovh/go-ovh/ovh"
 
 	"github.com/ovh/venom"
-	defaultctx "github.com/ovh/venom/context/default"
 )
 
 // Name of executor
@@ -62,13 +60,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, testCaseContext venom.TestCaseContext, step venom.TestStep, workdir string) (interface{}, error) {
-	// Get context
-	tcc, ok := testCaseContext.(*defaultctx.DefaultTestCaseContext)
-	if !ok {
-		return nil, fmt.Errorf("ovhapi executor need a default context")
-	}
-
+func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
 	// transform step to Executor Instance
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -76,22 +68,13 @@ func (Executor) Run(ctx context.Context, testCaseContext venom.TestCaseContext, 
 	}
 
 	// Get context
-	var endpoint, applicationKey, applicationSecret, consumerKey string
-	var err error
-	if endpoint, err = tcc.GetString("endpoint"); err != nil {
-		return nil, err
-	}
-	if !e.NoAuth {
-		if applicationKey, err = tcc.GetString("applicationKey"); err != nil {
-			return nil, err
-		}
-		if applicationSecret, err = tcc.GetString("applicationSecret"); err != nil {
-			return nil, err
-		}
-		if consumerKey, err = tcc.GetString("consumerKey"); err != nil {
-			return nil, err
-		}
-	}
+	var endpoint = venom.StringVarFromCtx(ctx, "ovh.endpoint")
+	var applicationKey = venom.StringVarFromCtx(ctx, "ovh.applicationKey")
+	var applicationSecret = venom.StringVarFromCtx(ctx, "ovh.applicationSecret")
+	var consumerKey = venom.StringVarFromCtx(ctx, "ovh.consumerKey")
+	var insecure = venom.BoolVarFromCtx(ctx, "ovh.insecureTLS")
+	var headers = venom.StringMapStringVarFromCtx(ctx, "ovh.headers")
+
 	// set default values
 	if e.Method == "" {
 		e.Method = "GET"
@@ -112,7 +95,7 @@ func (Executor) Run(ctx context.Context, testCaseContext venom.TestCaseContext, 
 		return nil, err
 	}
 
-	if insecure, err := tcc.GetBool("insecureTLS"); err == nil && insecure {
+	if insecure {
 		client.Client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
@@ -129,12 +112,7 @@ func (Executor) Run(ctx context.Context, testCaseContext venom.TestCaseContext, 
 		return nil, err
 	}
 
-	var contextHeader map[string]string
-	err = tcc.GetComplex("headers", &contextHeader)
-	if err != nil && err.Error() != defaultctx.NotFound("headers").Error() {
-		venom.Warn(ctx, "fail to read headers from context : '%s'", err)
-	}
-	for key, value := range contextHeader {
+	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
 

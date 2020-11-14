@@ -1,4 +1,4 @@
-name: variables testsuite
+name: Variables testsuite
 
 vars:
   service.id: '{{.CreateService.id}}'
