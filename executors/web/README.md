@@ -228,7 +228,7 @@ testcases:
       ConfirmPopup: true
 ```
 
-History actions allow you to manipulate browser history actions. The following action are available:
+History actions allow you to manipulate browser history actions. The following actions are available:
 * back
 * refresh
 * forward
@@ -271,3 +271,61 @@ testcases:
 * result.timehuman
 * result.title
 * result.find
+
+
+## Chrome
+This section describes some features specific to the Chrome browser
+
+### CI
+If you want to include Chrome Driver tests in your integration pipeline, you must execute Chrome in headless mode.
+
+Example
+```yaml
+name: TestSuite Web
+testcases:
+- name: Test disable same site security
+  context:
+    type: web
+    width: 1920
+    height: 1080
+    driver: chrome
+    args:
+    - 'headless'
+    timeout: 60
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://www.google.fr
+```
+
+
+### Flags
+
+In Chrome, you can turn experimental features on or off to test the behavior of upcoming features.
+You can do this manually with chrome://flags url with Chrome browser.
+In Venom, to enable a feature, add an instance of the enable-features argument.
+To disable a feature, add a disable-features argument instance
+
+Example
+```yaml
+name: TestSuite Web
+testcases:
+- name: Test disable same site security
+  context:
+    type: web
+    width: 1920
+    height: 1080
+    driver: chrome
+    args:
+    - 'disable-features=SameSiteByDefaultCookies'
+    - 'enable-features=CookiesWithoutSameSiteMustBeSecure'
+    timeout: 60
+    debug: true
+  steps:
+  - action:
+      navigate:
+        url: https://samesite-sandbox.glitch.me/
+  - action:
+      wait: 5
+```

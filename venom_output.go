@@ -6,10 +6,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"time"
 
-	dump "github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
 	tap "github.com/mndrix/tap-go"
 	log "github.com/sirupsen/logrus"
@@ -56,30 +54,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 			for _, tc := range ts.TestCases {
 				for _, f := range tc.Failures {
 					filename := v.OutputDir + "/" + slug.Make(ts.ShortName) + "." + slug.Make(tc.Name) + ".dump"
-
-					sdump := &bytes.Buffer{}
-					dumpEncoder := dump.NewEncoder(sdump)
-					dumpEncoder.ExtraFields.DetailedMap = false
-					dumpEncoder.ExtraFields.DetailedStruct = false
-					dumpEncoder.ExtraFields.Len = false
-					dumpEncoder.ExtraFields.Type = false
-					dumpEncoder.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-
-					//Try to pretty print only the result
-					var smartPrinted bool
-					for k, v := range f.Result {
-						if k == "result" && reflect.TypeOf(v).Kind() != reflect.String {
-							dumpEncoder.Fdump(v)
-							smartPrinted = true
-							break
-						}
-					}
-					//If not succeed print all the stuff
-					if !smartPrinted {
-						dumpEncoder.Fdump(f.Result)
-					}
-
-					output := f.Value + "\n ------ Result: \n" + sdump.String() + "\n ------ Variables:\n"
+					output := f.Value + "\n ------ Variables:\n"
 					for k, v := range ts.Vars {
 						output += fmt.Sprintf("%s:%v\n", k, v)
 					}
