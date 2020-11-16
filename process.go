@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/gosimple/slug"
@@ -163,48 +162,26 @@ func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 		return nil, err
 	}
 
-	chanEnd := make(chan *TestSuite, 1)
-	parallels := make(chan *TestSuite, v.Parallel) //Run testsuite in parrallel
-	wg := sync.WaitGroup{}
 	testsResult := &Tests{}
 
-	wg.Add(len(v.testsuites))
-	chanToRun := make(chan *TestSuite, len(v.testsuites)+1)
-
-	go v.computeStats(testsResult, chanEnd, &wg)
-	go func() {
-		for ts := range chanToRun {
-			parallels <- ts
-			go func(ts *TestSuite) {
-				v.runTestSuite(ctx, ts)
-				chanEnd <- ts
-				<-parallels
-			}(ts)
-		}
-	}()
-
 	for i := range v.testsuites {
-		chanToRun <- &v.testsuites[i]
+		v.runTestSuite(ctx, &v.testsuites[i])
+		v.computeStats(testsResult, &v.testsuites[i])
 	}
-
-	wg.Wait()
 
 	return testsResult, nil
 }
 
-func (v *Venom) computeStats(testsResult *Tests, chanEnd <-chan *TestSuite, wg *sync.WaitGroup) {
-	for t := range chanEnd {
-		testsResult.TestSuites = append(testsResult.TestSuites, *t)
-		if t.Failures > 0 || t.Errors > 0 {
-			testsResult.TotalKO += (t.Failures + t.Errors)
-		} else {
-			testsResult.TotalOK += len(t.TestCases) - (t.Failures + t.Errors)
-		}
-		if t.Skipped > 0 {
-			testsResult.TotalSkipped += t.Skipped
-		}
-
-		testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
-		wg.Done()
+func (v *Venom) computeStats(testsResult *Tests, ts *TestSuite) {
+	testsResult.TestSuites = append(testsResult.TestSuites, *ts)
+	if ts.Failures > 0 || ts.Errors > 0 {
+		testsResult.TotalKO += (ts.Failures + ts.Errors)
+	} else {
+		testsResult.TotalOK += len(ts.TestCases) - (ts.Failures + ts.Errors)
 	}
+	if ts.Skipped > 0 {
+		testsResult.TotalSkipped += ts.Skipped
+	}
+
+	testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
 }
