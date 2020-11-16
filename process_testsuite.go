@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime/pprof"
 
+	"github.com/fatih/color"
 	"github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -49,8 +50,8 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 	ts.ComputedVars = H{}
 
 	ctx = context.WithValue(ctx, ContextKey("testsuite"), ts.Name)
-	Debug(ctx, "Starting testsuite")
-	defer Debug(ctx, "Ending testsuite")
+	Info(ctx, "Starting testsuite")
+	defer Info(ctx, "Ending testsuite")
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
@@ -58,32 +59,61 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 	}
 
 	v.runTestCases(ctx, ts)
-	v.printTestsuiteOutput(*ts)
 }
 
 func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
+	var red = color.New(color.FgRed).SprintFunc()
+	var green = color.New(color.FgGreen).SprintFunc()
+	var cyan = color.New(color.FgCyan).SprintFunc()
+
+	v.Println(" • %s (%s)", ts.Name, ts.Package)
+
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
+		v.Print(" \t• %s", tc.Name)
 		tc.Classname = ts.Filename
+		var hasFailure bool
 		if len(tc.Skipped) == 0 {
 			v.runTestCase(ctx, ts, tc)
 		}
 
 		if len(tc.Failures) > 0 {
 			ts.Failures += len(tc.Failures)
+			hasFailure = true
 		}
 		if len(tc.Errors) > 0 {
 			ts.Errors += len(tc.Errors)
+			hasFailure = true
 		}
 		if len(tc.Skipped) > 0 {
 			ts.Skipped += len(tc.Skipped)
+		}
+
+		if hasFailure {
+			v.Println(" %s", red("FAILURE"))
+
+		} else {
+			v.Println(" %s", green("SUCCESS"))
+		}
+
+		for _, i := range tc.computedInfo {
+			v.Println("\t  %s %s", cyan("[info]"), cyan(i))
+		}
+
+		if hasFailure {
+			for _, f := range tc.Failures {
+				v.Println("%s", red(f.Value))
+			}
+			for _, f := range tc.Errors {
+				v.Println("%s", red(f.Value))
+			}
 		}
 
 		if v.StopOnFailure && (len(tc.Failures) > 0 || len(tc.Errors) > 0) {
 			// break TestSuite
 			return
 		}
-		ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.ComputedVars)
+		ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 	}
 }
 
@@ -98,6 +128,7 @@ func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
 	var extractsVars []string
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
+		tc.originalName = tc.Name
 		tc.Name = slug.Make(tc.Name)
 		tc.Vars = ts.Vars.Clone()
 		tc.Vars.Add("venom.testcase", tc.Name)
@@ -107,13 +138,10 @@ func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
 			if err != nil {
 				return nil, nil, err
 			}
-			for _k, k := range tvars {
+			for _, k := range tvars {
 				var found bool
 				for i := 0; i < len(vars); i++ {
-					Debug(context.TODO(), "tvars\t%v\t%v vs %s", _k, k, vars[i])
-
 					if vars[i] == k {
-						Debug(context.TODO(), "found %s", k)
 						found = true
 						break
 					}

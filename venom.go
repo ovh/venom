@@ -47,6 +47,14 @@ type Venom struct {
 	StopOnFailure   bool
 }
 
+func (v *Venom) Print(format string, a ...interface{}) {
+	v.PrintFunc(format, a...) // nolint
+}
+
+func (v *Venom) Println(format string, a ...interface{}) {
+	v.PrintFunc(format+"\n", a...) // nolint
+}
+
 func (v *Venom) AddVariables(variables map[string]interface{}) {
 	for k, variable := range variables {
 		v.variables[k] = variable
@@ -78,6 +86,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 		return nil, nil, err
 	}
 
+	info, _ := t.StringSliceValue("info")
 	vars, err := dump.ToStringMap(h)
 	if err != nil {
 		return ctx, nil, err
@@ -88,7 +97,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	}
 
 	if ex, ok := v.executors[name]; ok {
-		return ctx, newExecutorRunner(ex, name, retry, delay, timeout), nil
+		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
 	}
 
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
@@ -112,11 +121,6 @@ func IntVarFromCtx(ctx context.Context, varname string) int {
 func BoolVarFromCtx(ctx context.Context, varname string) bool {
 	i := ctx.Value(ContextKey("var." + varname))
 	return cast.ToBool(i)
-}
-
-func VarFromCtx(ctx context.Context, varname string) interface{} {
-	i := ctx.Value(ContextKey("var." + varname))
-	return i
 }
 
 func StringMapInterfaceVarFromCtx(ctx context.Context, varname string) map[string]interface{} {

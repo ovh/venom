@@ -15,21 +15,6 @@ import (
 	"github.com/ovh/venom/assertions"
 )
 
-type testingT struct {
-	ErrorS []string
-}
-
-func (t *testingT) Error(args ...interface{}) {
-	for _, a := range args {
-		switch v := a.(type) {
-		case string:
-			t.ErrorS = append(t.ErrorS, v)
-		default:
-			t.ErrorS = append(t.ErrorS, fmt.Sprintf("%s", v))
-		}
-	}
-}
-
 type assertionsApplied struct {
 	ok        bool
 	errors    []Failure
@@ -183,11 +168,11 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 	return val, nil
 }
 
-func findLineNumber(filename, testcase string, stepNumber int, assertion string) (int, error) {
+func findLineNumber(filename, testcase string, stepNumber int, assertion string) int {
 	countLine := 0
 	file, err := os.Open(filename)
 	if err != nil {
-		return countLine, err
+		return countLine
 	}
 	defer file.Close()
 
@@ -215,7 +200,7 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 			testcaseFound = true
 			continue
 		}
-		if testcaseFound && countStep <= stepNumber && strings.Contains(line, "type") {
+		if testcaseFound && countStep <= stepNumber && (strings.Contains(line, "type") || strings.Contains(line, "script")) {
 			countStep++
 			continue
 		}
@@ -226,12 +211,12 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return countLine, err
+		return countLine
 	}
 
 	if !lineFound {
-		return 0, nil
+		return 0
 	}
 
-	return countLine, nil
+	return countLine
 }

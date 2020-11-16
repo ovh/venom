@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/ovh/cds/sdk/interpolate"
+
+	"github.com/ovh/venom/executors"
 )
 
 //RunTestStep executes a venom testcase is a venom context
@@ -33,6 +37,22 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		}
 
 		Debug(ctx, "result: %+v", result)
+		mapResult := GetExecutorResult(result)
+		mapResultString, _ := executors.DumpString(result)
+
+		for _, i := range e.Info() {
+			info, err := interpolate.Do(i, mapResultString)
+			if err != nil {
+				Error(ctx, "unable to parse %q: %v", i, err)
+				continue
+			}
+			if info == "" {
+				continue
+			}
+			info += fmt.Sprintf(" (%s:%d)", ts.Filename, findLineNumber(ts.Filename, tc.originalName, stepNumber, i))
+			Info(ctx, info)
+			tc.computedInfo = append(tc.computedInfo, info)
+		}
 
 		if h, ok := e.(executorWithDefaultAssertions); ok {
 			assertRes = applyAssertions(result, *tc, stepNumber, step, h.GetDefaultAssertions())
@@ -40,8 +60,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 			assertRes = applyAssertions(result, *tc, stepNumber, step, nil)
 		}
 
-		mapResult := GetExecutorResult(result)
-		tc.ComputedVars.AddAll(H(mapResult))
+		tc.computedVars.AddAll(H(mapResult))
 
 		if assertRes.ok {
 			break

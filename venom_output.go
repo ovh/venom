@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/fatih/color"
 	dump "github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
 	tap "github.com/mndrix/tap-go"
@@ -128,28 +127,4 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
-}
-
-func (v *Venom) printTestsuiteOutput(ts TestSuite) {
-	var red = color.New(color.FgRed).SprintFunc()
-	var green = color.New(color.FgGreen).SprintFunc()
-	var hasFailed = ts.Failures > 0 || ts.Errors > 0
-	var output string
-	if hasFailed {
-		output = fmt.Sprintf("%s %q (from %s)", red("FAILURE"), ts.Name, ts.Package)
-	} else {
-		output = fmt.Sprintf("%s %q (from %s)", green("SUCCESS"), ts.Name, ts.Package)
-	}
-	v.PrintFunc("%v\n", output)
-	if hasFailed {
-		for _, tc := range ts.TestCases {
-			for _, f := range tc.Failures {
-				v.PrintFunc("%s\n", red(f.Value))
-			}
-			for _, f := range tc.Errors {
-				v.PrintFunc("%s\n", red(f.Value))
-			}
-		}
-	}
-
 }

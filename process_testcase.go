@@ -73,7 +73,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 				extractedVars = append(extractedVars, s)
 				continue
 			}
-
+			if strings.HasPrefix(k, "info") {
+				continue
+			}
 			if varRegEx.MatchString(v) {
 				var found bool
 				for i := 0; i < len(vars); i++ {
@@ -106,17 +108,19 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	ctx = context.WithValue(ctx, ContextKey("testcase"), tc.Name)
 	tc.Vars = ts.Vars.Clone()
+	tc.originalName = tc.Name
 	tc.Name = slug.Make(tc.Name)
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)
-	tc.ComputedVars = H{}
+	tc.computedVars = H{}
+
+	Info(ctx, "Starting testcase")
 
 	for k, v := range tc.Vars {
 		Debug(ctx, "Running testCase with variable %s: %+v", k, v)
 	}
 
-	Debug(ctx, "Starting testcase")
-	defer Debug(ctx, "Ending testcase")
+	defer Info(ctx, "Ending testcase")
 
 	var knowExecutors = map[string]struct{}{}
 
@@ -213,7 +217,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 		}
 
 		allVars := tc.Vars.Clone()
-		allVars.AddAll(tc.ComputedVars.Clone())
+		allVars.AddAll(tc.computedVars.Clone())
 
 		assign, _, err := ProcessVariableAssigments(ctx, tc.Name, allVars, rawStep)
 		if err != nil {
@@ -222,7 +226,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 			break
 		}
 
-		tc.ComputedVars.AddAll(assign)
+		tc.computedVars.AddAll(assign)
 	}
 }
 

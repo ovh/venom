@@ -3,7 +3,6 @@ package imap
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -24,12 +23,6 @@ func decodeHeader(msg *mail.Message, headerName string) (string, error) {
 		return msg.Header.Get(headerName), err
 	}
 	return s, nil
-}
-
-func hash(in string) string {
-	h2 := md5.New()
-	io.WriteString(h2, in)
-	return fmt.Sprintf("%x", h2.Sum(nil))
 }
 
 func extract(ctx context.Context, rsp imap.Response) (*Mail, error) {

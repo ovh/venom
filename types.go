@@ -13,28 +13,11 @@ import (
 	"github.com/spf13/cast"
 )
 
-const (
-	// DetailsLow prints only summary results
-	DetailsLow = "low"
-	// DetailsMedium summary with lines in failure
-	DetailsMedium = "medium"
-	// DetailsHigh all
-	DetailsHigh = "high"
-)
-
 type H map[string]interface{}
 
 func (h H) Clone() H {
 	var h2 = make(H, len(h))
 	h2.AddAll(h)
-	return h2
-}
-
-func (h H) Keys() []string {
-	var h2 = make([]string, len(h))
-	for k, _ := range h {
-		h2 = append(h2, k)
-	}
 	return h2
 }
 
@@ -54,10 +37,6 @@ func (h *H) AddAll(h2 H) {
 	for k, v := range h2 {
 		h.Add(k, v)
 	}
-}
-
-func (h H) Get(k string) interface{} {
-	return (h)[k]
 }
 
 func (h *H) AddAllWithPrefix(p string, h2 H) {
@@ -89,11 +68,6 @@ type StepAssertions struct {
 	Assertions []string `json:"assertions,omitempty" yaml:"assertions,omitempty"`
 }
 
-// StepExtracts contains "step extracts"
-type StepExtracts struct {
-	Extracts map[string]interface{} `json:"extracts,omitempty" yaml:"extracts,omitempty"`
-}
-
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
@@ -109,6 +83,7 @@ type ExecutorRunner interface {
 	Retry() int
 	Delay() int
 	Timeout() int
+	Info() []string
 }
 
 var _ Executor = new(executor)
@@ -117,9 +92,10 @@ var _ Executor = new(executor)
 type executor struct {
 	Executor
 	name    string
-	retry   int // nb retry a test case if it is in failure.
-	delay   int // delay between two retries
-	timeout int // timeout on executor
+	retry   int      // nb retry a test case if it is in failure.
+	delay   int      // delay between two retries
+	timeout int      // timeout on executor
+	info    []string // info to display after the run and before the assertion
 }
 
 func (e executor) Name() string {
@@ -136,6 +112,10 @@ func (e executor) Delay() int {
 
 func (e executor) Timeout() int {
 	return e.timeout
+}
+
+func (e executor) Info() []string {
+	return e.info
 }
 
 func (e executor) GetDefaultAssertions() *StepAssertions {
@@ -170,13 +150,14 @@ func (e executor) TearDown(ctx context.Context) error {
 	return nil
 }
 
-func newExecutorRunner(e Executor, name string, retry, delay, timeout int) ExecutorRunner {
+func newExecutorRunner(e Executor, name string, retry, delay, timeout int, info []string) ExecutorRunner {
 	return &executor{
 		Executor: e,
 		name:     name,
 		retry:    retry,
 		delay:    delay,
 		timeout:  timeout,
+		info:     info,
 	}
 }
 
@@ -239,11 +220,12 @@ type Property struct {
 
 // TestCase is a single test case with its result.
 type TestCase struct {
-	XMLName      xml.Name          `xml:"testcase" json:"-" yaml:"-"`
-	Classname    string            `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
-	Errors       []Failure         `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
-	Failures     []Failure         `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
-	Name         string            `xml:"name,attr" json:"name" yaml:"name"`
+	XMLName      xml.Name  `xml:"testcase" json:"-" yaml:"-"`
+	Classname    string    `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
+	Errors       []Failure `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
+	Failures     []Failure `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
+	Name         string    `xml:"name,attr" json:"name" yaml:"name"`
+	originalName string
 	Skipped      []Skipped         `xml:"skipped,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Status       string            `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
 	Systemout    InnerResult       `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
@@ -253,7 +235,8 @@ type TestCase struct {
 	testSteps    []TestStep
 	Context      map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
 	Vars         H                      `xml:"-" json:"-" yaml:"vars"`
-	ComputedVars H                      `xml:"-" json:"-" yaml:"-"`
+	computedVars H
+	computedInfo []string
 }
 
 // TestStep represents a testStep
@@ -273,6 +256,18 @@ func (t TestStep) StringValue(name string) (string, error) {
 		return "", fmt.Errorf("attribute %q is not an string", name)
 	}
 	return out, nil
+}
+
+func (t TestStep) StringSliceValue(name string) ([]string, error) {
+	out, err := cast.ToStringE(t[name])
+	if err != nil {
+		out, err := cast.ToStringSliceE(t[name])
+		if err != nil {
+			return nil, fmt.Errorf("attribute %q is neither a string nor a string array", name)
+		}
+		return out, nil
+	}
+	return []string{out}, nil
 }
 
 // Skipped contains data related to a skipped test.
@@ -299,13 +294,11 @@ type Failure struct {
 }
 
 func newFailure(tc TestCase, stepNumber int, assertion string, err error) *Failure {
-	var lineNumber int
-	lineNumber, _ = findLineNumber(tc.Classname, tc.Name, stepNumber, assertion)
-
+	var lineNumber = findLineNumber(tc.Classname, tc.originalName, stepNumber, assertion)
 	var value string
 	if assertion != "" {
-		value = color.YellowString(`Testcase %q, step #%d: Assertion %q failed. %s (%q:%d)`,
-			tc.Name,
+		value = color.YellowString(`Testcase %q, step #%d: Assertion %q failed. %s (%v:%d)`,
+			tc.originalName,
 			stepNumber,
 			RemoveNotPrintableChar(assertion),
 			RemoveNotPrintableChar(err.Error()),
@@ -313,8 +306,8 @@ func newFailure(tc TestCase, stepNumber int, assertion string, err error) *Failu
 			lineNumber,
 		)
 	} else {
-		value = color.YellowString(`Testcase %q, step #%d: %s (%q:%d)`,
-			tc.Name,
+		value = color.YellowString(`Testcase %q, step #%d: %s (%v:%d)`,
+			tc.originalName,
 			stepNumber,
 			RemoveNotPrintableChar(err.Error()),
 			tc.Classname,
