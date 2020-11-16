@@ -3,7 +3,6 @@ package venom
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,20 +14,10 @@ import (
 
 func (v *Venom) init() error {
 	v.testsuites = []TestSuite{}
-	switch v.LogLevel {
-	case "disable":
-		v.LogOutput = ioutil.Discard
+	if v.Verbose == 0 {
 		logrus.SetLevel(logrus.WarnLevel)
-		logrus.SetOutput(v.LogOutput)
-		return nil
-	case "debug":
+	} else {
 		logrus.SetLevel(logrus.DebugLevel)
-	case "info":
-		logrus.SetLevel(logrus.InfoLevel)
-	case "error":
-		logrus.SetLevel(logrus.WarnLevel)
-	default:
-		logrus.SetLevel(logrus.WarnLevel)
 	}
 
 	if v.OutputDir != "" {

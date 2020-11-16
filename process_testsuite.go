@@ -16,7 +16,7 @@ import (
 type ContextKey string
 
 func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
-	if v.EnableProfiling {
+	if v.Verbose == 2 {
 		var filename, filenameCPU, filenameMem string
 		if v.OutputDir != "" {
 			filename = v.OutputDir + "/"
