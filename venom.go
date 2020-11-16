@@ -1,9 +1,13 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/fsamin/go-dump"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -17,8 +21,7 @@ func New() *Venom {
 		LogOutput:       os.Stdout,
 		PrintFunc:       fmt.Printf,
 		executors:       map[string]Executor{},
-		contexts:        map[string]TestCaseContext{},
-		variables:       map[string]string{},
+		variables:       map[string]interface{}{},
 		EnableProfiling: false,
 		IgnoreVariables: []string{},
 		OutputFormat:    "xml",
@@ -32,10 +35,9 @@ type Venom struct {
 
 	PrintFunc func(format string, a ...interface{}) (n int, err error)
 	executors map[string]Executor
-	contexts  map[string]TestCaseContext
 
 	testsuites      []TestSuite
-	variables       map[string]string
+	variables       H
 	IgnoreVariables []string
 	Parallel        int
 
@@ -45,7 +47,15 @@ type Venom struct {
 	StopOnFailure   bool
 }
 
-func (v *Venom) AddVariables(variables map[string]string) {
+func (v *Venom) Print(format string, a ...interface{}) {
+	v.PrintFunc(format, a...) // nolint
+}
+
+func (v *Venom) Println(format string, a ...interface{}) {
+	v.PrintFunc(format+"\n", a...) // nolint
+}
+
+func (v *Venom) AddVariables(variables map[string]interface{}) {
 	for k, variable := range variables {
 		v.variables[k] = variable
 	}
@@ -58,80 +68,67 @@ func (v *Venom) RegisterExecutor(name string, e Executor) {
 
 // WrapExecutor initializes a test by name
 // no type -> exec is default
-func (v *Venom) WrapExecutor(t map[string]interface{}, tcc TestCaseContext) (*ExecutorWrap, error) {
-	var name string
-	var retry, delay, timeout int
-
-	if itype, ok := t["type"]; ok {
-		name = fmt.Sprintf("%s", itype)
-	}
-
-	if name == "" && tcc.GetName() != "default" {
-		name = tcc.GetName()
-	} else if name == "" {
+func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context.Context, ExecutorRunner, error) {
+	name, _ := t.StringValue("type")
+	if name == "" {
 		name = "exec"
 	}
-
-	retry, errRetry := getAttrInt(t, "retry")
-	if errRetry != nil {
-		return nil, errRetry
+	retry, err := t.IntValue("retry")
+	if err != nil {
+		return nil, nil, err
 	}
-	delay, errDelay := getAttrInt(t, "delay")
-	if errDelay != nil {
-		return nil, errDelay
+	delay, err := t.IntValue("delay")
+	if err != nil {
+		return nil, nil, err
 	}
-	timeout, errTimeout := getAttrInt(t, "timeout")
-	if errTimeout != nil {
-		return nil, errTimeout
-	}
-
-	if e, ok := v.executors[name]; ok {
-		ew := &ExecutorWrap{
-			executor: e,
-			retry:    retry,
-			delay:    delay,
-			timeout:  timeout,
-		}
-		return ew, nil
+	timeout, err := t.IntValue("timeout")
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return nil, fmt.Errorf("[%s] type '%s' is not implemented", tcc.GetName(), name)
+	info, _ := t.StringSliceValue("info")
+	vars, err := dump.ToStringMap(h)
+	if err != nil {
+		return ctx, nil, err
+	}
+
+	for k, v := range vars {
+		ctx = context.WithValue(ctx, ContextKey("var."+k), v)
+	}
+
+	if ex, ok := v.executors[name]; ok {
+		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
+	}
+
+	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
 
-// RegisterTestCaseContext new register TestCaseContext
-func (v *Venom) RegisterTestCaseContext(name string, tcc TestCaseContext) {
-	v.contexts[name] = tcc
+func StringVarFromCtx(ctx context.Context, varname string) string {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToString(i)
 }
 
-// ContextWrap initializes a context for a testcase
-// no type -> parent context
-func (v *Venom) ContextWrap(tc *TestCase) (TestCaseContext, error) {
-	if tc.Context == nil {
-		return v.contexts["default"], nil
-	}
-	var typeName string
-	if itype, ok := tc.Context["type"]; ok {
-		typeName = fmt.Sprintf("%s", itype)
-	}
-
-	if typeName == "" {
-		return v.contexts["default"], nil
-	}
-	v.contexts[typeName].SetTestCase(*tc)
-	return v.contexts[typeName], nil
+func StringSliceVarFromCtx(ctx context.Context, varname string) []string {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToStringSlice(i)
 }
 
-func getAttrInt(t map[string]interface{}, name string) (int, error) {
-	var out int
-	if i, ok := t[name]; ok {
-		var ok bool
-		out, ok = i.(int)
-		if !ok {
-			return -1, fmt.Errorf("attribute %s '%s' is not an integer", name, i)
-		}
-	}
-	if out < 0 {
-		out = 0
-	}
-	return out, nil
+func IntVarFromCtx(ctx context.Context, varname string) int {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToInt(i)
+}
+
+func BoolVarFromCtx(ctx context.Context, varname string) bool {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToBool(i)
+}
+
+func StringMapInterfaceVarFromCtx(ctx context.Context, varname string) map[string]interface{} {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToStringMap(i)
+}
+
+func StringMapStringVarFromCtx(ctx context.Context, varname string) map[string]string {
+	i := ctx.Value(ContextKey("var." + varname))
+	return cast.ToStringMapString(i)
 }

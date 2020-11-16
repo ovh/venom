@@ -1,25 +1,38 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
 
+	"github.com/gosimple/slug"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sclevine/agouti"
 
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/context/webctx"
-	"github.com/ovh/venom/executors"
 )
 
-// Name of executor
-const Name = "web"
+var (
+	_ venom.Executor          = new(Executor)
+	_ venom.ExecutorWithSetup = new(Executor)
+)
+
+// Key of context element in testsuite file
+const (
+	Name       = "web"
+	ContextKey = venom.ContextKey("webContext")
+)
 
 // New returns a new Executor
 func New() venom.Executor {
 	return &Executor{}
+}
+
+type WebContext struct {
+	wd   *agouti.WebDriver
+	Page *agouti.Page
 }
 
 // Executor struct
@@ -30,32 +43,91 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
-	Find        int      `json:"find,omitempty" yaml:"find,omitempty"`
-	HTML        string   `json:"html,omitempty" yaml:"html,omitempty"`
-	TimeSeconds float64  `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
-	TimeHuman   string   `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
-	Title       string   `json:"title,omitempty" yaml:"title,omitempty"`
-	URL         string   `json:"url,omitempty" yaml:"url,omitempty"`
-	Text        string   `json:"text,omitempty" yaml:"text,omitempty"`
-	Value       string   `json:"value,omitempty" yaml:"value,omitempty"`
+	Find        int     `json:"find,omitempty" yaml:"find,omitempty"`
+	HTML        string  `json:"html,omitempty" yaml:"html,omitempty"`
+	TimeSeconds float64 `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
+	TimeHuman   string  `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
+	Title       string  `json:"title,omitempty" yaml:"title,omitempty"`
+	URL         string  `json:"url,omitempty" yaml:"url,omitempty"`
+	Text        string  `json:"text,omitempty" yaml:"text,omitempty"`
+	Value       string  `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
-func (Executor) ZeroValueResult() venom.ExecutorResult {
-	r, _ := executors.Dump(Result{})
-	return r
+func (Executor) ZeroValueResult() interface{} {
+	return Result{}
+}
+
+func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error) {
+	var webCtx WebContext
+	var driver = venom.StringVarFromCtx(ctx, "web.driver") // Possible values: chrome, phantomjs, gecko
+	var args = venom.StringVarFromCtx(ctx, "web.args")
+	var prefs = venom.StringMapInterfaceVarFromCtx(ctx, "web.prefs")
+
+	switch driver {
+	case "chrome":
+		webCtx.wd = agouti.ChromeDriver(
+			agouti.ChromeOptions("args", args),
+			agouti.ChromeOptions("prefs", prefs),
+		)
+	case "gecko":
+		webCtx.wd = agouti.GeckoDriver()
+	default:
+		webCtx.wd = agouti.PhantomJS()
+	}
+
+	var timeout = venom.IntVarFromCtx(ctx, "web.timeout")
+	if timeout > 0 {
+		webCtx.wd.Timeout = time.Duration(timeout) * time.Second
+	} else {
+		webCtx.wd.Timeout = 180 * time.Second // default value
+	}
+
+	webCtx.wd.Debug = venom.BoolVarFromCtx(ctx, "web.debug")
+
+	if err := webCtx.wd.Start(); err != nil {
+		return ctx, fmt.Errorf("Unable start web driver %v", err)
+	}
+
+	// Init Page
+	var err error
+	webCtx.Page, err = webCtx.wd.NewPage()
+	if err != nil {
+		return ctx, fmt.Errorf("Unable create new page: %v", err)
+	}
+
+	var resizePage bool
+	var width = venom.IntVarFromCtx(ctx, "web.width")
+	var height = venom.IntVarFromCtx(ctx, "web.height")
+	if width > 0 && height > 0 {
+		resizePage = true
+	}
+
+	// Resize Page
+	if resizePage {
+		if err := webCtx.Page.Size(width, height); err != nil {
+			return ctx, fmt.Errorf("Unable resize page: %s", err)
+		}
+	}
+
+	return context.WithValue(ctx, ContextKey, &webCtx), nil
+}
+
+func getWebCtx(ctx context.Context) *WebContext {
+	i := ctx.Value(ContextKey)
+	if i == nil {
+		return nil
+	}
+	return i.(*WebContext)
+}
+
+func (Executor) TearDown(ctx context.Context) error {
+	return getWebCtx(ctx).wd.Stop()
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
-	var ctx *webctx.WebTestCaseContext
-	switch testCaseContext.(type) {
-	case *webctx.WebTestCaseContext:
-		ctx = testCaseContext.(*webctx.WebTestCaseContext)
-	default:
-		return nil, fmt.Errorf("Web executor need a Web context")
-	}
+func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+	webCtx := getWebCtx(ctx)
 
 	start := time.Now()
 
@@ -65,10 +137,10 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		return nil, err
 	}
 
-	result, err := e.runAction(l, ctx.Page)
+	result, err := e.runAction(ctx, webCtx.Page)
 	if err != nil {
-		if errg := generateErrorHTMLFile(l, ctx.Page, ctx.Name); errg != nil {
-			l.Warnf("Error while generate HTML file: %v", errg)
+		if errg := generateErrorHTMLFile(ctx, webCtx.Page, slug.Make(webCtx.Page.String())); errg != nil {
+			venom.Warn(ctx, "Error while generate HTML file: %v", errg)
 			return nil, err
 		}
 		return nil, err
@@ -76,18 +148,18 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	// take a screenshot
 	if e.Screenshot != "" {
-		if err := ctx.Page.Screenshot(e.Screenshot); err != nil {
+		if err := webCtx.Page.Screenshot(e.Screenshot); err != nil {
 			return nil, err
 		}
-		if err := generateErrorHTMLFile(l, ctx.Page, ctx.Name); err != nil {
-			l.Warnf("Error while generate HTML file: %v", err)
+		if err := generateErrorHTMLFile(ctx, webCtx.Page, slug.Make(webCtx.Page.String())); err != nil {
+			venom.Warn(ctx, "Error while generate HTML file: %v", err)
 			return nil, err
 		}
 	}
 
 	// Get page title (Check the absence of popup before the page title collect to avoid error)
-	if _, err := ctx.Page.PopupText(); err != nil {
-		title, err := ctx.Page.Title()
+	if _, err := webCtx.Page.PopupText(); err != nil {
+		title, err := webCtx.Page.Title()
 		if err != nil {
 			return nil, err
 		}
@@ -95,8 +167,8 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	// Get page url (Check the absence of popup before the page url collect to avoid error)
-	if _, err := ctx.Page.PopupText(); err != nil {
-		url, errU := ctx.Page.URL()
+	if _, err := webCtx.Page.PopupText(); err != nil {
+		url, errU := webCtx.Page.URL()
 		if errU != nil {
 			return nil, fmt.Errorf("Cannot get URL: %s", errU)
 		}
@@ -105,13 +177,13 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = fmt.Sprintf("%s", elapsed)
+	result.TimeHuman = elapsed.String()
 
-	return executors.Dump(result)
+	return result, nil
 }
 
-func (e Executor) runAction(l venom.Logger, page *agouti.Page) (*Result, error) {
-	r := &Result{Executor: e}
+func (e Executor) runAction(ctx context.Context, page *agouti.Page) (*Result, error) {
+	r := &Result{}
 	if e.Action.Click != nil {
 		s, err := find(page, e.Action.Click.Find, r)
 		if err != nil {
@@ -273,12 +345,12 @@ func findOne(page *agouti.Page, search string, r *Result) (*agouti.Selection, er
 }
 
 // generateErrorHTMLFile generates an HTML file in error case to identify clearly the error
-func generateErrorHTMLFile(logger venom.Logger, page *agouti.Page, name string) error {
+func generateErrorHTMLFile(ctx context.Context, page *agouti.Page, name string) error {
 	html, err := page.HTML()
 	if err != nil {
 		return err
 	}
 	filename := name + ".dump.html"
-	logger.Infof("Content of the HTML page is saved in %s", filename)
+	venom.Info(ctx, "Content of the HTML page is saved in %s", filename)
 	return ioutil.WriteFile(filename, []byte(html), 0644)
 }

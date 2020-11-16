@@ -381,7 +381,7 @@ func ShouldBeLessThanOrEqualTo(actual interface{}, expected ...interface{}) erro
 		return nil
 	}
 
-	return fmt.Errorf("expected %v less than or equals to %v but it wasn't", actual, expected[0])
+	return fmt.Errorf("expected '%v' less than or equals to %v but it wasn't", actual, expected[0])
 }
 
 // ShouldBeLessThan receives exactly two parameters and ensures that the first is less than the second.
@@ -397,7 +397,7 @@ func ShouldBeBetween(actual interface{}, expected ...interface{}) error {
 	err1 := ShouldBeLessThan(actual, expected[1])
 	err2 := ShouldBeGreaterThan(actual, expected[0])
 	if err1 != nil || err2 != nil {
-		return fmt.Errorf("expected %v between %v and %v but it wasn't", actual, expected[0], expected[1])
+		return fmt.Errorf("expected '%v' between %v and %v but it wasn't", actual, expected[0], expected[1])
 	}
 	return nil
 }
@@ -406,14 +406,12 @@ func ShouldBeBetween(actual interface{}, expected ...interface{}) error {
 // It ensures that the actual value is NOT between both bounds.
 func ShouldNotBeBetween(actual interface{}, expected ...interface{}) error {
 	if err := ShouldBeBetween(actual, expected...); err != nil {
-		fmt.Printf("%T %v\n", err, err)
-
 		if _, ok := err.(*AssertionError); ok {
 			return err
 		}
 		return nil
 	}
-	return fmt.Errorf("expected %v not between %v and %v but it was", actual, expected[0], expected[1])
+	return fmt.Errorf("expected '%v' not between %v and %v but it was", actual, expected[0], expected[1])
 }
 
 // ShouldBeBetweenOrEqual receives exactly three parameters: an actual value, a lower bound, and an upper bound.
@@ -430,7 +428,7 @@ func ShouldBeBetweenOrEqual(actual interface{}, expected ...interface{}) error {
 	err1 := ShouldBeLessThanOrEqualTo(actual, expected[1])
 	err2 := ShouldBeGreaterThanOrEqualTo(actual, expected[0])
 	if err1 != nil || err2 != nil {
-		return fmt.Errorf("expected %v between %v and %v but it wasn't", actual, expected[0], expected[1])
+		return fmt.Errorf("expected '%v' between %v and %v but it wasn't", actual, expected[0], expected[1])
 	}
 	return nil
 }
@@ -444,7 +442,7 @@ func ShouldNotBeBetweenOrEqual(actual interface{}, expected ...interface{}) erro
 		}
 		return nil
 	}
-	return fmt.Errorf("expected %v not between or equal to %v and %v but it was", actual, expected[0], expected[1])
+	return fmt.Errorf("expected '%v' not between or equal to %v and %v but it was", actual, expected[0], expected[1])
 }
 
 // ShouldContain receives exactly two parameters. The first is a slice and the
@@ -462,7 +460,7 @@ func ShouldContain(actual interface{}, expected ...interface{}) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("expected %v contain %v but it wasnt", actual, expected[0])
+	return fmt.Errorf("expected '%v' contain %v but it wasnt", actual, expected[0])
 }
 
 // ShouldNotContain receives exactly two parameters. The first is a slice and the
@@ -477,7 +475,7 @@ func ShouldNotContain(actual interface{}, expected ...interface{}) error {
 	}
 	for i := range actualSlice {
 		if ShouldEqual(actualSlice[i], expected[0]) == nil {
-			return fmt.Errorf("expected %v not contain %v but it was", actual, expected[0])
+			return fmt.Errorf("expected '%v' not contain %v but it was", actual, expected[0])
 		}
 	}
 	return nil
@@ -498,7 +496,7 @@ func ShouldContainKey(actual interface{}, expected ...interface{}) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("expected %v contain key %v but it wasnt", actual, expected[0])
+	return fmt.Errorf("expected '%v' contain key %v but it wasnt", actual, expected[0])
 }
 
 // ShouldNotContainKey receives exactly two parameters. The first is a map and the
@@ -513,7 +511,7 @@ func ShouldNotContainKey(actual interface{}, expected ...interface{}) error {
 	}
 	for k := range actualMap {
 		if ShouldEqual(k, expected[0]) == nil {
-			return fmt.Errorf("expected %v not contain key %v but it was", actual, expected[0])
+			return fmt.Errorf("expected '%v' not contain key %v but it was", actual, expected[0])
 		}
 	}
 	return nil
@@ -537,7 +535,7 @@ func ShouldBeIn(actual interface{}, expected ...interface{}) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("expected %v in %v but it wasnt", actual, expectedSlice)
+	return fmt.Errorf("expected '%v' in %v but it wasnt", actual, expectedSlice)
 }
 
 // ShouldNotBeIn receives at least 2 parameters. The first is a proposed member of the collection
@@ -553,7 +551,7 @@ func ShouldNotBeIn(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("expected %v not in %v but it was", actual, expected)
+	return fmt.Errorf("expected '%v' not in %v but it was", actual, expected)
 }
 
 // ShouldBeEmpty receives a single parameter (actual) and determines whether or not
@@ -581,7 +579,7 @@ func ShouldBeEmpty(actual interface{}, expected ...interface{}) error {
 		}
 	}
 
-	return fmt.Errorf("expected %v to be empty but it wasn't", actual)
+	return fmt.Errorf("expected '%v' to be empty but it wasn't", actual)
 }
 
 // ShouldNotBeEmpty receives a single parameter (actual) and determines whether or not
@@ -593,7 +591,7 @@ func ShouldNotBeEmpty(actual interface{}, expected ...interface{}) error {
 	if err := ShouldBeEmpty(actual); err != nil {
 		return nil
 	}
-	return fmt.Errorf("expected %v not to be empty but it wasn't", actual)
+	return fmt.Errorf("expected '%v' not to be empty but it wasn't", actual)
 }
 
 // ShouldHaveLength receives 2 parameters. The first is a collection to check
@@ -622,7 +620,7 @@ func ShouldHaveLength(actual interface{}, expected ...interface{}) error {
 		}
 	}
 
-	return fmt.Errorf("expected %v have length of %d but it wasn't", actual, length)
+	return fmt.Errorf("expected '%v' have length of %d but it wasn't", actual, length)
 
 }
 
@@ -646,7 +644,7 @@ func ShouldStartWith(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("expected %v have prefix %v it wasn't", s, prefix)
+	return fmt.Errorf("expected '%v' have prefix %q but it wasn't", s, prefix)
 }
 
 // ShouldNotStartWith receives exactly 2 string parameters and ensures that the first does not start with the second.
@@ -666,7 +664,7 @@ func ShouldNotStartWith(actual interface{}, expected ...interface{}) error {
 	}
 
 	if strings.HasPrefix(s, prefix) {
-		return fmt.Errorf("expected %v not have prefix %v it was", s, prefix)
+		return fmt.Errorf("expected '%v' not have prefix %q but it was", s, prefix)
 	}
 
 	return nil
@@ -692,7 +690,7 @@ func ShouldEndWith(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("expected %v have suffix %v it wasn't", s, suffix)
+	return fmt.Errorf("expected '%v' have suffix %q but it wasn't", s, suffix)
 }
 
 // ShouldEndWith receives exactly 2 string parameters and ensures that the first does not end with the second.
@@ -712,7 +710,7 @@ func ShouldNotEndWith(actual interface{}, expected ...interface{}) error {
 	}
 
 	if strings.HasSuffix(s, suffix) {
-		return fmt.Errorf("expected %v not have suffix %v it was", s, suffix)
+		return fmt.Errorf("expected '%v' not have suffix %q but it was", s, suffix)
 	}
 
 	return nil
@@ -733,7 +731,7 @@ func ShouldBeBlank(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("expected %v to be blank it wasn't", s)
+	return fmt.Errorf("expected '%v' to be blank but it wasn't", s)
 }
 
 // ShouldNotBeBlank receives exactly 1 string parameter and ensures that it is equal to "".
@@ -748,7 +746,7 @@ func ShouldNotBeBlank(actual interface{}, expected ...interface{}) error {
 	}
 
 	if s == "" {
-		return fmt.Errorf("expected value to not be blank it was")
+		return fmt.Errorf("expected value to not be blank but it was")
 	}
 
 	return nil
@@ -772,7 +770,7 @@ func ShouldContainSubstring(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("expected '%v' to contain '%v' it wasn't", s, ss)
+	return fmt.Errorf("expected '%v' to contain '%v' but it wasn't", s, ss)
 }
 
 // ShouldNotContainSubstring receives exactly 2 string parameters and ensures that the first does NOT contain the second as a substring.
@@ -790,7 +788,7 @@ func ShouldNotContainSubstring(actual interface{}, expected ...interface{}) erro
 	ss := strings.TrimSpace(arg)
 
 	if strings.Contains(s, ss) {
-		return fmt.Errorf("expected '%v' to not contain '%v' it was", s, ss)
+		return fmt.Errorf("expected '%v' to not contain '%v' but it was", s, ss)
 	}
 
 	return nil

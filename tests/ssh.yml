@@ -1,0 +1,12 @@
+name: SSH testsuite
+testcases:
+- name: ssh foo status
+  steps:
+  - type: ssh
+    user: venom
+    host: localhost:2222
+    privatekey: "$HOME/.ssh/id_rsa"
+    command: echo foo
+    assertions:
+    - result.code ShouldEqual 0
+    - result.timeseconds ShouldBeLessThan 10

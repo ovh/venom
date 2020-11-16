@@ -15,21 +15,6 @@ import (
 	"github.com/ovh/venom/assertions"
 )
 
-type testingT struct {
-	ErrorS []string
-}
-
-func (t *testingT) Error(args ...interface{}) {
-	for _, a := range args {
-		switch v := a.(type) {
-		case string:
-			t.ErrorS = append(t.ErrorS, v)
-		default:
-			t.ErrorS = append(t.ErrorS, fmt.Sprintf("%s", v))
-		}
-	}
-}
-
 type assertionsApplied struct {
 	ok        bool
 	errors    []Failure
@@ -38,23 +23,7 @@ type assertionsApplied struct {
 	systemerr string
 }
 
-// applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
-	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions)
-	if !res.ok {
-		return res
-	}
-
-	resExtract := applyExtracts(executorResult, step)
-
-	res.errors = append(res.errors, resExtract.errors...)
-	res.failures = append(res.failures, resExtract.failures...)
-	res.ok = resExtract.ok
-
-	return res
-}
-
-func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -73,6 +42,8 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 	if len(sa.Assertions) == 0 && defaultAssertions != nil {
 		sa = *defaultAssertions
 	}
+
+	executorResult := GetExecutorResult(r)
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
@@ -98,16 +69,18 @@ func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int,
 	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
-func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
+func check(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
+	executorResult := GetExecutorResult(r)
+
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
-		return nil, newFailure(tc, stepNumber, assertion, errors.New("syntax error"), executorResult)
+		return nil, newFailure(tc, stepNumber, assertion, errors.New("syntax error"))
 	}
 
 	actual := executorResult[assert[0]]
 	f, ok := assertions.Get(assert[1])
 	if !ok {
-		return nil, newFailure(tc, stepNumber, assertion, errors.New("assertion not supported"), executorResult)
+		return nil, newFailure(tc, stepNumber, assertion, errors.New("assertion not supported"))
 	}
 
 	args := make([]interface{}, len(assert[2:]))
@@ -115,12 +88,12 @@ func check(tc TestCase, stepNumber int, assertion string, executorResult Executo
 		var err error
 		args[i], err = stringToType(v, actual)
 		if err != nil {
-			return nil, newFailure(tc, stepNumber, assertion, fmt.Errorf("mismatched type between '%v' and '%v': %v", assert[0], v, err), executorResult)
+			return nil, newFailure(tc, stepNumber, assertion, fmt.Errorf("mismatched type between '%v' and '%v': %v", assert[0], v, err))
 		}
 	}
 
 	if err := f(actual, args...); err != nil {
-		return nil, newFailure(tc, stepNumber, assertion, err, executorResult)
+		return nil, newFailure(tc, stepNumber, assertion, err)
 	}
 	return nil, nil
 }
@@ -195,11 +168,11 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 	return val, nil
 }
 
-func findLineNumber(filename, testcase string, stepNumber int, assertion string) (int, error) {
+func findLineNumber(filename, testcase string, stepNumber int, assertion string) int {
 	countLine := 0
 	file, err := os.Open(filename)
 	if err != nil {
-		return countLine, err
+		return countLine
 	}
 	defer file.Close()
 
@@ -227,7 +200,7 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 			testcaseFound = true
 			continue
 		}
-		if testcaseFound && countStep <= stepNumber && strings.Contains(line, "type") {
+		if testcaseFound && countStep <= stepNumber && (strings.Contains(line, "type") || strings.Contains(line, "script")) {
 			countStep++
 			continue
 		}
@@ -238,12 +211,12 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return countLine, err
+		return countLine
 	}
 
 	if !lineFound {
-		return 0, nil
+		return 0
 	}
 
-	return countLine, nil
+	return countLine
 }

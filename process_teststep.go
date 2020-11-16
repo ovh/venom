@@ -5,63 +5,68 @@ import (
 	"fmt"
 	"time"
 
-	dump "github.com/fsamin/go-dump"
-	log "github.com/sirupsen/logrus"
+	"github.com/ovh/cds/sdk/interpolate"
+
+	"github.com/ovh/venom/executors"
 )
 
 //RunTestStep executes a venom testcase is a venom context
-func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCase, stepNumber int, step TestStep, l Logger) ExecutorResult {
+func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite, tc *TestCase, stepNumber int, step TestStep) interface{} {
+	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
+
 	var assertRes assertionsApplied
 
 	var retry int
-	var result ExecutorResult
+	var result interface{}
 
-	for retry = 0; retry <= e.retry && !assertRes.ok; retry++ {
+	for retry = 0; retry <= e.Retry() && !assertRes.ok; retry++ {
 		if retry > 1 && !assertRes.ok {
-			l.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
-			time.Sleep(time.Duration(e.delay) * time.Second)
+			Debug(ctx, "Sleep %d, it's %d attempt", e.Delay(), retry)
+			time.Sleep(time.Duration(e.Delay()) * time.Second)
 		}
 
 		var err error
-		result, err = runTestStepExecutor(tcc, e, ts, step, l)
-
+		result, err = runTestStepExecutor(ctx, e, ts, step)
 		if err != nil {
 			// we save the failure only if it's the last attempt
-			if retry == e.retry {
-				tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
+			if retry == e.Retry() {
+				failure := newFailure(*tc, stepNumber, "", err)
+				tc.Failures = append(tc.Failures, *failure)
 			}
 			continue
 		}
 
-		// add result in templater
-		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
+		Debug(ctx, "result: %+v", result)
+		mapResult := GetExecutorResult(result)
+		mapResultString, _ := executors.DumpString(result)
 
-		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
-			assertRes = applyChecks(&result, *tc, stepNumber, step, h.GetDefaultAssertions())
-		} else {
-			assertRes = applyChecks(&result, *tc, stepNumber, step, nil)
-		}
-		// add result again for extracts values
-		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
-
-		// then template the TestSuite vars if needed
-		var applied bool
-		applied, ts.Vars, err = ts.Templater.ApplyOnMap(ts.Vars)
-		if err != nil {
-			log.Errorf("err:%s", err)
-		}
-		if applied {
-			d, err := dump.ToStringMap(ts.Vars)
+		for _, i := range e.Info() {
+			info, err := interpolate.Do(i, mapResultString)
 			if err != nil {
-				log.Errorf("err:%s", err)
+				Error(ctx, "unable to parse %q: %v", i, err)
+				continue
 			}
-			ts.Templater.Add("", d)
+			if info == "" {
+				continue
+			}
+			info += fmt.Sprintf(" (%s:%d)", ts.Filename, findLineNumber(ts.Filename, tc.originalName, stepNumber, i))
+			Info(ctx, info)
+			tc.computedInfo = append(tc.computedInfo, info)
 		}
+
+		if h, ok := e.(executorWithDefaultAssertions); ok {
+			assertRes = applyAssertions(result, *tc, stepNumber, step, h.GetDefaultAssertions())
+		} else {
+			assertRes = applyAssertions(result, *tc, stepNumber, step, nil)
+		}
+
+		tc.computedVars.AddAll(H(mapResult))
 
 		if assertRes.ok {
 			break
 		}
 	}
+
 	tc.Errors = append(tc.Errors, assertRes.errors...)
 	tc.Failures = append(tc.Failures, assertRes.failures...)
 	if retry > 1 && (len(assertRes.failures) > 0 || len(assertRes.errors) > 0) {
@@ -73,32 +78,26 @@ func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite,
 	return result
 }
 
-func stringifyExecutorResult(e ExecutorResult) map[string]string {
-	out := make(map[string]string)
-	for k, v := range e {
-		out[k] = fmt.Sprintf("%v", v)
-	}
-	return out
-}
+func runTestStepExecutor(ctx context.Context, e ExecutorRunner, ts *TestSuite, step TestStep) (interface{}, error) {
+	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
-func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, step TestStep, l Logger) (ExecutorResult, error) {
-	if e.timeout == 0 {
-		return e.executor.Run(tcc, l, step, ts.WorkDir)
+	if e.Timeout() == 0 {
+		return e.Run(ctx, step, ts.WorkDir)
 	}
 
-	ctxTimeout, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout())*time.Second)
 	defer cancel()
 
-	ch := make(chan ExecutorResult)
+	ch := make(chan interface{})
 	cherr := make(chan error)
-	go func(tcc TestCaseContext, e *ExecutorWrap, step TestStep, l Logger) {
-		result, err := e.executor.Run(tcc, l, step, ts.WorkDir)
+	go func(e ExecutorRunner, step TestStep) {
+		result, err := e.Run(ctx, step, ts.WorkDir)
 		if err != nil {
 			cherr <- err
 		} else {
 			ch <- result
 		}
-	}(tcc, e, step, l)
+	}(e, step)
 
 	select {
 	case err := <-cherr:
@@ -106,6 +105,6 @@ func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, st
 	case result := <-ch:
 		return result, nil
 	case <-ctxTimeout.Done():
-		return nil, fmt.Errorf("Timeout after %d second(s)", e.timeout)
+		return nil, fmt.Errorf("Timeout after %d second(s)", e.Timeout())
 	}
 }

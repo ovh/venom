@@ -1,0 +1,37 @@
+name: DBFixtures integration testsuite
+vars:
+  mysqlHost: 'localhost'
+  mysqlPort: '13306'
+  mysqlUser: venom
+  mysqlPassword: venom
+  pgHost: 'localhost'
+  pgPort: '15432'
+  pgUser: venom
+  pgPassword: venom
+  
+testcases:
+- name: load-fixtures-into-mysql-database
+  steps:
+   - type: dbfixtures
+     database: mysql
+     dsn: "{{.mysqlUser}}:{{.mysqlPassword}}@({{.mysqlHost}}:{{.mysqlPort}})/venom?multiStatements=true"
+     schemas:
+       - dbfixtures/testdata/schemas/mysql.sql
+     folder: dbfixtures/testdata/fixtures
+
+- name: load-fixtures-into-postgreql-database
+  steps:
+   - type: dbfixtures
+     database: postgres
+     dsn: "user={{.pgUser}} password={{.pgPassword}} dbname=venom host={{.pgHost}} port={{.pgPort}} sslmode=disable"
+     schemas:
+       - dbfixtures/testdata/schemas/postgres.sql
+     folder: dbfixtures/testdata/fixtures
+
+- name: initialize-postgresql-database-with-migrations
+  steps:
+   - type: dbfixtures
+     database: postgres
+     dsn: "user=venom password=venom dbname=venom host={{.pgHost}} port={{.pgPort}} sslmode=disable"
+     migrations_path: dbfixtures/testdata/migrations
+     folder: dbfixtures/testdata/fixtures
