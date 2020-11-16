@@ -130,7 +130,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 			}
 			fi, err := os.Open(f)
 			if err != nil {
-				return fmt.Errorf("unable to open var-file %s: %v", f, err)
+				return fmt.Errorf("unable to open var-from-file %s: %v", f, err)
 			}
 			defer fi.Close()
 			readers = append(readers, fi)

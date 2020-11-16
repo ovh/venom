@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"time"
 
 	dump "github.com/fsamin/go-dump"
@@ -65,7 +66,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 					dumpEncoder.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 
 					//Try to pretty print only the result
-					/*var smartPrinted bool
+					var smartPrinted bool
 					for k, v := range f.Result {
 						if k == "result" && reflect.TypeOf(v).Kind() != reflect.String {
 							dumpEncoder.Fdump(v)
@@ -76,7 +77,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 					//If not succeed print all the stuff
 					if !smartPrinted {
 						dumpEncoder.Fdump(f.Result)
-					}*/
+					}
 
 					output := f.Value + "\n ------ Result: \n" + sdump.String() + "\n ------ Variables:\n"
 					for k, v := range ts.Vars {
