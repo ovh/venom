@@ -19,44 +19,27 @@ Usage:
   venom run [flags]
 
 Flags:
-      --env                    Inject environment variables. export FOO=BAR -> you can use {{.FOO}} in your tests (default true)
-      --format string          --format:yaml, json, xml, tap (default "xml")
-  -h, --help                   help for run
-      --log string             Log Level : debug, info or warn (default "warn")
-      --no-check-variables     Don't check variables before run
-      --output-dir string      Output Directory: create tests results file inside this directory
-      --parallel int           --parallel=2 : launches 2 Test Suites in parallel (default 1)
-      --profiling              Enable Mem / CPU Profile with pprof
-      --stop-on-failure        Stop running Test Suite on first Test Case failure
-      --strict                 Exit with an error code if one test fails
-      --var strings            --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file strings  --var-from-file filename.yaml --var-from-file filename2.yaml : hcl|json|yaml, must contains map[string]string'
+      --format string           --format:yaml, json, xml, tap (default "xml")
+  -h, --help                    help for run
+      --log string              Log Level : debug, info, warn or disable (default "warn")
+      --no-check-variables      Don't check variables before run
+      --output-dir string       Output Directory: create tests results file inside this directory
+      --parallel int            --parallel=2 : launches 2 Test Suites in parallel (default 1)
+      --profiling               Enable Mem / CPU Profile with pprof
+      --stop-on-failure         Stop running Test Suite on first Test Case failure
+      --strict                  Exit with an error code if one test fails
+      --var strings             --var cds='cds -f config.json' --var cds2='cds -f config.json'
+      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary'
 ```
 
-## Executors
+## TestSuites
 
-* **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
-* **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
-* **http**: https://github.com/ovh/venom/tree/master/executors/http
-* **imap**: https://github.com/ovh/venom/tree/master/executors/imap
-* **kafka** https://github.com/ovh/venom/tree/master/executors/kafka
-* **ovhapi**: https://github.com/ovh/venom/tree/master/executors/ovhapi
-* **readfile**: https://github.com/ovh/venom/tree/master/executors/readfile
-* **redis**: https://github.com/ovh/venom/tree/master/executors/redis
-* **smtp**: https://github.com/ovh/venom/tree/master/executors/smtp
-* **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
-* **web**: https://github.com/ovh/venom/tree/master/executors/web
-* **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
-* **rabbitmq**: https://github.com/ovh/venom/tree/master/executors/rabbitmq
-* **sql**: https://github.com/ovh/venom/tree/master/executors/sql
+A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours. 
+A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
-## TestSuite files
+In `venom` the testcases are executed sequentialy within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enable some specific kind of behavior.
 
-* Run `venom template`
-* Examples: https://github.com/ovh/cds/tree/master/tests
-
-
-### Example:
+In `venom` a testsuite is written in one `yaml` file respecting the following structure.
 
 ```yaml
 
@@ -101,34 +84,85 @@ testcases:
 
 ```
 
-Using variables and reuse results
+## Executors
+
+* **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
+* **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
+* **http**: https://github.com/ovh/venom/tree/master/executors/http
+* **imap**: https://github.com/ovh/venom/tree/master/executors/imap
+* **kafka** https://github.com/ovh/venom/tree/master/executors/kafka
+* **ovhapi**: https://github.com/ovh/venom/tree/master/executors/ovhapi
+* **readfile**: https://github.com/ovh/venom/tree/master/executors/readfile
+* **redis**: https://github.com/ovh/venom/tree/master/executors/redis
+* **smtp**: https://github.com/ovh/venom/tree/master/executors/smtp
+* **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
+* **web**: https://github.com/ovh/venom/tree/master/executors/web
+* **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
+* **rabbitmq**: https://github.com/ovh/venom/tree/master/executors/rabbitmq
+* **sql**: https://github.com/ovh/venom/tree/master/executors/sql
+
+
+## Variables
+
+### Testsuite variables
+
+You can define variable on the `testsuite` level.
 
 ```yaml
-name: MyTestSuiteTmpl
+name: myTestSuite
 vars:
-  api.foo: 'http://api/foo'
-  second: 'venomWithTmpl'
+  foo: foo
+  biz:
+    bar: bar
 
 testcases:
-- name: testA
+- name: first-test-case
   steps:
   - type: exec
-    script: echo '{{.api.foo}}'
+    script: echo '{{.foo}} {{.biz.bar}}'
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual http://api/foo
-
-- name: testB
-  steps:
-  - type: exec
-    script: echo 'XXX{{.testA.result.systemout}}YYY'
-    assertions:
-    - result.code ShouldEqual 0
-    - result.systemout ShouldEqual XXXhttp://api/fooYYY
-
+    - result.systemout ShouldEqual "foo bar"
+...
 ```
 
-Extract variable on the fly from results and reuse it in step after
+Each user variable used in testsuite must be declared in this section. You can override the values at runtime in a number of ways:
+- Individually, with the `--var` command line option.
+- In variable definitions files, either specified on the command line `--var-from-file`.
+- As environment variables.
+
+
+#### Variable on Command Line
+
+To specify individual variables on the command line, use the `--var` option when running the `venom run` commands:
+
+```
+venom run --var="foo=bar"
+venom run --var='foo_list=["biz","buz"]'
+venom run --var='foo={"biz":"bar","biz":"barr"}'
+```
+
+The -var option can be used any number of times in a single command.
+
+#### Variable Definitions Files
+
+To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a yaml dictionnay and you have specify that file on the command line with `--var-from-file`
+
+#### Environment Variables
+
+As a fallback for the other ways of defining variables, `venom` searches the environment of its own process for environment variables named VENOM_VAR_ followed by the name of a declared variable.
+
+```bash
+$ export VENOM_VAR_foo=bar
+$ venom run *.yml
+```
+
+### How to use outputs from a test step as input of another test step
+
+To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
+
+After the first step execution, `venom` extracts a value using a regular expression `foo with a ([a-z]+) here` from the content of the `result.systemout` property returned by the `executor`.
+Then we are able to reuse this variable with the name `testA.myvariable` with `testA` corresponding to the name of the testcase.
 
 ```yaml
 name: MyTestSuite
@@ -151,7 +185,7 @@ testcases:
     - result.systemout ShouldContainSubstring bar
 ```
 
-Builtin venom variables
+### Builtin venom variables
 
 ```yaml
 name: MyTestSuite
@@ -173,7 +207,7 @@ Builtin variables:
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
 
-## RUN Venom, with an export xUnit
+## Export test results as jUnit, json, yaml or tap reports
 
 ```bash
 venom run --format=xml --output-dir="."
