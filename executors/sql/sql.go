@@ -19,7 +19,7 @@ import (
 	_ "github.com/sijms/go-ora"
 
 	// ODBC
-	_ "github.com/alexbrainman/odbc"
+	//_ "github.com/alexbrainman/odbc"
 
 	"github.com/ovh/venom"
 )

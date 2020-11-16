@@ -4,14 +4,12 @@ go 1.13
 
 require (
 	github.com/Shopify/sarama v1.27.2
-	github.com/alexbrainman/odbc v0.0.0-20200426075526-f0492dfa1575
 	github.com/antonfisher/nested-logrus-formatter v1.3.0
 	github.com/fatih/color v1.10.0
 	github.com/fsamin/go-dump v1.1.1
 	github.com/fullstorydev/grpcurl v1.7.0
 	github.com/garyburd/redigo v1.6.2
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-testfixtures/testfixtures/v3 v3.4.1
 	github.com/golang/protobuf v1.4.3

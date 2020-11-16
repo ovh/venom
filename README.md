@@ -9,9 +9,6 @@ It can also output xUnit results files.
 
 Download latest binary release from https://github.com/ovh/venom/releases  
 
-If you want to go get it with: ```go get -u github.com/ovh/venom/cli/venom```, please
-check the dependencies in §Hacking section.
-
 ```bash
 $ venom run -h
 Run Tests
@@ -348,8 +345,8 @@ Feel free to open a Pull Request with your executors.
 
 # Hacking
 
-# example on osx with custom user installation of homebrew:
-# $ CGO_CFLAGS="-I$HOME/homebrew/Cellar/unixodbc/2.3.9/include" CGO_LDFLAGS="-L$HOME/homebrew/lib" make build
+```
+$ make build
 ```
 
 # License
