@@ -11,7 +11,10 @@ Download latest binary release from https://github.com/ovh/venom/releases
 
 ```bash
 $ venom run -h
-Run Tests
+
+$ venom run *.yml
+
+Notice that variables initialized with -var-from-file argument can be overrided with -var argument.
 
 Usage:
   venom run [flags]
@@ -19,15 +22,13 @@ Usage:
 Flags:
       --format string           --format:yaml, json, xml, tap (default "xml")
   -h, --help                    help for run
-      --log string              Log Level : debug, info, warn or disable (default "warn")
       --no-check-variables      Don't check variables before run
       --output-dir string       Output Directory: create tests results file inside this directory
-      --parallel int            --parallel=2 : launches 2 Test Suites in parallel (default 1)
-      --profiling               Enable Mem / CPU Profile with pprof
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --strict                  Exit with an error code if one test fails
       --var strings             --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary'
+      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
+  -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
 ## TestSuites
