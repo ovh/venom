@@ -51,10 +51,10 @@ func init() {
 	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
-	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
-	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose with CPU Profiling")
+	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
+	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
 }
 
 // Cmd run
@@ -94,7 +94,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.StopOnFailure = stopOnFailure
 		v.Verbose = *verbose
 
-		if v.Verbose == 2 {
+		if v.Verbose == 3 {
 			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
 			if err != nil {
 				log.Errorf("error while create profile file %v", err)
