@@ -1,0 +1,15 @@
+name: Builtin vars integration testsuite
+vars: 
+  short: "a short"
+  long: "{{.short}} and a long" 
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo '{{.venom.testsuite}} {{.venom.testsuite.filename}} {{.venom.testcase}} {{.venom.teststep.number}} {{.venom.datetime}} {{.venom.timestamp}} {{.short}} {{.long}}'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring "Builtin vars integration testsuite"
+    - result.systemout ShouldContainSubstring testA
+    - result.systemout ShouldContainSubstring "a short a short and a long"
+    - result.systemout ShouldContainSubstring 0

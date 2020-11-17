@@ -1,0 +1,19 @@
+syntax="proto3";
+ 
+package greeter;
+ 
+service Greeter {
+  rpc Hello (RequestGreet) returns (ResponseGreet) {}
+  rpc Goodbye (RequestGreet) returns (ResponseGreet) {}
+  rpc HowAreYou (stream RequestGreet) returns (ResponseGreet) {}
+  rpc NiceToMeetYou (RequestGreet) returns (stream ResponseGreet) {}
+  rpc Chat (stream RequestGreet) returns (stream ResponseGreet) {}
+}
+ 
+message RequestGreet {
+  string message = 1;
+}
+ 
+message ResponseGreet {
+  string message = 1;
+}

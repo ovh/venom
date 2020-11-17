@@ -1,18 +1,21 @@
 package venom
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime/pprof"
-	"strings"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/fsamin/go-dump"
+	"github.com/gosimple/slug"
+	"github.com/ovh/cds/sdk/interpolate"
 	log "github.com/sirupsen/logrus"
 )
 
-func (v *Venom) runTestSuite(ts *TestSuite) {
+type ContextKey string
+
+func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 	if v.EnableProfiling {
 		var filename, filenameCPU, filenameMem string
 		if v.OutputDir != "" {
@@ -32,95 +35,104 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		}
 	}
 
-	l := log.WithField("v.testsuite", ts.Name)
-	start := time.Now()
-
-	d, err := dump.ToStringMap(ts.Vars)
-	if err != nil {
-		log.Errorf("err:%s", err)
-	}
-	ts.Templater.Add("", d)
-	ts.Templater.Add("", map[string]string{"venom.testsuite": ts.ShortName})
-	ts.Templater.Add("", map[string]string{"venom.testsuite.filename": ts.Filename})
-
-	// we apply templater on current vars only
-	for index := 0; index < 10; index++ {
-		var toApply bool
-		for k, v := range ts.Templater.Values {
-			if strings.Contains(v, "{{") {
-				toApply = true
-				_, s := ts.Templater.apply([]byte(v))
-				ts.Templater.Values[k] = string(s)
-			}
+	// Intialiaze the testsuite varibles and compute a first interpolation over them
+	ts.Vars.AddAll(v.variables.Clone())
+	vars, _ := dump.ToStringMap(ts.Vars)
+	for k, v := range vars {
+		computedV, err := interpolate.Do(fmt.Sprintf("%v", v), vars)
+		if err != nil {
+			log.Errorf("error while computing variable %s=%q: %v", k, v, err)
 		}
-		if !toApply {
-			break
-		}
+		ts.Vars.Add(k, computedV)
 	}
+
+	ts.Vars.Add("venom.testsuite", ts.Name)
+	ts.ComputedVars = H{}
+
+	ctx = context.WithValue(ctx, ContextKey("testsuite"), ts.Name)
+	Info(ctx, "Starting testsuite")
+	defer Info(ctx, "Ending testsuite")
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
-		totalSteps += len(tc.TestSteps)
+		totalSteps += len(tc.testSteps)
 	}
 
-	v.runTestCases(ts, l)
-
-	elapsed := time.Since(start)
-
-	var o string
-	if ts.Failures > 0 || ts.Errors > 0 {
-		red := color.New(color.FgRed).SprintFunc()
-		o = fmt.Sprintf("%s %s", red("FAILURE"), ts.Package)
-	} else {
-		green := color.New(color.FgGreen).SprintFunc()
-		o = fmt.Sprintf("%s %s", green("SUCCESS"), ts.Package)
-	}
-	o += fmt.Sprintf("\t%.2fs", elapsed.Seconds())
-	v.PrintFunc("%v\n", o)
+	v.runTestCases(ctx, ts)
 }
 
-func (v *Venom) runTestCases(ts *TestSuite, l Logger) {
+func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
+	var red = color.New(color.FgRed).SprintFunc()
+	var green = color.New(color.FgGreen).SprintFunc()
+	var cyan = color.New(color.FgCyan).SprintFunc()
+
+	v.Println(" • %s (%s)", ts.Name, ts.Package)
+
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
+		v.Print(" \t• %s", tc.Name)
 		tc.Classname = ts.Filename
+		var hasFailure bool
 		if len(tc.Skipped) == 0 {
-			v.runTestCase(ts, tc, l)
+			v.runTestCase(ctx, ts, tc)
 		}
 
 		if len(tc.Failures) > 0 {
 			ts.Failures += len(tc.Failures)
+			hasFailure = true
 		}
 		if len(tc.Errors) > 0 {
 			ts.Errors += len(tc.Errors)
+			hasFailure = true
 		}
 		if len(tc.Skipped) > 0 {
 			ts.Skipped += len(tc.Skipped)
+		}
+
+		if hasFailure {
+			v.Println(" %s", red("FAILURE"))
+
+		} else {
+			v.Println(" %s", green("SUCCESS"))
+		}
+
+		for _, i := range tc.computedInfo {
+			v.Println("\t  %s %s", cyan("[info]"), cyan(i))
+		}
+
+		if hasFailure {
+			for _, f := range tc.Failures {
+				v.Println("%s", red(f.Value))
+			}
+			for _, f := range tc.Errors {
+				v.Println("%s", red(f.Value))
+			}
 		}
 
 		if v.StopOnFailure && (len(tc.Failures) > 0 || len(tc.Errors) > 0) {
 			// break TestSuite
 			return
 		}
+		ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 	}
 }
 
 //Parse the suite to find unreplaced and extracted variables
 func (v *Venom) parseTestSuite(ts *TestSuite) ([]string, []string, error) {
-	d, err := dump.ToStringMap(ts.Vars)
-	if err != nil {
-		log.Errorf("err:%s", err)
-	}
-	ts.Templater.Add("", d)
-
 	return v.parseTestCases(ts)
 }
 
 //Parse the testscases to find unreplaced and extracted variables
 func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
-	vars := []string{}
-	extractsVars := []string{}
+	var vars []string
+	var extractsVars []string
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
+		tc.originalName = tc.Name
+		tc.Name = slug.Make(tc.Name)
+		tc.Vars = ts.Vars.Clone()
+		tc.Vars.Add("venom.testcase", tc.Name)
+
 		if len(tc.Skipped) == 0 {
 			tvars, tExtractedVars, err := v.parseTestCase(ts, tc)
 			if err != nil {

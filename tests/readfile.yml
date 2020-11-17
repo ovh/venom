@@ -1,0 +1,18 @@
+name:  Readfile testsuite
+testcases:
+- name: testcase-readfile
+  steps:
+  - type: readfile
+    path: readfile/testa.json
+    assertions:
+      - result.contentjson.foo ShouldEqual bar
+
+  - type: readfile
+    path: readfile/testb.json
+    assertions:
+      - result.contentjson.contentjson0.foo2 ShouldEqual bar2
+
+  - type: readfile
+    path: readfile/test.txt
+    assertions:
+      - result.content ShouldContainSubstring multilines

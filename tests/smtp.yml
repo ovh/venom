@@ -1,0 +1,18 @@
+name: SMTP testsuite
+vars:
+  smtpHost: 'localhost'
+  smtpPort: '1025'
+testcases:
+- name: SMTP
+  steps:
+  - type: smtp
+    timeout: 10
+    withtls: false
+    host: "{{.smtpHost}}"
+    port: "{{.smtpPort}}"
+    #user: yourSMTPUsername
+    #password: yourSMTPPassword
+    to: destinationa@yourdomain.com,destinationb@yourdomain.com
+    from: venom@localhost.com
+    subject: title of mail
+    body: body of mail

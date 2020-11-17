@@ -1,0 +1,27 @@
+name: Variables testsuite
+
+vars:
+  service.id: '{{.CreateService.id}}'
+  thevar: 'thevalue'
+
+testcases:
+
+- name: CreateService
+  steps:
+  - type: exec
+    script: echo 'foo with a bar here'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.timeseconds ShouldBeLessThan 1
+    vars:
+      id:
+        from: result.systemout
+        regex: foo with a ([a-z]+) here
+
+- name: WriteServiceIdForNextTestSuites
+  steps:
+  - script: "echo 'value:{{.service.id}} - end value'"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring bar
+
