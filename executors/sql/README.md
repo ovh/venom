@@ -4,7 +4,6 @@ Step to execute SQL queries into databases:
 * **MySQL**
 * **PostgreSQL**
 * **Oracle**
-* **SQL Server** or other database compatible with ODBC system
 
 It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retreive rows as a list of map[string]interface{}
 
@@ -48,14 +47,6 @@ testcases:
         dsn: "oracle://system:oracle@localhost:49161/XE"
         commands:
           - select * from v$version
-
-  - name: SQL Server ODBC (ODBC Driver must be install)
-    steps:
-      - type: sql
-        driver: odbc
-        dsn: Driver={SQL Server};Server=localhost,1433;UID=sa;PWD=Example_1234;
-        commands:
-          - SELECT @@VERSION
 ```
 
 Example with a query file:
