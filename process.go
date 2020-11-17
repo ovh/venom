@@ -3,6 +3,7 @@ package venom
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,15 +27,20 @@ func (v *Venom) init() error {
 		}
 	}
 
-	var err error
-	var logFile = filepath.Join(v.OutputDir, "venom.log")
-	_ = os.RemoveAll(logFile)
-	v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
-	if err != nil {
-		return fmt.Errorf("unable to write log file: %v", err)
+	if v.Verbose > 0 {
+		var err error
+		var logFile = filepath.Join(v.OutputDir, "venom.log")
+		_ = os.RemoveAll(logFile)
+		v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+		if err != nil {
+			return fmt.Errorf("unable to write log file: %v", err)
+		}
+
+		logrus.SetOutput(v.LogOutput)
+	} else {
+		logrus.SetOutput(ioutil.Discard)
 	}
 
-	logrus.SetOutput(v.LogOutput)
 	logrus.SetFormatter(&nested.Formatter{
 		HideKeys:    true,
 		FieldsOrder: []string{"testsuite", "testcase", "step", "executor"},
