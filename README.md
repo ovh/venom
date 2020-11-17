@@ -214,7 +214,6 @@ Builtin variables:
 
 ## Export test results as jUnit, json, yaml or tap reports
 
-
 ```bash
 venom run --format=xml --output-dir="."
 ```
