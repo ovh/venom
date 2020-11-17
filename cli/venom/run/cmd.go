@@ -42,7 +42,6 @@ var (
 	outputDir       string
 	strict          bool
 	noCheckVars     bool
-	parallel        int
 	stopOnFailure   bool
 	enableProfiling bool
 	v               *venom.Venom
@@ -55,7 +54,6 @@ func init() {
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
-	Cmd.Flags().IntVarP(&parallel, "parallel", "", 1, "--parallel=2 : launches 2 Test Suites in parallel")
 	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info, warn or disable")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	Cmd.PersistentFlags().BoolVarP(&enableProfiling, "profiling", "", false, "Enable Mem / CPU Profile with pprof")
@@ -103,7 +101,6 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.LogLevel = logLevel
 		v.OutputDir = outputDir
 		v.OutputFormat = format
-		v.Parallel = parallel
 		v.StopOnFailure = stopOnFailure
 
 		if v.EnableProfiling {

@@ -39,7 +39,6 @@ type Venom struct {
 	testsuites      []TestSuite
 	variables       H
 	IgnoreVariables []string
-	Parallel        int
 
 	EnableProfiling bool
 	OutputFormat    string
