@@ -322,7 +322,7 @@ $ venom run test.yml
 
 # Hacking
 
-[How to write your own executor?](executor/README.md)
+[How to write your own executor?](/executor/README.md)
 
 How to compile?
 ```
