@@ -16,7 +16,6 @@ endif
 
 DIST_DIR := dist/
 RESULTS_DIR := results/
-STACK_LOGS_DIR := stacklogs
 
 APP_DIST := $(wildcard cmd/venom/dist/*)
 ALL_DIST := $(APP_DIST)
@@ -63,9 +62,7 @@ lint: mk_go_lint ## install and run golangci-lint on all go files. doc https://g
 clean: mk_go_clean ## delete directories dist and results and all temp files (coverage, tests, reports)
 	@rm -rf ${DIST_DIR}
 	@rm -rf ${RESULTS_DIR}
-	@rm -rf ${STACK_LOGS_DIR}
 	$(MAKE) clean -C cmd/venom
-	$(MAKE) clean -C tests
 
 test-results: $(ALL_RESULTS_TARGETS)
 

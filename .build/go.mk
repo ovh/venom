@@ -7,8 +7,6 @@ TEST_C_CMD 			= go test -c -coverprofile=profile.coverprofile
 TEST_RUN_ARGS 		= -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
 CURRENT_PACKAGE 	= $(shell $(GO_LIST))
 VERSION 			:= $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
-GITHASH 			:= $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
-BUILD_DATE        	= $(shell date "+%Y-%m-%dT%H:%M:%S%:z")
 TARGET_DIST 		:= ./dist
 TARGET_RESULTS 		:= ./results
 
