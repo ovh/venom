@@ -275,6 +275,48 @@ venom run --format=xml --output-dir="."
 
 Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
 
+
+## Debug your testsuites
+
+There is two ways to debug a testsuite:
+ - use `-v` flag on venom binary.
+   - `$ venom run -v test.yml` will output a venom.log file
+   - `$ venom run -vv test.yml` will output a venom.log file and dump.json files for each teststep.
+ - use `info` keyword your teststep:
+`test.yml` file:
+```yml
+name: Exec testsuite
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo 'foo with a bar here'
+    info:
+      - this a first info
+      - and a second...
+- name: cat json
+  steps:
+  - script: cat exec/testa.json
+    info: "the value of result.systemoutjson is {{.result.systemoutjson}}"
+    assertions:
+    - result.systemoutjson.foo ShouldContainSubstrin bar
+```
+
+```bash
+$ venom run test.yml
+
+# output:
+
+ • Exec testsuite (exec.yml)
+ 	• testA SUCCESS
+	  [info] this a first info (exec.yml:8)
+	  [info] and a second... (exec.yml:9)
+ 	• testB SUCCESS
+ 	• sleep 1 SUCCESS
+ 	• cat json SUCCESS
+	  [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
+```
+
 ### Write your executor
 
 An executor have to implement this interface
