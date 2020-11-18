@@ -38,6 +38,8 @@ $ cd venom
 $ docker run -it --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
 ```
 
+## TestSuites
+
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours. 
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
