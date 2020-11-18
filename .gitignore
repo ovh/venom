@@ -1,10 +1,13 @@
 .idea
 .vscode
 cmd/venom/bin
-venom
 tests/pprof*
 tests/.DS_Store
 .DS_Store
 vendor/
 dist/
 venom.log
+*.so
+foo.yml
+dist
+results
