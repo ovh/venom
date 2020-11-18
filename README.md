@@ -7,7 +7,7 @@ It can also output xUnit results files.
 
 ## Command Line
 
-Download latest binary release from https://github.com/ovh/venom/releases  
+Download latest binary release from https://github.com/ovh/venom/releases
 
 ```bash
 $ venom run -h
@@ -30,7 +30,14 @@ Flags:
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary'
 ```
 
-## TestSuites
+## Docker image
+
+venom can be launched inside a docker image with:
+```bash
+$ git clone git@github.com:ovh/venom.git
+$ cd venom
+$ docker run -it --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
+```
 
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours. 
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
