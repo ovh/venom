@@ -1,5 +1,10 @@
 # 🐍 Venom
 
+Venom run executors (script, HTTP Request, etc. ) and assertions.
+It can also output xUnit results files.
+
+<img src="./venom.gif" alt="Venom Demonstration" width="80%">
+
 * [Command Line](#command-line)
 * [Docker image](#docker-image)
 * [TestSuites](#testsuites)
@@ -17,11 +22,6 @@
 * [Debug your testsuites](#debug-your-testsuites)
 * [Hacking](#hacking)
 * [License](#license)
-
-Venom run executors (script, HTTP Request, etc. ) and assertions.
-It can also output xUnit results files.
-
-<img src="./venom.gif" alt="Venom Demonstration" width="80%">
 
 # Command Line
 
