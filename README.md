@@ -16,7 +16,7 @@ It can also output xUnit results files.
     * [Environment Variables](#environment-variables)
   * [How to use outputs from a test step as input of another test step](#how-to-use-outputs-from-a-test-step-as-input-of-another-test-step)
   * [Builtin venom variables](#builtin-venom-variables)
-* [Export test results as jUnit, json, yaml or tap reports](#export-test-results-as-junit-json-yaml-or-tap-reports)
+* [Tests Report](#tests-report)
 * [Assertion](#assertion)
   * [Keywords](#keywords)
 * [Debug your testsuites](#debug-your-testsuites)
@@ -231,11 +231,13 @@ Builtin variables:
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
 
-# Export test results as jUnit, json, yaml or tap reports
+# Tests Report
 
 ```bash
 venom run --format=xml --output-dir="."
 ```
+
+Available format: jUnit (xml), json, yaml, tap reports
 
 # Assertion
 
