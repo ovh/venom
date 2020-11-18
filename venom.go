@@ -102,6 +102,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 		return ctx, nil, fmt.Errorf("executor %q is not implemented - err:%v", name, err)
 	}
 
+	// then add the executor plugin to the map to not have to load it on each step
 	if ex, ok := v.executors[name]; ok {
 		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
 	}

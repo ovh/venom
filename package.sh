@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd cli/venom
+cd cmd/venom
 for DIST in `go tool dist list | grep -v '^android/' | grep -v '^dragonfly/' | grep -v '^illumos/' | grep -v 'mips' | grep -v 'riscv64' | grep -v 'ppc64' | grep -v 's390x'  | grep -v '^nacl/' | grep -v '^plan9/' | grep -v '^darwin/arm' | grep -v '^js/wasm' | grep -v 'bsd/arm64' | grep -v 'windows/arm' `; do
     GOOS=`echo ${DIST} | cut -d / -f 1`
     GOARCH=`echo ${DIST} | cut -d / -f 2`

@@ -63,7 +63,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	}
 
 	if e.Command == "" {
-		return nil, fmt.Errorf("Invalid command")
+		return nil, fmt.Errorf("Invalid ssh command")
 	}
 
 	start := time.Now()

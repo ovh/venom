@@ -117,7 +117,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	Info(ctx, "Starting testcase")
 
 	for k, v := range tc.Vars {
-		Debug(ctx, "Running testCase with variable %s: %+v", k, v)
+		Debug(ctx, "Running testcase with variable %s: %+v", k, v)
 	}
 
 	defer Info(ctx, "Ending testcase")
@@ -219,7 +219,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 		allVars := tc.Vars.Clone()
 		allVars.AddAll(tc.computedVars.Clone())
 
-		assign, _, err := ProcessVariableAssigments(ctx, tc.Name, allVars, rawStep)
+		assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
 		if err != nil {
 			tc.AppendError(err)
 			Error(ctx, "unable to process variable assignments: %v", err)
@@ -230,7 +230,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	}
 }
 
-func ProcessVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
+func processVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
 	var stepAssignment AssignStep
 	var result = make(H)
 	if err := yaml.Unmarshal(rawStep, &stepAssignment); err != nil {

@@ -63,7 +63,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	}
 
 	if e.Script == "" {
-		return nil, fmt.Errorf("Invalid command")
+		return nil, fmt.Errorf("Invalid exec command")
 	}
 
 	scriptContent := e.Script

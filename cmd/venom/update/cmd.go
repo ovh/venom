@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/inconshreveable/go-update"
 	"github.com/ovh/venom"
-	"github.com/ovh/venom/cli"
+	"github.com/ovh/venom/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -30,11 +30,11 @@ func getURLArtifactFromGithub() string {
 	client := github.NewClient(nil)
 	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "ovh", "venom")
 	if err != nil {
-		cli.Exit("Repositories.GetLatestRelease returned error: %v\n%v", err, resp.Body)
+		cmd.Exit("Repositories.GetLatestRelease returned error: %v\n%v", err, resp.Body)
 	}
 
 	if *release.TagName == venom.Version {
-		cli.Exit(fmt.Sprintf("you already have the latest release: %s", *release.TagName))
+		cmd.Exit(fmt.Sprintf("you already have the latest release: %s", *release.TagName))
 	}
 
 	if len(release.Assets) > 0 {
@@ -49,7 +49,7 @@ func getURLArtifactFromGithub() string {
 
 	text := "Invalid Artifacts on latest release. Please try again in few minutes.\n"
 	text += "If the problem persists, please open an issue on https://github.com/ovh/venom/issues\n"
-	cli.Exit(text)
+	cmd.Exit(text)
 	return ""
 }
 
@@ -68,22 +68,22 @@ func doUpdate() {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		cli.Exit("Error when downloading venom from url %s: %v\n", url, err)
+		cmd.Exit("Error when downloading venom from url %s: %v\n", url, err)
 	}
 
 	if contentType := getContentType(resp); contentType != "application/octet-stream" {
 		fmt.Printf("Url: %s\n", url)
-		cli.Exit("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s\n", contentType, urlGitubReleases)
+		cmd.Exit("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s\n", contentType, urlGitubReleases)
 	}
 
 	if resp.StatusCode != 200 {
-		cli.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, url)
+		cmd.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, url)
 	}
 
 	fmt.Printf("Getting latest release from: %s ...\n", url)
 	defer resp.Body.Close()
 	if err = update.Apply(resp.Body, update.Options{}); err != nil {
-		cli.Exit("Error when updating venom from url: %s err:%s\n", url, err.Error())
+		cmd.Exit("Error when updating venom from url: %s err:%s\n", url, err.Error())
 	}
 	fmt.Println("Update done.")
 }

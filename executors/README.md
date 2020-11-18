@@ -2,73 +2,84 @@
 
 ### Write your executor
 
-An executor have to implement this interface
+Create a file `executor/hello/hello.go`
 
 ```go
+package main
 
-// Executor execute a testStep.
-type Executor interface {
-	// Run run a Test Step
-	Run(ctx context.Content, TestStep) (interface{}, error)
-}
-```
+import (
+	"C"
+	"context"
+	"fmt"
 
-Example
+	"github.com/mitchellh/mapstructure"
 
-```go
+	"github.com/ovh/venom"
+)
 
+// Name of the executor
+const Name = "hello"
 
-// Name of executor
-const Name = "myexecutor"
+// Plugin var is mandatory, it's used by venom to register the executor
+var Plugin = Executor{}
 
-// New returns a new Executor
-func New() venom.Executor {
-	return &Executor{}
-}
-
-// Executor struct
+// Executor is a venom executor for Hello plugin
 type Executor struct {
-	Command string `json:"command,omitempty" yaml:"command,omitempty"`
+	Arg string `json:"arg,omitempty" yaml:"arg,omitempty"`
 }
 
-// Result represents a step result
+// Result represents a step result.
 type Result struct {
-	Code        int    `json:"code,omitempty" yaml:"code,omitempty"`
-	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
-	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
-	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
+	Body string `json:"body,omitempty" yaml:"body,omitempty"`
 }
 
-// GetDefaultAssertions return default assertions for this executor
-// Optional
-func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
-}
-
-// Run execute TestStep
-func (Executor)	Run(context.Context, TestStep, string) (interface{}, error) {
-	// transform step to Executor Instance
-	var e Executor
+// Run implements the venom.Executor interface for Executor.
+func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
-	// to something with e.Command here...
-	//...
-
-	systemout := "foo"
-	ouputCode := 0
-
-	// prepare result
-	r := Result{
-		Code:    ouputCode, // return Output Code
-		Command: e.Command, // return Command executed
-		Systemout: systemout, // return Output string
-	}
-
-	return r
+	venom.Debug(ctx, "running plugin Hello with arg %v\n", e.Arg)
+	r := Result{Body: fmt.Sprintf("Hello %v", e.Arg)}
+	return r, nil
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (e Executor) ZeroValueResult() interface{} {
+	return Result{}
+}
+
+// GetDefaultAssertions return the default assertions of the executor.
+func (e Executor) GetDefaultAssertions() venom.StepAssertions {
+	return venom.StepAssertions{Assertions: []string{}}
+}
+
+```
+
+Build venom and plugin:
+
+```bash
+$ make build
+```
+
+Create a file `test.yml` testsuite:
+
+```yml
+name: TestSuite
+testcases:
+- name: TestAssertions
+  steps:
+  - type: hello
+    arg: world
+    assertions:
+    - result.body ShouldContainSubstring world
+```
+
+Run venom:
+
+```
+$ ./venom run test.yml
 ```
 
 Feel free to open a Pull Request with your executors.
