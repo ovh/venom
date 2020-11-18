@@ -3,9 +3,27 @@
 Venom run executors (script, HTTP Request, etc. ) and assertions.
 It can also output xUnit results files.
 
-<img src="./venom.gif" alt="Venom Demonstration" width="80%">
+<img src="./venom.gif" alt="Venom Demonstration">
 
-## Command Line
+* [Command Line](#command-line)
+* [Docker image](#docker-image)
+* [TestSuites](#testsuites)
+* [Executors](#executors)
+* [Variables](#variables)
+  * [Testsuite variables](#testsuite-variables)
+    * [Variable on Command Line](#variable-on-command-line)
+    * [Variable Definitions Files](#variable-definitions-files)
+    * [Environment Variables](#environment-variables)
+  * [How to use outputs from a test step as input of another test step](#how-to-use-outputs-from-a-test-step-as-input-of-another-test-step)
+  * [Builtin venom variables](#builtin-venom-variables)
+* [Tests Report](#tests-report)
+* [Assertion](#assertion)
+  * [Keywords](#keywords)
+* [Debug your testsuites](#debug-your-testsuites)
+* [Hacking](#hacking)
+* [License](#license)
+
+# Command Line
 
 Download latest binary release from https://github.com/ovh/venom/releases
 
@@ -29,7 +47,7 @@ Flags:
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
-## Docker image
+# Docker image
 
 venom can be launched inside a docker image with:
 ```bash
@@ -37,6 +55,8 @@ $ git clone git@github.com:ovh/venom.git
 $ cd venom
 $ docker run -it --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
 ```
+
+# TestSuites
 
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours. 
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
@@ -88,7 +108,7 @@ testcases:
 
 ```
 
-## Executors
+# Executors
 
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
@@ -106,9 +126,9 @@ testcases:
 * **sql**: https://github.com/ovh/venom/tree/master/executors/sql
 
 
-## Variables
+# Variables
 
-### Testsuite variables
+## Testsuite variables
 
 You can define variable on the `testsuite` level.
 
@@ -136,7 +156,7 @@ Each user variable used in testsuite must be declared in this section. You can o
 - As environment variables.
 
 
-#### Variable on Command Line
+### Variable on Command Line
 
 To specify individual variables on the command line, use the `--var` option when running the `venom run` commands:
 
@@ -148,11 +168,11 @@ venom run --var='foo={"biz":"bar","biz":"barr"}'
 
 The -var option can be used any number of times in a single command.
 
-#### Variable Definitions Files
+### Variable Definitions Files
 
 To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a yaml dictionnay and you have specify that file on the command line with `--var-from-file`
 
-#### Environment Variables
+### Environment Variables
 
 As a fallback for the other ways of defining variables, `venom` searches the environment of its own process for environment variables named VENOM_VAR_ followed by the name of a declared variable.
 
@@ -161,7 +181,7 @@ $ export VENOM_VAR_foo=bar
 $ venom run *.yml
 ```
 
-### How to use outputs from a test step as input of another test step
+## How to use outputs from a test step as input of another test step
 
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
@@ -189,7 +209,7 @@ testcases:
     - result.systemout ShouldContainSubstring bar
 ```
 
-### Builtin venom variables
+## Builtin venom variables
 
 ```yaml
 name: MyTestSuite
@@ -211,15 +231,17 @@ Builtin variables:
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
 
-## Export test results as jUnit, json, yaml or tap reports
+# Tests Report
 
 ```bash
 venom run --format=xml --output-dir="."
 ```
 
-## Assertion
+Available format: jUnit (xml), json, yaml, tap reports
 
-### Keywords
+# Assertion
+
+## Keywords
 
 * ShouldEqual
 * ShouldNotEqual
@@ -275,85 +297,59 @@ venom run --format=xml --output-dir="."
 
 Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
 
-### Write your executor
 
-An executor have to implement this interface
+# Debug your testsuites
 
-```go
-
-// Executor execute a testStep.
-type Executor interface {
-	// Run run a Test Step
-	Run(ctx context.Content, TestStep) (interface{}, error)
-}
+There is two ways to debug a testsuite:
+ - use `-v` flag on venom binary.
+   - `$ venom run -v test.yml` will output a venom.log file
+   - `$ venom run -vv test.yml` will output a venom.log file and dump.json files for each teststep.
+ - use `info` keyword your teststep:
+`test.yml` file:
+```yml
+name: Exec testsuite
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo 'foo with a bar here'
+    info:
+      - this a first info
+      - and a second...
+- name: cat json
+  steps:
+  - script: cat exec/testa.json
+    info: "the value of result.systemoutjson is {{.result.systemoutjson}}"
+    assertions:
+    - result.systemoutjson.foo ShouldContainSubstrin bar
 ```
 
-Example
+```bash
+$ venom run test.yml
 
-```go
+# output:
 
-
-// Name of executor
-const Name = "myexecutor"
-
-// New returns a new Executor
-func New() venom.Executor {
-	return &Executor{}
-}
-
-// Executor struct
-type Executor struct {
-	Command string `json:"command,omitempty" yaml:"command,omitempty"`
-}
-
-// Result represents a step result
-type Result struct {
-	Code        int    `json:"code,omitempty" yaml:"code,omitempty"`
-	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
-	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
-	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
-}
-
-// GetDefaultAssertions return default assertions for this executor
-// Optional
-func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
-}
-
-// Run execute TestStep
-func (Executor)	Run(context.Context, TestStep, string) (interface{}, error) {
-	// transform step to Executor Instance
-	var e Executor
-	if err := mapstructure.Decode(step, &e); err != nil {
-		return nil, err
-	}
-
-	// to something with e.Command here...
-	//...
-
-	systemout := "foo"
-	ouputCode := 0
-
-	// prepare result
-	r := Result{
-		Code:    ouputCode, // return Output Code
-		Command: e.Command, // return Command executed
-		Systemout: systemout, // return Output string
-	}
-
-	return r
-}
-
+ • Exec testsuite (exec.yml)
+ 	• testA SUCCESS
+	  [info] this a first info (exec.yml:8)
+	  [info] and a second... (exec.yml:9)
+ 	• testB SUCCESS
+ 	• sleep 1 SUCCESS
+ 	• cat json SUCCESS
+	  [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
 ```
-
-Feel free to open a Pull Request with your executors.
 
 
 # Hacking
 
+[How to write your own executor?](/executor/README.md)
+
+How to compile?
 ```
 $ make build
 ```
+
+
 
 # License
 
