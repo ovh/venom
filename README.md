@@ -1,11 +1,29 @@
 # 🐍 Venom
 
+* [Command Line](#command-line)
+* [Docker image](#docker-image)
+* [TestSuites](#testsuites)
+* [Executors](#executors)
+* [Variables](#variables)
+  * [Testsuite variables](#testsuite-variables)
+    * [Variable on Command Line](#variable-on-command-line)
+    * [Variable Definitions Files](#variable-definitions-files)
+    * [Environment Variables](#environment-variables)
+  * [How to use outputs from a test step as input of another test step](#how-to-use-outputs-from-a-test-step-as-input-of-another-test-step)
+  * [Builtin venom variables](#builtin-venom-variables)
+* [Export test results as jUnit, json, yaml or tap reports](#export-test-results-as-junit-json-yaml-or-tap-reports)
+* [Assertion](#assertion)
+  * [Keywords](#keywords)
+* [Debug your testsuites](#debug-your-testsuites)
+* [Hacking](#hacking)
+* [License](#license)
+
 Venom run executors (script, HTTP Request, etc. ) and assertions.
 It can also output xUnit results files.
 
 <img src="./venom.gif" alt="Venom Demonstration" width="80%">
 
-## Command Line
+# Command Line
 
 Download latest binary release from https://github.com/ovh/venom/releases
 
@@ -29,7 +47,7 @@ Flags:
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
-## Docker image
+# Docker image
 
 venom can be launched inside a docker image with:
 ```bash
@@ -38,7 +56,7 @@ $ cd venom
 $ docker run -it --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
 ```
 
-## TestSuites
+# TestSuites
 
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours. 
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
@@ -90,7 +108,7 @@ testcases:
 
 ```
 
-## Executors
+# Executors
 
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
@@ -108,9 +126,9 @@ testcases:
 * **sql**: https://github.com/ovh/venom/tree/master/executors/sql
 
 
-## Variables
+# Variables
 
-### Testsuite variables
+## Testsuite variables
 
 You can define variable on the `testsuite` level.
 
@@ -138,7 +156,7 @@ Each user variable used in testsuite must be declared in this section. You can o
 - As environment variables.
 
 
-#### Variable on Command Line
+### Variable on Command Line
 
 To specify individual variables on the command line, use the `--var` option when running the `venom run` commands:
 
@@ -150,11 +168,11 @@ venom run --var='foo={"biz":"bar","biz":"barr"}'
 
 The -var option can be used any number of times in a single command.
 
-#### Variable Definitions Files
+### Variable Definitions Files
 
 To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a yaml dictionnay and you have specify that file on the command line with `--var-from-file`
 
-#### Environment Variables
+### Environment Variables
 
 As a fallback for the other ways of defining variables, `venom` searches the environment of its own process for environment variables named VENOM_VAR_ followed by the name of a declared variable.
 
@@ -163,7 +181,7 @@ $ export VENOM_VAR_foo=bar
 $ venom run *.yml
 ```
 
-### How to use outputs from a test step as input of another test step
+## How to use outputs from a test step as input of another test step
 
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
@@ -191,7 +209,7 @@ testcases:
     - result.systemout ShouldContainSubstring bar
 ```
 
-### Builtin venom variables
+## Builtin venom variables
 
 ```yaml
 name: MyTestSuite
@@ -213,15 +231,15 @@ Builtin variables:
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
 
-## Export test results as jUnit, json, yaml or tap reports
+# Export test results as jUnit, json, yaml or tap reports
 
 ```bash
 venom run --format=xml --output-dir="."
 ```
 
-## Assertion
+# Assertion
 
-### Keywords
+## Keywords
 
 * ShouldEqual
 * ShouldNotEqual
@@ -278,7 +296,7 @@ venom run --format=xml --output-dir="."
 Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
 
 
-## Debug your testsuites
+# Debug your testsuites
 
 There is two ways to debug a testsuite:
  - use `-v` flag on venom binary.
