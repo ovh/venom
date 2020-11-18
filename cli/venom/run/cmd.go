@@ -39,7 +39,6 @@ var (
 	format        string
 	varFiles      []string
 	outputDir     string
-	strict        bool
 	noCheckVars   bool
 	stopOnFailure bool
 	verbose       *int
@@ -50,7 +49,7 @@ func init() {
 	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
-	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
+	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
@@ -153,7 +152,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 			os.Exit(2)
 			return err
 		}
-		if strict && tests.TotalKO > 0 {
+		if tests.TotalKO > 0 {
 			os.Exit(2)
 		}
 
