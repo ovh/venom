@@ -25,7 +25,6 @@ Flags:
       --no-check-variables      Don't check variables before run
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
-      --strict                  Exit with an error code if one test fails
       --var strings             --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
