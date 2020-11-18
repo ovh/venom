@@ -22,7 +22,6 @@ Usage:
 Flags:
       --format string           --format:yaml, json, xml, tap (default "xml")
   -h, --help                    help for run
-      --no-check-variables      Don't check variables before run
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var strings             --var cds='cds -f config.json' --var cds2='cds -f config.json'
