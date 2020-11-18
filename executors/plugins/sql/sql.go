@@ -1,6 +1,7 @@
-package sql
+package main
 
 import (
+	"C"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -19,7 +20,7 @@ import (
 	_ "github.com/sijms/go-ora"
 
 	// ODBC
-	//_ "github.com/alexbrainman/odbc"
+	_ "github.com/alexbrainman/odbc"
 
 	"github.com/ovh/venom"
 )
@@ -27,10 +28,8 @@ import (
 // Name of the executor.
 const Name = "sql"
 
-// New returns a new executor that can execute SQL queries
-func New() venom.Executor {
-	return &Executor{}
-}
+// Plugin var is mandatory, it's used by venom to register the executor
+var Plugin = Executor{}
 
 // Executor is a venom executor can execute SQL queries
 type Executor struct {

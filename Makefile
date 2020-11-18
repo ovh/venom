@@ -71,6 +71,9 @@ test-results: $(ALL_RESULTS_TARGETS)
 
 test: mk_go_test ## run unit tests on all go packages
 
+integration-test: ## run venom integration tests declared in tests/ directory
+	$(MAKE) start-test-stack -C tests
+
 test-xunit: mk_go_test-xunit ## generate xunit report using the results of previous 'make test', useful on CDS only
 	$(MAKE) test-results
 

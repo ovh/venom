@@ -2,7 +2,7 @@
 
 ### Write your executor
 
-Create a file `executor/hello/hello.go`
+Create a file `executor/plugin/hello/hello.go`
 
 ```go
 package main

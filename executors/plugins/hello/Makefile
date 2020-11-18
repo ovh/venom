@@ -3,8 +3,8 @@
 
 ##### ^^^^^^ make help ^^^^^^ #####
 
-TARGET_NAME 			= venom
-LDFLAGS					= -ldflags "-X github.com/ovh/venom.Version=$(VERSION)"
+TARGET_NAME 			= hello
+BUILD_MODE				= -buildmode=plugin
 
 # If you want to enable the cross-compilation, uncomment the following line:
 ENABLE_CROSS_COMPILATION := true
@@ -13,13 +13,12 @@ ENABLE_CROSS_COMPILATION := true
 
 ##### =====> Commands <===== #####
 
-include ../../.build/core.mk
-include ../../.build/go.mk
+include ../../../.build/core.mk
+include ../../../.build/go.mk
 
 .PHONY: clean
 
 build: $(CROSS_COMPILED_BINARIES) ## Run build
 
 clean:
-	@rm -f venom
 	@rm -rf dist

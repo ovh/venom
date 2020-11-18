@@ -1,6 +1,6 @@
 
 
-GO_BUILD 			= CGO_ENABLED=0 go build -installsuffix cgo
+GO_BUILD 			= go build
 GO_LIST 			= env GO111MODULE=on GOPRIVATE="$(GOPRIVATE)" go list
 TEST_CMD 			= go test -v -timeout 600s -coverprofile=profile.coverprofile
 TEST_C_CMD 			= go test -c -coverprofile=profile.coverprofile
@@ -41,9 +41,9 @@ mk_go_build:
 
 $(CROSS_COMPILED_BINARIES): $(GOFILES) $(TARGET_DIST)
 	$(info *** compiling $@)
-	@GOOS=$(call get_os_from_binary_file,$@) \
+	GOOS=$(call get_os_from_binary_file,$@) \
 	GOARCH=$(call get_arch_from_binary_file,$@) \
-	$(GO_BUILD) $(LDFLAGS) -o $@;
+	$(GO_BUILD) $(BUILD_MODE) $(LDFLAGS) -o $@;
 
 ##### =====> Compile Tests <===== #####
 

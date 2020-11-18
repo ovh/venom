@@ -17,10 +17,10 @@ import (
 
 	"github.com/ovh/venom"
 
+	"github.com/ovh/venom/executors/builtins/exec"
+	"github.com/ovh/venom/executors/builtins/http"
 	"github.com/ovh/venom/executors/dbfixtures"
-	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/grpc"
-	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/kafka"
 	"github.com/ovh/venom/executors/ovhapi"
@@ -28,7 +28,6 @@ import (
 	"github.com/ovh/venom/executors/readfile"
 	"github.com/ovh/venom/executors/redis"
 	"github.com/ovh/venom/executors/smtp"
-	"github.com/ovh/venom/executors/sql"
 	"github.com/ovh/venom/executors/ssh"
 	"github.com/ovh/venom/executors/web"
 )
@@ -82,7 +81,6 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterExecutor(kafka.Name, kafka.New())
 		v.RegisterExecutor(grpc.Name, grpc.New())
 		v.RegisterExecutor(rabbitmq.Name, rabbitmq.New())
-		v.RegisterExecutor(sql.Name, sql.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		v.OutputDir = outputDir
