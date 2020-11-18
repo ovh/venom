@@ -18,25 +18,26 @@ testcases:
   - type: web
     action:
       navigate:
-        url: https://www.google.fr
+        url: https://httpbin.org/forms/post
+    info: "title is '{{.result.title}}''"
     assertions:
-    - result.title ShouldEqual Google
+    - result.title ShouldBeEmpty
 
   - type: web
     action:
-      find: input[name="q"]
+      find: input[name="custname"]
     assertions:
      - result.find ShouldEqual 1
 
   - type: web
     action:
       fill:
-      - find: input[name="q"]
-        text: "venom runabove"
+      - find: input[name="custname"]
+        text: "venom ovh"
         
   - type: web
     action:
       click:
-        find: input[value="Recherche Google"]
+        find: button
         wait: 1
-    screenshot: googlesearch.jpg
+    screenshot: httpbin_post.jpg
