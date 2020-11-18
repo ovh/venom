@@ -39,7 +39,6 @@ var (
 	format        string
 	varFiles      []string
 	outputDir     string
-	noCheckVars   bool
 	stopOnFailure bool
 	verbose       *int
 	v             *venom.Venom
@@ -50,7 +49,6 @@ func init() {
 	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
-	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
 }
@@ -130,12 +128,10 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 
 		start := time.Now()
 
-		if !noCheckVars {
-			if err := v.Parse(path); err != nil {
-				fmt.Println(err)
-				os.Exit(2)
-				return err
-			}
+		if err := v.Parse(path); err != nil {
+			fmt.Println(err)
+			os.Exit(2)
+			return err
 		}
 
 		tests, err := v.Process(context.Background(), path)
