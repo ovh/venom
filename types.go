@@ -86,6 +86,18 @@ type ExecutorRunner interface {
 	Info() []string
 }
 
+type ExecutorPlugin struct {
+	fRun                  func(ctx context.Context, testStep TestStep, workdir string) (interface{}, error)
+	fZeroValueResult      func() interface{}
+	fGetDefaultAssertions func() StepAssertions
+}
+
+func (e ExecutorPlugin) Run(ctx context.Context, t TestStep, workdir string) (interface{}, error) {
+	return e.fRun(ctx, t, workdir)
+}
+func (e ExecutorPlugin) ZeroValueResult() interface{}         { return e.fZeroValueResult() }
+func (e ExecutorPlugin) GetDefaultAssertions() StepAssertions { return e.fGetDefaultAssertions() }
+
 var _ Executor = new(executor)
 
 // ExecutorWrap contains an executor implementation and some attributes

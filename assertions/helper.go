@@ -12,6 +12,7 @@ const (
 	needSameType           = "This assertion requires 2 values of same types."
 )
 
+// AssertionError represents an assertion error
 type AssertionError struct {
 	cause error
 }

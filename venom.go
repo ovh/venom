@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"plugin"
 
 	"github.com/fsamin/go-dump"
 	"github.com/spf13/cast"
@@ -62,7 +63,7 @@ func (v *Venom) RegisterExecutor(name string, e Executor) {
 	v.executors[name] = e
 }
 
-// WrapExecutor initializes a test by name
+// GetExecutorRunner initializes a test by name
 // no type -> exec is default
 func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context.Context, ExecutorRunner, error) {
 	name, _ := t.StringValue("type")
@@ -96,7 +97,32 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
 	}
 
+	// try to load executor as a plugin
+	if err := v.registerPlugin(ctx, name); err != nil {
+		return ctx, nil, fmt.Errorf("executor %q is not implemented - err:%v", name, err)
+	}
+
+	if ex, ok := v.executors[name]; ok {
+		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
+	}
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
+}
+
+func (v *Venom) registerPlugin(ctx context.Context, name string) error {
+	p, err := plugin.Open(name + ".so")
+	if err != nil {
+		return err
+	}
+
+	symbolExecutor, err := p.Lookup("Plugin")
+	if err != nil {
+		return err
+	}
+
+	executor := symbolExecutor.(Executor)
+	v.RegisterExecutor(name, executor)
+
+	return nil
 }
 
 func StringVarFromCtx(ctx context.Context, varname string) string {
