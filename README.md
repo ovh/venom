@@ -53,7 +53,7 @@ venom can be launched inside a docker image with:
 ```bash
 $ git clone git@github.com:ovh/venom.git
 $ cd venom
-$ docker run -it --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
+$ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
 ```
 
 # TestSuites
