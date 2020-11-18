@@ -15,20 +15,10 @@ import (
 
 func (v *Venom) init() error {
 	v.testsuites = []TestSuite{}
-	switch v.LogLevel {
-	case "disable":
-		v.LogOutput = ioutil.Discard
+	if v.Verbose == 0 {
 		logrus.SetLevel(logrus.WarnLevel)
-		logrus.SetOutput(v.LogOutput)
-		return nil
-	case "debug":
+	} else {
 		logrus.SetLevel(logrus.DebugLevel)
-	case "info":
-		logrus.SetLevel(logrus.InfoLevel)
-	case "error":
-		logrus.SetLevel(logrus.WarnLevel)
-	default:
-		logrus.SetLevel(logrus.WarnLevel)
 	}
 
 	if v.OutputDir != "" {
@@ -37,15 +27,20 @@ func (v *Venom) init() error {
 		}
 	}
 
-	var err error
-	var logFile = filepath.Join(v.OutputDir, "venom.log")
-	_ = os.RemoveAll(logFile)
-	v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
-	if err != nil {
-		return fmt.Errorf("unable to write log file: %v", err)
+	if v.Verbose > 0 {
+		var err error
+		var logFile = filepath.Join(v.OutputDir, "venom.log")
+		_ = os.RemoveAll(logFile)
+		v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+		if err != nil {
+			return fmt.Errorf("unable to write log file: %v", err)
+		}
+
+		logrus.SetOutput(v.LogOutput)
+	} else {
+		logrus.SetOutput(ioutil.Discard)
 	}
 
-	logrus.SetOutput(v.LogOutput)
 	logrus.SetFormatter(&nested.Formatter{
 		HideKeys:    true,
 		FieldsOrder: []string{"testsuite", "testcase", "step", "executor"},

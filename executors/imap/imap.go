@@ -146,7 +146,7 @@ func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 
 		if found {
 			if e.DeleteOnSuccess {
-				venom.Debug(ctx, "Delete message %s", m.UID)
+				venom.Debug(ctx, "Delete message %v", m.UID)
 				if err := m.delete(c); err != nil {
 					return nil, err
 				}

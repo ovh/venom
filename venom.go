@@ -17,12 +17,10 @@ var (
 
 func New() *Venom {
 	v := &Venom{
-		LogLevel:        "info",
 		LogOutput:       os.Stdout,
 		PrintFunc:       fmt.Printf,
 		executors:       map[string]Executor{},
 		variables:       map[string]interface{}{},
-		EnableProfiling: false,
 		IgnoreVariables: []string{},
 		OutputFormat:    "xml",
 	}
@@ -30,7 +28,6 @@ func New() *Venom {
 }
 
 type Venom struct {
-	LogLevel  string
 	LogOutput io.Writer
 
 	PrintFunc func(format string, a ...interface{}) (n int, err error)
@@ -40,10 +37,10 @@ type Venom struct {
 	variables       H
 	IgnoreVariables []string
 
-	EnableProfiling bool
-	OutputFormat    string
-	OutputDir       string
-	StopOnFailure   bool
+	OutputFormat  string
+	OutputDir     string
+	StopOnFailure bool
+	Verbose       int
 }
 
 func (v *Venom) Print(format string, a ...interface{}) {

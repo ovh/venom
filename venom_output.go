@@ -6,9 +6,9 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"path"
 	"time"
 
-	"github.com/gosimple/slug"
 	tap "github.com/mndrix/tap-go"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
@@ -16,6 +16,9 @@ import (
 
 // OutputResult output result to sdtout, files...
 func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
+	if v.OutputDir == "" {
+		return nil
+	}
 	var data []byte
 	var err error
 	switch v.OutputFormat {
@@ -42,30 +45,12 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 	}
 
-	if v.OutputDir != "" {
-		v.PrintFunc("\n") // new line to display files written
-		filename := v.OutputDir + "/test_results." + v.OutputFormat
-		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
-			return fmt.Errorf("Error while creating file %s: %v", filename, err)
-		}
-		v.PrintFunc("Writing file %s\n", filename)
-
-		for _, ts := range tests.TestSuites {
-			for _, tc := range ts.TestCases {
-				for _, f := range tc.Failures {
-					filename := v.OutputDir + "/" + slug.Make(ts.ShortName) + "." + slug.Make(tc.Name) + ".dump"
-					output := f.Value + "\n ------ Variables:\n"
-					for k, v := range ts.Vars {
-						output += fmt.Sprintf("%s:%v\n", k, v)
-					}
-					if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
-						return fmt.Errorf("Error while creating file %s: %v", filename, err)
-					}
-					v.PrintFunc("File %s is written\n", filename)
-				}
-			}
-		}
+	filename := path.Join(v.OutputDir, "test_results."+v.OutputFormat)
+	if err := ioutil.WriteFile(filename, data, 0644); err != nil {
+		return fmt.Errorf("Error while creating file %s: %v", filename, err)
 	}
+	v.PrintFunc("Writing file %s\n", filename)
+
 	return nil
 }
 

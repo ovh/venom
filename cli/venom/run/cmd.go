@@ -34,17 +34,16 @@ import (
 )
 
 var (
-	path            []string
-	variables       []string
-	format          string
-	varFiles        []string
-	logLevel        string
-	outputDir       string
-	strict          bool
-	noCheckVars     bool
-	stopOnFailure   bool
-	enableProfiling bool
-	v               *venom.Venom
+	path          []string
+	variables     []string
+	format        string
+	varFiles      []string
+	outputDir     string
+	strict        bool
+	noCheckVars   bool
+	stopOnFailure bool
+	verbose       *int
+	v             *venom.Venom
 )
 
 func init() {
@@ -52,11 +51,10 @@ func init() {
 	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&strict, "strict", "", false, "Exit with an error code if one test fails")
-	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.Flags().BoolVarP(&noCheckVars, "no-check-variables", "", false, "Don't check variables before run")
-	Cmd.PersistentFlags().StringVarP(&logLevel, "log", "", "warn", "Log Level : debug, info, warn or disable")
+	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
-	Cmd.PersistentFlags().BoolVarP(&enableProfiling, "profiling", "", false, "Enable Mem / CPU Profile with pprof")
+	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
 }
 
 // Cmd run
@@ -65,12 +63,6 @@ var Cmd = &cobra.Command{
 	Short: "Run Tests",
 	Long: `
 $ venom run *.yml
-
-# to have more information about what's wrong on a test,
-# you can use the output-dir. *.dump files will be created
-# in this directory, with a lot of useful debug lines:
-
-$ venom run *.yml --output-dir=results
 
 Notice that variables initialized with -var-from-file argument can be overrided with -var argument.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -97,13 +89,12 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterExecutor(sql.Name, sql.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		v.EnableProfiling = enableProfiling
-		v.LogLevel = logLevel
 		v.OutputDir = outputDir
 		v.OutputFormat = format
 		v.StopOnFailure = stopOnFailure
+		v.Verbose = *verbose
 
-		if v.EnableProfiling {
+		if v.Verbose == 3 {
 			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
 			if err != nil {
 				log.Errorf("error while create profile file %v", err)

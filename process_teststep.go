@@ -2,13 +2,23 @@ package venom
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path"
 	"time"
 
+	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
 
 	"github.com/ovh/venom/executors"
 )
+
+type DumpFile struct {
+	Variables interface{} `json:"variables"`
+	TestStep  TestStep    `json:"step"`
+	Result    interface{} `json:"result"`
+}
 
 //RunTestStep executes a venom testcase is a venom context
 func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite, tc *TestCase, stepNumber int, step TestStep) interface{} {
@@ -39,6 +49,26 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		Debug(ctx, "result: %+v", result)
 		mapResult := GetExecutorResult(result)
 		mapResultString, _ := executors.DumpString(result)
+
+		if v.Verbose == 2 {
+			dumpFile := DumpFile{
+				Result:    result,
+				TestStep:  step,
+				Variables: ts.Vars,
+			}
+			output, _ := json.MarshalIndent(dumpFile, "", " ")
+
+			oDir := v.OutputDir
+			if oDir == "" {
+				oDir = "."
+			}
+			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.dump.json", slug.Make(ts.ShortName), slug.Make(tc.Name), stepNumber))
+
+			if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
+				return fmt.Errorf("Error while creating file %s: %v", filename, err)
+			}
+			Info(ctx, "File %s is written", filename)
+		}
 
 		for _, i := range e.Info() {
 			info, err := interpolate.Do(i, mapResultString)
