@@ -12,7 +12,7 @@ It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to ret
 In your yaml file, you declare tour step like this
 
 ```yaml
-  - driver mandatory [mysql/postgres/oracle/odbc]
+  - driver mandatory [mysql/postgres/oracle]
   - dsn mandatory
   - commands optional
   - file optional
@@ -74,4 +74,3 @@ This executor uses the following SQL drivers:
 - _MySQL_: https://github.com/go-sql-driver/mysql
 - _PostgreSQL_: https://github.com/lib/pq
 - _Oracle_: https://github.com/sijms/go-ora
-- _ODBC_: https://github.com/alexbrainman/odbc
