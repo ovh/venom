@@ -35,7 +35,7 @@ testcases:
     assertions:
     - result.statuscode ShouldEqual 401
 
-- name: post http (enhanced assertions)
+- name: post http enhanced assertions
   steps:
   - type: http
     method: POST
@@ -54,7 +54,7 @@ testcases:
       - result.bodyjson.bodyjson0 ShouldNotContainKey lol
       - result.statuscode ShouldNotEqual {{.post-http-multipart.result.statuscode}}
 
-- name: get http (with templated stuff)
+- name: get http with templated variables
   steps:
   - type: http
     method: POST
@@ -70,6 +70,7 @@ testcases:
     url: https://eu.api.ovh.com/1.0
     skip_body: true
     skip_headers: true
+    info: request is {{.result.request.method}} {{.result.request.url}} {{.result.request.body}}
     assertions:
       - result.statuscode ShouldEqual 405
       - result.body ShouldBeEmpty
