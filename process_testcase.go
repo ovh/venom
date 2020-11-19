@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-var varRegEx, _ = regexp.Compile("{{.*}}")
+var varRegEx = regexp.MustCompile("{{.*}}")
 
 //Parse the testcase to find unreplaced and extracted variables
 func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
@@ -94,8 +94,8 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 				if !found {
-					s = strings.Replace(s, "{{.", "", -1)
-					s = strings.Replace(s, "}}", "", -1)
+					s = strings.ReplaceAll(s, "{{.", "")
+					s = strings.ReplaceAll(s, "}}", "")
 					vars = append(vars, s)
 				}
 			}

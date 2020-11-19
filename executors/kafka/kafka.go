@@ -23,13 +23,13 @@ func New() venom.Executor {
 	return &Executor{}
 }
 
-//Message represents the object sended or received from kafka
+// Message represents the object sended or received from kafka
 type Message struct {
 	Topic string
 	Value string
 }
 
-//MessageJSON represents the object sended or received from kafka
+// MessageJSON represents the object sended or received from kafka
 type MessageJSON struct {
 	Topic string
 	Value interface{}
@@ -148,7 +148,7 @@ func (e Executor) produceMessages(workdir string) error {
 	messages := []*sarama.ProducerMessage{}
 
 	if e.MessagesFile != "" {
-		path := filepath.Join(workdir, string(e.MessagesFile))
+		path := filepath.Join(workdir, e.MessagesFile)
 		if _, err = os.Stat(path); err == nil {
 			content, err := ioutil.ReadFile(path)
 			if err != nil {

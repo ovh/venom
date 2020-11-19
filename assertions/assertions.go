@@ -106,7 +106,7 @@ func ShouldAlmostEqual(actual interface{}, expected ...interface{}) error {
 		return err
 	}
 
-	actualDeltaF := float64(math.Abs(actualF - expectedF))
+	actualDeltaF := math.Abs(actualF - expectedF)
 
 	if actualDeltaF <= deltaF {
 		return nil

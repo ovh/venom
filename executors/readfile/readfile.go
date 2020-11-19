@@ -90,7 +90,7 @@ func (e *Executor) readfile(workdir string) (Result, error) {
 
 	absPath := filepath.Join(workdir, e.Path)
 
-	fileInfo, _ := os.Stat(absPath)
+	fileInfo, _ := os.Stat(absPath) // nolint
 	if fileInfo != nil && fileInfo.IsDir() {
 		absPath = filepath.Dir(absPath)
 	}

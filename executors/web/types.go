@@ -32,7 +32,7 @@ type Click struct {
 
 // Navigate represents informations needed to navigate on defined url
 type Navigate struct {
-	Url   string `yaml:"url,omitempty"`
+	URL   string `yaml:"url,omitempty"`
 	Reset bool   `yaml:"reset,omitempty"`
 }
 

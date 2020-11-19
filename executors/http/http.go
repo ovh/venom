@@ -162,7 +162,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 		r.Headers = make(map[string]string)
 		for k, v := range resp.Header {
 			if strings.ToLower(k) == "set-cookie" {
-				r.Headers[k] = strings.Join(v[:], "; ")
+				r.Headers[k] = strings.Join(v, "; ")
 			} else {
 				r.Headers[k] = v[0]
 			}
@@ -188,7 +188,7 @@ func (e Executor) getRequest(workdir string) (*http.Request, error) {
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
-		path := filepath.Join(workdir, string(e.BodyFile))
+		path := filepath.Join(workdir, e.BodyFile)
 		if _, err := os.Stat(path); !os.IsNotExist(err) {
 			temp, err := ioutil.ReadFile(path)
 			if err != nil {

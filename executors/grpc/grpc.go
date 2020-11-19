@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -33,11 +32,11 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Url                  string                 `json:"url" yaml:"url"`
+	URL                  string                 `json:"url" yaml:"url"`
 	Service              string                 `json:"service" yaml:"service"`
 	Method               string                 `json:"method" yaml:"method"`
 	Plaintext            bool                   `json:"plaintext,omitempty" yaml:"plaintext,omitempty"`
-	JsonDefaultFields    bool                   `json:"default_fields" yaml:"default_fields"`
+	JSONDefaultFields    bool                   `json:"default_fields" yaml:"default_fields"`
 	IncludeTextSeparator bool                   `json:"include_text_separator" yaml:"include_text_separator"`
 	Data                 map[string]interface{} `json:"data" yaml:"data"`
 	Headers              map[string]string      `json:"headers" yaml:"headers"`
@@ -116,7 +115,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	// prepare data
 	data, err := json.Marshal(e.Data)
 	if err != nil {
-		return nil, fmt.Errorf("runGrpcurl: Cannot marshal request data: %s\n", err)
+		return nil, fmt.Errorf("runGrpcurl: Cannot marshal request data: %s", err)
 	}
 
 	result := Result{}
@@ -131,7 +130,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 		ctx, cancel := context.WithTimeout(ctx, dialTime)
 		defer cancel()
 		var creds credentials.TransportCredentials
-		cc, err := grpcurl.BlockingDial(ctx, "tcp", e.Url, creds)
+		cc, err := grpcurl.BlockingDial(ctx, "tcp", e.URL, creds)
 		if err != nil {
 			return nil
 		}
@@ -145,8 +144,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	refCtx := metadata.NewOutgoingContext(ctx, md)
 	cc = dial()
 	if cc == nil {
-		err := errors.New("grpc dial error")
-		return Result{Err: err.Error()}, err
+		return Result{Err: err.Error()}, fmt.Errorf("grpc dial error")
 	}
 	refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
 	descSource = grpcurl.DescriptorSourceFromServer(ctx, refClient)
@@ -168,7 +166,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	rf, formatter, err := grpcurl.RequestParserAndFormatterFor(
 		grpcurl.FormatJSON,
 		descSource,
-		e.JsonDefaultFields,
+		e.JSONDefaultFields,
 		e.IncludeTextSeparator,
 		in,
 	)

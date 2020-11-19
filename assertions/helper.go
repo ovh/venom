@@ -8,7 +8,6 @@ import (
 const (
 	needExactValues        = "This assertion requires exactly %d comparison values (you provided %d)."
 	needNonEmptyCollection = "This assertion requires at least 1 comparison value (you provided 0)."
-	needFewerValues        = "This assertion allows %d or fewer comparison values (you provided %d)."
 	needSameType           = "This assertion requires 2 values of same types."
 )
 
@@ -34,13 +33,6 @@ func need(needed int, expected []interface{}) error {
 func atLeast(minimum int, expected []interface{}) error {
 	if len(expected) < minimum {
 		return newAssertionError(needNonEmptyCollection)
-	}
-	return nil
-}
-
-func atMost(max int, expected []interface{}) error {
-	if len(expected) > max {
-		return newAssertionError(needFewerValues, max, len(expected))
 	}
 	return nil
 }
