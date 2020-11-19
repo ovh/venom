@@ -33,4 +33,4 @@ testcases:
     - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
     - result.messages.__len__ ShouldEqual 1
   - type: exec
-    script: KT_BROKER=localhost:9092 kt admin --deletetopic test-topic
+    script: command -v kt && KT_BROKER=localhost:9092 kt admin --deletetopic test-topic || true

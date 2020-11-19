@@ -19,7 +19,7 @@ testcases:
     action:
       navigate:
         url: https://httpbin.org/forms/post
-    info: "title is '{{.result.title}}''"
+    info: "title is '{{.result.title}}'"
     assertions:
     - result.title ShouldBeEmpty
 

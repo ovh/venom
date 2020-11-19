@@ -1,4 +1,4 @@
-name: My Kafka test suite with value from file
+name: Kafka test suite with value from file
 version: "2"
 testcases:
 - name: Kafka test with value from file

@@ -1,4 +1,4 @@
-name: My Kafka Avro test suite
+name: Kafka Avro test suite
 version: "2"
 testcases:
 - name: Kafka test
