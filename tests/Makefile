@@ -23,6 +23,6 @@ stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid
 
 run-test: 
-	@(cd ../cli/venom; go build && ./venom run --stop-on-failure  --log debug ../../tests/*.yml)
+	@(cd ../cmd/venom; go build && ./venom run --stop-on-failure  --log debug ../../tests/*.yml)
 
 
