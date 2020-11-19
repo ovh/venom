@@ -1,9 +1,28 @@
 # Venom - Executor SQL
 
+This executor is a plugin executor. You need to recompile venom with plugin support to use it.
+
+```bash
+$ git clone https://github.com/ovh/venom.git
+$ cd venom
+$ make build
+$ make plugins
+$ # venom binary is generated into dist directory
+$ # plugin binary is generated into dist/libs directory
+$ cd dist
+$ ./venom run ... 
+```
+
+To compile this executor, you need an ODBC driver. Please read https://github.com/alexbrainman/odbc/wiki
+
+Example on osx with driver installed with homebrew:
+```
+$ CGO_CFLAGS="-I$HOME/homebrew/Cellar/unixodbc/2.3.9/include" CGO_LDFLAGS="-L$HOME/homebrew/lib" go build
+```
+
 Step to execute SQL queries into databases:
-* **MySQL**
-* **PostgreSQL**
-* **Oracle**
+
+* **ODBC**
 
 It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retreive rows as a list of map[string]interface{}
 
@@ -12,7 +31,6 @@ It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to ret
 In your yaml file, you declare tour step like this
 
 ```yaml
-  - driver mandatory [mysql/postgres/oracle]
   - dsn mandatory
   - commands optional
   - file optional
@@ -29,8 +47,7 @@ testcases:
 
   - name: Query database
     steps:
-      - type: sql
-        driver: mysql
+      - type: odbc
         dsn: user:password@(localhost:3306)/venom
         commands:
           - "SELECT * FROM employee;"
@@ -39,14 +56,6 @@ testcases:
           - result.queries.__len__ ShouldEqual 2
           - result.queries.queries0.rows.rows0.name ShouldEqual Jack
           - result.queries.queries1.rows.rows0.age ShouldEqual 21
-
-  - name: Oracle
-    steps:
-      - type: sql
-        driver: oracle
-        dsn: "oracle://system:oracle@localhost:49161/XE"
-        commands:
-          - select * from v$version
 ```
 
 Example with a query file:
@@ -57,8 +66,8 @@ testcases:
 
   - name: Query database
     steps:
-      - type: sql
-        database: mysql
+      - type: odbc
+        database: thedatabase
         dsn: user:password@(localhost:3306)/venom
         file: ./test.sql
         assertions:
@@ -71,6 +80,4 @@ testcases:
 
 This executor uses the following SQL drivers:
 
-- _MySQL_: https://github.com/go-sql-driver/mysql
-- _PostgreSQL_: https://github.com/lib/pq
-- _Oracle_: https://github.com/sijms/go-ora
+- _ODBC_: https://github.com/alexbrainman/odbc

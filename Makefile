@@ -25,7 +25,6 @@ APP_RESULTS = $(wildcard cmd/venom/results/*)
 ALL_RESULTS = $(APP_RESULTS)
 ALL_RESULTS_TARGETS := $(foreach RESULTS,$(ALL_RESULTS),$(addprefix $(RESULTS_DIR),$(notdir $(RESULTS))))
 
-
 define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
 endef
@@ -51,6 +50,13 @@ build: ## build all components and push them into dist directory
 	$(MAKE) build -C cmd/venom
 	$(MAKE) dist
 
+plugins: ## build all components and push them into dist directory
+	$(info Building plugin)
+	$(MAKE) build -C executors/plugins
+	$(MAKE) dist -C executors/plugins
+	@mkdir -p dist/lib && \
+	mv executors/plugins/dist/lib/* dist/lib;
+
 dist: $(ALL_DIST_TARGETS)
 
 run: ## build binary for current OS only and run it. For development purpose only
@@ -63,6 +69,7 @@ clean: mk_go_clean ## delete directories dist and results and all temp files (co
 	@rm -rf ${DIST_DIR}
 	@rm -rf ${RESULTS_DIR}
 	$(MAKE) clean -C cmd/venom
+	$(MAKE) clean -C executors/plugins
 
 test-results: $(ALL_RESULTS_TARGETS)
 

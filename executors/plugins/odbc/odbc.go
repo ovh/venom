@@ -1,39 +1,31 @@
-package sql
+package main
 
 import (
+	"C"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"path"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/mitchellh/mapstructure"
 
-	// MySQL drivers
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
-
-	// Postgres driver
-	_ "github.com/lib/pq"
-
-	// Oracle
-	_ "github.com/sijms/go-ora"
+	// ODBC
+	_ "github.com/alexbrainman/odbc"
 
 	"github.com/ovh/venom"
 )
 
 // Name of the executor.
-const Name = "sql"
+const Name = "odbc"
 
-// New returns a new executor that can execute SQL queries
-func New() venom.Executor {
-	return &Executor{}
-}
+// Plugin var is mandatory, it's used by venom to register the executor
+var Plugin = Executor{}
 
 // Executor is a venom executor can execute SQL queries
 type Executor struct {
 	File     string   `json:"file,omitempty" yaml:"file,omitempty"`
 	Commands []string `json:"commands,omitempty" yaml:"commands,omitempty"`
-	Driver   string   `json:"driver" yaml:"driver"`
 	DSN      string   `json:"dsn" yaml:"dsn"`
 }
 
@@ -60,8 +52,8 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 		return nil, err
 	}
 	// Connect to the database and ping it.
-	venom.Debug(ctx, "connecting to database %s, %s\n", e.Driver, e.DSN)
-	db, err := sqlx.Connect(e.Driver, e.DSN)
+	venom.Debug(ctx, "connecting to database odbc, %s\n", e.DSN)
+	db, err := sqlx.Connect("odbc", e.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
