@@ -56,7 +56,10 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 				TestStep:  step,
 				Variables: ts.Vars,
 			}
-			output, _ := json.MarshalIndent(fdump, "", " ")
+			output, err := json.MarshalIndent(fdump, "", " ")
+			if err != nil {
+				Error(ctx, "unable to marshal result: %v", err)
+			}
 
 			oDir := v.OutputDir
 			if oDir == "" {

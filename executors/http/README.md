@@ -25,10 +25,9 @@ In your yaml file, you can use:
 
 ```yaml
 
-name: Title of TestSuite
+name: HTTP testsuite
 testcases:
-
-- name: GET http testcase
+- name: get http testcase
   steps:
   - type: http
     method: GET
@@ -37,56 +36,75 @@ testcases:
     - result.body ShouldContainSubstring /dedicated/server
     - result.body ShouldContainSubstring /ipLoadbalancing
     - result.statuscode ShouldEqual 200
+    - result.bodyjson.api ShouldBeNil
+    - result.bodyjson.apis ShouldNotBeEmpty
+    - result.bodyjson.apis.apis0 ShouldNotBeNil
     - result.bodyjson.apis.apis0.path ShouldEqual /allDom
 
-
-- name: POST http with bodyFile
+- name: post http multipart
   steps:
   - type: http
     method: POST
-    url: https://eu.api.ovh.com/1.0/
-    bodyFile: /tmp/myfile.tmp
-    assertions:
-    - result.statuscode ShouldNotEqual 200
-
-
-- name: POST http with multipart
-  steps:
-  - type: http
-    method: POST
-    url: https://eu.api.ovh.com/1.0/
+    url: https://eu.api.ovh.com/1.0/auth/logout
     multipart_form:
-        file: '@/tmp/myfile.tmp'
+      file: '@./venom.gif'
     assertions:
-    - result.statuscode ShouldNotEqual 200
+    - result.statuscode ShouldEqual 401
 
-- name: GET API health over Unix Socket
+- name: post http enhanced assertions
   steps:
   - type: http
-    method: GET
-    unix_sock: /run/myapp/health.sock
-    url: http://unix/health
+    method: POST
+    url: https://eu.api.ovh.com/1.0/newAccount/rules
     assertions:
-    - result.bodyjson.success ShouldBeTrue
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.__type__ ShouldEqual Array
+      # Ensure a minimum of fields are present.
+      - result.bodyjson.__len__ ShouldBeGreaterThanOrEqualTo 8
+      # Ensure fields have the right keys.
+      - result.bodyjson.bodyjson0 ShouldContainKey fieldName
+      - result.bodyjson.bodyjson0 ShouldContainKey mandatory
+      - result.bodyjson.bodyjson0 ShouldContainKey regularExpression
+      - result.bodyjson.bodyjson0 ShouldContainKey prefix
+      - result.bodyjson.bodyjson0 ShouldContainKey examples
+      - result.bodyjson.bodyjson0 ShouldNotContainKey lol
+      - result.statuscode ShouldNotEqual {{.post-http-multipart.result.statuscode}}
+
+- name: get http (with options)
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0
+    skip_body: true
+    skip_headers: true
+    info: request is {{.result.request.method}} {{.result.request.url}} {{.result.request.body}}
+    assertions:
+      - result.statuscode ShouldEqual 405
+      - result.body ShouldBeEmpty
+      - result.headers ShouldBeEmpty
+
+
 ```
 *NB: to post a file with multipart_form, prefix the path to the file with '@'*
 
 ## Output
 
 ```
-result.executor
+result.request
 result.timeseconds
 result.timehuman
 result.statuscode
 result.body
 result.bodyjson
 result.headers
-result.error
+result.err
 ```
 - result.timeseconds & result.timehuman: time of execution
-- result.executor.executor.method: HTTP method used, example: GET
-- result.executor.executor.url: url called
-- result.executor.executor.multipartform: multipartform if exists
+- result.request.method: HTTP method of the request
+- result.request.url: HTTP URL of the request
+- result.request.body: body content as string
+- result.request.form: HTTP form map
+- result.request.post_form: HTTP post form map
 - result.err: if exists, this field contains error
 - result.body: body of HTTP response
 - result.bodyjson: body of HTTP response if it's a JSON. You can access json data as result.bodyjson.yourkey for example.

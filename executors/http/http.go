@@ -56,10 +56,20 @@ type Result struct {
 	TimeSeconds float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
 	TimeHuman   string      `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 	StatusCode  int         `json:"statuscode,omitempty" yaml:"statuscode,omitempty"`
+	Request     HTTPRequest `json:"request,omitempty" yaml:"request,omitempty"`
 	Body        string      `json:"body,omitempty" yaml:"body,omitempty"`
 	BodyJSON    interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
 	Headers     Headers     `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
+}
+
+type HTTPRequest struct {
+	Method   string      `json:"method,omitempty"`
+	URL      string      `json:"url,omitempty"`
+	Header   http.Header `json:"headers,omitempty"`
+	Body     string      `json:"body,omitempty"`
+	Form     url.Values  `json:"form,omitempty"`
+	PostForm url.Values  `json:"post_form,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -124,6 +134,25 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 			return http.ErrUseLastResponse
 		}
 	}
+
+	cReq := req.Clone(ctx)
+	r.Request.Method = cReq.Method
+	r.Request.URL = req.URL.String()
+	if cReq.Body != nil {
+		body, err := cReq.GetBody()
+		if err != nil {
+			return nil, err
+		}
+		btes, err := ioutil.ReadAll(body)
+		if err != nil {
+			return nil, err
+		}
+		defer cReq.Body.Close()
+		r.Request.Body = string(btes)
+	}
+	r.Request.Header = cReq.Header
+	r.Request.Form = cReq.Form
+	r.Request.PostForm = cReq.PostForm
 
 	start := time.Now()
 	resp, err := client.Do(req)
