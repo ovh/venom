@@ -1,0 +1,45 @@
+name: Kafka Avro test suite
+version: "2"
+testcases:
+- name: Kafka test
+  description: Test kafka
+  steps:
+  - type: kafka
+    clientType: producer
+    withSASL: false
+    withTLS: false
+    withAVRO: true
+    user: "{{.kafkaUser}}"
+    password: "{{.kafkaPwd}}"
+    addrs:
+      - "{{.kafkaHost}}:{{.kafkaPort}}"
+    schemaRegistryAddr: "{{.kafkaSchemaRegistryHost}}"
+    messages:
+    - topic: test-topic-avro
+      key: '{"id":1}'
+      valueFile: "kafka/values/message1.json"
+      avroSchemaFile: "kafka/schemas/message.avsc"
+    - topic: test-topic-avro
+      key: '{"id":2}'
+      valueFile: "kafka/values/message2.json"
+      avroSchemaFile: "kafka/schemas/message.avsc"
+  - type: kafka
+    clientType: consumer
+    withTLS: false
+    withSASL: false
+    withAVRO: true
+    user: "{{.kafkaUser}}"
+    password: "{{.kafkaPwd}}"
+    markOffset: true
+    initialOffset: oldest
+    messageLimit: 2
+    groupID: venom
+    addrs:
+      - "{{.kafkaHost}}:{{.kafkaPort}}"
+    schemaRegistryAddr: "{{.kafkaSchemaRegistryHost}}"
+    topics:
+      - test-topic-avro
+    assertions:
+    - result.messagesjson.messagesjson0.value.id ShouldEqual 1
+    - result.messagesjson.messagesjson0.value.message ShouldEqual "Some test"
+    - result.messages.__len__ ShouldEqual 2

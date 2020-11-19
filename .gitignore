@@ -14,3 +14,6 @@ results
 bin.test
 profile.coverprofile
 tests.log
+*.dump.json
+*.dump.html
+*.jpg

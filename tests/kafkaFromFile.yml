@@ -1,8 +1,8 @@
-name: Kafka testsuite
+name: Kafka test suite with value from file
 version: "2"
 testcases:
-- name: Kafka test
-  description: Test kafka
+- name: Kafka test with value from file
+  description: Test kafka with value from file
   steps:
   - type: kafka
     clientType: producer
@@ -13,8 +13,8 @@ testcases:
     addrs:
       - "{{.kafkaHost}}:{{.kafkaPort}}"
     messages:
-    - topic: test-topic
-      value: '{"hello":"bar"}'
+      - topic: test-topic-with-file
+        valueFile: 'kafka/values/hello.json'
   - type: kafka
     clientType: consumer
     withTLS: false
@@ -28,9 +28,7 @@ testcases:
     addrs:
       - "{{.kafkaHost}}:{{.kafkaPort}}"
     topics:
-      - test-topic
+      - test-topic-with-file
     assertions:
     - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
     - result.messages.__len__ ShouldEqual 1
-  - type: exec
-    script: command -v kt && KT_BROKER=localhost:9092 kt admin --deletetopic test-topic || true

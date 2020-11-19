@@ -58,7 +58,7 @@ $ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):
 
 # TestSuites
 
-A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours. 
+A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours.
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
 In `venom` the testcases are executed sequentialy within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enable some specific kind of behavior.
@@ -112,19 +112,19 @@ testcases:
 
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
+* **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
 * **http**: https://github.com/ovh/venom/tree/master/executors/http
 * **imap**: https://github.com/ovh/venom/tree/master/executors/imap
 * **kafka** https://github.com/ovh/venom/tree/master/executors/kafka
+* **odbc**: https://github.com/ovh/venom/tree/master/executors/plugins/odbc
 * **ovhapi**: https://github.com/ovh/venom/tree/master/executors/ovhapi
+* **rabbitmq**: https://github.com/ovh/venom/tree/master/executors/rabbitmq
 * **readfile**: https://github.com/ovh/venom/tree/master/executors/readfile
 * **redis**: https://github.com/ovh/venom/tree/master/executors/redis
 * **smtp**: https://github.com/ovh/venom/tree/master/executors/smtp
+* **sql**: https://github.com/ovh/venom/tree/master/executors/sql
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
-* **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
-* **rabbitmq**: https://github.com/ovh/venom/tree/master/executors/rabbitmq
-* **sql**: https://github.com/ovh/venom/tree/master/executors/sql
-
 
 # Variables
 
@@ -348,8 +348,6 @@ How to compile?
 ```
 $ make build
 ```
-
-
 
 # License
 
