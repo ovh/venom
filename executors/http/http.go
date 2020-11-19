@@ -67,9 +67,9 @@ type HTTPRequest struct {
 	Method   string      `json:"method,omitempty"`
 	URL      string      `json:"url,omitempty"`
 	Header   http.Header `json:"headers,omitempty"`
-	Body     string      `json:"body,omitmepty"`
-	Form     url.Values  `json:"form,omitmepty"`
-	PostForm url.Values  `json:"post_form,omitmepty"`
+	Body     string      `json:"body,omitempty"`
+	Form     url.Values  `json:"form,omitempty"`
+	PostForm url.Values  `json:"post_form,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
