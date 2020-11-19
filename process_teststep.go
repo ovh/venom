@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/venom/executors"
 )
 
-type DumpFile struct {
+type dumpFile struct {
 	Variables interface{} `json:"variables"`
 	TestStep  TestStep    `json:"step"`
 	Result    interface{} `json:"result"`
@@ -51,12 +51,12 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		mapResultString, _ := executors.DumpString(result)
 
 		if v.Verbose == 2 {
-			dumpFile := DumpFile{
+			fdump := dumpFile{
 				Result:    result,
 				TestStep:  step,
 				Variables: ts.Vars,
 			}
-			output, _ := json.MarshalIndent(dumpFile, "", " ")
+			output, _ := json.MarshalIndent(fdump, "", " ")
 
 			oDir := v.OutputDir
 			if oDir == "" {
