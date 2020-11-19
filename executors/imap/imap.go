@@ -98,14 +98,14 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 	if e.SearchFrom == "" && e.SearchSubject == "" && e.SearchBody == "" && e.SearchTo == "" {
-		return nil, fmt.Errorf("You have to use one of searchfrom, searchto, searchsubject or subjectbody parameters.")
+		return nil, fmt.Errorf("you have to use one of searchfrom, searchto, searchsubject or subjectbody parameters")
 	}
 
 	c, errc := connect(e.IMAPHost, e.IMAPPort, e.IMAPUser, e.IMAPPassword)
 	if errc != nil {
-		return nil, fmt.Errorf("Error while connecting:%s", errc.Error())
+		return nil, fmt.Errorf("error while connecting:%s", errc.Error())
 	}
-	defer c.Logout(5 * time.Second)
+	defer c.Logout(5 * time.Second) // nolint
 
 	var box string
 
@@ -117,7 +117,7 @@ func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 
 	count, err := queryCount(c, box)
 	if err != nil {
-		return nil, fmt.Errorf("Error while queryCount:%s", err.Error())
+		return nil, fmt.Errorf("error while queryCount:%v", err)
 	}
 
 	venom.Debug(ctx, "count messages:%d", count)
@@ -128,7 +128,7 @@ func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 
 	messages, err := fetch(ctx, c, box, count)
 	if err != nil {
-		return nil, fmt.Errorf("Error while feching messages:%s", err.Error())
+		return nil, fmt.Errorf("Error while feching messages:%v", err)
 	}
 	defer c.Close(false)
 
@@ -225,18 +225,18 @@ func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error
 
 	c, errd := imap.DialTLS(host+port, nil)
 	if errd != nil {
-		return nil, fmt.Errorf("Unable to dial: %s", errd)
+		return nil, fmt.Errorf("unable to dial: %s", errd)
 	}
 
 	if c.Caps["STARTTLS"] {
 		if _, err := check(c.StartTLS(nil)); err != nil {
-			return nil, fmt.Errorf("Unable to start TLS: %s\n", err)
+			return nil, fmt.Errorf("unable to start TLS: %s", err)
 		}
 	}
 
 	c.SetLogMask(imapSafeLogMask)
 	if _, err := check(c.Login(imapUsername, imapPassword)); err != nil {
-		return nil, fmt.Errorf("Unable to login: %s", err)
+		return nil, fmt.Errorf("unable to login: %s", err)
 	}
 	c.SetLogMask(imapLogMask)
 

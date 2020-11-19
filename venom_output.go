@@ -46,7 +46,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 	}
 
 	filename := path.Join(v.OutputDir, "test_results."+v.OutputFormat)
-	if err := ioutil.WriteFile(filename, data, 0644); err != nil {
+	if err := ioutil.WriteFile(filename, data, 0600); err != nil {
 		return fmt.Errorf("Error while creating file %s: %v", filename, err)
 	}
 	v.PrintFunc("Writing file %s\n", filename)

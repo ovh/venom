@@ -39,7 +39,7 @@ func getURLArtifactFromGithub() string {
 
 	if len(release.Assets) > 0 {
 		for _, asset := range release.Assets {
-			assetName := strings.Replace(*asset.Name, ".", "-", -1)
+			assetName := strings.ReplaceAll(*asset.Name, ".", "-")
 			current := fmt.Sprintf("venom-%s-%s", runtime.GOOS, runtime.GOARCH)
 			if assetName == current {
 				return *asset.BrowserDownloadURL

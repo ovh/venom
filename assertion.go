@@ -159,7 +159,7 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 		return float32(iVal), err
 	case float64:
 		iVal, err := strconv.ParseFloat(val, 64)
-		return float64(iVal), err
+		return iVal, err
 	case time.Time:
 		return time.Parse(time.RFC3339, val)
 	case time.Duration:

@@ -227,14 +227,14 @@ func (e Executor) runAction(ctx context.Context, page *agouti.Page) (*Result, er
 			}
 		}
 	} else if e.Action.Navigate != nil {
-		if err := page.Navigate(e.Action.Navigate.Url); err != nil {
+		if err := page.Navigate(e.Action.Navigate.URL); err != nil {
 			return nil, err
 		}
 		if e.Action.Navigate.Reset {
 			if err := page.Reset(); err != nil {
 				return nil, err
 			}
-			if err := page.Navigate(e.Action.Navigate.Url); err != nil {
+			if err := page.Navigate(e.Action.Navigate.URL); err != nil {
 				return nil, err
 			}
 		}

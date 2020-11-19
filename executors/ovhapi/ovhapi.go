@@ -168,7 +168,7 @@ func (e Executor) getRequestBody(workdir string) (res interface{}, err error) {
 	if e.Body != "" {
 		bytes = []byte(e.Body)
 	} else if e.BodyFile != "" {
-		path := filepath.Join(workdir, string(e.BodyFile))
+		path := filepath.Join(workdir, e.BodyFile)
 		if _, err = os.Stat(path); !os.IsNotExist(err) {
 			bytes, err = ioutil.ReadFile(path)
 			if err != nil {

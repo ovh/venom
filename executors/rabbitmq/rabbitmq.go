@@ -21,7 +21,7 @@ func New() venom.Executor {
 	return &Executor{}
 }
 
-//Message represents the object sended or received from rabbitmq
+// Message represents the object sended or received from rabbitmq
 type Message struct {
 	Value           string     `json:"value" yaml:"value"`
 	Headers         amqp.Table `json:"headers" yaml:"headers"`
@@ -37,7 +37,7 @@ type Executor struct {
 	User     string `json:"user" yaml:"user"`
 	Password string `json:"password" yaml:"password"`
 
-	//ClientType must be "consumer" or "producer"
+	// ClientType must be "consumer" or "producer"
 	ClientType string `json:"client_type" yaml:"clientType"`
 
 	// QName represents the RabbitMQ queue name
@@ -52,11 +52,11 @@ type Executor struct {
 	// ExchangeType respresents the type of exchange (fanout, etc..)
 	RoutingKey string `json:"routing_key" yaml:"routingKey"`
 
-	//Represents the limit of message will be read. After limit, consumer stop read message
+	// Represents the limit of message will be read. After limit, consumer stop read message
 	MessageLimit int `json:"message_limit" yaml:"messageLimit"`
 
-	//Used when ClientType is producer
-	//Messages represents the message sended by producer
+	// Used when ClientType is producer
+	// Messages represents the message sended by producer
 	Messages []Message `json:"messages" yaml:"messages"`
 }
 
@@ -102,21 +102,22 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 		e.MessageLimit = 1
 	}
 
-	if e.ClientType == "publisher" {
+	switch e.ClientType {
+	case "publisher":
 		err := e.publishMessages(ctx, workdir)
 		if err != nil {
 			result.Err = err.Error()
 			return nil, err
 		}
-	} else if e.ClientType == "subscriber" {
+	case "subscriber":
 		var err error
 		result.Body, result.BodyJSON, result.Messages, result.Headers, err = e.consumeMessages(ctx)
 		if err != nil {
 			result.Err = err.Error()
 			return nil, err
 		}
-	} else {
-		return nil, fmt.Errorf("clientType must be publisher or subscriber")
+	default:
+		return nil, fmt.Errorf("clientType %q must be publisher or subscriber", e.ClientType)
 	}
 
 	elapsed := time.Since(start)
@@ -291,17 +292,14 @@ func (e Executor) consumeMessages(ctx context.Context) ([]string, []interface{},
 
 		venom.Debug(ctx, "message: %t %s %s %s", ok, msg.RoutingKey, msg.MessageId, msg.ContentType)
 
-		venom.Debug(ctx, "receive: %s", string(msg.Body[:]))
-		body = append(body, string(msg.Body[:]))
+		venom.Debug(ctx, "receive: %s", string(msg.Body))
+		body = append(body, string(msg.Body))
 
 		bodyJSONArray := []interface{}{}
 		if err := json.Unmarshal(msg.Body, &bodyJSONArray); err != nil {
 			bodyJSONMap := map[string]interface{}{}
-			if err2 := json.Unmarshal(msg.Body, &bodyJSONMap); err2 == nil {
-				bodyJSON = append(bodyJSON, bodyJSONMap)
-			} else {
-				bodyJSON = append(bodyJSON, bodyJSONMap)
-			}
+			json.Unmarshal(msg.Body, &bodyJSONMap) //nolint
+			bodyJSON = append(bodyJSON, bodyJSONMap)
 		} else {
 			bodyJSON = append(bodyJSON, bodyJSONArray)
 		}

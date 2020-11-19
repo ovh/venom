@@ -100,9 +100,9 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 				log.Errorf("error while create profile file %v", err)
 			}
 			if fCPU != nil && fMem != nil {
-				pprof.StartCPUProfile(fCPU)
+				pprof.StartCPUProfile(fCPU) //nolint
 				p := pprof.Lookup("heap")
-				defer p.WriteTo(fMem, 1)
+				defer p.WriteTo(fMem, 1) //nolint
 				defer pprof.StopCPUProfile()
 			}
 		}
@@ -158,7 +158,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 func readInitialVariables(argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
 	var cast = func(vS string) interface{} {
 		var v interface{}
-		_ = yml.Unmarshal([]byte(vS), &v) // ignore errors
+		_ = yml.Unmarshal([]byte(vS), &v) //nolint
 		return v
 	}
 

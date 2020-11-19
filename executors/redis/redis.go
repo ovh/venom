@@ -21,13 +21,13 @@ func New() venom.Executor {
 	return &Executor{}
 }
 
-//Executor represents the redis executor
+// Executor represents the redis executor
 type Executor struct {
 	Commands []string `json:"commands,omitempty" yaml:"commands,omitempty"`
 	FilePath string   `json:"path,omitempty" yaml:"path,omitempty" mapstructure:"path"`
 }
 
-//Command represents a redis command and the result
+// Command represents a redis command and the result
 type Command struct {
 	Name     string        `json:"name,omitempty" yaml:"name,omitempty"`
 	Args     []interface{} `json:"args,omitempty" yaml:"args,omitempty"`
@@ -131,12 +131,12 @@ func handleRedisResponse(res interface{}, err error) interface{} {
 		var result = []string{}
 		for i := range p {
 			u := p[i]
-			k, _ := redis.String(u, err)
+			k, _ := redis.String(u, err) //nolint
 			result = append(result, k)
 		}
 		return result
 	default:
-		t, _ := redis.String(res, err)
+		t, _ := redis.String(res, err) // nolint
 		return t
 	}
 }
