@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/mitchellh/mapstructure"
 
 	// ODBC
@@ -14,7 +15,6 @@ import (
 
 	"github.com/ovh/venom"
 )
-import "github.com/jmoiron/sqlx"
 
 // Name of the executor.
 const Name = "odbc"
