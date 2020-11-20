@@ -102,7 +102,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		}
 
 		for _, i := range tc.computedVerbose {
-			v.Println("\t  %s %s", verbose("[trace]"), verbose(i))
+			v.Println("\t  %s %s", verbose("[trac]"), verbose(i))
 		}
 
 		if hasFailure {
