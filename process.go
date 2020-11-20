@@ -39,7 +39,7 @@ func (v *Venom) Init() error {
 		}
 
 		var verbose = color.New(color.Attribute(90)).SprintFunc()
-		v.Println("\t  %s %s", verbose("[trace]"), verbose("writing "+logFile))
+		v.Println("\t  %s %s", verbose("[trac]"), verbose("writing "+logFile))
 
 		logrus.SetOutput(v.LogOutput)
 	} else {
