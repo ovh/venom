@@ -268,7 +268,6 @@ testcases:
 
 * result.url
 * result.timeseconds
-* result.timehuman
 * result.title
 * result.find
 

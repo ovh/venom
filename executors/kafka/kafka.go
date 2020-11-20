@@ -29,10 +29,8 @@ func New() venom.Executor {
 	return &Executor{}
 }
 
-
-
 type (
-  // Message represents the object sended or received from kafka
+	// Message represents the object sended or received from kafka
 	Message struct {
 		Topic          string `json:"topic" yaml:"topic"`
 		Key            string `json:"key" yaml:"key"`
@@ -94,7 +92,6 @@ type (
 	// Result represents a step result.
 	Result struct {
 		TimeSeconds  float64       `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-		TimeHuman    string        `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 		Messages     []Message     `json:"messages,omitempty" yaml:"messages,omitempty"`
 		MessagesJSON []interface{} `json:"messagesJSON,omitempty" yaml:"messagesJSON,omitempty"`
 		Err          string        `json:"error" yaml:"error"`
@@ -150,7 +147,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = elapsed.String()
 
 	return result, nil
 }

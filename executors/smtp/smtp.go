@@ -39,7 +39,6 @@ type Executor struct {
 type Result struct {
 	Err         string  `json:"error,omitempty" yaml:"error"`
 	TimeSeconds float64 `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-	TimeHuman   string  `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -70,7 +69,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = elapsed.String()
 
 	return result, nil
 }

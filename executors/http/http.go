@@ -54,7 +54,6 @@ type Executor struct {
 // Result represents a step result. Json and yaml descriptor are used for json output
 type Result struct {
 	TimeSeconds float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
-	TimeHuman   string      `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 	StatusCode  int         `json:"statuscode,omitempty" yaml:"statuscode,omitempty"`
 	Request     HTTPRequest `json:"request,omitempty" yaml:"request,omitempty"`
 	Body        string      `json:"body,omitempty" yaml:"body,omitempty"`
@@ -161,7 +160,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	}
 	elapsed := time.Since(start)
 	r.TimeSeconds = elapsed.Seconds()
-	r.TimeHuman = elapsed.String()
 
 	var bb []byte
 	if resp.Body != nil {

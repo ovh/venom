@@ -35,21 +35,22 @@ testcases:
 ## Output
 
 ```yaml
-executor
 systemout
+systemoutjson
 systemerr
+systemerrjson
 err
 code
 timeseconds
-timehuman
 ```
 
-- result.timeseconds & result.timehuman: time of execution
-- result.executor.executor.script: script executed
+- result.timeseconds: time of execution
 - result.err: if exists, this field contains error
 - result.systemout: Standard Output of executed script
-- result.systemerr: Error Output of executed script
-- result.code: Exit Code
+- result.systemoutjson: Standard Output of executed script parsed as a JSON object
+- result.systemerr: Error output of executed script
+- result.systemerrjson: Error output of executed script parsed as a JSON object
+- result.code: Exit code
 
 ## Default assertion
 

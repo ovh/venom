@@ -92,14 +92,13 @@ testcases:
 ```
 result.request
 result.timeseconds
-result.timehuman
 result.statuscode
 result.body
 result.bodyjson
 result.headers
 result.err
 ```
-- result.timeseconds & result.timehuman: time of execution
+- result.timeseconds: execution duration
 - result.request.method: HTTP method of the request
 - result.request.url: HTTP URL of the request
 - result.request.body: body content as string

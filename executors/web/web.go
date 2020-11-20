@@ -46,7 +46,6 @@ type Result struct {
 	Find        int     `json:"find,omitempty" yaml:"find,omitempty"`
 	HTML        string  `json:"html,omitempty" yaml:"html,omitempty"`
 	TimeSeconds float64 `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
-	TimeHuman   string  `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 	Title       string  `json:"title,omitempty" yaml:"title,omitempty"`
 	URL         string  `json:"url,omitempty" yaml:"url,omitempty"`
 	Text        string  `json:"text,omitempty" yaml:"text,omitempty"`
@@ -177,7 +176,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = elapsed.String()
 
 	return result, nil
 }

@@ -35,17 +35,14 @@ testcases:
 ## Output
 
 ```yaml
-executor
 systemout
 systemerr
 err
 code
 timeseconds
-timehuman
 ```
 
-- result.timeseconds & result.timehuman: time of execution
-- result.executor.executor.script: script executed
+- result.timeseconds: time of execution
 - result.err: if exists, this field contains error
 - result.systemout: Standard Output of executed script
 - result.systemerr: Error Output of executed script
