@@ -9,11 +9,13 @@ import (
 	"strings"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
+	"github.com/fatih/color"
 	"github.com/gosimple/slug"
 	"github.com/sirupsen/logrus"
 )
 
-func (v *Venom) init() error {
+// Init initializes venom logger
+func (v *Venom) Init() error {
 	v.testsuites = []TestSuite{}
 	if v.Verbose == 0 {
 		logrus.SetLevel(logrus.WarnLevel)
@@ -36,6 +38,9 @@ func (v *Venom) init() error {
 			return fmt.Errorf("unable to write log file: %v", err)
 		}
 
+		var verbose = color.New(color.FgMagenta).SprintFunc()
+		v.Println("\t  %s %s", verbose("[verbose]"), logFile+" created")
+
 		logrus.SetOutput(v.LogOutput)
 	} else {
 		logrus.SetOutput(ioutil.Discard)
@@ -54,10 +59,6 @@ func (v *Venom) init() error {
 
 // Parse parses tests suite to check context and variables
 func (v *Venom) Parse(path []string) error {
-	if err := v.init(); err != nil {
-		return err
-	}
-
 	filesPath, err := getFilesPath(path)
 	if err != nil {
 		return err
@@ -144,10 +145,6 @@ func (v *Venom) Parse(path []string) error {
 
 // Process runs tests suite and return a Tests result
 func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
-	if err := v.init(); err != nil {
-		return nil, err
-	}
-
 	filesPath, err := getFilesPath(path)
 	if err != nil {
 		return nil, err

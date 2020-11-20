@@ -220,23 +220,24 @@ type Property struct {
 
 // TestCase is a single test case with its result.
 type TestCase struct {
-	XMLName      xml.Name  `xml:"testcase" json:"-" yaml:"-"`
-	Classname    string    `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
-	Errors       []Failure `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
-	Failures     []Failure `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
-	Name         string    `xml:"name,attr" json:"name" yaml:"name"`
-	originalName string
-	Skipped      []Skipped         `xml:"skipped,omitempty" json:"skipped" yaml:"skipped,omitempty"`
-	Status       string            `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
-	Systemout    InnerResult       `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
-	Systemerr    InnerResult       `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
-	Time         string            `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
-	RawTestSteps []json.RawMessage `xml:"-" hcl:"step" json:"steps" yaml:"steps"`
-	testSteps    []TestStep
-	Context      map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
-	Vars         H                      `xml:"-" json:"-" yaml:"vars"`
-	computedVars H
-	computedInfo []string
+	XMLName         xml.Name  `xml:"testcase" json:"-" yaml:"-"`
+	Classname       string    `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
+	Errors          []Failure `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
+	Failures        []Failure `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
+	Name            string    `xml:"name,attr" json:"name" yaml:"name"`
+	originalName    string
+	Skipped         []Skipped         `xml:"skipped,omitempty" json:"skipped" yaml:"skipped,omitempty"`
+	Status          string            `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
+	Systemout       InnerResult       `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
+	Systemerr       InnerResult       `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
+	Time            string            `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
+	RawTestSteps    []json.RawMessage `xml:"-" hcl:"step" json:"steps" yaml:"steps"`
+	testSteps       []TestStep
+	Context         map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
+	Vars            H                      `xml:"-" json:"-" yaml:"vars"`
+	computedVars    H
+	computedInfo    []string
+	computedVerbose []string
 }
 
 // TestStep represents a testStep

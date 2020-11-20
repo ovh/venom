@@ -51,10 +51,12 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		mapResultString, _ := executors.DumpString(result)
 
 		if v.Verbose == 2 {
+			vars := ts.Vars.Clone()
+			vars.AddAll(tc.Vars)
 			fdump := dumpFile{
 				Result:    result,
 				TestStep:  step,
-				Variables: ts.Vars,
+				Variables: vars,
 			}
 			output, err := json.MarshalIndent(fdump, "", " ")
 			if err != nil {
@@ -70,7 +72,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 			if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
 				return fmt.Errorf("Error while creating file %s: %v", filename, err)
 			}
-			Info(ctx, "File %s is written", filename)
+			tc.computedVerbose = append(tc.computedVerbose, fmt.Sprintf("File %s is written", filename))
 		}
 
 		for _, i := range e.Info() {
