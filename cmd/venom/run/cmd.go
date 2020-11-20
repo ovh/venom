@@ -128,6 +128,12 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 
 		start := time.Now()
 
+		if err := v.Init(); err != nil {
+			fmt.Println(err)
+			os.Exit(2)
+			return err
+		}
+
 		if err := v.Parse(path); err != nil {
 			fmt.Println(err)
 			os.Exit(2)
