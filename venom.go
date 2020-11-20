@@ -7,6 +7,7 @@ import (
 	"os"
 	"plugin"
 
+	"github.com/fatih/color"
 	"github.com/fsamin/go-dump"
 	"github.com/spf13/cast"
 )
@@ -44,12 +45,18 @@ type Venom struct {
 	Verbose       int
 }
 
+var trace = color.New(color.Attribute(90)).SprintFunc()
+
 func (v *Venom) Print(format string, a ...interface{}) {
 	v.PrintFunc(format, a...) // nolint
 }
 
 func (v *Venom) Println(format string, a ...interface{}) {
 	v.PrintFunc(format+"\n", a...) // nolint
+}
+
+func (v *Venom) PrintlnTrace(s string) {
+	v.Println("\t  %s %s", trace("[trac]"), trace(s)) // nolint
 }
 
 func (v *Venom) AddVariables(variables map[string]interface{}) {
