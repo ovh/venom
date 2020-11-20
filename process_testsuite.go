@@ -65,7 +65,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 	var red = color.New(color.FgRed).SprintFunc()
 	var green = color.New(color.FgGreen).SprintFunc()
 	var cyan = color.New(color.FgCyan).SprintFunc()
-	var verbose = color.New(color.FgMagenta).SprintFunc()
+	var verbose = color.New(color.FgYellow).SprintFunc()
 
 	v.Println(" • %s (%s)", ts.Name, ts.Package)
 
@@ -102,7 +102,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		}
 
 		for _, i := range tc.computedVerbose {
-			v.Println("\t  %s %s", verbose("[verbose]"), verbose(i))
+			v.Println("\t  %s %s", verbose("[trace]"), verbose(i))
 		}
 
 		if hasFailure {
