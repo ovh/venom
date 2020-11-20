@@ -17,7 +17,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom"
 )
 
@@ -94,7 +96,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	r := Result{}
 
-	req, err := e.getRequest(workdir)
+	req, err := e.getRequest(ctx, workdir)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +200,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 }
 
 // getRequest returns the request correctly set for the current executor
-func (e Executor) getRequest(workdir string) (*http.Request, error) {
+func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request, error) {
 	path := fmt.Sprintf("%s%s", e.URL, e.Path)
 	method := e.Method
 	if method == "" {
@@ -218,7 +220,13 @@ func (e Executor) getRequest(workdir string) (*http.Request, error) {
 			if err != nil {
 				return nil, err
 			}
-			body = bytes.NewBuffer(temp)
+			h := venom.AllVarsFromCtx(ctx)
+			vars, _ := dump.ToStringMap(h)
+			stemp, err := interpolate.Do(string(temp), vars)
+			if err != nil {
+				return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+			}
+			body = bytes.NewBufferString(stemp)
 		}
 	} else if e.MultipartForm != nil {
 		form, ok := e.MultipartForm.(map[string]interface{})
