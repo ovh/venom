@@ -1,4 +1,7 @@
 name: HTTP testsuite
+vars:
+  input: "this my input"
+
 testcases:
 - name: get http testcase
   steps:
@@ -24,6 +27,17 @@ testcases:
     - result.headers.x-ovh-queryid ShouldNotBeEmpty
     - result.headers ShouldHaveLength 11
     - result.timeseconds ShouldBeLessThan 5
+
+- name: post http testcase with body file
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/auth/logout
+    bodyfile: http/input.json.tmpl
+    info: "request was {{.result.request.body}}"
+    assertions:
+    - result.request.body ShouldNotBeEmpty
+    - result.request.body ShouldContainSubstring "this my input"
 
 - name: post http multipart
   steps:

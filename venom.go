@@ -89,9 +89,12 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 		return ctx, nil, err
 	}
 
+	allKeys := []string{}
 	for k, v := range vars {
 		ctx = context.WithValue(ctx, ContextKey("var."+k), v)
+		allKeys = append(allKeys, k)
 	}
+	ctx = context.WithValue(ctx, ContextKey("vars"), allKeys)
 
 	if ex, ok := v.executors[name]; ok {
 		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
@@ -126,6 +129,11 @@ func (v *Venom) registerPlugin(ctx context.Context, name string) error {
 	return nil
 }
 
+func VarFromCtx(ctx context.Context, varname string) interface{} {
+	i := ctx.Value(ContextKey("var." + varname))
+	return i
+}
+
 func StringVarFromCtx(ctx context.Context, varname string) string {
 	i := ctx.Value(ContextKey("var." + varname))
 	return cast.ToString(i)
@@ -154,4 +162,14 @@ func StringMapInterfaceVarFromCtx(ctx context.Context, varname string) map[strin
 func StringMapStringVarFromCtx(ctx context.Context, varname string) map[string]string {
 	i := ctx.Value(ContextKey("var." + varname))
 	return cast.ToStringMapString(i)
+}
+
+func AllVarsFromCtx(ctx context.Context) H {
+	i := ctx.Value(ContextKey("vars"))
+	allKeys := cast.ToStringSlice(i)
+	res := H{}
+	for _, k := range allKeys {
+		res.Add(k, VarFromCtx(ctx, k))
+	}
+	return res
 }
