@@ -339,6 +339,10 @@ $ venom run test.yml
 	  [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
 ```
 
+# Use venom in CI
+
+Venom can be use on dev environement or your CI server.
+To display correctly the venom output, you probably will have to export the environment variable `IS_TTY=true` before running venom.
 
 # Hacking
 
