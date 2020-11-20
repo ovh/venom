@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
-	"github.com/fatih/color"
 	"github.com/gosimple/slug"
 	"github.com/sirupsen/logrus"
 )
@@ -38,8 +37,7 @@ func (v *Venom) Init() error {
 			return fmt.Errorf("unable to write log file: %v", err)
 		}
 
-		var verbose = color.New(color.Attribute(90)).SprintFunc()
-		v.Println("\t  %s %s", verbose("[trac]"), verbose("writing "+logFile))
+		v.PrintlnTrace("writing " + logFile)
 
 		logrus.SetOutput(v.LogOutput)
 	} else {
