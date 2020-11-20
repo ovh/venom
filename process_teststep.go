@@ -15,7 +15,7 @@ import (
 )
 
 type dumpFile struct {
-	Variables interface{} `json:"variables"`
+	Variables H           `json:"variables"`
 	TestStep  TestStep    `json:"step"`
 	Result    interface{} `json:"result"`
 }
@@ -51,12 +51,10 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		mapResultString, _ := executors.DumpString(result)
 
 		if v.Verbose == 2 {
-			vars := ts.Vars.Clone()
-			vars.AddAll(tc.Vars)
 			fdump := dumpFile{
 				Result:    result,
 				TestStep:  step,
-				Variables: vars,
+				Variables: AllVarsFromCtx(ctx),
 			}
 			output, err := json.MarshalIndent(fdump, "", " ")
 			if err != nil {
