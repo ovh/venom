@@ -62,10 +62,9 @@ systemerr
 err
 code
 timeseconds
-timehuman
 ```
 
-- result.timeseconds & result.timehuman: time of execution
+- result.timeseconds: execution duration
 - result.executor.executor.script: script executed
 - result.err: if exists, this field contains error
 - result.systemout: Standard Output of executed script

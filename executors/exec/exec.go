@@ -42,7 +42,6 @@ type Result struct {
 	Err           string      `json:"err,omitempty" yaml:"err,omitempty"`
 	Code          string      `json:"code,omitempty" yaml:"code,omitempty"`
 	TimeSeconds   float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
-	TimeHuman     string      `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -201,7 +200,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = elapsed.String()
 
 	result.Systemout = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemout, "\n"))
 	result.Systemerr = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemerr, "\n"))

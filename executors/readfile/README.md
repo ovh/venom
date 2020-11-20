@@ -32,8 +32,6 @@ testcases:
 
 ```yaml
   result.timeseconds
-  result.timehuman
-  result.executor.executor.path
   result.content
   result.contentjson
   result.size.filename
@@ -42,8 +40,7 @@ testcases:
   result.mod.filename
 ```
 
-- result.timeseconds & result.timehuman: time for read file
-- result.executor.path: executor condition with file path
+- result.timeseconds: execution duration
 - result.err: if exist, this field contains error
 - result.content: content of readed file
 - result.contentjson: content of readed file if it's a json. You can access json data as result.contentjson.yourkey for example

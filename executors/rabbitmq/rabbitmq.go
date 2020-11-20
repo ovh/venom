@@ -63,7 +63,6 @@ type Executor struct {
 // Result represents a step result.
 type Result struct {
 	TimeSeconds float64       `json:"timeSeconds" yaml:"timeSeconds"`
-	TimeHuman   string        `json:"timeHuman" yaml:"timeHuman"`
 	Body        []string      `json:"body" yaml:"body"`
 	Messages    []interface{} `json:"messages" yaml:"messages"`
 	BodyJSON    []interface{} `json:"bodyJSON" yaml:"bodyJSON"`
@@ -122,7 +121,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = elapsed.String()
 
 	return result, nil
 }

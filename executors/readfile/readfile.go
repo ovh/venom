@@ -37,7 +37,6 @@ type Result struct {
 	ContentJSON interface{}       `json:"contentjson,omitempty" yaml:"contentjson,omitempty"`
 	Err         string            `json:"error" yaml:"error"`
 	TimeSeconds float64           `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
-	TimeHuman   string            `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 	Md5sum      map[string]string `json:"md5sum,omitempty" yaml:"md5sum,omitempty"`
 	Size        map[string]int64  `json:"size,omitempty" yaml:"size,omitempty"`
 	ModTime     map[string]int64  `json:"modtime,omitempty" yaml:"modtime,omitempty"`
@@ -80,7 +79,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = elapsed.String()
 
 	return result, nil
 }

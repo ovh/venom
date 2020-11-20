@@ -52,7 +52,6 @@ type Result struct {
 	Err           string      `json:"err,omitempty" yaml:"err,omitempty"`
 	Code          string      `json:"code,omitempty" yaml:"code,omitempty"`
 	TimeSeconds   float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
-	TimeHuman     string      `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 }
 
 type customHandler struct {
@@ -189,7 +188,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
-	result.TimeHuman = elapsed.String()
 
 	if handle.err != nil {
 		result.Err = handle.err.Error()

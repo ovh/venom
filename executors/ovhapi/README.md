@@ -50,13 +50,12 @@ testcases:
 ```
 result.executor
 result.timeseconds
-result.timehuman
 result.statuscode
 result.body
 result.bodyjson
 result.error
 ```
-- result.timeseconds & result.timehuman: time of execution
+- result.timeseconds: execution duration
 - result.err: if exists, this field contains error
 - result.body: body of HTTP response
 - result.bodyjson: body of HTTP response if it's a json. You can access json data as result.bodyjson.yourkey for example
