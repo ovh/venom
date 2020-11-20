@@ -38,8 +38,8 @@ func (v *Venom) Init() error {
 			return fmt.Errorf("unable to write log file: %v", err)
 		}
 
-		var verbose = color.New(color.FgMagenta).SprintFunc()
-		v.Println("\t  %s %s", verbose("[verbose]"), logFile+" created")
+		var verbose = color.New(color.FgYellow).SprintFunc()
+		v.Println("\t  %s %s", verbose("[trace]"), verbose("writing "+logFile))
 
 		logrus.SetOutput(v.LogOutput)
 	} else {
