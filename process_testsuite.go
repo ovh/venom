@@ -65,7 +65,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 	var red = color.New(color.FgRed).SprintFunc()
 	var green = color.New(color.FgGreen).SprintFunc()
 	var cyan = color.New(color.FgCyan).SprintFunc()
-	var verbose = color.New(color.FgYellow).SprintFunc()
+	var verbose = color.New(color.Attribute(90)).SprintFunc()
 
 	v.Println(" • %s (%s)", ts.Name, ts.Package)
 
