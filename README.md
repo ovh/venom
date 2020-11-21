@@ -14,6 +14,7 @@ It can also output xUnit results files.
     * [Variable on Command Line](#variable-on-command-line)
     * [Variable Definitions Files](#variable-definitions-files)
     * [Environment Variables](#environment-variables)
+    * [Variable helpers](#variable-helpers)
   * [How to use outputs from a test step as input of another test step](#how-to-use-outputs-from-a-test-step-as-input-of-another-test-step)
   * [Builtin venom variables](#builtin-venom-variables)
 * [Tests Report](#tests-report)
