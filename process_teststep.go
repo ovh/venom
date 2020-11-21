@@ -50,7 +50,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		mapResult := GetExecutorResult(result)
 		mapResultString, _ := executors.DumpString(result)
 
-		if v.Verbose == 2 {
+		if v.Verbose >= 2 {
 			fdump := dumpFile{
 				Result:    result,
 				TestStep:  step,

@@ -20,6 +20,7 @@ It can also output xUnit results files.
 * [Assertion](#assertion)
   * [Keywords](#keywords)
 * [Debug your testsuites](#debug-your-testsuites)
+* [Use venom in CI](#use-venom-in-ci)
 * [Hacking](#hacking)
 * [License](#license)
 
@@ -45,6 +46,23 @@ Flags:
       --var strings             --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
+```
+
+You can define the arguments with environment variables:
+
+```bash
+venom run my-test-suite.yml --format=json
+# is the same as
+VENOM_FORMAT=json venom run my-test-suite.yml
+```
+
+```
+      --format           -  example: VENOM_FORMAT=json
+      --output-dir       -  example: VENOM_OUTPUT_DIR=.
+      --stop-on-failure  -  example: VENOM_STOP_ON_FAILURE=true
+      --var              -  example: VENOM_VAR="foo=bar"
+      --var-from-file    -  example: VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"
+      -v                 -  example: VENOM_VERBOSE=2 is the same as -vv
 ```
 
 # Docker image
@@ -180,6 +198,50 @@ As a fallback for the other ways of defining variables, `venom` searches the env
 $ export VENOM_VAR_foo=bar
 $ venom run *.yml
 ```
+
+### Variable helpers
+
+Helpers available and some examples:
+
+- `abbrev`
+- `abbrevboth`
+- `trunc`
+- `trim`
+- `upper`: {{.myvar | upper}}
+- `lower`: {{.myvar | lower}}
+- `title`
+- `untitle`
+- `substr`
+- `repeat`
+- `trimall`
+- `trimAll`
+- `trimSuffix`
+- `trimPrefix`
+- `nospace`
+- `initials`
+- `randAlphaNum`
+- `randAlpha`
+- `randASCII`
+- `randNumeric`
+- `swapcase`
+- `shuffle`
+- `snakecase`
+- `camelcase`
+- `quote`
+- `squote`
+- `indent`
+- `nindent`
+- `replace`: {{.myvar | replace "_" "."}}
+- `plural`
+- `default`: {{.myvar | default ""}}
+- `empty`
+- `coalesce`
+- `toJSON`
+- `toPrettyJSON`
+- `b64enc`
+- `b64dec` {{.result.bodyjson | b64enc}}
+- `escape`: replace ‘_‘, ‘/’, ‘.’ by ‘-’
+
 
 ## How to use outputs from a test step as input of another test step
 
