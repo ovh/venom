@@ -18,10 +18,10 @@ import (
 
 const (
 	// Name of executor
-	Name                      = "kafka"
-	defaultExecutorTimeoutMs  = 5000
-	defaultProducerMaxRetries = 10
-	defaultDialTimeout        = 10 * time.Second
+	Name                          = "kafka"
+	defaultExecutorTimeoutSeconds = 5
+	defaultProducerMaxRetries     = 10
+	defaultDialTimeout            = 10 * time.Second
 )
 
 // New returns a new Executor
@@ -64,8 +64,8 @@ type (
 		// Used when ClientType is consumer
 		GroupID string   `json:"group_id,omitempty" yaml:"groupID,omitempty"`
 		Topics  []string `json:"topics,omitempty" yaml:"topics,omitempty"`
-		// Represents the timeout for reading messages. In Milliseconds. Default 5000
-		Timeout int64 `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+		// Represents the timeout for reading messages. In Seconds. Default 5
+		Timeout int `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 		// Represents the limit of message will be read. After limit, consumer stop read message
 		MessageLimit int `json:"message_limit,omitempty" yaml:"messageLimit,omitempty"`
 		// InitialOffset represents the initial offset for the consumer. Possible value : newest, oldest. default: newest
@@ -127,7 +127,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	}
 
 	if e.Timeout == 0 {
-		e.Timeout = defaultExecutorTimeoutMs
+		e.Timeout = defaultExecutorTimeoutSeconds
 	}
 	switch e.ClientType {
 	case "producer":
@@ -279,7 +279,7 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 	}
 	defer func() { _ = consumerGroup.Close() }()
 
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout)*time.Second)
 	defer cancel()
 
 	// Track errors
