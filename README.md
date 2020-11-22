@@ -160,6 +160,45 @@ testcases:
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
 
+## User executor
+
+You can define an executor by using another executors.
+
+Example:
+
+file `executors/customA.yml`
+```yml
+executor: customA
+input:
+  myarg: {}
+steps:
+- script: echo "foo:{{.input.myarg}}"
+  assertions:
+  - result.code ShouldEqual 0
+```
+
+file `testsuite.yml`
+```yml
+name: testsuite with a user executor
+testcases:
+- name: my-testcase
+  steps:
+  - type: customA
+    myarg: World
+    info: 
+    - result of customA is {{.result.systemout}}
+    assertions:
+    - result.systemout ShouldContainSubstring World
+```
+
+venom will load user's executors from the directory `executors/`
+- from the path of the testsuite
+- from the venom path
+
+```bash
+$ venom run testsuite.yml # executors/*.yml files will be loaded as executors.
+```
+
 # Variables
 
 ## Testsuite variables

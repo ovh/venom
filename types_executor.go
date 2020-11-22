@@ -3,6 +3,7 @@ package venom
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/gosimple/slug"
@@ -152,7 +153,6 @@ func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, err
 				// default value from executor
 				vrs.Add("input."+k, v)
 			}
-
 		} else {
 			vrs.Add(k, v)
 		}
@@ -173,5 +173,9 @@ func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, err
 	Debug(ctx, "with vars: %v", vrs)
 
 	ux.v.runTestSteps(ctx, tc)
-	return nil, nil
+	result := tc.computedVars
+	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
+		return result, fmt.Errorf("failed")
+	}
+	return result, nil
 }

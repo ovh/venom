@@ -1,6 +1,0 @@
-name: Exec testsuite
-testcases:
-- name: testA
-  steps:
-  - type: custom
-    myarg: foo

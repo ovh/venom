@@ -1,0 +1,10 @@
+name: testsuite with a user executor
+testcases:
+- name: testA
+  steps:
+  - type: customA
+    myarg: World
+    info: 
+    - result of customA is {{.result.systemoutjson.hello}}
+    assertions:
+    - result.systemoutjson.hello ShouldContainSubstring World

@@ -1,0 +1,8 @@
+executor: customA
+input:
+  myarg: {}
+steps:
+- script: echo "{{.input.myarg}}" > t.log
+- script: echo "{\"hello\":\"{{.input.myarg}}\"}"
+  assertions:
+  - result.code ShouldEqual 0

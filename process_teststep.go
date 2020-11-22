@@ -65,7 +65,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			if oDir == "" {
 				oDir = "."
 			}
-			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.dump.json", tc.Vars["venom.testsuite.shortName"], slug.Make(tc.Name), stepNumber))
+			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.dump.json", StringVarFromCtx(ctx, "venom.testsuite.shortName"), slug.Make(tc.Name), stepNumber))
 
 			if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
 				return fmt.Errorf("Error while creating file %s: %v", filename, err)
@@ -82,8 +82,8 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			if info == "" {
 				continue
 			}
-			filename := tc.Vars["venom.testsuite.filename"]
-			info += fmt.Sprintf(" (%s:%d)", filename, findLineNumber(filename.(string), tc.originalName, stepNumber, i))
+			filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
+			info += fmt.Sprintf(" (%s:%d)", filename, findLineNumber(filename, tc.originalName, stepNumber, i))
 			Info(ctx, info)
 			tc.computedInfo = append(tc.computedInfo, info)
 		}
