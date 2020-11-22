@@ -46,7 +46,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor)	Run(context.Context, TestStep, string) (interface{}, error) {
+func (Executor)	Run(ctx context.Context, step TestStep) (interface{}, error) {
 	// transform step to Executor Instance
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {

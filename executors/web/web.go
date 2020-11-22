@@ -126,7 +126,7 @@ func (Executor) TearDown(ctx context.Context) error {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	webCtx := getWebCtx(ctx)
 
 	start := time.Now()

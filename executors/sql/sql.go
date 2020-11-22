@@ -54,7 +54,7 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -84,8 +84,9 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 			results = append(results, QueryResult{Rows: r})
 		}
 	} else if e.File != "" {
-		venom.Debug(ctx, "loading SQL file from folder %s\n", e.File)
+		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 		file := path.Join(workdir, e.File)
+		venom.Debug(ctx, "loading SQL file from %s\n", file)
 		sbytes, errs := ioutil.ReadFile(file)
 		if errs != nil {
 			return nil, errs

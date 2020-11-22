@@ -12,7 +12,7 @@ import (
 // Executor execute a testStep.
 type Executor interface {
 	// Run run a Test Step
-	Run(context.Context, TestStep, string) (interface{}, error)
+	Run(context.Context, TestStep) (interface{}, error)
 }
 
 type ExecutorRunner interface {
@@ -137,7 +137,7 @@ type UserExecutorOutput struct {
 	Result string `json:"result" yaml:"result"`
 }
 
-func (ux UserExecutor) Run(ctx context.Context, step TestStep, workdir string) (interface{}, error) {
+func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, error) {
 	vrs := H{}
 	for k, v := range ux.Input {
 		if !strings.HasPrefix(k, "venom") {

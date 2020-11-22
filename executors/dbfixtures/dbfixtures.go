@@ -47,7 +47,7 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -64,6 +64,9 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 	if err = db.Ping(); err != nil {
 		return nil, errors.Wrapf(err, "failed to ping database")
 	}
+
+	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+
 	// Load and import the schemas in the database
 	// if the argument is specified.
 	if len(e.Schemas) != 0 {

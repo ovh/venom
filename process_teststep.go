@@ -36,7 +36,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		}
 
 		var err error
-		result, err = runTestStepExecutor(ctx, e, step, tc.Vars["venom.testsuite.workdir"].(string))
+		result, err = runTestStepExecutor(ctx, e, step)
 		if err != nil {
 			// we save the failure only if it's the last attempt
 			if retry == e.Retry() {
@@ -112,11 +112,11 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 	return result
 }
 
-func runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep, workdir string) (interface{}, error) {
+func runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep) (interface{}, error) {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	if e.Timeout() == 0 {
-		return e.Run(ctx, step, workdir)
+		return e.Run(ctx, step)
 	}
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout())*time.Second)
@@ -125,7 +125,7 @@ func runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep, w
 	ch := make(chan interface{})
 	cherr := make(chan error)
 	go func(e ExecutorRunner, step TestStep) {
-		result, err := e.Run(ctx, step, workdir)
+		result, err := e.Run(ctx, step)
 		if err != nil {
 			cherr <- err
 		} else {

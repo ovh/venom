@@ -34,7 +34,7 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err

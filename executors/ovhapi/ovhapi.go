@@ -59,7 +59,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// transform step to Executor Instance
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -73,6 +73,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	var consumerKey = venom.StringVarFromCtx(ctx, "ovh.consumerKey")
 	var insecure = venom.BoolVarFromCtx(ctx, "ovh.insecureTLS")
 	var headers = venom.StringMapStringVarFromCtx(ctx, "ovh.headers")
+	var workdir = venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 
 	// set default values
 	if e.Method == "" {
