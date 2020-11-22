@@ -9,6 +9,7 @@ It can also output xUnit results files.
 * [Docker image](#docker-image)
 * [TestSuites](#testsuites)
 * [Executors](#executors)
+  * [User executor](#user-executor)
 * [Variables](#variables)
   * [Testsuite variables](#testsuite-variables)
     * [Variable on Command Line](#variable-on-command-line)
