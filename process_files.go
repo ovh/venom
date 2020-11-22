@@ -30,13 +30,13 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 
 		fpaths, err := filepath.Glob(p)
 		if err != nil {
-			log.Errorf("error reading files on path:%s :%s", path, err)
+			log.Errorf("error reading files on path %q err:%v", path, err)
 			return nil, errors.Wrapf(err, "error reading files on path %q", path)
 		}
 
 		for _, fp := range fpaths {
 			switch ext := filepath.Ext(fp); ext {
-			case ".hcl", ".yml", ".yaml":
+			case ".yml", ".yaml":
 				filePaths = append(filePaths, fp)
 			}
 		}
@@ -59,12 +59,12 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 		log.Info("Reading ", f)
 		btes, err := ioutil.ReadFile(f)
 		if err != nil {
-			return fmt.Errorf("unable to read file %s err:%v", f, err)
+			return errors.Wrapf(err, "unable to read file %q", f)
 		}
 
 		vars, err := dump.ToStringMap(v.variables)
 		if err != nil {
-			return fmt.Errorf("unable to parse variables :%v", err)
+			return errors.Wrapf(err, "unable to parse variables")
 		}
 
 		content, err := interpolate.Do(string(btes), vars)
@@ -75,32 +75,28 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 		var partialTs partialTestSuite
 		if err := yaml.Unmarshal([]byte(content), &partialTs); err != nil {
 			Error(context.Background(), "file content: %s", content)
-			return fmt.Errorf("error while unmarshal file %s err: %v", f, err)
+			return errors.Wrapf(err, "error while unmarshal file %q", f)
 		}
 
 		var ts TestSuite
 		if err := yaml.Unmarshal([]byte(content), &ts); err != nil {
 			Error(context.Background(), "file content: %s", content)
-			return fmt.Errorf("error while unmarshal file %s err: %v", f, err)
+			return errors.Wrapf(err, "error while unmarshal file %q", f)
+		}
+
+		// Default workdir is testsuite directory
+		ts.WorkDir, err = filepath.Abs(filepath.Dir(f))
+		if err != nil {
+			return errors.Wrapf(err, "Unable to get testsuite's working directory")
 		}
 
 		ts.Package = f
-		ts.ShortName = ts.Name
 		ts.Filename = f
 		ts.Vars = partialTs.Vars.Clone()
 
-		// Default workdir is testsuite directory
-		if ts.Version == "" || !strings.HasPrefix(ts.Version, "1") {
-			ts.WorkDir, err = filepath.Abs(filepath.Dir(f))
-			if err != nil {
-				return fmt.Errorf("Unable to get testsuite's working directory err:%s", err)
-			}
-		} else {
-			ts.WorkDir, err = os.Getwd()
-			if err != nil {
-				return fmt.Errorf("Unable to get current working directory err:%s", err)
-			}
-		}
+		ts.Vars.Add("venom.testsuite.workdir", ts.WorkDir)
+		ts.Vars.Add("venom.testsuite.shortName", ts.Name)
+		ts.Vars.Add("venom.testsuite.filename", ts.Filename)
 
 		nSteps := 0
 		for _, tc := range ts.TestCases {

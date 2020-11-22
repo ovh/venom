@@ -1,0 +1,7 @@
+executor: custom
+input:
+  myarg: {}
+steps:
+- script: echo "{{.input.myarg}}" > t.log
+output: 
+  result: "{{.result.systemout}}"

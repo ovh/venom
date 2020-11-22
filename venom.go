@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"plugin"
 
 	"github.com/fatih/color"
 	"github.com/fsamin/go-dump"
+	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 )
 
@@ -19,12 +23,11 @@ var (
 
 func New() *Venom {
 	v := &Venom{
-		LogOutput:       os.Stdout,
-		PrintFunc:       fmt.Printf,
-		executors:       map[string]Executor{},
-		variables:       map[string]interface{}{},
-		IgnoreVariables: []string{},
-		OutputFormat:    "xml",
+		LogOutput:    os.Stdout,
+		PrintFunc:    fmt.Printf,
+		executors:    map[string]Executor{},
+		variables:    map[string]interface{}{},
+		OutputFormat: "xml",
 	}
 	return v
 }
@@ -35,9 +38,8 @@ type Venom struct {
 	PrintFunc func(format string, a ...interface{}) (n int, err error)
 	executors map[string]Executor
 
-	testsuites      []TestSuite
-	variables       H
-	IgnoreVariables []string
+	testsuites []TestSuite
+	variables  H
 
 	OutputFormat  string
 	OutputDir     string
@@ -107,8 +109,11 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
 	}
 
-	// try to load executor as a plugin
-	if err := v.registerPlugin(ctx, name); err != nil {
+	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
+		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
+	}
+
+	if err := v.registerPlugin(ctx, name, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as plugin - err:%v", name, err)
 	}
 
@@ -119,10 +124,46 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
 
-func (v *Venom) registerPlugin(ctx context.Context, name string) error {
-	p, err := plugin.Open("lib/" + name + ".so")
+func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
+	workdir := vars["venom.testsuite.workdir"]
+	executorsPath, err := getFilesPath([]string{fmt.Sprintf(workdir + "/executors")})
 	if err != nil {
 		return err
+	}
+
+	for _, f := range executorsPath {
+		log.Info("Reading ", f)
+		btes, err := ioutil.ReadFile(f)
+		if err != nil {
+			return errors.Wrapf(err, "unable to read file %q", f)
+		}
+
+		ux := UserExecutor{}
+		if err := yaml.Unmarshal([]byte(btes), &ux); err != nil {
+			Error(context.Background(), "file %q content: %s", f, btes)
+			return errors.Wrapf(err, "error while unmarshal file %q", f)
+		}
+
+		ux.v = v
+		for k, vr := range vars {
+			ux.Input.Add(k, vr)
+		}
+
+		v.RegisterExecutor(name, ux)
+	}
+	return nil
+}
+
+func (v *Venom) registerPlugin(ctx context.Context, name string, vars map[string]string) error {
+	workdir := vars["venom.testsuite.workdir"]
+	// try to load from testsuite path
+	p, err := plugin.Open(workdir + "/executors/" + name + ".so")
+	if err != nil {
+		// try to load from venom binary path
+		p, err = plugin.Open("/executors/" + name + ".so")
+		if err != nil {
+			return fmt.Errorf("unable to load plugin %q.so", name)
+		}
 	}
 
 	symbolExecutor, err := p.Lookup("Plugin")

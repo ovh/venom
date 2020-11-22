@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"unicode"
 
 	"github.com/fatih/color"
-	"github.com/ovh/venom/executors"
 	"github.com/spf13/cast"
 )
 
@@ -52,128 +50,9 @@ func (h *H) AddAllWithPrefix(p string, h2 H) {
 	}
 }
 
-// Aliases contains list of aliases
-type Aliases map[string]string
-
-func GetExecutorResult(r interface{}) map[string]interface{} {
-	d, err := executors.Dump(r)
-	if err != nil {
-		panic(err)
-	}
-	return d
-}
-
 // StepAssertions contains step assertions
 type StepAssertions struct {
 	Assertions []string `json:"assertions,omitempty" yaml:"assertions,omitempty"`
-}
-
-// Executor execute a testStep.
-type Executor interface {
-	// Run run a Test Step
-	Run(context.Context, TestStep, string) (interface{}, error)
-}
-
-type ExecutorRunner interface {
-	Executor
-	executorWithDefaultAssertions
-	executorWithZeroValueResult
-	ExecutorWithSetup
-	Name() string
-	Retry() int
-	Delay() int
-	Timeout() int
-	Info() []string
-}
-
-var _ Executor = new(executor)
-
-// ExecutorWrap contains an executor implementation and some attributes
-type executor struct {
-	Executor
-	name    string
-	retry   int      // nb retry a test case if it is in failure.
-	delay   int      // delay between two retries
-	timeout int      // timeout on executor
-	info    []string // info to display after the run and before the assertion
-}
-
-func (e executor) Name() string {
-	return e.name
-}
-
-func (e executor) Retry() int {
-	return e.retry
-}
-
-func (e executor) Delay() int {
-	return e.delay
-}
-
-func (e executor) Timeout() int {
-	return e.timeout
-}
-
-func (e executor) Info() []string {
-	return e.info
-}
-
-func (e executor) GetDefaultAssertions() *StepAssertions {
-	x, ok := e.Executor.(executorWithDefaultAssertions)
-	if ok {
-		return x.GetDefaultAssertions()
-	}
-	return nil
-}
-
-func (e executor) ZeroValueResult() interface{} {
-	x, ok := e.Executor.(executorWithZeroValueResult)
-	if ok {
-		return x.ZeroValueResult()
-	}
-	return nil
-}
-
-func (e executor) Setup(ctx context.Context, vars H) (context.Context, error) {
-	x, ok := e.Executor.(ExecutorWithSetup)
-	if ok {
-		return x.Setup(ctx, vars)
-	}
-	return ctx, nil
-}
-
-func (e executor) TearDown(ctx context.Context) error {
-	x, ok := e.Executor.(ExecutorWithSetup)
-	if ok {
-		return x.TearDown(ctx)
-	}
-	return nil
-}
-
-func newExecutorRunner(e Executor, name string, retry, delay, timeout int, info []string) ExecutorRunner {
-	return &executor{
-		Executor: e,
-		name:     name,
-		retry:    retry,
-		delay:    delay,
-		timeout:  timeout,
-		info:     info,
-	}
-}
-
-// executorWithDefaultAssertions execute a testStep.
-type executorWithDefaultAssertions interface {
-	// GetDefaultAssertion returns default assertions
-	GetDefaultAssertions() *StepAssertions
-}
-
-type executorWithZeroValueResult interface {
-	ZeroValueResult() interface{}
-}
-
-type ExecutorWithSetup interface {
-	Setup(ctx context.Context, vars H) (context.Context, error)
-	TearDown(ctx context.Context) error
 }
 
 // Tests contains all informations about tests in a pipeline build
@@ -197,13 +76,12 @@ type TestSuite struct {
 	ID           string     `xml:"id,attr,omitempty" json:"id" yaml:"-"`
 	Name         string     `xml:"name,attr" json:"name" yaml:"name"`
 	Filename     string     `xml:"-" json:"-" yaml:"-"`
-	ShortName    string     `xml:"-" json:"-" yaml:"-"`
 	Package      string     `xml:"package,attr,omitempty" json:"package" yaml:"-"`
 	Properties   []Property `xml:"-" json:"properties" yaml:"-"`
 	Skipped      int        `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Total        int        `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
-	TestCases    []TestCase `xml:"testcase" hcl:"testcase" json:"testcases" yaml:"testcases"`
-	Version      string     `xml:"version,omitempty" hcl:"version" json:"version" yaml:"version,omitempty"`
+	TestCases    []TestCase `xml:"testcase" json:"testcases" yaml:"testcases"`
+	Version      string     `xml:"version,omitempty" json:"version" yaml:"version,omitempty"`
 	Time         string     `xml:"time,attr,omitempty" json:"time" yaml:"-"`
 	Timestamp    string     `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
 	Vars         H          `xml:"-" json:"-" yaml:"vars"`
@@ -231,7 +109,7 @@ type TestCase struct {
 	Systemout       InnerResult       `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
 	Systemerr       InnerResult       `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
 	Time            string            `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
-	RawTestSteps    []json.RawMessage `xml:"-" hcl:"step" json:"steps" yaml:"steps"`
+	RawTestSteps    []json.RawMessage `xml:"-" json:"steps" yaml:"steps"`
 	testSteps       []TestStep
 	Vars            H `xml:"-" json:"-" yaml:"vars"`
 	computedVars    H

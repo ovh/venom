@@ -54,8 +54,8 @@ plugins: ## build all components and push them into dist directory
 	$(info Building plugin)
 	$(MAKE) build -C executors/plugins
 	$(MAKE) dist -C executors/plugins
-	@mkdir -p dist/lib && \
-	mv executors/plugins/dist/lib/* dist/lib;
+	@mkdir -p dist/executors && \
+	mv executors/plugins/dist/executors/* dist/executors;
 
 dist: $(ALL_DIST_TARGETS)
 
@@ -70,6 +70,7 @@ clean: mk_go_clean ## delete directories dist and results and all temp files (co
 	@rm -rf ${RESULTS_DIR}
 	$(MAKE) clean -C cmd/venom
 	$(MAKE) clean -C executors/plugins
+	$(MAKE) clean -C tests
 
 test-results: $(ALL_RESULTS_TARGETS)
 

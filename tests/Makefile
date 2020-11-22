@@ -49,3 +49,6 @@ wait-for-kafka:
 	@printf "waiting for Kafka infrastructure startup ... (it may take a few minutes)" ; \
 	until curl --retry 30 --retry-connrefused --retry-max-time 100 --connect-timeout 10 -s http://localhost:8081/config/ -o /dev/null; do sleep 2; done ; \
 	echo "\n\033[0;32mdone\033[0m"
+
+clean:
+	@rm -f *.prof *.log *.dump.json

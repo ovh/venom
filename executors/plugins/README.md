@@ -61,6 +61,7 @@ Build venom and plugin:
 
 ```bash
 $ make build
+$ make plugins
 ```
 
 Create a file `test.yml` testsuite:

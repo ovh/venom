@@ -2,13 +2,13 @@ package imap
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 	"github.com/yesnault/go-imap/imap"
 
 	"github.com/ovh/venom"
@@ -101,7 +101,7 @@ func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 
 	c, errc := connect(e.IMAPHost, e.IMAPPort, e.IMAPUser, e.IMAPPassword)
 	if errc != nil {
-		return nil, fmt.Errorf("error while connecting:%s", errc.Error())
+		return nil, errors.Wrapf(errc, "error while connecting")
 	}
 	defer c.Logout(5 * time.Second) // nolint
 
@@ -115,7 +115,7 @@ func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 
 	count, err := queryCount(c, box)
 	if err != nil {
-		return nil, fmt.Errorf("error while queryCount:%v", err)
+		return nil, errors.Wrapf(err, "error while queryCount")
 	}
 
 	venom.Debug(ctx, "count messages:%d", count)
@@ -126,7 +126,7 @@ func (e *Executor) getMail(ctx context.Context) (*Mail, error) {
 
 	messages, err := fetch(ctx, c, box, count)
 	if err != nil {
-		return nil, fmt.Errorf("Error while feching messages:%v", err)
+		return nil, errors.Wrapf(err, "Error while feching messages")
 	}
 	defer c.Close(false)
 

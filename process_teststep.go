@@ -21,7 +21,7 @@ type dumpFile struct {
 }
 
 //RunTestStep executes a venom testcase is a venom context
-func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite, tc *TestCase, stepNumber int, step TestStep) interface{} {
+func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, stepNumber int, step TestStep) interface{} {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	var assertRes assertionsApplied
@@ -36,7 +36,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		}
 
 		var err error
-		result, err = runTestStepExecutor(ctx, e, ts, step)
+		result, err = runTestStepExecutor(ctx, e, step, tc.Vars["venom.testsuite.workdir"].(string))
 		if err != nil {
 			// we save the failure only if it's the last attempt
 			if retry == e.Retry() {
@@ -65,7 +65,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 			if oDir == "" {
 				oDir = "."
 			}
-			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.dump.json", slug.Make(ts.ShortName), slug.Make(tc.Name), stepNumber))
+			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.dump.json", tc.Vars["venom.testsuite.shortName"], slug.Make(tc.Name), stepNumber))
 
 			if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
 				return fmt.Errorf("Error while creating file %s: %v", filename, err)
@@ -82,7 +82,8 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 			if info == "" {
 				continue
 			}
-			info += fmt.Sprintf(" (%s:%d)", ts.Filename, findLineNumber(ts.Filename, tc.originalName, stepNumber, i))
+			filename := tc.Vars["venom.testsuite.filename"]
+			info += fmt.Sprintf(" (%s:%d)", filename, findLineNumber(filename.(string), tc.originalName, stepNumber, i))
 			Info(ctx, info)
 			tc.computedInfo = append(tc.computedInfo, info)
 		}
@@ -111,11 +112,11 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 	return result
 }
 
-func runTestStepExecutor(ctx context.Context, e ExecutorRunner, ts *TestSuite, step TestStep) (interface{}, error) {
+func runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep, workdir string) (interface{}, error) {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	if e.Timeout() == 0 {
-		return e.Run(ctx, step, ts.WorkDir)
+		return e.Run(ctx, step, workdir)
 	}
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout())*time.Second)
@@ -124,7 +125,7 @@ func runTestStepExecutor(ctx context.Context, e ExecutorRunner, ts *TestSuite, s
 	ch := make(chan interface{})
 	cherr := make(chan error)
 	go func(e ExecutorRunner, step TestStep) {
-		result, err := e.Run(ctx, step, ts.WorkDir)
+		result, err := e.Run(ctx, step, workdir)
 		if err != nil {
 			cherr <- err
 		} else {

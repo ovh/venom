@@ -8,7 +8,7 @@ $ cd venom
 $ make build
 $ make plugins
 $ # venom binary is generated into dist directory
-$ # plugin binary is generated into dist/libs directory
+$ # plugin binary is generated into dist/executors directory
 $ cd dist
 $ ./venom run ... 
 ```

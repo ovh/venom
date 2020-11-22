@@ -117,11 +117,14 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	Info(ctx, "Starting testcase")
 
 	for k, v := range tc.Vars {
-		Debug(ctx, "Running testCase with variable %s: %+v", k, v)
+		Debug(ctx, "Running testcase with variable %s: %+v", k, v)
 	}
 
 	defer Info(ctx, "Ending testcase")
+	v.runTestSteps(ctx, tc)
+}
 
+func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 	for _, skipAssertion := range tc.Skip {
 		Debug(ctx, "evaluating %s", skipAssertion)
 		assert, err := parseAssertions(ctx, skipAssertion, tc.Vars)
@@ -211,7 +214,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 			}(ctx)
 		}
 
-		v.RunTestStep(ctx, e, ts, tc, stepNumber, step)
+		v.RunTestStep(ctx, e, tc, stepNumber, step)
 
 		tc.testSteps = append(tc.testSteps, step)
 
@@ -283,22 +286,22 @@ func processVariableAssigments(ctx context.Context, tcName string, tcVars H, raw
 		} else {
 			regex, err := regexp.Compile(assigment.Regex)
 			if err != nil {
-				Warn(ctx, "unable to compile regexp %s", assigment.Regex)
+				Warn(ctx, "unable to compile regexp %q", assigment.Regex)
 				return nil, true, err
 			}
 			varValueS, ok := varValue.(string)
 			if !ok {
-				Warn(ctx, "%s is not a string value", varname)
+				Warn(ctx, "%q is not a string value", varname)
 				result.Add(varname, "")
 				continue
 			}
 			submatches := regex.FindStringSubmatch(varValueS)
 			if len(submatches) == 0 {
-				Warn(ctx, "%s: '%v' doesn't match anything in '%s'", varname, regex, varValue)
+				Warn(ctx, "%s: %q doesn't match anything in %q", varname, regex, varValue)
 				result.Add(varname, "")
 				continue
 			}
-			Info(ctx, "Assign '%s' from regexp '%v', values '%v'", varname, regex, submatches)
+			Info(ctx, "Assign %q from regexp %q, values %q", varname, regex, submatches)
 			result.Add(varname, submatches[len(submatches)-1])
 		}
 	}

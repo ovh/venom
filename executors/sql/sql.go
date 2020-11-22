@@ -2,11 +2,11 @@ package sql
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 
 	// MySQL drivers
 	_ "github.com/go-sql-driver/mysql"
@@ -63,7 +63,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 	venom.Debug(ctx, "connecting to database %s, %s\n", e.Driver, e.DSN)
 	db, err := sqlx.Connect(e.Driver, e.DSN)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %v", err)
+		return nil, errors.Wrapf(err, "failed to connect to database")
 	}
 	defer db.Close()
 
@@ -75,11 +75,11 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 			venom.Debug(ctx, "Executing command number %d\n", i)
 			rows, err := db.Queryx(s)
 			if err != nil {
-				return nil, fmt.Errorf("failed to exec command number %d : %v", i, err)
+				return nil, errors.Wrapf(err, "failed to exec command number %d", i)
 			}
 			r, err := handleRows(rows)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse SQL rows for command number %d : %v", i, err)
+				return nil, errors.Wrapf(err, "failed to parse SQL rows for command number %d", i)
 			}
 			results = append(results, QueryResult{Rows: r})
 		}
@@ -92,11 +92,11 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 		}
 		rows, err := db.Queryx(string(sbytes))
 		if err != nil {
-			return nil, fmt.Errorf("failed to exec SQL file %s : %v", file, err)
+			return nil, errors.Wrapf(err, "failed to exec SQL file %q", file)
 		}
 		r, err := handleRows(rows)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse SQL rows for SQL file %s : %v", file, err)
+			return nil, errors.Wrapf(err, "failed to parse SQL rows for SQL file %q", file)
 		}
 		results = append(results, QueryResult{Rows: r})
 	}

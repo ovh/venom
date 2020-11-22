@@ -85,17 +85,17 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	}
 
 	// Create a tmp file
-	tmpscript, errt := ioutil.TempFile(os.TempDir(), "venom-")
-	if errt != nil {
-		return nil, fmt.Errorf("cannot create tmp file: %s", errt)
+	tmpscript, err := ioutil.TempFile(os.TempDir(), "venom-")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create tmp file: %s", err)
 	}
 
 	// Put script in file
 	venom.Debug(ctx, "work with tmp file %s", tmpscript.Name())
-	n, errw := tmpscript.Write([]byte(scriptContent))
-	if errw != nil || n != len(scriptContent) {
-		if errw != nil {
-			return nil, fmt.Errorf("cannot write script: %s", errw)
+	n, err := tmpscript.Write([]byte(scriptContent))
+	if err != nil || n != len(scriptContent) {
+		if err != nil {
+			return nil, fmt.Errorf("cannot write script: %s", err)
 		}
 		return nil, fmt.Errorf("cannot write all script: %d/%d", n, len(scriptContent))
 	}
@@ -122,8 +122,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	defer os.Remove(scriptPath)
 
 	// Chmod file
-	if errc := os.Chmod(scriptPath, 0755); errc != nil {
-		return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, errc)
+	if err := os.Chmod(scriptPath, 0750); err != nil {
+		return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, err)
 	}
 
 	start := time.Now()
