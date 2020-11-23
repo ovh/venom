@@ -3,7 +3,6 @@ package main
 import (
 	"C"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path"
 
@@ -15,6 +14,7 @@ import (
 
 	"github.com/ovh/venom"
 )
+import "github.com/pkg/errors"
 
 // Name of the executor.
 const Name = "odbc"
@@ -46,7 +46,7 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 	venom.Debug(ctx, "connecting to database odbc, %s\n", e.DSN)
 	db, err := sqlx.Connect("odbc", e.DSN)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %v", err)
+		return nil, errors.Wrapf(err, "failed to connect to database")
 	}
 	defer db.Close()
 
@@ -67,28 +67,29 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 			venom.Debug(ctx, "Executing command number %d\n", i)
 			rows, err := db.Queryx(s)
 			if err != nil {
-				return nil, fmt.Errorf("failed to exec command number %d : %v", i, err)
+				return nil, errors.Wrapf(err, "failed to exec command number %d", i)
 			}
 			r, err := handleRows(rows)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse SQL rows for command number %d : %v", i, err)
+				return nil, errors.Wrapf(err, "failed to parse SQL rows for command number %d", i)
 			}
 			results = append(results, QueryResult{Rows: r})
 		}
 	} else if e.File != "" {
-		venom.Debug(ctx, "loading SQL file from folder %s\n", e.File)
+		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 		file := path.Join(workdir, e.File)
+		venom.Debug(ctx, "loading SQL file from %s\n", file)
 		sbytes, errs := ioutil.ReadFile(file)
 		if errs != nil {
 			return nil, errs
 		}
 		rows, err := db.Queryx(string(sbytes))
 		if err != nil {
-			return nil, fmt.Errorf("failed to exec SQL file %s : %v", file, err)
+			return nil, errors.Wrapf(err, "failed to exec SQL file %q", file)
 		}
 		r, err := handleRows(rows)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse SQL rows for SQL file %s : %v", file, err)
+			return nil, errors.Wrapf(err, "failed to parse SQL rows for SQL file %q", file)
 		}
 		results = append(results, QueryResult{Rows: r})
 	}

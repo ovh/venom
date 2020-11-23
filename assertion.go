@@ -49,7 +49,7 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, r)
+		errs, fails := check(tc, stepNumber, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false

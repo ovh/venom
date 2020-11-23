@@ -9,6 +9,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 	"github.com/sclevine/agouti"
 
 	"github.com/ovh/venom"
@@ -85,14 +86,14 @@ func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error
 	webCtx.wd.Debug = venom.BoolVarFromCtx(ctx, "web.debug")
 
 	if err := webCtx.wd.Start(); err != nil {
-		return ctx, fmt.Errorf("Unable start web driver %v", err)
+		return ctx, errors.Wrapf(err, "Unable start web driver")
 	}
 
 	// Init Page
 	var err error
 	webCtx.Page, err = webCtx.wd.NewPage()
 	if err != nil {
-		return ctx, fmt.Errorf("Unable create new page: %v", err)
+		return ctx, errors.Wrapf(err, "Unable create new page")
 	}
 
 	var resizePage bool
@@ -125,7 +126,7 @@ func (Executor) TearDown(ctx context.Context) error {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	webCtx := getWebCtx(ctx)
 
 	start := time.Now()

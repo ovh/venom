@@ -10,6 +10,7 @@ import (
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/gosimple/slug"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,7 +25,7 @@ func (v *Venom) InitLogger() error {
 
 	if v.OutputDir != "" {
 		if err := os.MkdirAll(v.OutputDir, os.FileMode(0755)); err != nil {
-			return fmt.Errorf("unable to create output dir: %v", err)
+			return errors.Wrapf(err, "unable to create output dir")
 		}
 	}
 
@@ -34,7 +35,7 @@ func (v *Venom) InitLogger() error {
 		_ = os.RemoveAll(logFile)
 		v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
 		if err != nil {
-			return fmt.Errorf("unable to write log file: %v", err)
+			return errors.Wrapf(err, "unable to write log file")
 		}
 
 		v.PrintlnTrace("writing " + logFile)
@@ -117,20 +118,11 @@ func (v *Venom) Parse(path []string) error {
 			}
 		}
 		if !varExtracted {
-			var ignored bool
 			// ignore {{.venom.var..}}
 			if strings.HasPrefix(k, "venom.") {
 				continue
 			}
-			for _, i := range v.IgnoreVariables {
-				if strings.HasPrefix(k, i) {
-					ignored = true
-					break
-				}
-			}
-			if !ignored {
-				reallyMissingVars = append(reallyMissingVars, k)
-			}
+			reallyMissingVars = append(reallyMissingVars, k)
 		}
 	}
 
@@ -144,7 +136,7 @@ func (v *Venom) Parse(path []string) error {
 // Process runs tests suite and return a Tests result
 func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	testsResult := &Tests{}
-
+	Debug(ctx, "nb testsuites: %d", len(v.testsuites))
 	for i := range v.testsuites {
 		v.runTestSuite(ctx, &v.testsuites[i])
 		v.computeStats(testsResult, &v.testsuites[i])

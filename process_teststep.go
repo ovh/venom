@@ -21,11 +21,10 @@ type dumpFile struct {
 }
 
 //RunTestStep executes a venom testcase is a venom context
-func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite, tc *TestCase, stepNumber int, step TestStep) interface{} {
+func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, stepNumber int, step TestStep) interface{} {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	var assertRes assertionsApplied
-
 	var retry int
 	var result interface{}
 
@@ -36,7 +35,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 		}
 
 		var err error
-		result, err = runTestStepExecutor(ctx, e, ts, step)
+		result, err = v.runTestStepExecutor(ctx, e, step)
 		if err != nil {
 			// we save the failure only if it's the last attempt
 			if retry == e.Retry() {
@@ -46,7 +45,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 			continue
 		}
 
-		Debug(ctx, "result: %+v", result)
+		Debug(ctx, "result of runTestStepExecutor: %+v", result)
 		mapResult := GetExecutorResult(result)
 		mapResultString, _ := executors.DumpString(result)
 
@@ -65,7 +64,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 			if oDir == "" {
 				oDir = "."
 			}
-			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.dump.json", slug.Make(ts.ShortName), slug.Make(tc.Name), stepNumber))
+			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.dump.json", slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), stepNumber))
 
 			if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
 				return fmt.Errorf("Error while creating file %s: %v", filename, err)
@@ -82,7 +81,8 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 			if info == "" {
 				continue
 			}
-			info += fmt.Sprintf(" (%s:%d)", ts.Filename, findLineNumber(ts.Filename, tc.originalName, stepNumber, i))
+			filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
+			info += fmt.Sprintf(" (%s:%d)", filename, findLineNumber(filename, tc.originalName, stepNumber, i))
 			Info(ctx, info)
 			tc.computedInfo = append(tc.computedInfo, info)
 		}
@@ -111,11 +111,14 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, ts *TestSuite
 	return result
 }
 
-func runTestStepExecutor(ctx context.Context, e ExecutorRunner, ts *TestSuite, step TestStep) (interface{}, error) {
+func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep) (interface{}, error) {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	if e.Timeout() == 0 {
-		return e.Run(ctx, step, ts.WorkDir)
+		if e.Type() == "user" {
+			return v.RunUserExecutor(ctx, e.GetExecutor().(UserExecutor), step)
+		}
+		return e.Run(ctx, step)
 	}
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout())*time.Second)
@@ -124,7 +127,13 @@ func runTestStepExecutor(ctx context.Context, e ExecutorRunner, ts *TestSuite, s
 	ch := make(chan interface{})
 	cherr := make(chan error)
 	go func(e ExecutorRunner, step TestStep) {
-		result, err := e.Run(ctx, step, ts.WorkDir)
+		var err error
+		var result interface{}
+		if e.Type() == "user" {
+			result, err = v.RunUserExecutor(ctx, e.GetExecutor().(UserExecutor), step)
+		} else {
+			result, err = e.Run(ctx, step)
+		}
 		if err != nil {
 			cherr <- err
 		} else {

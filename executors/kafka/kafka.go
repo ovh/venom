@@ -110,7 +110,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -131,6 +131,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	}
 	switch e.ClientType {
 	case "producer":
+		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 		err := e.produceMessages(workdir)
 		if err != nil {
 			result.Err = err.Error()

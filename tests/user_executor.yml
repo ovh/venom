@@ -1,0 +1,8 @@
+name: testsuite with a user executor
+testcases:
+- name: testA
+  steps:
+  - type: hello
+    myarg: World
+    assertions:
+    - result.display.hello ShouldContainSubstring World

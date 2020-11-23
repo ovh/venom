@@ -70,6 +70,7 @@ clean: mk_go_clean ## delete directories dist and results and all temp files (co
 	@rm -rf ${RESULTS_DIR}
 	$(MAKE) clean -C cmd/venom
 	$(MAKE) clean -C executors/plugins
+	$(MAKE) clean -C tests
 
 test-results: $(ALL_RESULTS_TARGETS)
 

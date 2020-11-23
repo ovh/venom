@@ -1,0 +1,10 @@
+executor: hello
+input:
+  myarg: {}
+steps:
+- script: echo "{\"hello\":\"{{.input.myarg}}\"}"
+  assertions:
+  - result.code ShouldEqual 0
+output:
+  display:
+    hello: "{{.result.systemoutjson.hello}}"

@@ -4,11 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path"
 	"plugin"
 
 	"github.com/fatih/color"
 	"github.com/fsamin/go-dump"
+	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 )
 
@@ -19,12 +24,13 @@ var (
 
 func New() *Venom {
 	v := &Venom{
-		LogOutput:       os.Stdout,
-		PrintFunc:       fmt.Printf,
-		executors:       map[string]Executor{},
-		variables:       map[string]interface{}{},
-		IgnoreVariables: []string{},
-		OutputFormat:    "xml",
+		LogOutput:        os.Stdout,
+		PrintFunc:        fmt.Printf,
+		executorsBuiltin: map[string]Executor{},
+		executorsPlugin:  map[string]Executor{},
+		executorsUser:    map[string]Executor{},
+		variables:        map[string]interface{}{},
+		OutputFormat:     "xml",
 	}
 	return v
 }
@@ -32,12 +38,13 @@ func New() *Venom {
 type Venom struct {
 	LogOutput io.Writer
 
-	PrintFunc func(format string, a ...interface{}) (n int, err error)
-	executors map[string]Executor
+	PrintFunc        func(format string, a ...interface{}) (n int, err error)
+	executorsBuiltin map[string]Executor
+	executorsPlugin  map[string]Executor
+	executorsUser    map[string]Executor
 
-	testsuites      []TestSuite
-	variables       H
-	IgnoreVariables []string
+	testsuites []TestSuite
+	variables  H
 
 	OutputFormat  string
 	OutputDir     string
@@ -65,9 +72,19 @@ func (v *Venom) AddVariables(variables map[string]interface{}) {
 	}
 }
 
-// RegisterExecutor register Test Executors
-func (v *Venom) RegisterExecutor(name string, e Executor) {
-	v.executors[name] = e
+// RegisterExecutorBuiltin register builtin executors
+func (v *Venom) RegisterExecutorBuiltin(name string, e Executor) {
+	v.executorsBuiltin[name] = e
+}
+
+// RegisterExecutorPlugin register plugin executors
+func (v *Venom) RegisterExecutorPlugin(name string, e Executor) {
+	v.executorsPlugin[name] = e
+}
+
+// RegisterExecutorUser register User sxecutors
+func (v *Venom) RegisterExecutorUser(name string, e Executor) {
+	v.executorsUser[name] = e
 }
 
 // GetExecutorRunner initializes a test by name
@@ -103,26 +120,67 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	}
 	ctx = context.WithValue(ctx, ContextKey("vars"), allKeys)
 
-	if ex, ok := v.executors[name]; ok {
-		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
+	if ex, ok := v.executorsBuiltin[name]; ok {
+		return ctx, newExecutorRunner(ex, name, "builtin", retry, delay, timeout, info), nil
 	}
 
-	// try to load executor as a plugin
-	if err := v.registerPlugin(ctx, name); err != nil {
+	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
+		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
+	}
+
+	if ex, ok := v.executorsUser[name]; ok {
+		return ctx, newExecutorRunner(ex, name, "user", retry, delay, timeout, info), nil
+	}
+
+	if err := v.registerPlugin(ctx, name, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as plugin - err:%v", name, err)
 	}
 
 	// then add the executor plugin to the map to not have to load it on each step
-	if ex, ok := v.executors[name]; ok {
-		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
+	if ex, ok := v.executorsUser[name]; ok {
+		return ctx, newExecutorRunner(ex, name, "plugin", retry, delay, timeout, info), nil
 	}
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
 
-func (v *Venom) registerPlugin(ctx context.Context, name string) error {
-	p, err := plugin.Open("lib/" + name + ".so")
+func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
+	workdir := vars["venom.testsuite.workdir"]
+	executorsPath, err := getFilesPath([]string{path.Join(workdir, "lib")})
 	if err != nil {
 		return err
+	}
+
+	for _, f := range executorsPath {
+		log.Info("Reading ", f)
+		btes, err := ioutil.ReadFile(f)
+		if err != nil {
+			return errors.Wrapf(err, "unable to read file %q", f)
+		}
+
+		ux := UserExecutor{}
+		if err := yaml.Unmarshal(btes, &ux); err != nil {
+			return errors.Wrapf(err, "unable to parse file %q", f)
+		}
+
+		for k, vr := range vars {
+			ux.Input.Add(k, vr)
+		}
+
+		v.RegisterExecutorUser(name, ux)
+	}
+	return nil
+}
+
+func (v *Venom) registerPlugin(ctx context.Context, name string, vars map[string]string) error {
+	workdir := vars["venom.testsuite.workdir"]
+	// try to load from testsuite path
+	p, err := plugin.Open(path.Join(workdir, "lib", name+".so"))
+	if err != nil {
+		// try to load from venom binary path
+		p, err = plugin.Open(path.Join("lib", name+".so"))
+		if err != nil {
+			return fmt.Errorf("unable to load plugin %q.so", name)
+		}
 	}
 
 	symbolExecutor, err := p.Lookup("Plugin")
@@ -131,7 +189,7 @@ func (v *Venom) registerPlugin(ctx context.Context, name string) error {
 	}
 
 	executor := symbolExecutor.(Executor)
-	v.RegisterExecutor(name, executor)
+	v.RegisterExecutorPlugin(name, executor)
 
 	return nil
 }

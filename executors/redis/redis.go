@@ -11,6 +11,7 @@ import (
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
+	"github.com/pkg/errors"
 )
 
 // Name of executor
@@ -46,7 +47,7 @@ func (Executor) ZeroValueResult() interface{} {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -64,11 +65,13 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 		return nil, err
 	}
 
+	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+
 	var commands []string
 	if e.FilePath != "" {
 		commands, err = file2lines(path.Join(workdir, e.FilePath))
 		if err != nil {
-			return nil, fmt.Errorf("Failed to load file %v", err)
+			return nil, errors.Wrapf(err, "Failed to load file")
 		}
 	} else {
 		commands = e.Commands

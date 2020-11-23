@@ -55,7 +55,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -85,17 +85,17 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	}
 
 	// Create a tmp file
-	tmpscript, errt := ioutil.TempFile(os.TempDir(), "venom-")
-	if errt != nil {
-		return nil, fmt.Errorf("cannot create tmp file: %s", errt)
+	tmpscript, err := ioutil.TempFile(os.TempDir(), "venom-")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create tmp file: %s", err)
 	}
 
 	// Put script in file
 	venom.Debug(ctx, "work with tmp file %s", tmpscript.Name())
-	n, errw := tmpscript.Write([]byte(scriptContent))
-	if errw != nil || n != len(scriptContent) {
-		if errw != nil {
-			return nil, fmt.Errorf("cannot write script: %s", errw)
+	n, err := tmpscript.Write([]byte(scriptContent))
+	if err != nil || n != len(scriptContent) {
+		if err != nil {
+			return nil, fmt.Errorf("cannot write script: %s", err)
 		}
 		return nil, fmt.Errorf("cannot write all script: %d/%d", n, len(scriptContent))
 	}
@@ -122,15 +122,15 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	defer os.Remove(scriptPath)
 
 	// Chmod file
-	if errc := os.Chmod(scriptPath, 0755); errc != nil {
-		return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, errc)
+	if err := os.Chmod(scriptPath, 0700); err != nil {
+		return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, err)
 	}
 
 	start := time.Now()
 
 	cmd := exec.CommandContext(ctx, shell, opts...)
 	venom.Debug(ctx, "teststep exec '%s %s'", shell, strings.Join(opts, " "))
-	cmd.Dir = workdir
+	cmd.Dir = venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("runScriptAction: Cannot get stdout pipe: %s", err)

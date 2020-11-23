@@ -84,7 +84,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// transform step to Executor Instance
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -95,6 +95,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (i
 	e.MultipartForm = step["multipart_form"]
 
 	r := Result{}
+
+	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 
 	req, err := e.getRequest(ctx, workdir)
 	if err != nil {

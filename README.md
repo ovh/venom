@@ -9,6 +9,7 @@ It can also output xUnit results files.
 * [Docker image](#docker-image)
 * [TestSuites](#testsuites)
 * [Executors](#executors)
+  * [User defined executors](#user-defined-executors)
 * [Variables](#variables)
   * [Testsuite variables](#testsuite-variables)
     * [Variable on Command Line](#variable-on-command-line)
@@ -20,7 +21,9 @@ It can also output xUnit results files.
 * [Tests Report](#tests-report)
 * [Assertion](#assertion)
   * [Keywords](#keywords)
-* [Debug your testsuites](#debug-your-testsuites)
+* [Advanced usage](#advanced-usage)
+  * [Debug your testsuites](#debug-your-testsuites)
+  * [Skip testcase](#skip-testcase)
 * [Use venom in CI](#use-venom-in-ci)
 * [Hacking](#hacking)
 * [License](#license)
@@ -159,6 +162,46 @@ testcases:
 * **sql**: https://github.com/ovh/venom/tree/master/executors/sql
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
+
+## User defined executors
+
+You can define an executor by single yaml file. This is a good way to abstract technical of functional behaviors and reuse them in complex testsuites.
+
+Example:
+
+file `lib/customA.yml`
+```yml
+executor: hello
+input:
+  myarg: {}
+steps:
+- script: echo "{\"hello\":\"{{.input.myarg}}\"}"
+  assertions:
+  - result.code ShouldEqual 0
+output:
+  display:
+    hello: "{{.result.systemoutjson.hello}}"
+```
+
+file `testsuite.yml`
+```yml
+name: testsuite with a user executor
+testcases:
+- name: testA
+  steps:
+  - type: hello
+    myarg: World
+    assertions:
+    - result.display.hello ShouldContainSubstring World
+```
+
+venom will load user's executors from the directory `lib/`
+- from the path of the testsuite
+- from the venom path
+
+```bash
+$ venom run testsuite.yml # lib/*.yml files will be loaded as executors.
+```
 
 # Variables
 

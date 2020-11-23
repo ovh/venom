@@ -9,6 +9,7 @@ import (
 
 	fixtures "github.com/go-testfixtures/testfixtures/v3"
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 	migrate "github.com/rubenv/sql-migrate"
 
 	// SQL drivers.
@@ -46,7 +47,7 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -56,13 +57,16 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 
 	db, err := sql.Open(e.Database, e.DSN)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %v", err)
+		return nil, errors.Wrapf(err, "failed to connect to database")
 	}
 	defer db.Close()
 
 	if err = db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %v", err)
+		return nil, errors.Wrapf(err, "failed to ping database")
 	}
+
+	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+
 	// Load and import the schemas in the database
 	// if the argument is specified.
 	if len(e.Schemas) != 0 {
@@ -74,7 +78,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep, workdir string) 
 				return nil, errs
 			}
 			if _, err = db.Exec(string(sbytes)); err != nil {
-				return nil, fmt.Errorf("failed to exec schema from file %s : %v", s, err)
+				return nil, errors.Wrapf(err, "failed to exec schema from file %q", s)
 			}
 		}
 	} else if e.Migrations != "" {
@@ -129,10 +133,10 @@ func loadFixtures(ctx context.Context, db *sql.DB, files []string, folder string
 			dialect)
 
 		if err != nil {
-			return fmt.Errorf("failed to create folder loader: %v", err)
+			return errors.Wrapf(err, "failed to create folder loader")
 		}
 		if err = loader.Load(); err != nil {
-			return fmt.Errorf("failed to load fixtures from folder %s: %v", path.Join(workdir, folder), err)
+			return errors.Wrapf(err, "failed to load fixtures from folder %q", path.Join(workdir, folder))
 		}
 		return nil
 	}
@@ -150,10 +154,10 @@ func loadFixtures(ctx context.Context, db *sql.DB, files []string, folder string
 			dialect)
 
 		if err != nil {
-			return fmt.Errorf("failed to create files loader: %v", err)
+			return errors.Wrapf(err, "failed to create files loader")
 		}
 		if err = loader.Load(); err != nil {
-			return fmt.Errorf("failed to load fixtures from files: %v", err)
+			return errors.Wrapf(err, "failed to load fixtures from files")
 		}
 		return nil
 	}

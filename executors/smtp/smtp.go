@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/venom"
 )
@@ -52,7 +53,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(ctx context.Context, step venom.TestStep, workdir string) (interface{}, error) {
+func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -117,7 +118,7 @@ func (e *Executor) sendEmail(ctx context.Context) error {
 	if e.WithTLS {
 		conn, err := tls.Dial("tcp", servername, tlsconfig)
 		if err != nil {
-			return fmt.Errorf("tls dial error: %v", err)
+			return errors.Wrapf(err, "tls dial error")
 		}
 
 		c, err = smtp.NewClient(conn, e.Host)
@@ -128,7 +129,7 @@ func (e *Executor) sendEmail(ctx context.Context) error {
 		var err error
 		c, err = smtp.Dial(servername)
 		if err != nil {
-			return fmt.Errorf("tls dial error: %v", err)
+			return errors.Wrapf(err, "tls dial error")
 		}
 		defer c.Close()
 	}
