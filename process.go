@@ -143,15 +143,6 @@ func (v *Venom) Parse(path []string) error {
 
 // Process runs tests suite and return a Tests result
 func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
-	filesPath, err := getFilesPath(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := v.readFiles(filesPath); err != nil {
-		return nil, err
-	}
-
 	testsResult := &Tests{}
 
 	for i := range v.testsuites {
