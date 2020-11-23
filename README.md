@@ -171,27 +171,28 @@ Example:
 
 file `lib/customA.yml`
 ```yml
-executor: customA
+executor: hello
 input:
   myarg: {}
 steps:
-- script: echo "foo:{{.input.myarg}}"
+- script: echo "{\"hello\":\"{{.input.myarg}}\"}"
   assertions:
   - result.code ShouldEqual 0
+output:
+  display:
+    hello: "{{.result.systemoutjson.hello}}"
 ```
 
 file `testsuite.yml`
 ```yml
 name: testsuite with a user executor
 testcases:
-- name: my-testcase
+- name: testA
   steps:
-  - type: customA
+  - type: hello
     myarg: World
-    info: 
-    - result of customA is {{.result.systemout}}
     assertions:
-    - result.systemout ShouldContainSubstring World
+    - result.display.hello ShouldContainSubstring World
 ```
 
 venom will load user's executors from the directory `lib/`

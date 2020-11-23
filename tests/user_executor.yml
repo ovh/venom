@@ -2,7 +2,7 @@ name: testsuite with a user executor
 testcases:
 - name: testA
   steps:
-  - type: customA
+  - type: hello
     myarg: World
     assertions:
-    - result.systemoutjson.hello ShouldContainSubstring World
+    - result.display.hello ShouldContainSubstring World

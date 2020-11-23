@@ -1,11 +1,10 @@
-executor: customA
+executor: hello
 input:
   myarg: {}
 steps:
-- script: echo "foo"
 - script: echo "{\"hello\":\"{{.input.myarg}}\"}"
   assertions:
   - result.code ShouldEqual 0
 output:
-  systemoutjson:
+  display:
     hello: "{{.result.systemoutjson.hello}}"
