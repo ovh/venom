@@ -25,7 +25,6 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	var assertRes assertionsApplied
-
 	var retry int
 	var result interface{}
 
@@ -36,7 +35,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		}
 
 		var err error
-		result, err = runTestStepExecutor(ctx, e, step)
+		result, err = v.runTestStepExecutor(ctx, e, step)
 		if err != nil {
 			// we save the failure only if it's the last attempt
 			if retry == e.Retry() {
@@ -112,10 +111,13 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 	return result
 }
 
-func runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep) (interface{}, error) {
+func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep) (interface{}, error) {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	if e.Timeout() == 0 {
+		if e.Type() == "user" {
+			return v.RunUserExecutor(ctx, e.GetExecutor().(UserExecutor), step)
+		}
 		return e.Run(ctx, step)
 	}
 
@@ -125,7 +127,13 @@ func runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep) (
 	ch := make(chan interface{})
 	cherr := make(chan error)
 	go func(e ExecutorRunner, step TestStep) {
-		result, err := e.Run(ctx, step)
+		var err error
+		var result interface{}
+		if e.Type() == "user" {
+			result, err = v.RunUserExecutor(ctx, e.GetExecutor().(UserExecutor), step)
+		} else {
+			result, err = e.Run(ctx, step)
+		}
 		if err != nil {
 			cherr <- err
 		} else {

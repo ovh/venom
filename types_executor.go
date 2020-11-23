@@ -3,6 +3,7 @@ package venom
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -26,6 +27,8 @@ type ExecutorRunner interface {
 	Delay() int
 	Timeout() int
 	Info() []string
+	Type() string
+	GetExecutor() Executor
 }
 
 var _ Executor = new(executor)
@@ -38,10 +41,15 @@ type executor struct {
 	delay   int      // delay between two retries
 	timeout int      // timeout on executor
 	info    []string // info to display after the run and before the assertion
+	stype   string   // builtin, plugin, user
 }
 
 func (e executor) Name() string {
 	return e.name
+}
+
+func (e executor) Type() string {
+	return e.stype
 }
 
 func (e executor) Retry() int {
@@ -58,6 +66,10 @@ func (e executor) Timeout() int {
 
 func (e executor) Info() []string {
 	return e.info
+}
+
+func (e executor) GetExecutor() Executor {
+	return e.Executor
 }
 
 func (e executor) GetDefaultAssertions() *StepAssertions {
@@ -92,7 +104,7 @@ func (e executor) TearDown(ctx context.Context) error {
 	return nil
 }
 
-func newExecutorRunner(e Executor, name string, retry, delay, timeout int, info []string) ExecutorRunner {
+func newExecutorRunner(e Executor, name, stype string, retry, delay, timeout int, info []string) ExecutorRunner {
 	return &executor{
 		Executor: e,
 		name:     name,
@@ -100,6 +112,7 @@ func newExecutorRunner(e Executor, name string, retry, delay, timeout int, info 
 		delay:    delay,
 		timeout:  timeout,
 		info:     info,
+		stype:    stype,
 	}
 }
 
@@ -139,6 +152,10 @@ type UserExecutorOutput struct {
 }
 
 func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, error) {
+	return nil, errors.New("Run not implemented for user interface, use RunUserExecutor instead")
+}
+
+func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestStep) (interface{}, error) {
 	vrs := H{}
 	for k, v := range ux.Input {
 		if !strings.HasPrefix(k, "venom") {
@@ -172,7 +189,7 @@ func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, err
 	Debug(ctx, "running user executor %v\n", tc.Name)
 	Debug(ctx, "with vars: %v", vrs)
 
-	ux.v.runTestSteps(ctx, tc)
+	v.runTestSteps(ctx, tc)
 	result := tc.computedVars
 	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
 		return result, fmt.Errorf("failed")

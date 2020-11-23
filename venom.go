@@ -24,11 +24,13 @@ var (
 
 func New() *Venom {
 	v := &Venom{
-		LogOutput:    os.Stdout,
-		PrintFunc:    fmt.Printf,
-		executors:    map[string]Executor{},
-		variables:    map[string]interface{}{},
-		OutputFormat: "xml",
+		LogOutput:        os.Stdout,
+		PrintFunc:        fmt.Printf,
+		executorsBuiltin: map[string]Executor{},
+		executorsPlugin:  map[string]Executor{},
+		executorsUser:    map[string]Executor{},
+		variables:        map[string]interface{}{},
+		OutputFormat:     "xml",
 	}
 	return v
 }
@@ -36,8 +38,10 @@ func New() *Venom {
 type Venom struct {
 	LogOutput io.Writer
 
-	PrintFunc func(format string, a ...interface{}) (n int, err error)
-	executors map[string]Executor
+	PrintFunc        func(format string, a ...interface{}) (n int, err error)
+	executorsBuiltin map[string]Executor
+	executorsPlugin  map[string]Executor
+	executorsUser    map[string]Executor
 
 	testsuites []TestSuite
 	variables  H
@@ -68,9 +72,19 @@ func (v *Venom) AddVariables(variables map[string]interface{}) {
 	}
 }
 
-// RegisterExecutor register Test Executors
-func (v *Venom) RegisterExecutor(name string, e Executor) {
-	v.executors[name] = e
+// RegisterExecutorBuiltin register builtin executors
+func (v *Venom) RegisterExecutorBuiltin(name string, e Executor) {
+	v.executorsBuiltin[name] = e
+}
+
+// RegisterExecutorPlugin register plugin executors
+func (v *Venom) RegisterExecutorPlugin(name string, e Executor) {
+	v.executorsPlugin[name] = e
+}
+
+// RegisterExecutorUser register User sxecutors
+func (v *Venom) RegisterExecutorUser(name string, e Executor) {
+	v.executorsUser[name] = e
 }
 
 // GetExecutorRunner initializes a test by name
@@ -106,12 +120,16 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	}
 	ctx = context.WithValue(ctx, ContextKey("vars"), allKeys)
 
-	if ex, ok := v.executors[name]; ok {
-		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
+	if ex, ok := v.executorsBuiltin[name]; ok {
+		return ctx, newExecutorRunner(ex, name, "builtin", retry, delay, timeout, info), nil
 	}
 
 	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
+	}
+
+	if ex, ok := v.executorsUser[name]; ok {
+		return ctx, newExecutorRunner(ex, name, "user", retry, delay, timeout, info), nil
 	}
 
 	if err := v.registerPlugin(ctx, name, vars); err != nil {
@@ -119,8 +137,8 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	}
 
 	// then add the executor plugin to the map to not have to load it on each step
-	if ex, ok := v.executors[name]; ok {
-		return ctx, newExecutorRunner(ex, name, retry, delay, timeout, info), nil
+	if ex, ok := v.executorsUser[name]; ok {
+		return ctx, newExecutorRunner(ex, name, "plugin", retry, delay, timeout, info), nil
 	}
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
@@ -149,7 +167,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			ux.Input.Add(k, vr)
 		}
 
-		v.RegisterExecutor(name, ux)
+		v.RegisterExecutorUser(name, ux)
 	}
 	return nil
 }
@@ -172,7 +190,7 @@ func (v *Venom) registerPlugin(ctx context.Context, name string, vars map[string
 	}
 
 	executor := symbolExecutor.(Executor)
-	v.RegisterExecutor(name, executor)
+	v.RegisterExecutorPlugin(name, executor)
 
 	return nil
 }
