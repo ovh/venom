@@ -140,7 +140,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 
 		ux := UserExecutor{}
 		if err := yaml.Unmarshal(btes, &ux); err != nil {
-			return errors.Wrapf(err, "error while unmarshal file %q", f)
+			return errors.Wrapf(err, "unable to parse file %q", f)
 		}
 
 		ux.v = v
