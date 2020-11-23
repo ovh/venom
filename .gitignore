@@ -17,3 +17,4 @@ tests.log
 *.dump.json
 *.dump.html
 *.jpg
+.venomrc

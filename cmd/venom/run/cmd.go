@@ -12,12 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ghodss/yaml"
 	yml "github.com/ghodss/yaml"
+	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/venom"
-
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/grpc"
@@ -57,6 +58,74 @@ func init() {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
 	}
+
+	if err := initFromConfigFile(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
+func initFromConfigFile() error {
+	if fileExists(".venomrc") {
+		fi, err := os.Open(".venomrc")
+		if err != nil {
+			return err
+		}
+		defer fi.Close()
+		return initFromReader(fi)
+	}
+
+	home, err := homedir.Dir()
+	if err != nil {
+		return err
+	}
+	if fileExists(filepath.Join(home, ".venomrc")) {
+		fi, err := os.Open(filepath.Join(home, ".venomrc"))
+		if err != nil {
+			return err
+		}
+		defer fi.Close()
+		return initFromReader(fi)
+	}
+	return nil
+}
+
+type ConfigFileData struct {
+	Variables      []string `yaml:"variables"`
+	VariablesFiles []string `yaml:"variables_files"`
+	StopOnFailure  bool     `yaml:"stop_on_failure"`
+	Format         string   `yaml:"format"`
+	OutputDir      string   `yaml:"output_dir"`
+	Verbosity      int      `yaml:"verbosity"`
+}
+
+func initFromReader(reader io.Reader) error {
+	btes, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return err
+	}
+
+	var configFileData ConfigFileData
+	if err := yaml.Unmarshal(btes, &configFileData); err != nil {
+		return err
+	}
+
+	variables = configFileData.Variables
+	varFiles = configFileData.VariablesFiles
+	format = configFileData.Format
+	stopOnFailure = configFileData.StopOnFailure
+	outputDir = configFileData.OutputDir
+	verbose = &configFileData.Verbosity
+
+	return nil
 }
 
 func initFromEnv() error {
@@ -91,12 +160,12 @@ func initFromEnv() error {
 }
 
 func displayArg(ctx context.Context) {
-	venom.Debug(ctx, "arg variables=%v", strings.Join(variables, " "))
-	venom.Debug(ctx, "arg varFiles=%v", strings.Join(varFiles, " "))
-	venom.Debug(ctx, "arg format=%v", format)
-	venom.Debug(ctx, "arg stopOnFailure=%v", stopOnFailure)
-	venom.Debug(ctx, "arg outputDir=%v", outputDir)
-	venom.Debug(ctx, "arg verbose=%v", *verbose)
+	venom.Debug(ctx, "Command arg variables=%v", strings.Join(variables, " "))
+	venom.Debug(ctx, "Command arg varFiles=%v", strings.Join(varFiles, " "))
+	venom.Debug(ctx, "Command arg format=%v", format)
+	venom.Debug(ctx, "Command arg stopOnFailure=%v", stopOnFailure)
+	venom.Debug(ctx, "Command arg outputDir=%v", outputDir)
+	venom.Debug(ctx, "Command arg verbose=%v", *verbose)
 }
 
 // Cmd run

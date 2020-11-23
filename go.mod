@@ -26,6 +26,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.10
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mattn/go-zglob v0.0.3
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
