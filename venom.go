@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"plugin"
 
 	"github.com/fatih/color"
@@ -126,7 +127,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 
 func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
 	workdir := vars["venom.testsuite.workdir"]
-	executorsPath, err := getFilesPath([]string{fmt.Sprintf(workdir + "/executors")})
+	executorsPath, err := getFilesPath([]string{path.Join(workdir, "lib")})
 	if err != nil {
 		return err
 	}
@@ -156,10 +157,10 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 func (v *Venom) registerPlugin(ctx context.Context, name string, vars map[string]string) error {
 	workdir := vars["venom.testsuite.workdir"]
 	// try to load from testsuite path
-	p, err := plugin.Open(workdir + "/executors/" + name + ".so")
+	p, err := plugin.Open(path.Join(workdir, "lib", name+".so"))
 	if err != nil {
 		// try to load from venom binary path
-		p, err = plugin.Open("/executors/" + name + ".so")
+		p, err = plugin.Open(path.Join("lib", name+".so"))
 		if err != nil {
 			return fmt.Errorf("unable to load plugin %q.so", name)
 		}
