@@ -78,7 +78,7 @@ func (v *Venom) Parse(path []string) error {
 			return err
 		}
 
-		Debug(context.TODO(), "ts(%s).Vars: %+v", ts.Package, ts.Vars)
+		Debug(context.TODO(), "Testsuite (%s) variables: %+v", ts.Package, ts.Vars)
 		for k := range ts.Vars {
 			textractedVars = append(textractedVars, k)
 		}

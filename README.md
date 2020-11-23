@@ -66,6 +66,21 @@ VENOM_FORMAT=json venom run my-test-suite.yml
       -v                 -  example: VENOM_VERBOSE=2 is the same as -vv
 ```
 
+You can define the venom settings using a configuration file `.venomrc`. This configuration file should be placed in the current directory or in the home directory.
+
+```
+variables: 
+  - foo=bar
+variables_files
+  - my_var_file.yaml
+stop_on_failure: true
+format: xml
+output_dir: output
+verbosity: 3
+```
+
+Please note that command line flags overrides the configuration file. Configuration file overrides the Environment variables.
+
 # Docker image
 
 venom can be launched inside a docker image with:
