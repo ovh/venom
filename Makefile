@@ -54,8 +54,8 @@ plugins: ## build all components and push them into dist directory
 	$(info Building plugin)
 	$(MAKE) build -C executors/plugins
 	$(MAKE) dist -C executors/plugins
-	@mkdir -p dist/executors && \
-	mv executors/plugins/dist/executors/* dist/executors;
+	@mkdir -p dist/lib && \
+	mv executors/plugins/dist/lib/* dist/lib;
 
 dist: $(ALL_DIST_TARGETS)
 

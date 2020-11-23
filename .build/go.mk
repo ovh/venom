@@ -40,8 +40,8 @@ mk_go_build:
 	$(info *** mk_go_build)
 
 mk_go_build_plugin: 
-	@mkdir -p dist/executors && \
-	go build -buildmode=plugin -o dist/executors/$(TARGET_NAME).so
+	@mkdir -p dist/lib && \
+	go build -buildmode=plugin -o dist/lib/$(TARGET_NAME).so
 
 mk_go_build_clean:
 	@rm -rf dist

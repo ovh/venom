@@ -9,7 +9,7 @@ It can also output xUnit results files.
 * [Docker image](#docker-image)
 * [TestSuites](#testsuites)
 * [Executors](#executors)
-  * [User defined executors](#user-executor)
+  * [User defined executors](#user-defined-executor)
 * [Variables](#variables)
   * [Testsuite variables](#testsuite-variables)
     * [Variable on Command Line](#variable-on-command-line)
@@ -167,7 +167,7 @@ You can define an executor by single yaml file. This is a good way to abstract t
 
 Example:
 
-file `executors/customA.yml`
+file `lib/customA.yml`
 ```yml
 executor: customA
 input:
@@ -192,12 +192,12 @@ testcases:
     - result.systemout ShouldContainSubstring World
 ```
 
-venom will load user's executors from the directory `executors/`
+venom will load user's executors from the directory `lib/`
 - from the path of the testsuite
 - from the venom path
 
 ```bash
-$ venom run testsuite.yml # executors/*.yml files will be loaded as executors.
+$ venom run testsuite.yml # lib/*.yml files will be loaded as executors.
 ```
 
 # Variables
