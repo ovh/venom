@@ -9,7 +9,7 @@ It can also output xUnit results files.
 * [Docker image](#docker-image)
 * [TestSuites](#testsuites)
 * [Executors](#executors)
-  * [User executor](#user-executor)
+  * [User defined executors](#user-executor)
 * [Variables](#variables)
   * [Testsuite variables](#testsuite-variables)
     * [Variable on Command Line](#variable-on-command-line)
@@ -161,9 +161,9 @@ testcases:
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
 
-## User executor
+## User defined executors
 
-You can define an executor by using another executors.
+You can define an executor by single yaml file. This is a good way to abstract technical of functional behaviors and reuse them in complex testsuites.
 
 Example:
 

@@ -122,7 +122,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	defer os.Remove(scriptPath)
 
 	// Chmod file
-	if err := os.Chmod(scriptPath, 0750); err != nil {
+	if err := os.Chmod(scriptPath, 0700); err != nil {
 		return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, err)
 	}
 
