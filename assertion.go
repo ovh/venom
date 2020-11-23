@@ -47,8 +47,6 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 
 	executorResult := GetExecutorResult(r)
 
-	fmt.Printf("###### ---> executorResult: %+v\n", executorResult)
-
 	isOK := true
 	for _, assertion := range sa.Assertions {
 		errs, fails := check(tc, stepNumber, assertion, executorResult)
