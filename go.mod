@@ -6,6 +6,7 @@ require (
 	github.com/Shopify/sarama v1.27.2
 	github.com/alexbrainman/odbc v0.0.0-20200426075526-f0492dfa1575
 	github.com/antonfisher/nested-logrus-formatter v1.3.0
+	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/fatih/color v1.10.0
 	github.com/fsamin/go-dump v1.1.2
 	github.com/fullstorydev/grpcurl v1.7.0

@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/kafka"
+	"github.com/ovh/venom/executors/mqtt"
 	"github.com/ovh/venom/executors/ovhapi"
 	"github.com/ovh/venom/executors/rabbitmq"
 	"github.com/ovh/venom/executors/readfile"
@@ -83,6 +84,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterExecutor(grpc.Name, grpc.New())
 		v.RegisterExecutor(rabbitmq.Name, rabbitmq.New())
 		v.RegisterExecutor(sql.Name, sql.New())
+		v.RegisterExecutor(mqtt.Name, mqtt.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		v.OutputDir = outputDir
