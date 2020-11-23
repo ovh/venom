@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-dump"
+	"github.com/ghodss/yaml"
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom/executors"
@@ -145,7 +146,7 @@ type UserExecutor struct {
 	Executor     string            `json:"executor" yaml:"executor"`
 	Input        H                 `json:"input" yaml:"input"`
 	RawTestSteps []json.RawMessage `json:"steps" yaml:"steps"`
-	Output       H                 `json:"output" yaml:"output"`
+	Output       json.RawMessage   `json:"output" yaml:"output"`
 }
 
 func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, error) {
@@ -188,27 +189,30 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 
 	v.runTestSteps(ctx, tc)
 
-	result := H{}
 	computedVars, err := dump.ToStringMap(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
 	}
-	uxOutput, err := dump.ToStringMap(ux.Output)
+
+	type Output struct {
+		Result json.RawMessage `json:"result"`
+	}
+	output := Output{
+		Result: ux.Output,
+	}
+	outputString, err := json.Marshal(output)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to dump user executor output")
+		return nil, err
+	}
+	outputS, err := interpolate.Do(string(outputString), computedVars)
+	if err != nil {
+		return nil, err
 	}
 
-	for k, va := range uxOutput {
-		if _, ok := computedVars["result."+k]; ok {
-			content, err := interpolate.Do(va, computedVars)
-			if err != nil {
-				return nil, err
-			}
-			Debug(ctx, "add result.%v : %v", k, content)
-			result.AddWithPrefix("result", k, content)
-		}
+	var result interface{}
+	if err := yaml.Unmarshal([]byte(outputS), &result); err != nil {
+		return nil, errors.Wrapf(err, "unable to unmarshal output")
 	}
-
 	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
 		return result, fmt.Errorf("failed")
 	}

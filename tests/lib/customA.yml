@@ -7,5 +7,5 @@ steps:
   assertions:
   - result.code ShouldEqual 0
 output:
-   systemout: "{{.result.systemout}}"
-   systemoutjson.hello: "{{.result.systemoutjson.hello}}"
+  systemoutjson:
+    hello: "{{.result.systemoutjson.hello}}"

@@ -2,9 +2,14 @@ name: testsuite with a user executor
 testcases:
 - name: testA
   steps:
+  - script: echo "{\"hello\":\"bar\"}"
+    info: 
+    - result of customA is {{.result.systemoutjson.hello}}
   - type: customA
     myarg: World
     info: 
-    - result of customA is {{.result.systemoutjson.hello}}
+    - result of customA is result.systemoutjson.hello --> {{.result.systemoutjson.hello}}
+    - result of customA is systemoutjson.hello --> {{.systemoutjson.hello}}
+    - result of customA is result --> {{.result}}
     assertions:
     - result.systemoutjson.hello ShouldContainSubstring World

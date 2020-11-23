@@ -45,7 +45,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			continue
 		}
 
-		Debug(ctx, "result: %+v", result)
+		Debug(ctx, "result of runTestStepExecutor: %+v", result)
 		mapResult := GetExecutorResult(result)
 		mapResultString, _ := executors.DumpString(result)
 
