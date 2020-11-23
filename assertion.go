@@ -2,6 +2,7 @@ package venom
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom/assertions"
+	"github.com/ovh/venom/executors"
 )
 
 type assertionsApplied struct {
@@ -47,7 +49,7 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, executorResult)
+		errs, fails := check(tc, stepNumber, assertion, r)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -69,18 +71,26 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
-func check(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
-	executorResult := GetExecutorResult(r)
+type assertion struct {
+	Actual interface{}
+	Func   assertions.AssertFunc
+	Args   []interface{}
+}
 
-	assert := splitAssertion(assertion)
-	if len(assert) < 2 {
-		return nil, newFailure(tc, stepNumber, assertion, errors.New("syntax error"))
+func parseAssertions(ctx context.Context, s string, input interface{}) (*assertion, error) {
+	dump, err := executors.Dump(input)
+	if err != nil {
+		return nil, errors.New("assertion syntax error")
 	}
+	assert := splitAssertion(s)
+	if len(assert) < 2 {
+		return nil, errors.New("assertion syntax error")
+	}
+	actual := dump[assert[0]]
 
-	actual := executorResult[assert[0]]
 	f, ok := assertions.Get(assert[1])
 	if !ok {
-		return nil, newFailure(tc, stepNumber, assertion, errors.New("assertion not supported"))
+		return nil, errors.New("assertion not supported")
 	}
 
 	args := make([]interface{}, len(assert[2:]))
@@ -88,11 +98,23 @@ func check(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failu
 		var err error
 		args[i], err = stringToType(v, actual)
 		if err != nil {
-			return nil, newFailure(tc, stepNumber, assertion, fmt.Errorf("mismatched type between '%v' and '%v': %v", assert[0], v, err))
+			return nil, fmt.Errorf("mismatched type between '%v' and '%v': %v", assert[0], v, err)
 		}
 	}
+	return &assertion{
+		Actual: actual,
+		Func:   f,
+		Args:   args,
+	}, nil
+}
 
-	if err := f(actual, args...); err != nil {
+func check(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
+	assert, err := parseAssertions(context.Background(), assertion, r)
+	if err != nil {
+		return nil, newFailure(tc, stepNumber, assertion, err)
+	}
+
+	if err := assert.Func(assert.Actual, assert.Args...); err != nil {
 		return nil, newFailure(tc, stepNumber, assertion, err)
 	}
 	return nil, nil
