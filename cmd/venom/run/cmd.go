@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 	"time"
 
@@ -51,6 +52,51 @@ func init() {
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
 	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
+
+	if err := initFromEnv(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+	}
+}
+
+func initFromEnv() error {
+	if os.Getenv("VENOM_VAR") != "" {
+		variables = strings.Split(os.Getenv("VENOM_VAR"), " ")
+	}
+	if os.Getenv("VENOM_VAR_FROM_FILE") != "" {
+		varFiles = strings.Split(os.Getenv("VENOM_VAR_FROM_FILE"), " ")
+	}
+	if os.Getenv("VENOM_FORMAT") != "" {
+		format = os.Getenv("VENOM_FORMAT")
+	}
+	if os.Getenv("VENOM_STOP_ON_FAILURE") != "" {
+		var err error
+		stopOnFailure, err = strconv.ParseBool(os.Getenv("VENOM_STOP_ON_FAILURE"))
+		if err != nil {
+			return fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
+		}
+	}
+	if os.Getenv("VENOM_OUTPUT_DIR") != "" {
+		outputDir = os.Getenv("VENOM_OUTPUT_DIR")
+	}
+	if os.Getenv("VENOM_VERBOSE") != "" {
+		v, err := strconv.ParseInt(os.Getenv("VENOM_VERBOSE"), 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid value for VENOM_VERBOSE, must be 1, 2 or 3")
+		}
+		v2 := int(v)
+		verbose = &v2
+	}
+	return nil
+}
+
+func displayArg(ctx context.Context) {
+	venom.Debug(ctx, "arg variables=%v", strings.Join(variables, " "))
+	venom.Debug(ctx, "arg varFiles=%v", strings.Join(varFiles, " "))
+	venom.Debug(ctx, "arg format=%v", format)
+	venom.Debug(ctx, "arg stopOnFailure=%v", stopOnFailure)
+	venom.Debug(ctx, "arg outputDir=%v", outputDir)
+	venom.Debug(ctx, "arg verbose=%v", *verbose)
 }
 
 // Cmd run
@@ -90,6 +136,12 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.StopOnFailure = stopOnFailure
 		v.Verbose = *verbose
 
+		if err := v.InitLogger(); err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(2)
+			return err
+		}
+
 		if v.Verbose == 3 {
 			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
 			if err != nil {
@@ -105,6 +157,9 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 				defer p.WriteTo(fMem, 1) //nolint
 				defer pprof.StopCPUProfile()
 			}
+		}
+		if *verbose >= 2 {
+			displayArg(context.Background())
 		}
 
 		var readers = []io.Reader{}
@@ -128,28 +183,22 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 
 		start := time.Now()
 
-		if err := v.Init(); err != nil {
-			fmt.Println(err)
-			os.Exit(2)
-			return err
-		}
-
 		if err := v.Parse(path); err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
 		}
 
 		tests, err := v.Process(context.Background(), path)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
 		}
 
 		elapsed := time.Since(start)
 		if err := v.OutputResult(*tests, elapsed); err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
 		}

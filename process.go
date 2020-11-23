@@ -13,8 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Init initializes venom logger
-func (v *Venom) Init() error {
+// InitLogger initializes venom logger
+func (v *Venom) InitLogger() error {
 	v.testsuites = []TestSuite{}
 	if v.Verbose == 0 {
 		logrus.SetLevel(logrus.WarnLevel)
