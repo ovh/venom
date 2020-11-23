@@ -3,12 +3,14 @@ package venom
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom/executors"
+	"github.com/pkg/errors"
 )
 
 // Executor execute a testStep.
@@ -140,14 +142,10 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 }
 
 type UserExecutor struct {
-	Executor     string             `json:"executor" yaml:"executor"`
-	Input        H                  `json:"input" yaml:"input"`
-	RawTestSteps []json.RawMessage  `json:"steps" yaml:"steps"`
-	Output       UserExecutorOutput `json:"output" yaml:"output"`
-}
-
-type UserExecutorOutput struct {
-	Result string `json:"result" yaml:"result"`
+	Executor     string            `json:"executor" yaml:"executor"`
+	Input        H                 `json:"input" yaml:"input"`
+	RawTestSteps []json.RawMessage `json:"steps" yaml:"steps"`
+	Output       H                 `json:"output" yaml:"output"`
 }
 
 func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, error) {
@@ -156,7 +154,7 @@ func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, err
 
 func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestStep) (interface{}, error) {
 	vrs := H{}
-	for k, v := range ux.Input {
+	for k, va := range ux.Input {
 		if !strings.HasPrefix(k, "venom") {
 			vl, err := step.StringValue(k)
 			if err != nil {
@@ -167,10 +165,10 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 				vrs.Add("input."+k, vl)
 			} else {
 				// default value from executor
-				vrs.Add("input."+k, v)
+				vrs.Add("input."+k, va)
 			}
 		} else {
-			vrs.Add(k, v)
+			vrs.Add(k, va)
 		}
 	}
 
@@ -185,11 +183,32 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.computedVars = H{}
 
-	Debug(ctx, "running user executor %v\n", tc.Name)
+	Debug(ctx, "running user executor %v", tc.Name)
 	Debug(ctx, "with vars: %v", vrs)
 
 	v.runTestSteps(ctx, tc)
-	result := tc.computedVars
+
+	result := H{}
+	computedVars, err := dump.ToStringMap(tc.computedVars)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
+	}
+	uxOutput, err := dump.ToStringMap(ux.Output)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to dump user executor output")
+	}
+
+	for k, va := range uxOutput {
+		if _, ok := computedVars["result."+k]; ok {
+			content, err := interpolate.Do(va, computedVars)
+			if err != nil {
+				return nil, err
+			}
+			Debug(ctx, "add result.%v : %v", k, content)
+			result.AddWithPrefix("result", k, content)
+		}
+	}
+
 	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
 		return result, fmt.Errorf("failed")
 	}

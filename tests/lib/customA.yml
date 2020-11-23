@@ -6,3 +6,6 @@ steps:
 - script: echo "{\"hello\":\"{{.input.myarg}}\"}"
   assertions:
   - result.code ShouldEqual 0
+output:
+   systemout: "{{.result.systemout}}"
+   systemoutjson.hello: "{{.result.systemoutjson.hello}}"
