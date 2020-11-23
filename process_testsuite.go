@@ -65,6 +65,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 	var red = color.New(color.FgRed).SprintFunc()
 	var green = color.New(color.FgGreen).SprintFunc()
 	var cyan = color.New(color.FgCyan).SprintFunc()
+	var gray = color.New(color.Attribute(90)).SprintFunc()
 
 	v.Println(" • %s (%s)", ts.Name, ts.Package)
 
@@ -73,7 +74,8 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		v.Print(" \t• %s", tc.Name)
 		tc.Classname = ts.Filename
 		var hasFailure bool
-		if len(tc.Skipped) == 0 {
+		var hasSkipped = len(tc.Skipped) > 0
+		if !hasSkipped {
 			v.runTestCase(ctx, ts, tc)
 		}
 
@@ -87,11 +89,16 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		}
 		if len(tc.Skipped) > 0 {
 			ts.Skipped += len(tc.Skipped)
+			hasSkipped = true
+		}
+
+		if hasSkipped {
+			v.Println(" %s", gray("SKIPPED"))
+			continue
 		}
 
 		if hasFailure {
 			v.Println(" %s", red("FAILURE"))
-
 		} else {
 			v.Println(" %s", green("SUCCESS"))
 		}

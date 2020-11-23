@@ -122,6 +122,25 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 
 	defer Info(ctx, "Ending testcase")
 
+	for _, skipAssertion := range tc.Skip {
+		Debug(ctx, "evaluating %s", skipAssertion)
+		assert, err := parseAssertions(ctx, skipAssertion, tc.Vars)
+		if err != nil {
+			Error(ctx, "unable to parse skip assertion: %v", err)
+			tc.AppendError(err)
+			return
+		}
+		if err := assert.Func(assert.Actual, assert.Args...); err != nil {
+			s := fmt.Sprintf("skipping testcase %q: %v", tc.originalName, err)
+			tc.Skipped = append(tc.Skipped, Skipped{Value: s})
+			Warn(ctx, s)
+		}
+	}
+
+	if len(tc.Skipped) > 0 {
+		return
+	}
+
 	var knowExecutors = map[string]struct{}{}
 
 	for stepNumber, rawStep := range tc.RawTestSteps {

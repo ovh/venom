@@ -1,0 +1,28 @@
+name: "Skip testsuite"
+vars:
+  foo: bar
+
+testcases:
+- name: init
+  steps:
+  - type: exec
+    script: echo {{.foo}}
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring bar
+
+- name: do-not-skip-this
+  skip: 
+  - foo ShouldNotBeEmpty
+  steps:
+  - type: exec
+    script: exit 0
+
+- name: skip-this
+  skip: 
+    - foo ShouldBeEmpty
+  steps:
+  - type: exec
+    script: command_not_found
+    assertions:
+    - result.code ShouldEqual 0

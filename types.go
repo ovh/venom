@@ -233,11 +233,11 @@ type TestCase struct {
 	Time            string            `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
 	RawTestSteps    []json.RawMessage `xml:"-" hcl:"step" json:"steps" yaml:"steps"`
 	testSteps       []TestStep
-	Context         map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
-	Vars            H                      `xml:"-" json:"-" yaml:"vars"`
+	Vars            H `xml:"-" json:"-" yaml:"vars"`
 	computedVars    H
 	computedInfo    []string
 	computedVerbose []string
+	Skip            []string `xml:"-" json:"skip" yaml:"skip"`
 }
 
 // TestStep represents a testStep

@@ -376,7 +376,8 @@ Available format: jUnit (xml), json, yaml, tap reports
 Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
 
 
-# Debug your testsuites
+# Advanced usage
+## Debug your testsuites
 
 There is two ways to debug a testsuite:
  - use `-v` flag on venom binary.
@@ -415,6 +416,42 @@ $ venom run test.yml
  	• sleep 1 SUCCESS
  	• cat json SUCCESS
 	  [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
+```
+
+## Skip testcase
+
+It is possible to skip `testcase` according to some `assertions`. For instance, the following exampl will skip the last testcase.
+
+```yaml
+name: "Skip testsuite"
+vars:
+  foo: bar
+
+testcases:
+- name: init
+  steps:
+  - type: exec
+    script: echo {{.foo}}
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring bar
+
+- name: do-not-skip-this
+  skip: 
+  - foo ShouldNotBeEmpty
+  steps:
+  - type: exec
+    script: exit 0
+
+- name: skip-this
+  skip: 
+    - foo ShouldBeEmpty
+  steps:
+  - type: exec
+    script: command_not_found
+    assertions:
+    - result.code ShouldEqual 0
+
 ```
 
 # Use venom in CI
