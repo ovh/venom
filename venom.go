@@ -162,7 +162,6 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			return errors.Wrapf(err, "unable to parse file %q", f)
 		}
 
-		ux.v = v
 		for k, vr := range vars {
 			ux.Input.Add(k, vr)
 		}

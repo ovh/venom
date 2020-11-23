@@ -144,7 +144,6 @@ type UserExecutor struct {
 	Input        H                  `json:"input" yaml:"input"`
 	RawTestSteps []json.RawMessage  `json:"steps" yaml:"steps"`
 	Output       UserExecutorOutput `json:"output" yaml:"output"`
-	v            *Venom             `json:"-" yaml:"-"`
 }
 
 type UserExecutorOutput struct {
