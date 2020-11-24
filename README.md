@@ -247,7 +247,7 @@ The `--var` option can be used many times in a single command.
 
 ### Variable Definitions Files
 
-To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a yaml dictionnary and you have specify that file on the command line with `--var-from-file`
+To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a YAML dictionnary and you have specify that file on the command line with `--var-from-file`
 
 ### Environment Variables
 
