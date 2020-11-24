@@ -71,7 +71,7 @@ VENOM_FORMAT=json venom run my-test-suite.yml
 
 You can define the venom settings using a configuration file `.venomrc`. This configuration file should be placed in the current directory or in the home directory.
 
-```
+```yml
 variables: 
   - foo=bar
 variables_files
@@ -251,7 +251,7 @@ To set lots of variables, it is more convenient to specify their values in a var
 
 ### Environment Variables
 
-As a fallback for the other ways of defining variables, `venom` searches the environment of its own process for environment variables named VENOM_VAR_ followed by the name of a declared variable.
+As a fallback for the other ways of defining variables, `venom` searches the environment of its own process for environment variables named `VENOM_VAR_` followed by the name of a declared variable.
 
 ```bash
 $ export VENOM_VAR_foo=bar
@@ -358,7 +358,7 @@ Builtin variables:
 venom run --format=xml --output-dir="."
 ```
 
-Available format: jUnit (xml), json, yaml, tap reports
+Available formats: jUnit (xml), json, yaml, tap reports
 
 # Assertion
 
@@ -453,7 +453,7 @@ $ venom run test.yml
 
 ## Skip testcase
 
-It is possible to skip `testcase` according to some `assertions`. For instance, the following exampl will skip the last testcase.
+It is possible to skip `testcase` according to some `assertions`. For instance, the following example will skip the last testcase.
 
 ```yaml
 name: "Skip testsuite"
@@ -497,7 +497,7 @@ To display correctly the venom output, you probably will have to export the envi
 [How to write your own executor?](https://github.com/ovh/venom/tree/master/executors#venom-executor)
 
 How to compile?
-```
+```bash
 $ make build
 ```
 
