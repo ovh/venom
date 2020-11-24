@@ -347,6 +347,8 @@ Builtin variables:
 
 * {{.venom.testsuite}}
 * {{.venom.testsuite.filename}}
+* {{.venom.testsuite.shortName}}
+* {{.venom.testsuite.workdir}}
 * {{.venom.testcase}}
 * {{.venom.teststep.number}}
 * {{.venom.datetime}}
