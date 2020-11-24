@@ -368,10 +368,6 @@ Available format: jUnit (xml), json, yaml, tap reports
 * ShouldNotEqual
 * ShouldAlmostEqual
 * ShouldNotAlmostEqual
-* ShouldResemble
-* ShouldNotResemble
-* ShouldPointTo
-* ShouldNotPointTo
 * ShouldBeNil
 * ShouldNotBeNil
 * ShouldBeTrue
@@ -402,18 +398,12 @@ Available format: jUnit (xml), json, yaml, tap reports
 * ShouldNotBeBlank
 * ShouldContainSubstring
 * ShouldNotContainSubstring
-* ShouldEqualWithout
 * ShouldEqualTrimSpace
 * ShouldHappenBefore
 * ShouldHappenOnOrBefore
 * ShouldHappenAfter
 * ShouldHappenOnOrAfter
 * ShouldHappenBetween
-* ShouldHappenOnOrBetween
-* ShouldNotHappenOnOrBetween
-* ShouldHappenWithin
-* ShouldNotHappenWithin
-* ShouldBeChronological
 * ShouldNotExist
 
 Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
