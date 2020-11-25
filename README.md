@@ -82,11 +82,11 @@ output_dir: output
 verbosity: 3
 ```
 
-Please note that command line flags overrides the configuration file. Configuration file overrides the Environment variables.
+Please note that command line flags overrides the configuration file. Configuration file overrides the environment variables.
 
 # Docker image
 
-venom can be launched inside a docker image with:
+Venom can be started inside a docker image with:
 ```bash
 $ git clone git@github.com:ovh/venom.git
 $ cd venom
@@ -98,7 +98,7 @@ $ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours.
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
-In `venom` the testcases are executed sequentialy within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enable some specific kind of behavior.
+In `venom` the testcases are executed sequentially within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enable some specific kind of behavior.
 
 In `venom` a testsuite is written in one `yaml` file respecting the following structure.
 
@@ -165,7 +165,7 @@ testcases:
 
 ## User defined executors
 
-You can define an executor by single yaml file. This is a good way to abstract technical of functional behaviors and reuse them in complex testsuites.
+You can define an executor with a single yaml file. This is a good way to abstract technical or functional behaviors and reuse them in complex testsuites.
 
 Example:
 
@@ -227,7 +227,7 @@ testcases:
 ...
 ```
 
-Each user variable used in testsuite must be declared in this section. You can override the values at runtime in a number of ways:
+Each user variable used in testsuite must be declared in this section. You can override its value at runtime in a number of ways:
 - Individually, with the `--var` command line option.
 - In variable definitions files, either specified on the command line `--var-from-file`.
 - As environment variables.
@@ -243,11 +243,11 @@ venom run --var='foo_list=["biz","buz"]'
 venom run --var='foo={"biz":"bar","biz":"barr"}'
 ```
 
-The -var option can be used any number of times in a single command.
+The `--var` option can be used many times in a single command.
 
 ### Variable Definitions Files
 
-To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a yaml dictionnay and you have specify that file on the command line with `--var-from-file`
+To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a YAML dictionnary and you have specify that file on the command line with `--var-from-file`
 
 ### Environment Variables
 
@@ -260,7 +260,7 @@ $ venom run *.yml
 
 ### Variable helpers
 
-Helpers available and some examples:
+Available helpers and some examples:
 
 - `abbrev`
 - `abbrevboth`
@@ -307,7 +307,7 @@ Helpers available and some examples:
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
 After the first step execution, `venom` extracts a value using a regular expression `foo with a ([a-z]+) here` from the content of the `result.systemout` property returned by the `executor`.
-Then we are able to reuse this variable with the name `testA.myvariable` with `testA` corresponding to the name of the testcase.
+Then it is able to reuse this variable with the name `testA.myvariable` with `testA` corresponding to the name of the testcase.
 
 ```yaml
 name: MyTestSuite
