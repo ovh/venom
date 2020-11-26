@@ -108,7 +108,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 	return r, nil
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }

@@ -73,7 +73,7 @@ type HTTPRequest struct {
 	PostForm url.Values  `json:"post_form,omitempty"`
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }

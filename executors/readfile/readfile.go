@@ -44,7 +44,7 @@ type Result struct {
 	Mod         map[string]string `json:"mod,omitempty" yaml:"mod,omitempty"`
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	r := Result{
 		Md5sum:  make(map[string]string),

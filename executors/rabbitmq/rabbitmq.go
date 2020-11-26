@@ -70,7 +70,7 @@ type Result struct {
 	Err         string        `json:"error" yaml:"error"`
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }

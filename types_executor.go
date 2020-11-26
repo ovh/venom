@@ -153,6 +153,26 @@ func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, err
 	return nil, errors.New("Run not implemented for user interface, use RunUserExecutor instead")
 }
 
+func (ux UserExecutor) ZeroValueResult() interface{} {
+	type Output struct {
+		Result interface{} `json:"result"`
+	}
+	output := &Output{
+		Result: ux.Output,
+	}
+	outputS, err := json.Marshal(output)
+	if err != nil {
+		return ""
+	}
+
+	result := make(map[string]interface{})
+	err = json.Unmarshal(outputS, &result)
+	if err != nil {
+		return ""
+	}
+	return result
+}
+
 func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestStep) (interface{}, error) {
 	vrs := H{}
 	for k, va := range ux.Input {

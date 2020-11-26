@@ -53,7 +53,7 @@ type Result struct {
 	Value       string  `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }

@@ -48,6 +48,16 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 				return nil, nil, err
 			}
 			for k := range dumpE {
+				var found bool
+				for i := 0; i < len(vars); i++ {
+					if vars[i] == k {
+						found = true
+						break
+					}
+				}
+				if !found {
+					extractedVars = append(extractedVars, k)
+				}
 				extractedVars = append(extractedVars, tc.Name+"."+k)
 				if strings.HasSuffix(k, "__type__") && dumpE[k] == "Map" {
 					// go-dump doesnt dump the map name, here is a workaround
@@ -100,7 +110,6 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 				}
 			}
 		}
-
 	}
 	return vars, extractedVars, nil
 }

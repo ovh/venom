@@ -41,7 +41,7 @@ type Result struct {
 	Commands []Command `json:"commands,omitempty" yaml:"commands,omitempty"`
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }
