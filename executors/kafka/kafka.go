@@ -99,7 +99,7 @@ type (
 	consumeFunc = func(message *sarama.ConsumerMessage) (Message, interface{}, error)
 )
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }

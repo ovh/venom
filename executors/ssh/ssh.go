@@ -44,7 +44,7 @@ type Result struct {
 	TimeSeconds float64 `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }

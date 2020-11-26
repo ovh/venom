@@ -87,7 +87,7 @@ func (c *customHandler) OnReceiveTrailers(stat *status.Status, met metadata.MD) 
 	c.target.Code = strconv.Itoa(int(uint32(stat.Code())))
 }
 
-// ZeroValueResult return an empty implemtation of this executor result
+// ZeroValueResult return an empty implementation of this executor result
 func (Executor) ZeroValueResult() interface{} {
 	return Result{}
 }
