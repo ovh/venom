@@ -36,6 +36,13 @@ func TestShouldEqual(t *testing.T) {
 				expected: []interface{}{1.0},
 			},
 		},
+		{
+			name: "different types",
+			args: args{
+				actual:   42,
+				expected: []interface{}{"42"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

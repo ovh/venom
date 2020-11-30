@@ -32,3 +32,10 @@ testcases:
     - result.err ShouldEqual ""
     - result.md5sum.readfile_testa.json ShouldEqual "{{.testcase-readfile2.md5sum_foo}}"
 
+- name: testcase-readfile-with-integer
+  steps:
+  - type: readfile
+    path: readfile/testa.json
+    info: "result.contentjson.total: {{.result.contentjson.total}}"
+    assertions:
+    - result.contentjson.total ShouldEqual 42
