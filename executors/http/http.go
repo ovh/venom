@@ -51,6 +51,10 @@ type Executor struct {
 	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
 	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
+	MutualTLS         bool        `json:"mutual_tls" yaml:"mutual_tls" mapstructure:"mutual_tls"`
+	TLSClientCert     string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
+	TLSClientKey      string      `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
+	TLSRootCA         string      `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -110,9 +114,27 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		}
 	}
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: e.IgnoreVerifySSL},
-		Proxy:           http.ProxyFromEnvironment,
+	var opts []func(*http.Transport) error
+	opts = append(opts, WithProxyFromEnv())
+
+	if e.IgnoreVerifySSL {
+		opts = append(opts, WithTLSInsecureSkipVerify(true))
+	}
+
+	if e.TLSClientCert != "" {
+		cert, err := tls.X509KeyPair([]byte(e.TLSClientCert), []byte(e.TLSClientKey))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse x509 mTLS certificate or key: %s", err)
+		}
+		opts = append(opts, WithTLSClientAuth(cert))
+	}
+	if e.TLSRootCA != "" {
+		opts = append(opts, WithTLSRootCA(ctx, []byte(e.TLSRootCA)))
+	}
+
+	tr, err := GetTransport(opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(e.UnixSock) > 0 {
