@@ -25,7 +25,7 @@ testcases:
   - type: readfile
     path: yourfile.txt
     assertions:
-    - result.err ShouldNotExist
+    - result.err ShouldBeEmpty
 ```
 
 ## Output
@@ -52,7 +52,7 @@ testcases:
 ## Default assertion
 
 ```yaml
-result.err ShouldNotExist
+result.err ShouldBeEmpty
 ```
 
 ## Example
