@@ -63,23 +63,30 @@ func Get(s string) (AssertFunc, bool) {
 	return f, ok
 }
 
+func deepEqual(x, y interface{}) bool {
+	if !reflect.DeepEqual(x, y) {
+		return fmt.Sprintf("%v", x) == fmt.Sprintf("%v", y)
+	}
+	return true
+}
+
 // ShouldEqual receives exactly two parameters and does an equality check.
 func ShouldEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	if reflect.DeepEqual(actual, expected[0]) {
+	if deepEqual(actual, expected[0]) {
 		return nil
 	}
 	return fmt.Errorf("expected: %v got: %v", expected[0], actual)
 }
 
-// ShouldEqual receives exactly two parameters and does an inequality check.
+// ShouldNotEqual receives exactly two parameters and does an inequality check.
 func ShouldNotEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	if !reflect.DeepEqual(actual, expected[0]) {
+	if !deepEqual(actual, expected[0]) {
 		return nil
 	}
 	return fmt.Errorf("not expected: %v got: %v", expected[0], actual)
@@ -154,7 +161,7 @@ func ShouldBeNil(actual interface{}, expected ...interface{}) error {
 	return fmt.Errorf("expected: Nil but is wasn't")
 }
 
-// ShouldBeNil receives a single parameter and ensures that it is nil, blank or zero value
+// ShouldNotExist receives a single parameter and ensures that it is nil, blank or zero value
 func ShouldNotExist(actual interface{}, expected ...interface{}) error {
 	if ShouldBeNil(actual) != nil ||
 		ShouldBeBlank(actual) != nil ||
@@ -343,7 +350,7 @@ func ShouldBeLessThan(actual interface{}, expected ...interface{}) error {
 	return fmt.Errorf("expected: %v less than %v but it wasn't", actual, expected[0])
 }
 
-// ShouldBeLessThan receives exactly two parameters and ensures that the first is less than or equal to the second.
+// ShouldBeLessThanOrEqualTo receives exactly two parameters and ensures that the first is less than or equal to the second.
 func ShouldBeLessThanOrEqualTo(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -384,7 +391,7 @@ func ShouldBeLessThanOrEqualTo(actual interface{}, expected ...interface{}) erro
 	return fmt.Errorf("expected '%v' less than or equals to %v but it wasn't", actual, expected[0])
 }
 
-// ShouldBeLessThan receives exactly two parameters and ensures that the first is less than the second.
+// ShouldBeBetween receives exactly two parameters and ensures that the first is less than the second.
 func ShouldBeBetween(actual interface{}, expected ...interface{}) error {
 	if err := need(2, expected); err != nil {
 		return err
@@ -693,7 +700,7 @@ func ShouldEndWith(actual interface{}, expected ...interface{}) error {
 	return fmt.Errorf("expected '%v' have suffix %q but it wasn't", s, suffix)
 }
 
-// ShouldEndWith receives exactly 2 string parameters and ensures that the first does not end with the second.
+// ShouldNotEndWith receives exactly 2 string parameters and ensures that the first does not end with the second.
 func ShouldNotEndWith(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
