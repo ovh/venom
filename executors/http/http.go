@@ -51,7 +51,6 @@ type Executor struct {
 	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
 	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
-	MutualTLS         bool        `json:"mutual_tls" yaml:"mutual_tls" mapstructure:"mutual_tls"`
 	TLSClientCert     string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
 	TLSClientKey      string      `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
 	TLSRootCA         string      `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
