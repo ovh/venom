@@ -157,6 +157,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 
 	for stepNumber, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
+		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
 		vars, err := dump.ToStringMap(stepVars)

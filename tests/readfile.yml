@@ -5,14 +5,30 @@ testcases:
   - type: readfile
     path: readfile/testa.json
     assertions:
-      - result.contentjson.foo ShouldEqual bar
+    - result.contentjson.foo ShouldEqual bar
 
   - type: readfile
     path: readfile/testb.json
     assertions:
-      - result.contentjson.contentjson0.foo2 ShouldEqual bar2
+    - result.contentjson.contentjson0.foo2 ShouldEqual bar2
 
   - type: readfile
     path: readfile/test.txt
     assertions:
-      - result.content ShouldContainSubstring multilines
+    - result.content ShouldContainSubstring multilines
+
+- name: testcase-readfile2
+  steps:
+  - type: readfile
+    path: readfile/testa.json
+    vars:
+      md5sum_foo:
+        from: result.md5sum.readfile_testa.json
+
+  - type: readfile
+    path: readfile/testa.json
+    info: "md5sum_foo: {{.md5sum_foo}}"
+    assertions:
+    - result.err ShouldEqual ""
+    - result.md5sum.readfile_testa.json ShouldEqual "{{.testcase-readfile2.md5sum_foo}}"
+
