@@ -46,7 +46,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b
 	golang.org/x/crypto v0.0.0-20201112155050-0c6587e931a9
-	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
+	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
 	golang.org/x/sys v0.0.0-20201118182958-a01c418693c7 // indirect
 	google.golang.org/grpc v1.30.0

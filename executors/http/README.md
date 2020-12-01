@@ -20,6 +20,9 @@ In your yaml file, you can use:
   - no_follow_redirect optional: indicates that you don't want to follow Location if server returns a Redirect (301/302/...)
   - skip_body: skip the body and bodyjson result
   - skip_headers: skip the headers result
+  - tls_client_cert optional: a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enable mutual TLS authentication
+  - tls_client_key optional: private key corresponding to the certificate.
+  _ tls_root_ca optional: defines additional root CAs to perform the call. can contains multiple CAs concatenated together
 
 ```
 
