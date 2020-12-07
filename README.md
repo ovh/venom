@@ -74,7 +74,7 @@ You can define the venom settings using a configuration file `.venomrc`. This co
 ```yml
 variables: 
   - foo=bar
-variables_files
+variables_files:
   - my_var_file.yaml
 stop_on_failure: true
 format: xml
