@@ -71,6 +71,17 @@ func deepEqual(x, y interface{}) bool {
 }
 
 // ShouldEqual receives exactly two parameters and does an equality check.
+//
+// Example of testsuite file:
+//
+//  name: Assertions testsuite
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - script: echo 'foo'
+//      assertions:
+//      - result.code ShouldEqual 0
+//
 func ShouldEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -528,6 +539,17 @@ func ShouldNotContainKey(actual interface{}, expected ...interface{}) error {
 // that is passed in either as the second parameter, or of the collection that is comprised
 // of all the remaining parameters. This assertion ensures that the proposed member is in
 // the collection (using ShouldEqual).
+//
+// Example of testsuite file:
+//
+//  name: Assertions testsuite
+//  testcases:
+//    - name: ShouldBeIn
+//      steps:
+//      - script: echo 1
+//        assertions:
+//        - result.systemoutjson ShouldBeIn 1 2
+//
 func ShouldBeIn(actual interface{}, expected ...interface{}) error {
 	if err := atLeast(1, expected); err != nil {
 		return err
@@ -549,6 +571,17 @@ func ShouldBeIn(actual interface{}, expected ...interface{}) error {
 // that is passed in either as the second parameter, or of the collection that is comprised
 // of all the remaining parameters. This assertion ensures that the proposed member is NOT in
 // the collection (using ShouldEqual).
+//
+// Example of testsuite file:
+//
+//  name: Assertions testsuite
+//  testcases:
+//    - name: ShouldNotBeIn
+//      steps:
+//      - script: echo 3
+//        assertions:
+//        - result.systemoutjson ShouldNotBeIn 1 2
+//
 func ShouldNotBeIn(actual interface{}, expected ...interface{}) error {
 	if err := atLeast(1, expected); err != nil {
 		return err
@@ -812,6 +845,21 @@ func ShouldEqualTrimSpace(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenBefore receives exactly 2 time.Time arguments and asserts that the first happens before the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenBefore
+//  vars:
+//    time: 2006-01-02T15:04:05+07:00
+//    time_with_5s_after: 2006-01-02T15:04:10+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenBefore "{{.time_with_5s_after}}"
 func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -834,6 +882,21 @@ func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenOnOrBefore receives exactly 2 time.Time arguments and asserts that the first happens on or before the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenOnOrBefore
+//  vars:
+//    time: 2006-01-02T15:04:05+07:00
+//    time_with_5s_after: 2006-01-02T15:04:10+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenOnOrBefore "{{.time_with_5s_after}}"
 func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -855,6 +918,21 @@ func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenAfter receives exactly 2 time.Time arguments and asserts that the first happens after the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenAfter
+//  vars:
+//    time_with_5s_before: 2006-01-02T15:04:00+07:00
+//    time: 2006-01-02T15:04:05+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenAfter "{{.time_with_5s_before}}"
 func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -876,6 +954,21 @@ func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenOnOrAfter receives exactly 2 time.Time arguments and asserts that the first happens on or after the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenOnOrAfter
+//  vars:
+//    time_with_5s_before: 2006-01-02T15:04:00+07:00
+//    time: 2006-01-02T15:04:05+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenOnOrAfter "{{.time_with_5s_before}}"
 func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -897,6 +990,22 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenBetween receives exactly 3 time.Time arguments and asserts that the first happens between (not on) the second and third.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenBetween
+//  vars:
+//    time_with_5s_before: 2006-01-02T15:04:00+07:00
+//    time: 2006-01-02T15:04:05+07:00
+//    time_with_5s_after: 2006-01-02T15:04:10+07:00
+//  testcases:
+//  - name: check_time_happen_between
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenBetween "{{.time_with_5s_before}}" "{{.time_with_5s_after}}"
 func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 	if err := need(2, expected); err != nil {
 		return err

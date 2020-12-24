@@ -21,7 +21,7 @@ func Test_readInitialVariables(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "from environnement",
+			name: "from environment",
 			args: args{
 				env: []string{`VENOM_VAR_a=1`, `VENOM_VAR_b="B"`, `VENOM_VAR_c=[1,2,3]`},
 			},

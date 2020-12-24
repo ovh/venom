@@ -366,7 +366,7 @@ Available formats: jUnit (xml), json, yaml, tap reports
 
 ## Keywords
 
-* ShouldEqual
+* ShouldEqual - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldEqual)
 * ShouldNotEqual
 * ShouldAlmostEqual
 * ShouldNotAlmostEqual
@@ -387,8 +387,8 @@ Available formats: jUnit (xml), json, yaml, tap reports
 * ShouldNotContain
 * ShouldContainKey
 * ShouldNotContainKey
-* ShouldBeIn
-* ShouldNotBeIn
+* ShouldBeIn - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldBeIn)
+* ShouldNotBeIn - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldNotBeIn)
 * ShouldBeEmpty
 * ShouldNotBeEmpty
 * ShouldHaveLength
@@ -401,12 +401,12 @@ Available formats: jUnit (xml), json, yaml, tap reports
 * ShouldContainSubstring
 * ShouldNotContainSubstring
 * ShouldEqualTrimSpace
-* ShouldHappenBefore
-* ShouldHappenOnOrBefore
-* ShouldHappenAfter
-* ShouldHappenOnOrAfter
-* ShouldHappenBetween
 * ShouldNotExist
+* ShouldHappenBefore - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldHappenBefore)
+* ShouldHappenOnOrBefore - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldHappenOnOrBefore)
+* ShouldHappenAfter - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldHappenAfter)
+* ShouldHappenOnOrAfter - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldHappenOnOrAfter)
+* ShouldHappenBetween - [example](https://pkg.go.dev/github.com/ovh/venom/assertions#ShouldHappenBetween)
 
 Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
 
