@@ -10,7 +10,7 @@ import (
 )
 
 func TestProcessVariableAssigments(t *testing.T) {
-	initTestLogger(t)
+	InitTestLogger(t)
 	assign := AssignStep{}
 	assign.Assignments = make(map[string]Assignment)
 	assign.Assignments["assignVar"] = Assignment{
