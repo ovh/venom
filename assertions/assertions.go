@@ -1000,7 +1000,7 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 //    time: 2006-01-02T15:04:05+07:00
 //    time_with_5s_after: 2006-01-02T15:04:10+07:00
 //  testcases:
-//  - name: check_time_happen_between
+//  - name: test assertion
 //    steps:
 //    - type: exec
 //      script: "echo {{.time}}"

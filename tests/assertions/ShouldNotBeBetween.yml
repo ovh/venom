@@ -1,0 +1,13 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion
+  steps:
+  - script: echo 4
+    assertions:
+    - result.systemout ShouldNotBeBetween 1 3
+
+- name: test assertion float
+  steps:
+  - script: echo 2.5
+    assertions:
+    - result.systemout ShouldNotBeBetween 2.2 2.4

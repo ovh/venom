@@ -1,0 +1,7 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion
+  steps:
+  - script: echo 'foo2'
+    assertions:
+    - result.systemout ShouldStartWith fo
