@@ -816,11 +816,14 @@ func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
 
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.Before(expectedTime) {
@@ -835,11 +838,13 @@ func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
-
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.Before(expectedTime) || actualTime.Equal(expectedTime) {
@@ -854,11 +859,13 @@ func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
-
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.After(expectedTime) {
@@ -873,11 +880,14 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
 
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.Before(expectedTime) || actualTime.Equal(expectedTime) {
@@ -891,16 +901,38 @@ func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 	if err := need(2, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	min, minOk := expected[0].(time.Time)
-	max, maxOk := expected[1].(time.Time)
 
-	if !firstOk || !minOk || !maxOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	min, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
+	}
+	max, err := getTimeFromString(expected[1])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.After(min) && actualTime.Before(max) {
 		return nil
 	}
 	return fmt.Errorf("expected '%v' to be between '%v' and '%v' ", actualTime, min, max)
+}
+
+func getTimeFromString(in interface{}) (time.Time, error) {
+	if t, isTime := in.(time.Time); isTime {
+		return t, nil
+	}
+	s, err := cast.ToStringE(in)
+	if err != nil {
+		return time.Time{}, errors.Errorf("invalid date provided: %q", in)
+	}
+
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return time.Time{}, errors.Errorf("invalid date RFC3339 provided with %q", in)
+	}
+	return t, nil
 }

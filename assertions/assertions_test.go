@@ -1313,6 +1313,21 @@ func TestShouldHappenBetween(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "ok",
+			args: args{
+				actual:   "2006-01-02T15:04:05+07:00",
+				expected: []interface{}{"2006-01-02T15:04:00+07:00", "2006-01-02T15:04:10+07:00"},
+			},
+		},
+		{
+			name: "ko",
+			args: args{
+				actual:   "2006-01-02T15:04:00+07:00",
+				expected: []interface{}{"2006-01-02T15:04:05+07:00", "2006-01-02T15:04:10+07:00"},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
