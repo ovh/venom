@@ -1267,14 +1267,14 @@ func TestShouldHappenOnOrAfter(t *testing.T) {
 			name: "ok",
 			args: args{
 				actual:   time.Now(),
-				expected: []interface{}{time.Now().Add(1 * time.Second)},
+				expected: []interface{}{time.Now().Add(-1 * time.Second)},
 			},
 		},
 		{
 			name: "ko",
 			args: args{
 				actual:   time.Now(),
-				expected: []interface{}{time.Now().Add(-1 * time.Second)},
+				expected: []interface{}{time.Now().Add(1 * time.Second)},
 			},
 			wantErr: true,
 		},
