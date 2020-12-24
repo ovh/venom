@@ -1,0 +1,7 @@
+name: Assertions testsuite
+testcases:
+  - name: ShouldNotBeIn
+    steps:
+    - script: echo 3
+      assertions:
+      - result.systemoutjson ShouldNotBeIn 1 2

@@ -983,7 +983,7 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 		return err
 	}
 
-	if actualTime.Before(expectedTime) || actualTime.Equal(expectedTime) {
+	if actualTime.After(expectedTime) || actualTime.Equal(expectedTime) {
 		return nil
 	}
 	return fmt.Errorf("expected '%v' to be before or on '%v'", actualTime, expectedTime)
