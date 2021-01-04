@@ -71,6 +71,17 @@ func deepEqual(x, y interface{}) bool {
 }
 
 // ShouldEqual receives exactly two parameters and does an equality check.
+//
+// Example of testsuite file:
+//
+//  name: Assertions testsuite
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - script: echo 'foo'
+//      assertions:
+//      - result.code ShouldEqual 0
+//
 func ShouldEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -528,6 +539,17 @@ func ShouldNotContainKey(actual interface{}, expected ...interface{}) error {
 // that is passed in either as the second parameter, or of the collection that is comprised
 // of all the remaining parameters. This assertion ensures that the proposed member is in
 // the collection (using ShouldEqual).
+//
+// Example of testsuite file:
+//
+//  name: Assertions testsuite
+//  testcases:
+//    - name: ShouldBeIn
+//      steps:
+//      - script: echo 1
+//        assertions:
+//        - result.systemoutjson ShouldBeIn 1 2
+//
 func ShouldBeIn(actual interface{}, expected ...interface{}) error {
 	if err := atLeast(1, expected); err != nil {
 		return err
@@ -549,6 +571,17 @@ func ShouldBeIn(actual interface{}, expected ...interface{}) error {
 // that is passed in either as the second parameter, or of the collection that is comprised
 // of all the remaining parameters. This assertion ensures that the proposed member is NOT in
 // the collection (using ShouldEqual).
+//
+// Example of testsuite file:
+//
+//  name: Assertions testsuite
+//  testcases:
+//    - name: ShouldNotBeIn
+//      steps:
+//      - script: echo 3
+//        assertions:
+//        - result.systemoutjson ShouldNotBeIn 1 2
+//
 func ShouldNotBeIn(actual interface{}, expected ...interface{}) error {
 	if err := atLeast(1, expected); err != nil {
 		return err
@@ -812,15 +845,33 @@ func ShouldEqualTrimSpace(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenBefore receives exactly 2 time.Time arguments and asserts that the first happens before the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenBefore
+//  vars:
+//    time: 2006-01-02T15:04:05+07:00
+//    time_with_5s_after: 2006-01-02T15:04:10+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenBefore "{{.time_with_5s_after}}"
 func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
 
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.Before(expectedTime) {
@@ -831,15 +882,32 @@ func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenOnOrBefore receives exactly 2 time.Time arguments and asserts that the first happens on or before the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenOnOrBefore
+//  vars:
+//    time: 2006-01-02T15:04:05+07:00
+//    time_with_5s_after: 2006-01-02T15:04:10+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenOnOrBefore "{{.time_with_5s_after}}"
 func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
-
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.Before(expectedTime) || actualTime.Equal(expectedTime) {
@@ -850,15 +918,32 @@ func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenAfter receives exactly 2 time.Time arguments and asserts that the first happens after the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenAfter
+//  vars:
+//    time_with_5s_before: 2006-01-02T15:04:00+07:00
+//    time: 2006-01-02T15:04:05+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenAfter "{{.time_with_5s_before}}"
 func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
-
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.After(expectedTime) {
@@ -869,38 +954,94 @@ func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenOnOrAfter receives exactly 2 time.Time arguments and asserts that the first happens on or after the second.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenOnOrAfter
+//  vars:
+//    time_with_5s_before: 2006-01-02T15:04:00+07:00
+//    time: 2006-01-02T15:04:05+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenOnOrAfter "{{.time_with_5s_before}}"
 func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	expectedTime, secondOk := expected[0].(time.Time)
 
-	if !firstOk || !secondOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
 	}
 
-	if actualTime.Before(expectedTime) || actualTime.Equal(expectedTime) {
+	if actualTime.After(expectedTime) || actualTime.Equal(expectedTime) {
 		return nil
 	}
 	return fmt.Errorf("expected '%v' to be before or on '%v'", actualTime, expectedTime)
 }
 
 // ShouldHappenBetween receives exactly 3 time.Time arguments and asserts that the first happens between (not on) the second and third.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldHappenBetween
+//  vars:
+//    time_with_5s_before: 2006-01-02T15:04:00+07:00
+//    time: 2006-01-02T15:04:05+07:00
+//    time_with_5s_after: 2006-01-02T15:04:10+07:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldHappenBetween "{{.time_with_5s_before}}" "{{.time_with_5s_after}}"
 func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 	if err := need(2, expected); err != nil {
 		return err
 	}
-	actualTime, firstOk := actual.(time.Time)
-	min, minOk := expected[0].(time.Time)
-	max, maxOk := expected[1].(time.Time)
 
-	if !firstOk || !minOk || !maxOk {
-		return errors.Errorf("invalid date provided")
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	min, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
+	}
+	max, err := getTimeFromString(expected[1])
+	if err != nil {
+		return err
 	}
 
 	if actualTime.After(min) && actualTime.Before(max) {
 		return nil
 	}
 	return fmt.Errorf("expected '%v' to be between '%v' and '%v' ", actualTime, min, max)
+}
+
+func getTimeFromString(in interface{}) (time.Time, error) {
+	if t, isTime := in.(time.Time); isTime {
+		return t, nil
+	}
+	s, err := cast.ToStringE(in)
+	if err != nil {
+		return time.Time{}, errors.Errorf("invalid date provided: %q", in)
+	}
+
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return time.Time{}, errors.Errorf("invalid date RFC3339 provided with %q", in)
+	}
+	return t, nil
 }

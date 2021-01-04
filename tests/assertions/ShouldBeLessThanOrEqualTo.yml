@@ -1,0 +1,8 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion
+  steps:
+  - script: echo 2.4
+    assertions:
+    - result.systemout ShouldBeLessThanOrEqualTo 2.4
+    - result.systemout ShouldBeLessThanOrEqualTo 3

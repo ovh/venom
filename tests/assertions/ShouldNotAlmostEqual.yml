@@ -1,0 +1,7 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion
+  steps:
+  - script: echo 2.4
+    assertions:
+    - result.systemout ShouldNotAlmostEqual 2.0 0.2

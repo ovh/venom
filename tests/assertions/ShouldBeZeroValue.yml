@@ -1,0 +1,12 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion
+  steps:
+  - script: echo ''
+    assertions:
+    - result.systemoutjson ShouldBeZeroValue
+- name: test assertion attr json
+  steps:
+  - script: echo '{"foo":""}'
+    assertions:
+    - result.systemoutjson.foo ShouldBeZeroValue

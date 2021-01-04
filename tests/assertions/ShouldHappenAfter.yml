@@ -1,0 +1,11 @@
+name: test ShouldHappenAfter - use RFC3339 format
+vars:
+  time_with_5s_before: 2006-01-02T15:04:00+07:00
+  time: 2006-01-02T15:04:05+07:00
+testcases:
+- name: test assertion
+  steps:
+  - type: exec
+    script: "echo {{.time}}"
+    assertions:
+      - result.systemout ShouldHappenAfter "{{.time_with_5s_before}}"

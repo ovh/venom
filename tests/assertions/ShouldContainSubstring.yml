@@ -1,0 +1,7 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion
+  steps:
+  - script: echo 'foo bar foo'
+    assertions:
+    - result.systemout ShouldContainSubstring bar

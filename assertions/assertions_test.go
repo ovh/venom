@@ -1267,14 +1267,14 @@ func TestShouldHappenOnOrAfter(t *testing.T) {
 			name: "ok",
 			args: args{
 				actual:   time.Now(),
-				expected: []interface{}{time.Now().Add(1 * time.Second)},
+				expected: []interface{}{time.Now().Add(-1 * time.Second)},
 			},
 		},
 		{
 			name: "ko",
 			args: args{
 				actual:   time.Now(),
-				expected: []interface{}{time.Now().Add(-1 * time.Second)},
+				expected: []interface{}{time.Now().Add(1 * time.Second)},
 			},
 			wantErr: true,
 		},
@@ -1310,6 +1310,21 @@ func TestShouldHappenBetween(t *testing.T) {
 			args: args{
 				actual:   time.Now(),
 				expected: []interface{}{time.Now().Add(1 * time.Second), time.Now().Add(2 * time.Second)},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ok",
+			args: args{
+				actual:   "2006-01-02T15:04:05+07:00",
+				expected: []interface{}{"2006-01-02T15:04:00+07:00", "2006-01-02T15:04:10+07:00"},
+			},
+		},
+		{
+			name: "ko",
+			args: args{
+				actual:   "2006-01-02T15:04:00+07:00",
+				expected: []interface{}{"2006-01-02T15:04:05+07:00", "2006-01-02T15:04:10+07:00"},
 			},
 			wantErr: true,
 		},
