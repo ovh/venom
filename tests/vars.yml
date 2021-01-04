@@ -25,3 +25,11 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemout ShouldContainSubstring bar
 
+- name: echo_myvar
+  steps:
+  - type: exec
+    script: "echo {{.myvar}}"
+    info: "{{.myvar}}"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring foo

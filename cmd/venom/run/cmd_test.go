@@ -5,10 +5,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ovh/venom"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func Test_readInitialVariables(t *testing.T) {
+	venom.InitTestLogger(t)
 	type args struct {
 		argsVars     []string
 		argVarsFiles []io.Reader
@@ -64,7 +67,7 @@ c:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := readInitialVariables(tt.args.argsVars, tt.args.argVarsFiles, tt.args.env)
+			got, err := readInitialVariables(context.TODO(), tt.args.argsVars, tt.args.argVarsFiles, tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("readInitialVariables() error = %v, wantErr %v", err, tt.wantErr)
 				return
