@@ -244,7 +244,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 			readers = append(readers, fi)
 		}
 
-		mapvars, err := readInitialVariables(variables, readers, os.Environ())
+		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
 		if err != nil {
 			return err
 		}
@@ -279,7 +279,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 	},
 }
 
-func readInitialVariables(argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
+func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
 	var cast = func(vS string) interface{} {
 		var v interface{}
 		_ = yml.Unmarshal([]byte(vS), &v) //nolint
@@ -292,6 +292,7 @@ func readInitialVariables(argsVars []string, argVarsFiles []io.Reader, environ [
 			tuple := strings.Split(env, "=")
 			k := strings.TrimPrefix(tuple[0], "VENOM_VAR_")
 			result[k] = cast(tuple[1])
+			venom.Debug(ctx, "Adding variable from environment variable %s=%s", k, result[k])
 		}
 	}
 
@@ -306,6 +307,7 @@ func readInitialVariables(argsVars []string, argVarsFiles []io.Reader, environ [
 		}
 		for k, v := range tmpResult {
 			result[k] = v
+			venom.Debug(ctx, "Adding variable from vars-files %s=%s", k, v)
 		}
 	}
 
@@ -318,6 +320,7 @@ func readInitialVariables(argsVars []string, argVarsFiles []io.Reader, environ [
 			return nil, fmt.Errorf("invalid variable declaration: %v", arg)
 		}
 		result[tuple[0]] = cast(tuple[1])
+		venom.Debug(ctx, "Adding variable from vars arg %s=%s", tuple[0], result[tuple[0]])
 	}
 
 	return result, nil

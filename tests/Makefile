@@ -42,7 +42,7 @@ stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
 
 run-test: wait-for-kafka
-	@(cd ../cmd/venom; go build && ./venom run --stop-on-failure -vv --var-from-file ../../tests/kafka/testVariables.yml ../../tests/*.yml)
+	@(cd ../cmd/venom; go build && VENOM_VAR_MY_ENVAR=foo ./venom run --stop-on-failure -vv --var-from-file ../../tests/kafka/testVariables.yml --var-from-file ../../tests/vars/vars.yml ../../tests/*.yml)
 
 .PHONY: wait-for-kafka
 wait-for-kafka:

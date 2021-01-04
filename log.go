@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func initTestLogger(t *testing.T) {
+func InitTestLogger(t *testing.T) {
 	l := logrus.New()
 	logger = logrus.NewEntry(l)
 }

@@ -32,7 +32,7 @@ func randomString(n int) string {
 }
 
 func Test_getFilesPath(t *testing.T) {
-	initTestLogger(t)
+	InitTestLogger(t)
 	rand.Seed(time.Now().UnixNano())
 	log.SetLevel(log.DebugLevel)
 

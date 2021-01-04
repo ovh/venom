@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
+	"github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -109,12 +110,24 @@ func (v *Venom) Parse(path []string) error {
 		}
 	}
 
+	vars, err := dump.ToStringMap(v.variables)
+	if err != nil {
+		return errors.Wrapf(err, "unable to parse variables")
+	}
+
 	reallyMissingVars := []string{}
 	for _, k := range missingVars {
 		var varExtracted bool
 		for _, e := range extractedVars {
 			if strings.HasPrefix(k, e) {
 				varExtracted = true
+				break
+			}
+		}
+		for t := range vars {
+			if t == k {
+				varExtracted = true
+				break
 			}
 		}
 		if !varExtracted {
