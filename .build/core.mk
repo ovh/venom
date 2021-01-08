@@ -1,5 +1,4 @@
 CI                  := $(if ${CI},${CI},0)
-VERSION             := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 CDS_VERSION         := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 UNAME               := $(shell uname)
 UNAME_LOWERCASE     := $(shell uname -s| tr A-Z a-z)
