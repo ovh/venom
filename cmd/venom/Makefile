@@ -4,7 +4,7 @@
 ##### ^^^^^^ make help ^^^^^^ #####
 
 TARGET_NAME 			= venom
-LDFLAGS					= -ldflags "-X github.com/ovh/venom.Version=$(VERSION)"
+LDFLAGS					= -ldflags "-X github.com/ovh/venom.Version=$(if ${GIT_DESCRIBE},${GIT_DESCRIBE},snapshot)"
 
 # If you want to enable the cross-compilation, uncomment the following line:
 ENABLE_CROSS_COMPILATION := true

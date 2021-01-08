@@ -1,5 +1,5 @@
 CI                  := $(if ${CI},${CI},0)
-VERSION             := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
+VERSION 			:= $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},snapshot)
 CDS_VERSION         := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 UNAME               := $(shell uname)
 UNAME_LOWERCASE     := $(shell uname -s| tr A-Z a-z)

@@ -6,7 +6,7 @@ TEST_CMD 			= go test -v -timeout 600s -coverprofile=profile.coverprofile
 TEST_C_CMD 			= go test -c -coverprofile=profile.coverprofile
 TEST_RUN_ARGS 		= -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
 CURRENT_PACKAGE 	= $(shell $(GO_LIST))
-VERSION 			:= $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
+VERSION 			:= $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},snapshot)
 TARGET_DIST 		:= ./dist
 TARGET_RESULTS 		:= ./results
 
