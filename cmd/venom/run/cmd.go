@@ -315,8 +315,8 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 		if arg == "" {
 			continue
 		}
-		tuple := strings.Split(arg, "=")
-		if len(tuple) != 2 {
+		tuple := strings.SplitN(arg, "=", 2)
+		if len(tuple) < 2 {
 			return nil, fmt.Errorf("invalid variable declaration: %v", arg)
 		}
 		result[tuple[0]] = cast(tuple[1])
