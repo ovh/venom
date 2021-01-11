@@ -46,6 +46,15 @@ func Test_readInitialVariables(t *testing.T) {
 			},
 		},
 		{
+			name: "from args",
+			args: args{
+				argsVars: []string{`db.dsn="user=test password=test dbname=yo host=localhost port=1234 sslmode=disable"`},
+			},
+			want: map[string]interface{}{
+				"db.dsn": "user=test password=test dbname=yo host=localhost port=1234 sslmode=disable",
+			},
+		},
+		{
 			name: "from readers",
 			args: args{
 				argVarsFiles: []io.Reader{
