@@ -1,7 +1,7 @@
 # 🐍 Venom
 
-Venom run executors (script, HTTP Request, etc. ) and assertions.
-It can also output xUnit results files.
+Venom execute "executors" (script, HTTP Request, etc. ) and assertions.
+It can also generate xUnit result files.
 
 <img src="./venom.gif" alt="Venom Demonstration">
 
@@ -95,7 +95,7 @@ $ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):
 
 # TestSuites
 
-A test suite is a collection of test cases that are intended to be used to test a software program to show that it has some specified set of behaviours.
+A test suite is a collection of test cases that are intended to be used to test a software program to show that it has a specified set of behaviors.
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
 In `venom` the testcases are executed sequentially within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enable some specific kind of behavior.
@@ -408,9 +408,6 @@ Available formats: jUnit (xml), json, yaml, tap reports
 * ShouldHappenOnOrAfter - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenOnOrAfter.yml)
 * ShouldHappenBetween - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenBetween.yml)
 
-Most assertion keywords documentation can be found on https://pkg.go.dev/github.com/ovh/venom/assertions.
-
-
 # Advanced usage
 ## Debug your testsuites
 
@@ -505,7 +502,7 @@ $ make build
 
 # License
 
-Copyright 2020 OVH SAS
+Copyright 2021 OVH SAS
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
