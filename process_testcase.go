@@ -9,7 +9,6 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/ghodss/yaml"
-	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
@@ -117,8 +116,6 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	ctx = context.WithValue(ctx, ContextKey("testcase"), tc.Name)
 	tc.Vars = ts.Vars.Clone()
-	tc.originalName = tc.Name
-	tc.Name = slug.Make(tc.Name)
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)
 	tc.computedVars = H{}
