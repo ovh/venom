@@ -166,7 +166,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			ux.Input.Add(k, vr)
 		}
 
-		v.RegisterExecutorUser(name, ux)
+		v.RegisterExecutorUser(ux.Executor, ux)
 	}
 	return nil
 }
