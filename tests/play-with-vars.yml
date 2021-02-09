@@ -4,6 +4,7 @@ vars:
   multipleVars: {"coo": "car"}
   multipleVarsSecondSyntax: 
     goo: gar
+  aQuote: 'foo"bar'
 
 testcases:
 - name: foobar
@@ -26,3 +27,10 @@ testcases:
     info: value of multipleVarsSecondSyntax.goo is {{.multipleVarsSecondSyntax.goo}}
     assertions:
     - result.systemout ShouldContainSubstring gar
+
+- name: aQuote
+  steps:
+  - script: echo '{{.aQuote}}'
+    info: value of aQuote is {{.aQuote}}
+    assertions:
+    - result.systemout ShouldContainSubstring foo"bar
