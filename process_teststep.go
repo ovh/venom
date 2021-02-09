@@ -72,7 +72,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			tc.computedVerbose = append(tc.computedVerbose, fmt.Sprintf("writing %s", filename))
 		}
 
-		for _, i := range e.Info() {
+		for ninfo, i := range e.Info() {
 			info, err := interpolate.Do(i, mapResultString)
 			if err != nil {
 				Error(ctx, "unable to parse %q: %v", i, err)
@@ -82,7 +82,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 				continue
 			}
 			filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
-			info += fmt.Sprintf(" (%s:%d)", filename, findLineNumber(filename, tc.originalName, stepNumber, i))
+			info += fmt.Sprintf(" (%s:%d)", filename, findLineNumber(filename, tc.originalName, stepNumber, i, ninfo+1))
 			Info(ctx, info)
 			tc.computedInfo = append(tc.computedInfo, info)
 		}

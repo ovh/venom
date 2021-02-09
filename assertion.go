@@ -190,7 +190,7 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 	return val, nil
 }
 
-func findLineNumber(filename, testcase string, stepNumber int, assertion string) int {
+func findLineNumber(filename, testcase string, stepNumber int, assertion string, infoNumber int) int {
 	countLine := 0
 	file, err := os.Open(filename)
 	if err != nil {
@@ -202,6 +202,7 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 	testcaseFound := false
 	commentBlock := false
 	countStep := 0
+	countInfo := 0
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -226,9 +227,18 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string)
 			countStep++
 			continue
 		}
-		if testcaseFound && countStep > stepNumber && strings.Contains(line, assertion) {
-			lineFound = true
-			break
+
+		if testcaseFound && countStep > stepNumber {
+			if strings.Contains(line, assertion) {
+				lineFound = true
+				break
+			} else if strings.Contains(strings.ReplaceAll(line, " ", ""), "info:") {
+				countInfo++
+				if infoNumber == countInfo {
+					lineFound = true
+					break
+				}
+			}
 		}
 	}
 

@@ -35,7 +35,6 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 		}
 
 		var step TestStep
-		fmt.Printf("content is %v\n", content)
 		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
 			return nil, nil, errors.Wrapf(err, "unable to unmarshal teststep with content: %v", content)
 		}
