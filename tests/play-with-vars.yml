@@ -1,0 +1,19 @@
+name: play-with-vars
+vars:
+  aString: '{"foo": "bar"}'
+  multipleVars: {"coo": "car"}
+
+testcases:
+- name: foobar
+  steps:
+  - info: value of aString.coo is {{.aString}}
+    script: echo '{{.aString}}'
+    assertions:
+    - result.systemoutjson.foo ShouldContainSubstring bar    
+
+- name: coocar
+  steps:
+  - info: value of multipleVars.coo is {{.multipleVars.coo}}
+    script: echo '{{.multipleVars.coo}}'
+    assertions:
+    - result.systemout ShouldContainSubstring car

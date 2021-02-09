@@ -10,6 +10,7 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/pkg/errors"
 )
 
 var varRegEx = regexp.MustCompile("{{.*}}")
@@ -24,6 +25,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	vars := []string{}
 	extractedVars := []string{}
 
+	for i := range dvars {
+		dvars[i] = strings.ReplaceAll(dvars[i], "\"", "\\\"")
+	}
 	for _, rawStep := range tc.RawTestSteps {
 		content, err := interpolate.Do(string(rawStep), dvars)
 		if err != nil {
@@ -31,8 +35,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 		}
 
 		var step TestStep
+		fmt.Printf("content is %v\n", content)
 		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Wrapf(err, "unable to unmarshal teststep with content: %v", content)
 		}
 
 		_, exec, err := v.GetExecutorRunner(context.Background(), step, tc.Vars)
@@ -172,6 +177,10 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				return
 			}
 			vars[k] = content
+		}
+
+		for i := range vars {
+			vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
 		}
 
 		var content string
