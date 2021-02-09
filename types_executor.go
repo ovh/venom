@@ -239,7 +239,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 
 	var result interface{}
 	if err := yaml.Unmarshal([]byte(outputS), &result); err != nil {
-		return nil, errors.Wrapf(err, "unable to unmarshal output: %v", outputS)
+		return nil, errors.Wrapf(err, "unable to unmarshal")
 	}
 	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
 		return result, fmt.Errorf("failed")
