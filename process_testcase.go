@@ -25,6 +25,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	vars := []string{}
 	extractedVars := []string{}
 
+	// the value of each var can contains a double-quote -> "
+	// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
+	// This also avoids injections into the json structure of a step
 	for i := range dvars {
 		dvars[i] = strings.ReplaceAll(dvars[i], "\"", "\\\"")
 	}
@@ -178,6 +181,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 			vars[k] = content
 		}
 
+		// the value of each var can contains a double-quote -> "
+		// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
+		// This also avoids injections into the json structure of a step
 		for i := range vars {
 			vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
 		}
