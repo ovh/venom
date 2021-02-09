@@ -2,6 +2,8 @@ name: play-with-vars
 vars:
   aString: '{"foo": "bar"}'
   multipleVars: {"coo": "car"}
+  multipleVarsSecondSyntax: 
+    goo: gar
 
 testcases:
 - name: foobar
@@ -17,3 +19,10 @@ testcases:
     script: echo '{{.multipleVars.coo}}'
     assertions:
     - result.systemout ShouldContainSubstring car
+
+- name: goocar
+  steps:
+  - info: value of multipleVarsSecondSyntax.goo is {{.multipleVarsSecondSyntax.goo}}
+    script: echo '{{.multipleVarsSecondSyntax.goo}}'
+    assertions:
+    - result.systemout ShouldContainSubstring gar
