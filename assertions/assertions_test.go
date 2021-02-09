@@ -23,6 +23,13 @@ func TestShouldEqual(t *testing.T) {
 			},
 		},
 		{
+			name: "with string and multiple value",
+			args: args{
+				actual:   `foo bar goo`,
+				expected: []interface{}{`foo`, `bar`, `goo`},
+			},
+		},
+		{
 			name: "with int",
 			args: args{
 				actual:   1,
