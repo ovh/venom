@@ -231,7 +231,7 @@ testcases:
   - script: echo '{{.aString}}'
     info: value of aString is {{.aString}}
     assertions:
-    - result.systemoutjson.foo ShouldContainSubstring bar
+    - result.systemoutjson.foo ShouldEqual bar
 ...
 ```
 

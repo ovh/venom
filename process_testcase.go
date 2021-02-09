@@ -36,7 +36,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 		var step TestStep
 		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
-			return nil, nil, errors.Wrapf(err, "unable to unmarshal teststep with content: %v", content)
+			return nil, nil, errors.Wrapf(err, "unable to unmarshal teststep")
 		}
 
 		_, exec, err := v.GetExecutorRunner(context.Background(), step, tc.Vars)
