@@ -6,8 +6,16 @@ testcases:
     myarg: World
     assertions:
     - result.display.hello ShouldContainSubstring World
+
 - name: testB
   steps:
   - script: echo "{{.testA.result.display.hello}}"
     assertions:
     - result.systemout ShouldContainSubstring {{.testA.result.display.hello}}
+
+- name: testfoobar
+  steps:
+  - type: foobar
+    bar: hop
+    assertions:
+    - result.foobar ShouldContainSubstring foo-hop

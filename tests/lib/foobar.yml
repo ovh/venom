@@ -1,0 +1,9 @@
+executor: foobar
+input:
+  bar: {}
+steps:
+- script: echo "foo-{{.input.bar}}"
+  assertions:
+  - result.code ShouldEqual 0
+output:
+  foobar: "{{.result.systemout}}"
