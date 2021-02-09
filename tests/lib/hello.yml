@@ -8,3 +8,4 @@ steps:
 output:
   display:
     hello: "{{.result.systemoutjson.hello}}"
+  result: '{{.result.systemout}}'
