@@ -215,6 +215,7 @@ vars:
   foo: foo
   biz:
     bar: bar
+  aString: '{"foo": "bar"}'
 
 testcases:
 - name: first-test-case
@@ -224,6 +225,13 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - result.systemout ShouldEqual "foo bar"
+
+- name: foobar
+  steps:
+  - script: echo '{{.aString}}'
+    info: value of aString is {{.aString}}
+    assertions:
+    - result.systemoutjson.foo ShouldContainSubstring bar
 ...
 ```
 
