@@ -13,7 +13,7 @@ testcases:
     info: value of aString is {{.aString}}
     assertions:
     - result.systemoutjson.foo ShouldEqual bar
-    - 'result.systemout ShouldEqual {"foo": "far"}'
+    - 'result.systemout ShouldEqual {"foo": "bar"}'
 
 - name: coocar
   steps:
