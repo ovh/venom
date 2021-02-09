@@ -1,0 +1,37 @@
+name: play-with-vars
+vars:
+  aString: '{"foo": "bar"}'
+  multipleVars: {"coo": "car"}
+  multipleVarsSecondSyntax: 
+    goo: gar
+  aQuote: 'foo"bar'
+
+testcases:
+- name: foobar
+  steps:
+  - script: echo '{{.aString}}'
+    info: value of aString is {{.aString}}
+    assertions:
+    - result.systemoutjson.foo ShouldEqual bar
+    - 'result.systemout ShouldEqual {"foo": "bar"}'
+
+- name: coocar
+  steps:
+  - script: echo '{{.multipleVars.coo}}'
+    info: value of multipleVars.coo is {{.multipleVars.coo}}
+    assertions:
+    - result.systemout ShouldEqual car
+
+- name: goocar
+  steps:
+  - script: echo '{{.multipleVarsSecondSyntax.goo}}'
+    info: value of multipleVarsSecondSyntax.goo is {{.multipleVarsSecondSyntax.goo}}
+    assertions:
+    - result.systemout ShouldEqual gar
+
+- name: aQuote
+  steps:
+  - script: echo '{{.aQuote}}'
+    info: value of aQuote is {{.aQuote}}
+    assertions:
+    - result.systemout ShouldEqual foo"bar

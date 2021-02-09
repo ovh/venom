@@ -224,6 +224,14 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 	if err != nil {
 		return nil, err
 	}
+
+	// the value of each var can contains a double-quote -> "
+	// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
+	// This also avoids injections into the json structure of a user executor
+	for i := range computedVars {
+		computedVars[i] = strings.ReplaceAll(computedVars[i], "\"", "\\\"")
+	}
+
 	outputS, err := interpolate.Do(string(outputString), computedVars)
 	if err != nil {
 		return nil, err
@@ -231,7 +239,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 
 	var result interface{}
 	if err := yaml.Unmarshal([]byte(outputS), &result); err != nil {
-		return nil, errors.Wrapf(err, "unable to unmarshal output")
+		return nil, errors.Wrapf(err, "unable to unmarshal")
 	}
 	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
 		return result, fmt.Errorf("failed")

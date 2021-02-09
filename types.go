@@ -173,7 +173,7 @@ type Failure struct {
 }
 
 func newFailure(tc TestCase, stepNumber int, assertion string, err error) *Failure {
-	var lineNumber = findLineNumber(tc.Classname, tc.originalName, stepNumber, assertion)
+	var lineNumber = findLineNumber(tc.Classname, tc.originalName, stepNumber, assertion, -1)
 	var value string
 	if assertion != "" {
 		value = color.YellowString(`Testcase %q, step #%d: Assertion %q failed. %s (%v:%d)`,

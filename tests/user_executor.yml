@@ -5,17 +5,24 @@ testcases:
   - type: hello
     myarg: World
     assertions:
-    - result.display.hello ShouldContainSubstring World
+    - result.display.hello ShouldEqual World
+
+- name: testAResultDisplay
+  steps:
+  - script: echo '{{.testA.result.result}}'
+    info: value is "{{.testA.result.result}}"
+    assertions:
+    - result.systemoutjson.hello ShouldEqual World
 
 - name: testB
   steps:
   - script: echo "{{.testA.result.display.hello}}"
     assertions:
-    - result.systemout ShouldContainSubstring {{.testA.result.display.hello}}
+    - result.systemout ShouldEqual {{.testA.result.display.hello}}
 
 - name: testfoobar
   steps:
   - type: foobar
     bar: hop
     assertions:
-    - result.foobar ShouldContainSubstring foo-hop
+    - result.foobar ShouldEqual foo-hop

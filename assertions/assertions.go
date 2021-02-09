@@ -83,6 +83,23 @@ func deepEqual(x, y interface{}) bool {
 //      - result.code ShouldEqual 0
 //
 func ShouldEqual(actual interface{}, expected ...interface{}) error {
+	// if expected is an array, we considere that this array is an array of string
+	// so, we concat all values before doing the comparaison
+	if len(expected) > 0 {
+		var args string
+		for i := range expected {
+			actualS, err := cast.ToStringE(expected[i])
+			if err != nil {
+				return err
+			}
+			args += actualS + " "
+		}
+		if deepEqual(actual, strings.TrimRight(args, " ")) {
+			return nil
+		}
+		return fmt.Errorf("expected: %v got: %v", args, actual)
+	}
+
 	if err := need(1, expected); err != nil {
 		return err
 	}
@@ -94,13 +111,10 @@ func ShouldEqual(actual interface{}, expected ...interface{}) error {
 
 // ShouldNotEqual receives exactly two parameters and does an inequality check.
 func ShouldNotEqual(actual interface{}, expected ...interface{}) error {
-	if err := need(1, expected); err != nil {
-		return err
+	if err := ShouldEqual(actual, expected...); err == nil {
+		return fmt.Errorf("not expected: %v got: %v", expected[0], actual)
 	}
-	if !deepEqual(actual, expected[0]) {
-		return nil
-	}
-	return fmt.Errorf("not expected: %v got: %v", expected[0], actual)
+	return nil
 }
 
 // ShouldAlmostEqual makes sure that two parameters are close enough to being equal.
