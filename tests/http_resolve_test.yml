@@ -1,0 +1,14 @@
+name: HTTP testsuite
+testcases:
+- name: get http testcase
+  steps:
+  - type: http
+    method: GET
+    url: https://ca.api.ovh.com/1.0/
+    resolve: 
+    - ca.api.ovh.com:443:eu.api.ovh.com
+    ignore_verify_ssl: true
+    info: 
+    - '{{.result.bodyjson.basepath}}'
+    assertions:
+    - result.headers.x-ovh-queryid ShouldContainSubstring "EU.ext"

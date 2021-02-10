@@ -49,6 +49,7 @@ type Executor struct {
 	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
 	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
 	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
+	Resolve           []string    `json:"resolve" yaml:"resolve" mapstructure:"resolve"`
 	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
 	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
 	TLSClientCert     string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
@@ -136,7 +137,31 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, err
 	}
 
-	if len(e.UnixSock) > 0 {
+	if len(e.Resolve) > 0 && len(e.UnixSock) > 0 {
+		return nil, fmt.Errorf("you can't use resolve and unix_sock attributes in the same time")
+	}
+
+	if len(e.Resolve) > 0 {
+		tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			// resolve can contains foo.com:443:127.0.0.1
+			for _, r := range e.Resolve {
+				tuple := strings.Split(r, ":")
+				if len(tuple) != 3 {
+					return nil, fmt.Errorf("invalid value for resolve attribute: %v", e.Resolve)
+				}
+				if addr == tuple[0]+":"+tuple[1] {
+					addr = tuple[2] + ":" + tuple[1]
+				}
+			}
+
+			dialer := &net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}
+			return dialer.DialContext(ctx, network, addr)
+		}
+	} else if len(e.UnixSock) > 0 {
 		tr.DialContext = func(_ context.Context, _, _ string) (net.Conn, error) {
 			return net.DialUnix("unix", nil, &net.UnixAddr{
 				Name: e.UnixSock,
@@ -152,6 +177,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		}
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
+
 	client := &http.Client{Transport: tr}
 	if e.NoFollowRedirect {
 		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
