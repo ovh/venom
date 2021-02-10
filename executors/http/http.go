@@ -49,7 +49,7 @@ type Executor struct {
 	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
 	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
 	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
-	Resolve           string      `json:"resolve" yaml:"resolve" mapstructure:"resolve"`
+	Resolve           []string    `json:"resolve" yaml:"resolve" mapstructure:"resolve"`
 	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
 	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
 	TLSClientCert     string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
@@ -143,9 +143,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	if len(e.Resolve) > 0 {
 		tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-			// resolve can contains foo.com:443:127.0.0.1,bar.com:443:127.0.0.1
-			resolvers := strings.Split(e.Resolve, ",")
-			for _, r := range resolvers {
+			// resolve can contains foo.com:443:127.0.0.1
+			for _, r := range e.Resolve {
 				tuple := strings.Split(r, ":")
 				if len(tuple) != 3 {
 					return nil, fmt.Errorf("invalid value for resolve attribute: %v", e.Resolve)
