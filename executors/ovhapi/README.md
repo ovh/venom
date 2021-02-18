@@ -1,42 +1,65 @@
 # Venom - Executor OVHAPI
 
-Step to test OVH API
+## Step to test OVH API
 
 Use case: you software need to make call to OVH API.<br>
 You will need OVH credentials to make API call. Please follow this tutorial to get all needed keys: <br>
-FR: https://www.ovh.com/fr/g934.premiers_pas_avec_lapi <br>
-EN: https://api.ovh.com/g934.first_step_with_api
+EN: https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/
 
 ## Input
 In your yaml file, you can use:
 
 ```
+  - endpoint optional, default value: ovh-eu
+  - applicationKey optional, if noAuth, otherwise mandatory
+  - applicationSecret optional, if noAuth, otherwise mandatory
+  - consumerKey optional, if noAuth, otherwise mandatory
+  - noAuth optional
+  - headers optional
+  - resolve optional
+  - proxy optional
+  - tlsRootCA optional
+
   - method optional, default value: GET
   - path mandatory, example "/me"
-  - noAuth optional
   - body optional
   - bodyFile optional
 ```
 
-```yaml
+The first batch of parameters can also be defined inside Venom variables like this
 
+```yaml
+vars:
+  ovh.endpoint: ovh-eu
+  ovh.applicationKey: foo
+  ovh.applicationSecret: foo
+  ovh.consumerKey: foo
+  ovh.noAuth: false
+  ovh.headers:
+    x-foo: foo
+  ovh.resolve:
+  - example.org:443:127.0.0.1
+  ovh.proxy: localhost:8000
+  ovh.tlsRootCA: |-
+    -----BEGIN CERTIFICATE-----
+    MIIF3jCCA8agAwIBAgIQAf1tMPyjylGoG7xkDjUDLTANBgkqhkiG9w0BAQwFADCB
+    ...
+    -----END CERTIFICATE-----
+```
+
+## Example of an __ovhapi__ TestSuite
+```yaml
 name: Title of TestSuite
 testcases:
 - name: me
-  context:
-    type: default
+  steps:
+  - type: ovhapi
     endpoint: 'ovh-eu'
     applicationKey: 'APPLICATION_KEY'
     applicationSecret: 'APPLICATION_SECRET'
     consumerKey: 'CONSUMER_KEY'
-    insecureTLS: true #default false
-  steps:
-  - type: ovhapi
     method: GET
     path: /me
-    headers:
-      header1: value1
-      header2: value2
     retry: 3
     delay: 2
     assertions:
