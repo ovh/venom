@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/fsamin/go-dump"
 	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
@@ -17,7 +16,7 @@ var varRegEx = regexp.MustCompile("{{.*}}")
 
 //Parse the testcase to find unreplaced and extracted variables
 func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
-	dvars, err := dump.ToStringMap(tc.Vars)
+	dvars, err := DumpString(tc.Vars)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -49,7 +48,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 		defaultResult := exec.ZeroValueResult()
 		if defaultResult != nil {
-			dumpE, err := dump.ToStringMap(defaultResult, dump.WithDefaultLowerCaseFormatter())
+			dumpE, err := DumpString(defaultResult)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -73,7 +72,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 			}
 		}
 
-		dumpE, err := dump.ToStringMap(step, dump.WithDefaultLowerCaseFormatter())
+		dumpE, err := DumpString(step)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -164,7 +163,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
-		vars, err := dump.ToStringMap(stepVars)
+		vars, err := DumpString(stepVars)
 		if err != nil {
 			Error(ctx, "unable to dump testcase vars: %v", err)
 			tc.AppendError(err)

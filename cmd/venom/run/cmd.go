@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	yml "github.com/ghodss/yaml"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -252,7 +251,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 
 		start := time.Now()
 
-		if err := v.Parse(path); err != nil {
+		if err := v.Parse(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
@@ -282,7 +281,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
 	var cast = func(vS string) interface{} {
 		var v interface{}
-		_ = yml.Unmarshal([]byte(vS), &v) //nolint
+		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
 		return v
 	}
 
@@ -302,7 +301,7 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 		if err != nil {
 			return nil, err
 		}
-		if err := yml.Unmarshal(btes, &tmpResult); err != nil {
+		if err := yaml.Unmarshal(btes, &tmpResult); err != nil {
 			return nil, err
 		}
 		for k, v := range tmpResult {

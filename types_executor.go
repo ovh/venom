@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fsamin/go-dump"
 	"github.com/ghodss/yaml"
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/venom/executors"
 	"github.com/pkg/errors"
 )
 
@@ -135,7 +133,7 @@ type ExecutorWithSetup interface {
 }
 
 func GetExecutorResult(r interface{}) map[string]interface{} {
-	d, err := executors.Dump(r)
+	d, err := Dump(r)
 	if err != nil {
 		panic(err)
 	}
@@ -173,25 +171,24 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 	return result
 }
 
-func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestStep) (interface{}, error) {
+func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, step TestStep) (interface{}, error) {
 	vrs := H{}
-	for k, va := range ux.Input {
+	uxIn := runner.GetExecutor().(UserExecutor)
+
+	for k, va := range uxIn.Input {
 		if !strings.HasPrefix(k, "venom") {
-			vl, err := step.StringValue(k)
-			if err != nil {
-				return nil, err
-			}
-			if vl != "" {
-				// value from step
-				vrs.Add("input."+k, vl)
-			} else {
-				// default value from executor
-				vrs.Add("input."+k, va)
+			if vl, ok := step[k]; ok && vl != "" { // value from step
+				vrs.AddWithPrefix("input", k, vl)
+			} else { // default value from executor
+				vrs.AddWithPrefix("input", k, va)
 			}
 		} else {
 			vrs.Add(k, va)
 		}
 	}
+	// reload the user executor with the interpolated vars
+	_, exe, err := v.GetExecutorRunner(ctx, step, vrs)
+	ux := exe.GetExecutor().(UserExecutor)
 
 	tc := &TestCase{
 		Name:         ux.Executor,
@@ -209,7 +206,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 
 	v.runTestSteps(ctx, tc)
 
-	computedVars, err := dump.ToStringMap(tc.computedVars)
+	computedVars, err := DumpString(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
 	}
@@ -236,6 +233,10 @@ func (v *Venom) RunUserExecutor(ctx context.Context, ux UserExecutor, step TestS
 	if err != nil {
 		return nil, err
 	}
+
+	// re-inject info into executorRunner
+	b := runner.(*executor)
+	b.info = append(b.info, tc.computedInfo...)
 
 	var result interface{}
 	if err := yaml.Unmarshal([]byte(outputS), &result); err != nil {

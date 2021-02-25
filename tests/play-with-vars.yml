@@ -1,6 +1,6 @@
 name: play-with-vars
 vars:
-  aString: '{"foo": "bar"}'
+  astring: '["foo", "bar"]'
   multipleVars: {"coo": "car"}
   multipleVarsSecondSyntax: 
     goo: gar
@@ -9,11 +9,12 @@ vars:
 testcases:
 - name: foobar
   steps:
-  - script: echo '{{.aString}}'
-    info: value of aString is {{.aString}}
+  - script: echo '{{.astring}}'
+    info: 'value of astring is {{.astring}}'
     assertions:
-    - result.systemoutjson.foo ShouldEqual bar
-    - 'result.systemout ShouldEqual {"foo": "bar"}'
+    - result.systemoutjson.systemoutjson0 ShouldEqual foo
+    - result.systemoutjson.systemoutjson1 ShouldEqual bar
+    - 'result.systemout ShouldEqual ["foo", "bar"]'
 
 - name: coocar
   steps:

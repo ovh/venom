@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom"
@@ -270,7 +269,7 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 				return nil, err
 			}
 			h := venom.AllVarsFromCtx(ctx)
-			vars, _ := dump.ToStringMap(h)
+			vars, _ := venom.DumpString(h)
 			stemp, err := interpolate.Do(string(temp), vars)
 			if err != nil {
 				return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)

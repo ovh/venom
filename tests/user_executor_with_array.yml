@@ -1,0 +1,13 @@
+name: play-with-array
+vars:
+  foo:
+  - fooA
+  - fooB
+
+testcases:
+- name: mytc
+  steps:
+  - type: withArray
+    thearray: {{.foo}}
+    assertions:
+    - result.foobar ShouldEqual ["fooA","fooB"]

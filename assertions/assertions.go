@@ -83,7 +83,7 @@ func deepEqual(x, y interface{}) bool {
 //      - result.code ShouldEqual 0
 //
 func ShouldEqual(actual interface{}, expected ...interface{}) error {
-	// if expected is an array, we considere that this array is an array of string
+	// if expected is an array, we consider that this array is an array of string
 	// so, we concat all values before doing the comparaison
 	if len(expected) > 0 {
 		var args string

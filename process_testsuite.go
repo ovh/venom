@@ -7,7 +7,6 @@ import (
 	"runtime/pprof"
 
 	"github.com/fatih/color"
-	"github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
 	log "github.com/sirupsen/logrus"
@@ -37,7 +36,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 
 	// Intialiaze the testsuite varibles and compute a first interpolation over them
 	ts.Vars.AddAll(v.variables.Clone())
-	vars, _ := dump.ToStringMap(ts.Vars)
+	vars, _ := DumpString(ts.Vars)
 	for k, v := range vars {
 		computedV, err := interpolate.Do(fmt.Sprintf("%v", v), vars)
 		if err != nil {

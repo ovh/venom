@@ -10,8 +10,6 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
-
-	"github.com/ovh/venom/executors"
 )
 
 type dumpFile struct {
@@ -47,7 +45,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 
 		Debug(ctx, "result of runTestStepExecutor: %+v", result)
 		mapResult := GetExecutorResult(result)
-		mapResultString, _ := executors.DumpString(result)
+		mapResultString, _ := DumpString(result)
 
 		if v.Verbose >= 2 {
 			fdump := dumpFile{
@@ -116,7 +114,7 @@ func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, step 
 
 	if e.Timeout() == 0 {
 		if e.Type() == "user" {
-			return v.RunUserExecutor(ctx, e.GetExecutor().(UserExecutor), step)
+			return v.RunUserExecutor(ctx, e, step)
 		}
 		return e.Run(ctx, step)
 	}
@@ -130,7 +128,7 @@ func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, step 
 		var err error
 		var result interface{}
 		if e.Type() == "user" {
-			result, err = v.RunUserExecutor(ctx, e.GetExecutor().(UserExecutor), step)
+			result, err = v.RunUserExecutor(ctx, e, step)
 		} else {
 			result, err = e.Run(ctx, step)
 		}
