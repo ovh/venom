@@ -1,0 +1,10 @@
+vars:
+  foo: '{"type": "mytype","action": "myaction","metadata": {"mymetadata":"{\"myid\": 10}"}}'
+
+testcases:
+- name: foobar
+  steps:
+  - script: 'echo {{.foo}}'
+    info: 'value of foo is {{.foo}}'
+    assertions:
+    - 'result.systemout ShouldEqual {type: mytype,action: myaction,metadata: {mymetadata:{"myid": 10}}}'
