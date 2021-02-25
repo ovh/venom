@@ -63,15 +63,26 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 
 		varCloned := v.variables.Clone()
 
-		varsFromPartial, err := getVarFromPartialYML(ctx, btes)
-		if err != nil {
-			return errors.Wrapf(err, "unable to get vars from file %q", f)
-		}
-		varCloned.AddAll(varsFromPartial)
-
 		vars, err := DumpStringPreserveCase(varCloned)
 		if err != nil {
 			return errors.Wrapf(err, "unable to parse variables")
+		}
+
+		fromPartial, err := getVarFromPartialYML(ctx, btes)
+		if err != nil {
+			return errors.Wrapf(err, "unable to get vars from file %q", f)
+		}
+
+		varsFromPartial, err := DumpStringPreserveCase(fromPartial)
+		if err != nil {
+			return errors.Wrapf(err, "unable to parse variables")
+		}
+
+		// we take default vars from the testsuite, only if it's not already is global vars
+		for k, value := range varsFromPartial {
+			if _, ok := vars[k]; !ok {
+				vars[k] = value
+			}
 		}
 
 		content, err := interpolate.Do(string(btes), vars)
