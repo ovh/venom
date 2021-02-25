@@ -108,7 +108,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	}
 
 	info, _ := t.StringSliceValue("info")
-	vars, err := DumpString(h)
+	vars, err := DumpStringPreserveCase(h)
 	if err != nil {
 		return ctx, nil, err
 	}
@@ -163,7 +163,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 		}
 
 		// varsFromPartial contains the default vars from the executor
-		varsFromPartialMap, err := DumpString(varsFromPartial)
+		varsFromPartialMap, err := DumpStringPreserveCase(varsFromPartial)
 		if err != nil {
 			return errors.Wrapf(err, "unable to parse variables")
 		}

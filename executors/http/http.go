@@ -269,7 +269,7 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 				return nil, err
 			}
 			h := venom.AllVarsFromCtx(ctx)
-			vars, _ := venom.DumpString(h)
+			vars, _ := venom.DumpStringPreserveCase(h)
 			stemp, err := interpolate.Do(string(temp), vars)
 			if err != nil {
 				return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)

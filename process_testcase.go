@@ -16,7 +16,7 @@ var varRegEx = regexp.MustCompile("{{.*}}")
 
 //Parse the testcase to find unreplaced and extracted variables
 func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
-	dvars, err := DumpString(tc.Vars)
+	dvars, err := DumpStringPreserveCase(tc.Vars)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,7 +72,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 			}
 		}
 
-		dumpE, err := DumpString(step)
+		dumpE, err := DumpStringPreserveCase(step)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -163,7 +163,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
-		vars, err := DumpString(stepVars)
+		vars, err := DumpStringPreserveCase(stepVars)
 		if err != nil {
 			Error(ctx, "unable to dump testcase vars: %v", err)
 			tc.AppendError(err)

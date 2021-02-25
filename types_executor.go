@@ -206,7 +206,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, step
 
 	v.runTestSteps(ctx, tc)
 
-	computedVars, err := DumpString(tc.computedVars)
+	computedVars, err := DumpStringPreserveCase(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
 	}

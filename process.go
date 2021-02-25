@@ -109,7 +109,7 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 		}
 	}
 
-	vars, err := DumpString(v.variables)
+	vars, err := DumpStringPreserveCase(v.variables)
 	if err != nil {
 		return errors.Wrapf(err, "unable to parse variables")
 	}
