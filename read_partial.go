@@ -29,13 +29,16 @@ func getUserExecutorPartialYML(ctx context.Context, btesIn []byte) (H, error) {
 
 func getVarFromPartialYML(ctx context.Context, btesIn []byte) (H, error) {
 	btes := readPartialYML(btesIn, "vars")
-	var partialTs partialTestSuite
-	if err := yaml.Unmarshal([]byte(btes), &partialTs); err != nil {
+	type partialVars struct {
+		Vars H `yaml:"vars" json:"vars"`
+	}
+	var partial partialVars
+	if err := yaml.Unmarshal([]byte(btes), &partial); err != nil {
 		Error(context.Background(), "file content: %s", string(btes))
 		return nil, errors.Wrapf(err, "error while unmarshal - see venom.log")
 	}
 
-	return partialTs.Vars, nil
+	return partial.Vars, nil
 }
 
 // readPartialYML extract a yml part from a given string
