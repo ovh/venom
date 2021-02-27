@@ -206,7 +206,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, step
 
 	v.runTestSteps(ctx, tc)
 
-	computedVars, err := DumpStringPreserveCase(tc.computedVars)
+	computedVars, err := DumpString(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
 	}
@@ -238,12 +238,39 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, step
 	b := runner.(*executor)
 	b.info = append(b.info, tc.computedInfo...)
 
-	var result interface{}
-	if err := yaml.Unmarshal([]byte(outputS), &result); err != nil {
+	var outputResult interface{}
+	if err := yaml.Unmarshal([]byte(outputS), &outputResult); err != nil {
 		return nil, errors.Wrapf(err, "unable to unmarshal")
 	}
+
 	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
-		return result, fmt.Errorf("failed")
+		return outputResult, fmt.Errorf("failed")
+	}
+
+	// here, we have the user executor results.
+	// and for each key in output, we try to add the json version
+	// this will allow user to use json version of output (map, etc...)
+	// because, it's not possible to to that:
+	// output:
+	//   therawout: {{.result.systemout}}
+	//
+	// test is in file user_executor.yml
+
+	result, err := Dump(outputResult)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to compute result")
+	}
+
+	resultS, err := DumpString(outputResult)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to compute result")
+	}
+
+	for k, v := range resultS {
+		var outJSON interface{}
+		if err := json.Unmarshal([]byte(v), &outJSON); err == nil {
+			result[k+"json"] = outJSON
+		}
 	}
 	return result, nil
 }

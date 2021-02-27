@@ -181,6 +181,7 @@ steps:
 output:
   display:
     hello: "{{.result.systemoutjson.hello}}"
+  all: "{{.result.systemoutjson}}"
 ```
 
 file `testsuite.yml`
@@ -193,7 +194,10 @@ testcases:
     myarg: World
     assertions:
     - result.display.hello ShouldContainSubstring World
+    - result.alljson.hello ShouldContainSubstring World
 ```
+
+Notice the variable `alljson`. All variables declared in output are automatically converted in a json format with the suffix `json`. In the example above, two implicit variables are available: `displayjson.hello` and `alljson`.
 
 venom will load user's executors from the directory `lib/`
 - from the path of the testsuite

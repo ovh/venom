@@ -1,5 +1,14 @@
 name: testsuite with a user executor
 testcases:
+- name: testJSON
+  steps:
+  - type: hello
+    myarg: World
+    assertions:
+    - result.display.hello ShouldEqual World
+    - result.therawout ShouldEqual '{"hello":"World"}'
+    - result.therawoutjson.hello ShouldEqual World
+
 - name: testA
   steps:
   - type: hello
@@ -9,8 +18,8 @@ testcases:
 
 - name: testAResultDisplay
   steps:
-  - script: echo '{{.testA.result.result}}'
-    info: value is "{{.testA.result.result}}"
+  - script: echo '{{.testA.result.therawout}}'
+    info: value is "{{.testA.result.therawout}}"
     assertions:
     - result.systemoutjson.hello ShouldEqual World
 
