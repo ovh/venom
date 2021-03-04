@@ -7,7 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"plugin"
+	"sort"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
@@ -144,15 +147,36 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
 
-func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
-	workdir := vars["venom.testsuite.workdir"]
-	var libPath string
+func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []string, err error) {
+	var libpaths []string
 	if v.LibDir != "" {
-		libPath = v.LibDir
-	} else { // default behavior
-		libPath = path.Join(workdir, "lib")
+		for _, p := range strings.Split(v.LibDir, string(os.PathListSeparator)) {
+			libpaths = append(libpaths, p)
+		}
 	}
-	executorsPath, err := getFilesPath([]string{libPath})
+	libpaths = append(libpaths, path.Join(vars["venom.testsuite.workdir"], "lib"))
+
+	for _, p := range libpaths {
+		p = strings.TrimSpace(p)
+
+		err = filepath.Walk(p, func(fp string, f os.FileInfo, err error) error {
+			switch ext := filepath.Ext(fp); ext {
+			case ".yml", ".yaml":
+				filePaths = append(filePaths, fp)
+			}
+			return nil
+		})
+	}
+
+	sort.Strings(filePaths)
+	if len(filePaths) == 0 {
+		return nil, fmt.Errorf("no user executor yml file selected")
+	}
+	return filePaths, nil
+}
+
+func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
+	executorsPath, err := v.getUserExecutorFilesPath(vars)
 	if err != nil {
 		return err
 	}

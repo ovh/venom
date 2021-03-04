@@ -63,7 +63,7 @@ VENOM_FORMAT=json venom run my-test-suite.yml
 ```
       --format           -  example: VENOM_FORMAT=json
       --output-dir       -  example: VENOM_OUTPUT_DIR=.
-      --lib-dir          -  example: VENOM_LIB_DIR=lib/
+      --lib-dir          -  example: VENOM_LIB_DIR=/etc/venom/lib:$HOME/venom.d/lib
       --stop-on-failure  -  example: VENOM_STOP_ON_FAILURE=true
       --var              -  example: VENOM_VAR="foo=bar"
       --var-from-file    -  example: VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"
@@ -201,11 +201,11 @@ testcases:
 
 Notice the variable `alljson`. All variables declared in output are automatically converted in a json format with the suffix `json`. In the example above, two implicit variables are available: `displayjson.hello` and `alljson`.
 
-Venom will load user's executors from the directory `lib/` relative to the testsuite path. You can force venom to register user executors from a common lib directory, using the flag `--lib-dir`.
+Venom will load user's executors from the directory `lib/` relative to the testsuite path. You add executors source path using the flag `--lib-dir`. 
 
 ```bash
 $ venom run testsuite.yml # lib/*.yml files will be loaded as executors.
-$ venom run --lib-dir=/foo/bar/lib testsuite.yml # executors will be loaded only from /foo/bar/lib folder.
+$ venom run --lib-dir=/etc/venom/lib:$HOME/venom.d/lib testsuite.yml # executors will be loaded from /etc/venom/lib, $HOME/venom.d/lib and lib/ directory relative to testsuite.yml file.
 ```
 
 # Variables
