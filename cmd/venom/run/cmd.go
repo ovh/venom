@@ -98,12 +98,12 @@ func initFromConfigFile() error {
 }
 
 type ConfigFileData struct {
-	Variables      []string `yaml:"variables"`
-	VariablesFiles []string `yaml:"variables_files"`
-	StopOnFailure  bool     `yaml:"stop_on_failure"`
-	Format         string   `yaml:"format"`
-	OutputDir      string   `yaml:"output_dir"`
-	Verbosity      int      `yaml:"verbosity"`
+	Variables      []string `json:"variables" yaml:"variables"`
+	VariablesFiles []string `json:"variables_files" yaml:"variables_files"`
+	StopOnFailure  bool     `json:"stop_on_failure" yaml:"stop_on_failure"`
+	Format         string   `json:"format" yaml:"format"`
+	OutputDir      string   `json:"output_dir" yaml:"output_dir"`
+	Verbosity      int      `json:"verbosity" yaml:"verbosity"`
 }
 
 func initFromReader(reader io.Reader) error {
