@@ -199,12 +199,11 @@ testcases:
 
 Notice the variable `alljson`. All variables declared in output are automatically converted in a json format with the suffix `json`. In the example above, two implicit variables are available: `displayjson.hello` and `alljson`.
 
-venom will load user's executors from the directory `lib/`
-- from the path of the testsuite
-- from the venom path
+Venom will load user's executors from the directory `lib/` relative to the testsuite path. You can force venom to register user executors from a common lib directory, using the flag `--lib-dir`.
 
 ```bash
 $ venom run testsuite.yml # lib/*.yml files will be loaded as executors.
+$ venom run --lib-dir=/foo/bar/lib testsuite.yml # executors will be loaded only from /foo/bar/lib folder.
 ```
 
 # Variables

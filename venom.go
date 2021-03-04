@@ -46,6 +46,7 @@ type Venom struct {
 	testsuites []TestSuite
 	variables  H
 
+	LibDir        string
 	OutputFormat  string
 	OutputDir     string
 	StopOnFailure bool
@@ -145,7 +146,13 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 
 func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
 	workdir := vars["venom.testsuite.workdir"]
-	executorsPath, err := getFilesPath([]string{path.Join(workdir, "lib")})
+	var libPath string
+	if v.LibDir != "" {
+		libPath = v.LibDir
+	} else { // default behavior
+		libPath = path.Join(workdir, "lib")
+	}
+	executorsPath, err := getFilesPath([]string{libPath})
 	if err != nil {
 		return err
 	}
