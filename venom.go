@@ -10,8 +10,8 @@ import (
 	"plugin"
 
 	"github.com/fatih/color"
-	"github.com/fsamin/go-dump"
 	"github.com/ghodss/yaml"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
@@ -108,7 +108,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 	}
 
 	info, _ := t.StringSliceValue("info")
-	vars, err := dump.ToStringMap(h)
+	vars, err := DumpStringPreserveCase(h)
 	if err != nil {
 		return ctx, nil, err
 	}
@@ -157,12 +157,39 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			return errors.Wrapf(err, "unable to read file %q", f)
 		}
 
+		varsFromPartial, err := getUserExecutorPartialYML(ctx, btes)
+		if err != nil {
+			return err
+		}
+
+		// varsFromPartial contains the default vars from the executor
+		varsFromPartialMap, err := DumpStringPreserveCase(varsFromPartial)
+		if err != nil {
+			return errors.Wrapf(err, "unable to parse variables")
+		}
+
+		varsComputed := map[string]string{}
+		for k, v := range vars {
+			varsComputed[k] = v
+		}
+		for k, v := range varsFromPartialMap {
+			// we only take vars from varsFromPartialMap if it's not already exist in vars from arg
+			if _, ok := vars[k]; !ok {
+				varsComputed[k] = v
+			}
+		}
+
+		content, err := interpolate.Do(string(btes), varsComputed)
+		if err != nil {
+			return err
+		}
+
 		ux := UserExecutor{}
-		if err := yaml.Unmarshal(btes, &ux); err != nil {
+		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
 			return errors.Wrapf(err, "unable to parse file %q", f)
 		}
 
-		for k, vr := range vars {
+		for k, vr := range varsComputed {
 			ux.Input.Add(k, vr)
 		}
 

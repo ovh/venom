@@ -14,7 +14,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom/assertions"
-	"github.com/ovh/venom/executors"
 )
 
 type assertionsApplied struct {
@@ -78,7 +77,7 @@ type assertion struct {
 }
 
 func parseAssertions(ctx context.Context, s string, input interface{}) (*assertion, error) {
-	dump, err := executors.Dump(input)
+	dump, err := Dump(input)
 	if err != nil {
 		return nil, errors.New("assertion syntax error")
 	}

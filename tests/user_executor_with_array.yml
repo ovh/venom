@@ -1,0 +1,24 @@
+name: play-with-array
+vars:
+  foo:
+  - fooA
+  - fooB
+
+  array_from_var:
+  - wrongA
+  - wrongB
+
+testcases:
+- name: mytc
+  steps:
+  - type: withArray
+    thearray: {{.foo}}
+    assertions:
+    - result.foobar ShouldEqual ["fooA","fooB"]
+
+- name: using-var-from-arg
+  steps:
+  - type: withArray
+    thearray: {{.array_from_var}}
+    assertions:
+    - result.foobar ShouldEqual ["biz","buz"]

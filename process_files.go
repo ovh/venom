@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/fsamin/go-dump"
 	"github.com/ghodss/yaml"
 
 	"github.com/ovh/cds/sdk/interpolate"
@@ -54,7 +53,7 @@ type partialTestSuite struct {
 	Vars H      `yaml:"vars" json:"vars"`
 }
 
-func (v *Venom) readFiles(filesPath []string) (err error) {
+func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 	for _, f := range filesPath {
 		log.Info("Reading ", f)
 		btes, err := ioutil.ReadFile(f)
@@ -62,7 +61,26 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 			return errors.Wrapf(err, "unable to read file %q", f)
 		}
 
-		vars, err := dump.ToStringMap(v.variables)
+		varCloned := v.variables.Clone()
+
+		fromPartial, err := getVarFromPartialYML(ctx, btes)
+		if err != nil {
+			return errors.Wrapf(err, "unable to get vars from file %q", f)
+		}
+
+		varsFromPartial, err := DumpStringPreserveCase(fromPartial)
+		if err != nil {
+			return errors.Wrapf(err, "unable to parse variables")
+		}
+
+		// we take default vars from the testsuite, only if it's not already is global vars
+		for k, value := range varsFromPartial {
+			if _, ok := varCloned[k]; !ok || (varCloned[k] == "{}" && varCloned["__Len__"] == "0") {
+				varCloned[k] = value
+			}
+		}
+
+		vars, err := DumpStringPreserveCase(varCloned)
 		if err != nil {
 			return errors.Wrapf(err, "unable to parse variables")
 		}
@@ -70,12 +88,6 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 		content, err := interpolate.Do(string(btes), vars)
 		if err != nil {
 			return err
-		}
-
-		var partialTs partialTestSuite
-		if err := yaml.Unmarshal([]byte(content), &partialTs); err != nil {
-			Error(context.Background(), "file content: %s", content)
-			return errors.Wrapf(err, "error while unmarshal file %q", f)
 		}
 
 		var ts TestSuite
@@ -92,7 +104,7 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 
 		ts.Package = f
 		ts.Filename = f
-		ts.Vars = partialTs.Vars.Clone()
+		ts.Vars = varCloned
 
 		ts.Vars.Add("venom.testsuite.workdir", ts.WorkDir)
 		ts.Vars.Add("venom.testsuite.shortName", ts.Name)

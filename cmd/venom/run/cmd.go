@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	yml "github.com/ghodss/yaml"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -37,7 +36,7 @@ import (
 
 var (
 	path          []string
-	variables     []string
+	variables     *[]string
 	format        string
 	varFiles      []string
 	outputDir     string
@@ -47,7 +46,7 @@ var (
 )
 
 func init() {
-	Cmd.Flags().StringSliceVarP(&variables, "var", "", []string{""}, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
+	variables = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
@@ -118,7 +117,7 @@ func initFromReader(reader io.Reader) error {
 		return err
 	}
 
-	variables = configFileData.Variables
+	variables = &configFileData.Variables
 	varFiles = configFileData.VariablesFiles
 	format = configFileData.Format
 	stopOnFailure = configFileData.StopOnFailure
@@ -130,7 +129,8 @@ func initFromReader(reader io.Reader) error {
 
 func initFromEnv() error {
 	if os.Getenv("VENOM_VAR") != "" {
-		variables = strings.Split(os.Getenv("VENOM_VAR"), " ")
+		v := strings.Split(os.Getenv("VENOM_VAR"), " ")
+		variables = &v
 	}
 	if os.Getenv("VENOM_VAR_FROM_FILE") != "" {
 		varFiles = strings.Split(os.Getenv("VENOM_VAR_FROM_FILE"), " ")
@@ -160,7 +160,7 @@ func initFromEnv() error {
 }
 
 func displayArg(ctx context.Context) {
-	venom.Debug(ctx, "Command arg variables=%v", strings.Join(variables, " "))
+	venom.Debug(ctx, "Command arg variables=%v", strings.Join(*variables, " "))
 	venom.Debug(ctx, "Command arg varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "Command arg format=%v", format)
 	venom.Debug(ctx, "Command arg stopOnFailure=%v", stopOnFailure)
@@ -244,7 +244,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 			readers = append(readers, fi)
 		}
 
-		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
+		mapvars, err := readInitialVariables(context.Background(), *variables, readers, os.Environ())
 		if err != nil {
 			return err
 		}
@@ -252,7 +252,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 
 		start := time.Now()
 
-		if err := v.Parse(path); err != nil {
+		if err := v.Parse(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
@@ -282,7 +282,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
 	var cast = func(vS string) interface{} {
 		var v interface{}
-		_ = yml.Unmarshal([]byte(vS), &v) //nolint
+		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
 		return v
 	}
 
@@ -302,7 +302,7 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 		if err != nil {
 			return nil, err
 		}
-		if err := yml.Unmarshal(btes, &tmpResult); err != nil {
+		if err := yaml.Unmarshal(btes, &tmpResult); err != nil {
 			return nil, err
 		}
 		for k, v := range tmpResult {

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
-	"github.com/fsamin/go-dump"
 	"github.com/gosimple/slug"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -58,13 +57,13 @@ func (v *Venom) InitLogger() error {
 }
 
 // Parse parses tests suite to check context and variables
-func (v *Venom) Parse(path []string) error {
+func (v *Venom) Parse(ctx context.Context, path []string) error {
 	filesPath, err := getFilesPath(path)
 	if err != nil {
 		return err
 	}
 
-	if err := v.readFiles(filesPath); err != nil {
+	if err := v.readFiles(ctx, filesPath); err != nil {
 		return err
 	}
 
@@ -74,13 +73,13 @@ func (v *Venom) Parse(path []string) error {
 		ts := &v.testsuites[i]
 		ts.Vars.Add("venom.testsuite", ts.Name)
 
-		Info(context.Background(), "Parsing testsuite %s : %+v", ts.Package, ts.Vars)
+		Info(ctx, "Parsing testsuite %s : %+v", ts.Package, ts.Vars)
 		tvars, textractedVars, err := v.parseTestSuite(ts)
 		if err != nil {
 			return err
 		}
 
-		Debug(context.TODO(), "Testsuite (%s) variables: %+v", ts.Package, ts.Vars)
+		Debug(ctx, "Testsuite (%s) variables: %+v", ts.Package, ts.Vars)
 		for k := range ts.Vars {
 			textractedVars = append(textractedVars, k)
 		}
@@ -110,7 +109,7 @@ func (v *Venom) Parse(path []string) error {
 		}
 	}
 
-	vars, err := dump.ToStringMap(v.variables)
+	vars, err := DumpStringPreserveCase(v.variables)
 	if err != nil {
 		return errors.Wrapf(err, "unable to parse variables")
 	}

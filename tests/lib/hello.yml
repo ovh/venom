@@ -5,7 +5,8 @@ steps:
 - script: echo "{\"hello\":\"{{.input.myarg}}\"}"
   assertions:
   - result.code ShouldEqual 0
+  info: "{{.result.systemoutjson.hello}}"
 output:
   display:
     hello: "{{.result.systemoutjson.hello}}"
-  result: '{{.result.systemout}}'
+  therawout: '{{.result.systemout}}'
