@@ -52,7 +52,7 @@ func init() {
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
-	Cmd.PersistentFlags().StringVarP(&libDir, "lib-dir", "", "", "Lib Directory: this directory can contain user executors. This overrides the default lib folder directory")
+	Cmd.PersistentFlags().StringVarP(&libDir, "lib-dir", "", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
 	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
 
 	if err := initFromEnv(); err != nil {

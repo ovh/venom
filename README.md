@@ -45,9 +45,10 @@ Usage:
 Flags:
       --format string           --format:yaml, json, xml, tap (default "xml")
   -h, --help                    help for run
+      --lib-dir string          Lib Directory: this directory can contain user executors. This overrides the default lib folder directory
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
-      --var strings             --var cds='cds -f config.json' --var cds2='cds -f config.json'
+      --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
@@ -202,10 +203,14 @@ testcases:
 Notice the variable `alljson`. All variables declared in output are automatically converted in a json format with the suffix `json`. In the example above, two implicit variables are available: `displayjson.hello` and `alljson`.
 
 Venom will load user's executors from the directory `lib/` relative to the testsuite path. You add executors source path using the flag `--lib-dir`. 
+Note that all folders listed with `--lib-dir` will be scanned recursively to find `.yml` files as user executors.
 
 ```bash
-$ venom run testsuite.yml # lib/*.yml files will be loaded as executors.
-$ venom run --lib-dir=/etc/venom/lib:$HOME/venom.d/lib testsuite.yml # executors will be loaded from /etc/venom/lib, $HOME/venom.d/lib and lib/ directory relative to testsuite.yml file.
+# lib/*.yml files will be loaded as executors.
+$ venom run testsuite.yml 
+
+# executors will be loaded from /etc/venom/lib, $HOME/venom.d/lib and lib/ directory relative to testsuite.yml file.
+$ venom run --lib-dir=/etc/venom/lib:$HOME/venom.d/lib testsuite.yml 
 ```
 
 # Variables
