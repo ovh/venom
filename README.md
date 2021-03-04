@@ -63,6 +63,7 @@ VENOM_FORMAT=json venom run my-test-suite.yml
 ```
       --format           -  example: VENOM_FORMAT=json
       --output-dir       -  example: VENOM_OUTPUT_DIR=.
+      --lib-dir          -  example: VENOM_LIB_DIR=lib/
       --stop-on-failure  -  example: VENOM_STOP_ON_FAILURE=true
       --var              -  example: VENOM_VAR="foo=bar"
       --var-from-file    -  example: VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"
@@ -79,6 +80,7 @@ variables_files:
 stop_on_failure: true
 format: xml
 output_dir: output
+lib_dir: lib
 verbosity: 3
 ```
 

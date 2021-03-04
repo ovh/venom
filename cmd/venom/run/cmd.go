@@ -149,6 +149,9 @@ func initFromEnv() error {
 			return fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
 		}
 	}
+	if os.Getenv("VENOM_LIB_DIR") != "" {
+		libDir = os.Getenv("VENOM_LIB_DIR")
+	}
 	if os.Getenv("VENOM_OUTPUT_DIR") != "" {
 		outputDir = os.Getenv("VENOM_OUTPUT_DIR")
 	}
