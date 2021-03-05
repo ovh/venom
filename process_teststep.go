@@ -33,7 +33,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		}
 
 		var err error
-		result, err = v.runTestStepExecutor(ctx, e, step)
+		result, err = v.runTestStepExecutor(ctx, e, tc, step)
 		if err != nil {
 			// we save the failure only if it's the last attempt
 			if retry == e.Retry() {
@@ -109,12 +109,12 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 	return result
 }
 
-func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, step TestStep) (interface{}, error) {
+func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, tc *TestCase, step TestStep) (interface{}, error) {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	if e.Timeout() == 0 {
 		if e.Type() == "user" {
-			return v.RunUserExecutor(ctx, e, step)
+			return v.RunUserExecutor(ctx, e, tc, step)
 		}
 		return e.Run(ctx, step)
 	}
@@ -128,7 +128,7 @@ func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, step 
 		var err error
 		var result interface{}
 		if e.Type() == "user" {
-			result, err = v.RunUserExecutor(ctx, e, step)
+			result, err = v.RunUserExecutor(ctx, e, tc, step)
 		} else {
 			result, err = e.Run(ctx, step)
 		}
