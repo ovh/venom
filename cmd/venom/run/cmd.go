@@ -40,6 +40,7 @@ var (
 	format        string
 	varFiles      []string
 	outputDir     string
+	libDir        string
 	stopOnFailure bool
 	verbose       *int
 	v             *venom.Venom
@@ -51,6 +52,7 @@ func init() {
 	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
 	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
 	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
+	Cmd.PersistentFlags().StringVarP(&libDir, "lib-dir", "", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
 	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
 
 	if err := initFromEnv(); err != nil {
@@ -98,11 +100,12 @@ func initFromConfigFile() error {
 }
 
 type ConfigFileData struct {
+	Format         string   `json:"format" yaml:"format"`
+	LibDir         string   `json:"lib_dir" yaml:"lib_dir"`
+	OutputDir      string   `json:"output_dir" yaml:"output_dir"`
+	StopOnFailure  bool     `json:"stop_on_failure" yaml:"stop_on_failure"`
 	Variables      []string `json:"variables" yaml:"variables"`
 	VariablesFiles []string `json:"variables_files" yaml:"variables_files"`
-	StopOnFailure  bool     `json:"stop_on_failure" yaml:"stop_on_failure"`
-	Format         string   `json:"format" yaml:"format"`
-	OutputDir      string   `json:"output_dir" yaml:"output_dir"`
 	Verbosity      int      `json:"verbosity" yaml:"verbosity"`
 }
 
@@ -117,11 +120,12 @@ func initFromReader(reader io.Reader) error {
 		return err
 	}
 
+	format = configFileData.Format
+	libDir = configFileData.LibDir
+	outputDir = configFileData.OutputDir
+	stopOnFailure = configFileData.StopOnFailure
 	variables = &configFileData.Variables
 	varFiles = configFileData.VariablesFiles
-	format = configFileData.Format
-	stopOnFailure = configFileData.StopOnFailure
-	outputDir = configFileData.OutputDir
 	verbose = &configFileData.Verbosity
 
 	return nil
@@ -145,6 +149,9 @@ func initFromEnv() error {
 			return fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
 		}
 	}
+	if os.Getenv("VENOM_LIB_DIR") != "" {
+		libDir = os.Getenv("VENOM_LIB_DIR")
+	}
 	if os.Getenv("VENOM_OUTPUT_DIR") != "" {
 		outputDir = os.Getenv("VENOM_OUTPUT_DIR")
 	}
@@ -160,11 +167,12 @@ func initFromEnv() error {
 }
 
 func displayArg(ctx context.Context) {
+	venom.Debug(ctx, "Command arg format=%v", format)
+	venom.Debug(ctx, "Command arg libDir=%v", libDir)
+	venom.Debug(ctx, "Command arg outputDir=%v", outputDir)
+	venom.Debug(ctx, "Command arg stopOnFailure=%v", stopOnFailure)
 	venom.Debug(ctx, "Command arg variables=%v", strings.Join(*variables, " "))
 	venom.Debug(ctx, "Command arg varFiles=%v", strings.Join(varFiles, " "))
-	venom.Debug(ctx, "Command arg format=%v", format)
-	venom.Debug(ctx, "Command arg stopOnFailure=%v", stopOnFailure)
-	venom.Debug(ctx, "Command arg outputDir=%v", outputDir)
 	venom.Debug(ctx, "Command arg verbose=%v", *verbose)
 }
 
@@ -201,6 +209,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		v.OutputDir = outputDir
+		v.LibDir = libDir
 		v.OutputFormat = format
 		v.StopOnFailure = stopOnFailure
 		v.Verbose = *verbose

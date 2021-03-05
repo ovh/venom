@@ -1,0 +1,15 @@
+name: testsuite with a user executor in custom dir
+testcases:
+- name: testfoobar
+  steps:
+  - type: foobar
+    bar: hop
+    assertions:
+    - result.foobar ShouldEqual foo-hop
+
+- name: testfoobar custom
+  steps:
+  - type: foobarcustom
+    bar: hop
+    assertions:
+    - result.foobar ShouldEqual custom-hop
