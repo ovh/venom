@@ -171,7 +171,7 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 	return result
 }
 
-func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, step TestStep) (interface{}, error) {
+func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, step TestStep) (interface{}, error) {
 	vrs := H{}
 	uxIn := runner.GetExecutor().(UserExecutor)
 
@@ -243,6 +243,8 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, step
 		return nil, errors.Wrapf(err, "unable to unmarshal")
 	}
 
+	tcIn.Errors = tc.Errors
+	tcIn.Failures = tc.Failures
 	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
 		return outputResult, fmt.Errorf("failed")
 	}
