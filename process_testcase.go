@@ -121,6 +121,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	ctx = context.WithValue(ctx, ContextKey("testcase"), tc.Name)
+	tc.TestSuiteVars = ts.Vars.Clone()
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)

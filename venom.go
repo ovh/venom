@@ -25,6 +25,10 @@ var (
 	Version = "snapshot"
 )
 
+// ContextKey can be added in context to store contextual infos. Also used by logger.
+type ContextKey string
+
+// New instanciates a new venom on venom run cmd
 func New() *Venom {
 	v := &Venom{
 		LogOutput:        os.Stdout,
@@ -93,25 +97,25 @@ func (v *Venom) RegisterExecutorUser(name string, e Executor) {
 
 // GetExecutorRunner initializes a test by name
 // no type -> exec is default
-func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context.Context, ExecutorRunner, error) {
-	name, _ := t.StringValue("type")
+func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (context.Context, ExecutorRunner, error) {
+	name, _ := ts.StringValue("type")
 	if name == "" {
 		name = "exec"
 	}
-	retry, err := t.IntValue("retry")
+	retry, err := ts.IntValue("retry")
 	if err != nil {
 		return nil, nil, err
 	}
-	delay, err := t.IntValue("delay")
+	delay, err := ts.IntValue("delay")
 	if err != nil {
 		return nil, nil, err
 	}
-	timeout, err := t.IntValue("timeout")
+	timeout, err := ts.IntValue("timeout")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	info, _ := t.StringSliceValue("info")
+	info, _ := ts.StringSliceValue("info")
 	vars, err := DumpStringPreserveCase(h)
 	if err != nil {
 		return ctx, nil, err
@@ -128,7 +132,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, t TestStep, h H) (context
 		return ctx, newExecutorRunner(ex, name, "builtin", retry, delay, timeout, info), nil
 	}
 
-	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
+	if err := v.registerUserExecutors(ctx, name, ts, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
 	}
 
@@ -175,7 +179,7 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 	return filePaths, nil
 }
 
-func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
+func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestStep, vars map[string]string) error {
 	executorsPath, err := v.getUserExecutorFilesPath(vars)
 	if err != nil {
 		return err
@@ -188,13 +192,13 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			return errors.Wrapf(err, "unable to read file %q", f)
 		}
 
-		varsFromPartial, err := getUserExecutorPartialYML(ctx, btes)
+		varsFromInput, err := getUserExecutorInputYML(ctx, btes)
 		if err != nil {
 			return err
 		}
 
-		// varsFromPartial contains the default vars from the executor
-		varsFromPartialMap, err := DumpStringPreserveCase(varsFromPartial)
+		// varsFromInput contains the default vars from the executor
+		varsFromInputMap, err := DumpStringPreserveCase(varsFromInput)
 		if err != nil {
 			return errors.Wrapf(err, "unable to parse variables")
 		}
@@ -203,8 +207,8 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 		for k, v := range vars {
 			varsComputed[k] = v
 		}
-		for k, v := range varsFromPartialMap {
-			// we only take vars from varsFromPartialMap if it's not already exist in vars from arg
+		for k, v := range varsFromInputMap {
+			// we only take vars from varsFromInputMap if it's not already exist in vars from teststep vars
 			if _, ok := vars[k]; !ok {
 				varsComputed[k] = v
 			}
@@ -215,7 +219,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			return err
 		}
 
-		ux := UserExecutor{}
+		ux := UserExecutor{Filename: f}
 		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
 			return errors.Wrapf(err, "unable to parse file %q", f)
 		}

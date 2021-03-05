@@ -1,0 +1,12 @@
+executor: userExecutorB
+input:
+  foo: defaultValueB
+steps:
+
+- script: echo '{{.input.foo}}'
+  info: 'value on B: {{.input.foo}}'
+- type: exec
+  script: echo 'input.foo {{.input.foo}}; fooFromEnv {{.foo}}'
+  assertions:
+  - result.code ShouldEqual 0
+  - result.systemout ShouldEqual input.foo foo_from_vars_on_b; fooFromEnv foo_from_vars

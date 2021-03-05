@@ -1,0 +1,12 @@
+name: Many user executor
+vars:
+  foo: "foo_from_vars"
+
+testcases:
+- name: info
+  steps:
+  - script: echo "foo"
+    info: 'value foo vars {{.foo}}'
+- name: mytc
+  steps:
+  - type: userExecutorA

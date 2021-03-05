@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func getUserExecutorPartialYML(ctx context.Context, btesIn []byte) (H, error) {
+func getUserExecutorInputYML(ctx context.Context, btesIn []byte) (H, error) {
 	btes := readPartialYML(btesIn, "input")
 
 	var result = map[string]interface{}{}
