@@ -76,7 +76,12 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		// we take default vars from the testsuite, only if it's not already is global vars
 		for k, value := range varsFromPartial {
 			if _, ok := varCloned[k]; !ok || (varCloned[k] == "{}" && varCloned["__Len__"] == "0") {
-				varCloned[k] = value
+				// we interpolate the value of vars here, to do it only once per ts
+				valueInterpolated, err := interpolate.Do(value, varsFromPartial)
+				if err != nil {
+					return errors.Wrapf(err, "unable to parse variable %q", k)
+				}
+				varCloned[k] = valueInterpolated
 			}
 		}
 

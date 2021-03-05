@@ -1,0 +1,20 @@
+name: testsuite
+vars:
+  phone_number: "+3375{{ randNumeric 7 }}"
+testcases:
+- name: test 1
+  steps:
+  - type: exec
+    script: echo '{{.phone_number}}'
+    info: '{{.phone_number}} test 1'
+    vars:
+      myvariable:
+        from: result.systemout
+        regex: ([a-z0-9\+]+)
+- name: test 2
+  steps:
+  - type: exec
+    script: echo '{{.phone_number}}'
+    info: '{{.phone_number}} test 2'
+    assertions:
+    - result.systemout ShouldEqual {{.test-1.myvariable}}
