@@ -12,8 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type ContextKey string
-
 func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 	if v.Verbose == 3 {
 		var filename, filenameCPU, filenameMem string

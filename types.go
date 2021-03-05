@@ -111,11 +111,13 @@ type TestCase struct {
 	Time            string            `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
 	RawTestSteps    []json.RawMessage `xml:"-" json:"steps" yaml:"steps"`
 	testSteps       []TestStep
+	TestSuiteVars   H `xml:"-" json:"-" yaml:"-"`
 	Vars            H `xml:"-" json:"-" yaml:"vars"`
 	computedVars    H
 	computedInfo    []string
 	computedVerbose []string
 	Skip            []string `xml:"-" json:"skip" yaml:"skip"`
+	IsExecutor      bool     `xml:"-" json:"-" yaml:"-"`
 }
 
 // TestStep represents a testStep

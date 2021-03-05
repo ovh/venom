@@ -1,0 +1,10 @@
+executor: userExecutorA
+input:
+  foo: defaultValueA
+steps:
+- script: echo '{{.input.foo}}'
+  info: 'value on A: {{.input.foo}}'
+  assertions:
+  - result.code ShouldEqual 0
+- type: userExecutorB
+  foo: '{{.input.foo}}_on_b'

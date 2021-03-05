@@ -145,8 +145,10 @@ type UserExecutor struct {
 	Input        H                 `json:"input" yaml:"input"`
 	RawTestSteps []json.RawMessage `json:"steps" yaml:"steps"`
 	Output       json.RawMessage   `json:"output" yaml:"output"`
+	Filename     string            `json:"-" yaml:"-"`
 }
 
+// Run is not implemented on user executor
 func (ux UserExecutor) Run(ctx context.Context, step TestStep) (interface{}, error) {
 	return nil, errors.New("Run not implemented for user interface, use RunUserExecutor instead")
 }
@@ -172,11 +174,14 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 }
 
 func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, step TestStep) (interface{}, error) {
-	vrs := H{}
+	vrs := tcIn.TestSuiteVars.Clone()
 	uxIn := runner.GetExecutor().(UserExecutor)
 
 	for k, va := range uxIn.Input {
-		if !strings.HasPrefix(k, "venom") {
+		if strings.HasPrefix(k, "input.") {
+			// do not reinject input.vars from parent user executor if exists
+			continue
+		} else if !strings.HasPrefix(k, "venom") {
 			if vl, ok := step[k]; ok && vl != "" { // value from step
 				vrs.AddWithPrefix("input", k, vl)
 			} else { // default value from executor
@@ -191,14 +196,18 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	ux := exe.GetExecutor().(UserExecutor)
 
 	tc := &TestCase{
-		Name:         ux.Executor,
-		RawTestSteps: ux.RawTestSteps,
-		Vars:         vrs,
+		Name:          ux.Executor,
+		RawTestSteps:  ux.RawTestSteps,
+		Vars:          vrs,
+		TestSuiteVars: tcIn.TestSuiteVars,
+		IsExecutor:    true,
 	}
 
 	tc.originalName = tc.Name
 	tc.Name = slug.Make(tc.Name)
 	tc.Vars.Add("venom.testcase", tc.Name)
+	tc.Vars.Add("venom.executor.filename", ux.Filename)
+	tc.Vars.Add("venom.executor.name", ux.Executor)
 	tc.computedVars = H{}
 
 	Debug(ctx, "running user executor %v", tc.Name)
