@@ -504,6 +504,54 @@ testcases:
 
 ```
 
+# FAQ
+
+## Common errors with quotes
+
+If you have this kind of error:
+
+```
+err:unable to parse file "foo.yaml": error converting YAML to JSON: yaml: line 8: did not find expected key
+```
+
+this is probably because you try to use a json value instead of a string. You should have more details in venom.log file.
+
+Wrong:
+
+```yml
+...
+vars:
+  body: >-
+      {
+        "the-attribute": "the-value"
+      }
+...
+steps:
+- type: http
+  body: "{{.body}}"
+...
+```
+
+OK:
+
+
+```yml
+...
+vars:
+  body: >-
+      {
+        "the-attribute": "the-value"
+      }
+...
+steps:
+- type: http
+  body: '{{.body}}'
+...
+```
+
+Note the simple quote on the value of `body`.
+
+
 # Use venom in CI
 
 Venom can be use on dev environement or your CI server.
