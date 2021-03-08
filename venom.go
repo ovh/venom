@@ -221,7 +221,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 
 		ux := UserExecutor{Filename: f}
 		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
-			return errors.Wrapf(err, "unable to parse file %q", f)
+			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
 		}
 
 		for k, vr := range varsComputed {
