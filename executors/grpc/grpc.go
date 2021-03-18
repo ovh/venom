@@ -121,7 +121,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	start := time.Now()
 
 	// prepare dial function
-	dial := func() *grpc.ClientConn {
+	dial := func() (*grpc.ClientConn, error) {
 		dialTime := 10 * time.Second
 		if e.ConnectTimeout != nil && *e.ConnectTimeout > 0 {
 			dialTime = time.Duration(*e.ConnectTimeout * int64(time.Second))
@@ -131,9 +131,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		var creds credentials.TransportCredentials
 		cc, err := grpcurl.BlockingDial(ctx, "tcp", e.URL, creds)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return cc
+		return cc, nil
 	}
 
 	var cc *grpc.ClientConn
@@ -141,8 +141,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	var refClient *grpcreflect.Client
 	md := grpcurl.MetadataFromHeaders(headers)
 	refCtx := metadata.NewOutgoingContext(ctx, md)
-	cc = dial()
-	if cc == nil {
+	cc, err = dial()
+	if err != nil {
 		return Result{Err: err.Error()}, fmt.Errorf("grpc dial error")
 	}
 	refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
