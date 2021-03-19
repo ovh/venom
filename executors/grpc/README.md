@@ -11,7 +11,7 @@ gRPC server reflection also does not properly work with `gogo/protobuf`: grpc/gr
 
 ## Tests
 
-Results of test are parsed as json and saved in `bodyjson`. Status codes correspond 
+Results of test are parsed as json and saved in `systemoutjson`. Status codes correspond 
 to the official status codes of gRPC.
 You can find what individual return codes mean [here](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md).
 
@@ -49,7 +49,7 @@ testcases:
     method: GetAllFoos
     assertions:
     - result.code ShouldEqual 0
-    - result.bodyjson.foo ShouldEqual bar
+    - result.systemoutjson.foo ShouldEqual bar
 
 ```
 
