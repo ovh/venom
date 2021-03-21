@@ -1,0 +1,6 @@
+variables_files:
+  - env.yml
+variables:
+  - foo3=from-venomrc  
+output_dir: results
+verbosity: 3

@@ -16,6 +16,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/executors/dbfixtures"
@@ -35,27 +36,40 @@ import (
 )
 
 var (
-	path          []string
-	variables     *[]string
+	path []string
+	v    *venom.Venom
+
+	variables     []string
 	format        string
 	varFiles      []string
 	outputDir     string
 	libDir        string
 	stopOnFailure bool
 	verbose       *int
-	v             *venom.Venom
+
+	variablesFlag     *[]string
+	formatFlag        *string
+	varFilesFlag      *[]string
+	outputDirFlag     *string
+	libDirFlag        *string
+	stopOnFailureFlag *bool
+	verboseFlag       *int
 )
 
 func init() {
-	variables = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
-	Cmd.Flags().StringSliceVarP(&varFiles, "var-from-file", "", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
-	Cmd.Flags().StringVarP(&format, "format", "", "xml", "--format:yaml, json, xml, tap")
-	Cmd.Flags().BoolVarP(&stopOnFailure, "stop-on-failure", "", false, "Stop running Test Suite on first Test Case failure")
-	Cmd.PersistentFlags().StringVarP(&outputDir, "output-dir", "", "", "Output Directory: create tests results file inside this directory")
-	Cmd.PersistentFlags().StringVarP(&libDir, "lib-dir", "", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
-	verbose = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
+	formatFlag = Cmd.Flags().String("format", "xml", "--format:yaml, json, xml, tap")
+	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
+	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
+	varFilesFlag = Cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
+	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
+	outputDirFlag = Cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
+	libDirFlag = Cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+}
 
-	if err := initFromEnv(); err != nil {
+func initArgs(cmd *cobra.Command) {
+	// command line flags overrides the configuration file.
+	// Configuration file overrides the environment variables.
+	if _, err := initFromEnv(os.Environ()); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
 	}
@@ -63,6 +77,51 @@ func init() {
 	if err := initFromConfigFile(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
+	}
+	cmd.LocalFlags().VisitAll(initFromCommandArguments)
+}
+
+func initFromCommandArguments(f *pflag.Flag) {
+	if !f.Changed {
+		return
+	}
+
+	switch f.Name {
+	case "format":
+		if formatFlag != nil {
+			format = *formatFlag
+		}
+
+	case "stop-on-failure":
+		if stopOnFailureFlag != nil {
+			stopOnFailure = *stopOnFailureFlag
+		}
+	case "output-dir":
+		if outputDirFlag != nil {
+			outputDir = *outputDirFlag
+		}
+	case "lib-dir":
+		if libDirFlag != nil {
+			libDir = *libDirFlag
+		}
+	case "verbose":
+		if verboseFlag != nil {
+			verbose = verboseFlag
+		}
+	case "var-from-file":
+		if varFilesFlag != nil {
+			for _, varFile := range *varFilesFlag {
+				if !isInArray(varFile, varFiles) {
+					varFiles = append(varFiles, varFile)
+				}
+			}
+		}
+	case "var":
+		if variablesFlag != nil {
+			for _, varFlag := range *variablesFlag {
+				variables = mergeVariables(varFlag, variables)
+			}
+		}
 	}
 }
 
@@ -81,7 +140,7 @@ func initFromConfigFile() error {
 			return err
 		}
 		defer fi.Close()
-		return initFromReader(fi)
+		return initFromReaderConfigFile(fi)
 	}
 
 	home, err := homedir.Dir()
@@ -94,22 +153,23 @@ func initFromConfigFile() error {
 			return err
 		}
 		defer fi.Close()
-		return initFromReader(fi)
+		return initFromReaderConfigFile(fi)
 	}
 	return nil
 }
 
 type ConfigFileData struct {
-	Format         string   `json:"format" yaml:"format"`
-	LibDir         string   `json:"lib_dir" yaml:"lib_dir"`
-	OutputDir      string   `json:"output_dir" yaml:"output_dir"`
-	StopOnFailure  bool     `json:"stop_on_failure" yaml:"stop_on_failure"`
-	Variables      []string `json:"variables" yaml:"variables"`
-	VariablesFiles []string `json:"variables_files" yaml:"variables_files"`
-	Verbosity      int      `json:"verbosity" yaml:"verbosity"`
+	Format         *string   `json:"format,omitempty" yaml:"format,omitempty"`
+	LibDir         *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
+	OutputDir      *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
+	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
+	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
+	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
+	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
 }
 
-func initFromReader(reader io.Reader) error {
+// Configuration file overrides the environment variables.
+func initFromReaderConfigFile(reader io.Reader) error {
 	btes, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return err
@@ -120,21 +180,67 @@ func initFromReader(reader io.Reader) error {
 		return err
 	}
 
-	format = configFileData.Format
-	libDir = configFileData.LibDir
-	outputDir = configFileData.OutputDir
-	stopOnFailure = configFileData.StopOnFailure
-	variables = &configFileData.Variables
-	varFiles = configFileData.VariablesFiles
-	verbose = &configFileData.Verbosity
+	if configFileData.Format != nil {
+		format = *configFileData.Format
+	}
+	if configFileData.LibDir != nil {
+		libDir = *configFileData.LibDir
+	}
+	if configFileData.OutputDir != nil {
+		outputDir = *configFileData.OutputDir
+	}
+	if configFileData.StopOnFailure != nil {
+		stopOnFailure = *configFileData.StopOnFailure
+	}
+	if configFileData.Variables != nil {
+		for _, varFromFile := range *configFileData.Variables {
+			variables = mergeVariables(varFromFile, variables)
+		}
+	}
+	if configFileData.VariablesFiles != nil {
+		for _, varFile := range *configFileData.VariablesFiles {
+			if !isInArray(varFile, varFiles) {
+				varFiles = append(varFiles, varFile)
+			}
+		}
+	}
+	if configFileData.Verbosity != nil {
+		verbose = configFileData.Verbosity
+	}
 
 	return nil
 }
 
-func initFromEnv() error {
+func mergeVariables(varToMerge string, existingVariables []string) []string {
+	idx := strings.Index(varToMerge, "=")
+	nameConfigFile := varToMerge[0:idx]
+	for i, variable := range existingVariables {
+		idx := strings.Index(variable, "=")
+		if idx > 1 {
+			nameEnv := variable[0:idx]
+			if nameEnv == nameConfigFile {
+				existingVariables[i] = varToMerge
+				return existingVariables
+			}
+		}
+	}
+	existingVariables = append(existingVariables, varToMerge)
+	return existingVariables
+}
+
+func isInArray(elt string, array []string) bool {
+	for _, item := range array {
+		if item == elt {
+			return true
+		}
+	}
+	return false
+}
+
+func initFromEnv(environ []string) ([]string, error) {
 	if os.Getenv("VENOM_VAR") != "" {
 		v := strings.Split(os.Getenv("VENOM_VAR"), " ")
-		variables = &v
+		variables = v
 	}
 	if os.Getenv("VENOM_VAR_FROM_FILE") != "" {
 		varFiles = strings.Split(os.Getenv("VENOM_VAR_FROM_FILE"), " ")
@@ -146,7 +252,7 @@ func initFromEnv() error {
 		var err error
 		stopOnFailure, err = strconv.ParseBool(os.Getenv("VENOM_STOP_ON_FAILURE"))
 		if err != nil {
-			return fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
+			return nil, fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
 		}
 	}
 	if os.Getenv("VENOM_LIB_DIR") != "" {
@@ -158,22 +264,37 @@ func initFromEnv() error {
 	if os.Getenv("VENOM_VERBOSE") != "" {
 		v, err := strconv.ParseInt(os.Getenv("VENOM_VERBOSE"), 10, 64)
 		if err != nil {
-			return fmt.Errorf("invalid value for VENOM_VERBOSE, must be 1, 2 or 3")
+			return nil, fmt.Errorf("invalid value for VENOM_VERBOSE, must be 1, 2 or 3")
 		}
 		v2 := int(v)
 		verbose = &v2
 	}
-	return nil
+
+	var cast = func(vS string) interface{} {
+		var v interface{}
+		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
+		return v
+	}
+
+	for _, env := range environ {
+		if strings.HasPrefix(env, "VENOM_VAR_") {
+			tuple := strings.Split(env, "=")
+			k := strings.TrimPrefix(tuple[0], "VENOM_VAR_")
+			variables = append(variables, fmt.Sprintf("%v=%v", k, cast(tuple[1])))
+		}
+	}
+
+	return variables, nil
 }
 
 func displayArg(ctx context.Context) {
-	venom.Debug(ctx, "Command arg format=%v", format)
-	venom.Debug(ctx, "Command arg libDir=%v", libDir)
-	venom.Debug(ctx, "Command arg outputDir=%v", outputDir)
-	venom.Debug(ctx, "Command arg stopOnFailure=%v", stopOnFailure)
-	venom.Debug(ctx, "Command arg variables=%v", strings.Join(*variables, " "))
-	venom.Debug(ctx, "Command arg varFiles=%v", strings.Join(varFiles, " "))
-	venom.Debug(ctx, "Command arg verbose=%v", *verbose)
+	venom.Debug(ctx, "option format=%v", format)
+	venom.Debug(ctx, "option libDir=%v", libDir)
+	venom.Debug(ctx, "option outputDir=%v", outputDir)
+	venom.Debug(ctx, "option stopOnFailure=%v", stopOnFailure)
+	venom.Debug(ctx, "option variables=%v", strings.Join(variables, " "))
+	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
+	venom.Debug(ctx, "option verbose=%v", *verbose)
 }
 
 // Cmd run
@@ -208,6 +329,8 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterExecutorBuiltin(sql.Name, sql.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		initArgs(cmd)
+
 		v.OutputDir = outputDir
 		v.LibDir = libDir
 		v.OutputFormat = format
@@ -253,7 +376,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 			readers = append(readers, fi)
 		}
 
-		mapvars, err := readInitialVariables(context.Background(), *variables, readers, os.Environ())
+		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
 		if err != nil {
 			return err
 		}
@@ -296,14 +419,6 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 	}
 
 	var result = map[string]interface{}{}
-	for _, env := range environ {
-		if strings.HasPrefix(env, "VENOM_VAR_") {
-			tuple := strings.Split(env, "=")
-			k := strings.TrimPrefix(tuple[0], "VENOM_VAR_")
-			result[k] = cast(tuple[1])
-			venom.Debug(ctx, "Adding variable from environment variable %s=%s", k, result[k])
-		}
-	}
 
 	for _, r := range argVarsFiles {
 		var tmpResult = map[string]interface{}{}

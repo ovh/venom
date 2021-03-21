@@ -1,13 +1,13 @@
 package run
 
 import (
+	"context"
 	"io"
 	"strings"
 	"testing"
 
 	"github.com/ovh/venom"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 )
 
 func Test_readInitialVariables(t *testing.T) {
@@ -23,17 +23,6 @@ func Test_readInitialVariables(t *testing.T) {
 		want    map[string]interface{}
 		wantErr bool
 	}{
-		{
-			name: "from environment",
-			args: args{
-				env: []string{`VENOM_VAR_a=1`, `VENOM_VAR_b="B"`, `VENOM_VAR_c=[1,2,3]`},
-			},
-			want: map[string]interface{}{
-				"a": 1.0,
-				"b": "B",
-				"c": []interface{}{1.0, 2.0, 3.0},
-			},
-		},
 		{
 			name: "from args",
 			args: args{
@@ -83,5 +72,36 @@ c:
 			}
 			require.EqualValues(t, tt.want, got)
 		})
+	}
+}
+
+func Test_mergeVariables(t *testing.T) {
+	ma := mergeVariables("aa=bb", []string{"cc=dd", "ee=ff"})
+	require.Equal(t, 3, len(ma))
+
+	mb := mergeVariables("aa=bb", []string{"aa=dd"})
+	require.Equal(t, 1, len(mb))
+
+	mc := mergeVariables("aa=bb=dd", []string{"aa=dd"})
+	require.Equal(t, 1, len(mc))
+
+	md := mergeVariables("aa=bb=dd", []string{"cc=dd"})
+	require.Equal(t, 2, len(md))
+}
+
+func Test_initFromEnv(t *testing.T) {
+	env := []string{`VENOM_VAR_a=1`, `VENOM_VAR_b="B"`, `VENOM_VAR_c=[1,2,3]`}
+	found, err := initFromEnv(env)
+	require.NoError(t, err)
+	require.Equal(t, 3, len(found))
+	var nb int
+	for i := range found {
+		if found[i] == "a=1" {
+			nb++
+		} else if found[i] == "b=B" {
+			nb++
+		} else if found[i] == "c=[1,2,3]" {
+			nb++
+		}
 	}
 }
