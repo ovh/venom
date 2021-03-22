@@ -42,7 +42,7 @@ stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
 
 run-test: wait-for-kafka
-	@(cd ../cmd/venom; go build && VENOM_VAR_MY_ENVAR=foo ./venom run --stop-on-failure -vv --lib-dir=lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ../../tests/kafka/testVariables.yml  --var-from-file ../../tests/vars/vars.yml ../../tests/*.yml ../../tests/assertions/*.yml)
+	@(cd ../cmd/venom; go build && VENOM_VAR_MY_ENVAR=foo ./venom run --stop-on-failure -vv --lib-dir=lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ../../tests/kafka/testVariables.yml  --var-from-file ../../tests/vars/vars.yml ../../tests/*.yml ../../tests/assertions/*.yml && cp ./venom ../../tests/vars_override/venom && cd ../../tests/vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ./venom run --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' mytc.yml)
 
 .PHONY: wait-for-kafka
 wait-for-kafka:

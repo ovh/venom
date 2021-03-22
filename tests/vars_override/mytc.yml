@@ -1,0 +1,42 @@
+name: testsuite
+
+vars:
+  foo:
+  - fooA
+  - fooB
+
+  array_from_var:
+  - wrongA
+  - wrongB
+
+testcases:
+- name: echo_foo from command line
+  steps:
+  - type: exec
+    script: echo "{{.foo}}"
+    info: echo "{{.foo}}"
+    assertions:
+    - result.systemout ShouldEqual from-cmd-arg
+
+- name: echo_FOO2 from Env
+  steps:
+  - type: exec
+    script: echo "{{.FOO2}}"
+    info: echo "{{.FOO2}}"
+    assertions:
+    - result.systemout ShouldEqual from-env2
+
+- name: echo_foo3 from venomrc
+  steps:
+  - type: exec
+    script: echo "{{.foo3}}"
+    info: echo "{{.foo3}}"
+    assertions:
+    - result.systemout ShouldEqual from-venomrc
+
+- name: using-var-from-arg
+  steps:
+  - type: exec
+    script: echo '{{.array_from_var}}'
+    assertions:
+    - result.systemout ShouldEqual ["biz","buz"]

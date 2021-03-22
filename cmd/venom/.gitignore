@@ -1,3 +1,4 @@
 venom
 bin
 *.yml
+.venomrc
