@@ -5,6 +5,7 @@ endef
 docker-network := venom-test-net
 
 COVER_FILES = $(shell find . -name "*.coverprofile")
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/venom | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
 venom-postgres.cid:
 	$(call docker_run,postgres,postgres,-p 15432:5432 -e POSTGRES_PASSWORD=venom -e POSTGRES_USER=venom -e POSTGRES_DB=venom)
@@ -44,7 +45,9 @@ stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
 
 build-test-binary:
-	cd ../cmd/venom && CGO_ENABLED=1 go test -coverpkg="./..." -c . -o ../../tests/venom.test -tags testbincover
+	cd ../cmd/venom; \
+	TEMP=`$(PKGS_COMMA_SEP)`; \
+	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -tags testbincover;
 
 build-test-binary-docker:
 	docker run -v `pwd`/..:/workspace golang:1.16 sh -c "cd /workspace/tests && make build-test-binary"	
@@ -60,7 +63,7 @@ wait-for-kafka:
 	echo "\n\033[0;32mdone\033[0m"
 
 clean:
-	@rm -f *.prof *.log *.dump.json
+	@rm -f *.prof *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
 
 merge-coverage:
 	@docker run -v `pwd`:/workspace golang:1.16 sh -c "\
