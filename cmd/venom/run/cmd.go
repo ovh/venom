@@ -45,7 +45,7 @@ var (
 	outputDir     string
 	libDir        string
 	stopOnFailure bool
-	verbose       *int
+	verbose       int
 
 	variablesFlag     *[]string
 	formatFlag        *string
@@ -106,7 +106,7 @@ func initFromCommandArguments(f *pflag.Flag) {
 		}
 	case "verbose":
 		if verboseFlag != nil {
-			verbose = verboseFlag
+			verbose = *verboseFlag
 		}
 	case "var-from-file":
 		if varFilesFlag != nil {
@@ -205,7 +205,7 @@ func initFromReaderConfigFile(reader io.Reader) error {
 		}
 	}
 	if configFileData.Verbosity != nil {
-		verbose = configFileData.Verbosity
+		verbose = *configFileData.Verbosity
 	}
 
 	return nil
@@ -267,7 +267,7 @@ func initFromEnv(environ []string) ([]string, error) {
 			return nil, fmt.Errorf("invalid value for VENOM_VERBOSE, must be 1, 2 or 3")
 		}
 		v2 := int(v)
-		verbose = &v2
+		verbose = v2
 	}
 
 	var cast = func(vS string) interface{} {
@@ -294,7 +294,7 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option stopOnFailure=%v", stopOnFailure)
 	venom.Debug(ctx, "option variables=%v", strings.Join(variables, " "))
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
-	venom.Debug(ctx, "option verbose=%v", *verbose)
+	venom.Debug(ctx, "option verbose=%v", verbose)
 }
 
 // Cmd run
@@ -335,7 +335,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.LibDir = libDir
 		v.OutputFormat = format
 		v.StopOnFailure = stopOnFailure
-		v.Verbose = *verbose
+		v.Verbose = verbose
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -359,7 +359,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 				defer pprof.StopCPUProfile()
 			}
 		}
-		if *verbose >= 2 {
+		if verbose >= 2 {
 			displayArg(context.Background())
 		}
 
