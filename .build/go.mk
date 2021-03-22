@@ -2,12 +2,13 @@
 
 GO_BUILD 			= CGO_ENABLED=0 go build -installsuffix cgo
 GO_LIST 			= env GO111MODULE=on go list
-TEST_CMD 			= go test -v -timeout 600s -coverprofile=profile.coverprofile
-TEST_C_CMD 			= go test -c -coverprofile=profile.coverprofile
+TEST_C_CMD 			= go test -c
 TEST_RUN_ARGS 		= -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
 CURRENT_PACKAGE 	= $(shell $(GO_LIST))
 TARGET_DIST 		:= ./dist
 TARGET_RESULTS 		:= ./results
+
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/venom | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
 ##### =====> Clean <===== #####
 
@@ -63,7 +64,9 @@ TESTPKGS_C = $(foreach PKG, $(TESTPKGS), $(TESTPKGS_C_FILE))
 
 $(TESTPKGS_C): #main_test.go
 	$(info *** compiling test $@)
-	@cd $(dir $@) && $(TEST_C_CMD) -o bin.test .
+	@cd $(dir $@); \
+	TEMP=`$(PKGS_COMMA_SEP)`; \
+	$(TEST_C_CMD) -coverpkg $$TEMP -o bin.test .;
 
 ##### =====> Running Tests <===== #####
 
