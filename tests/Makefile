@@ -44,7 +44,9 @@ stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
 
 build-test-binary:
-	cd ../cmd/venom && CGO_ENABLED=1 go test -coverpkg="./..." -c . -o ../../tests/venom.test -tags testbincover
+	@docker run -v `pwd`/..:/workspace golang:1.16 sh -c "\
+			cd /workspace/cmd/venom && CGO_ENABLED=1 go test -coverpkg="./..." -c . -o ../../tests/venom.test -tags testbincover \
+		"	
 
 run-test: wait-for-kafka build-test-binary
 	VENOM_VAR_MY_ENVAR=foo ./venom_wrapper.sh run --stop-on-failure -vv --format=xml --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml  --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml; \
