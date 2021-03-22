@@ -1,2 +1,9 @@
 *.cid
 *.log
+venom.test
+*.args.file
+*.cover.out
+*.error.out
+*.coverprofile
+*.out
+*.test.out
