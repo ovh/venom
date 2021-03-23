@@ -4,6 +4,9 @@ endef
 
 docker-network := venom-test-net
 
+COVER_FILES = $(shell find . -name "*.coverprofile")
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/venom | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
+
 venom-postgres.cid:
 	$(call docker_run,postgres,postgres,-p 15432:5432 -e POSTGRES_PASSWORD=venom -e POSTGRES_USER=venom -e POSTGRES_DB=venom)
 venom-mysql.cid:
@@ -41,8 +44,17 @@ start-test-stack: venom-postgres.cid venom-mysql.cid venom-redis.cid venom-imap.
 stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
 
+build-test-binary:
+	cd ../cmd/venom; \
+	TEMP=`$(PKGS_COMMA_SEP)`; \
+	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -tags testbincover;
+
+build-test-binary-docker:
+	docker run -v `pwd`/..:/workspace golang:1.16 sh -c "cd /workspace/tests && make build-test-binary"	
+
 run-test: wait-for-kafka
-	@(cd ../cmd/venom; go build && VENOM_VAR_MY_ENVAR=foo ./venom run --stop-on-failure -vv --lib-dir=lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ../../tests/kafka/testVariables.yml  --var-from-file ../../tests/vars/vars.yml ../../tests/*.yml ../../tests/assertions/*.yml && cp ./venom ../../tests/vars_override/venom && cd ../../tests/vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ./venom run --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' mytc.yml)
+	VENOM_VAR_MY_ENVAR=foo ./venom_wrapper.sh run -vv --format=xml --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml  --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml;
+	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml);
 
 .PHONY: wait-for-kafka
 wait-for-kafka:
@@ -51,4 +63,11 @@ wait-for-kafka:
 	echo "\n\033[0;32mdone\033[0m"
 
 clean:
-	@rm -f *.prof *.log *.dump.json
+	@rm -f *.prof *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
+
+merge-coverage:
+	@docker run -v `pwd`:/workspace golang:1.16 sh -c "\
+			go get -u github.com/wadey/gocovmerge && \
+			cd /workspace && \
+      gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \
+		"

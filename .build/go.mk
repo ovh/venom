@@ -2,12 +2,13 @@
 
 GO_BUILD 			= CGO_ENABLED=0 go build -installsuffix cgo
 GO_LIST 			= env GO111MODULE=on go list
-TEST_CMD 			= go test -v -timeout 600s -coverprofile=profile.coverprofile
-TEST_C_CMD 			= go test -c -coverprofile=profile.coverprofile
+TEST_C_CMD 			= go test -c
 TEST_RUN_ARGS 		= -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
 CURRENT_PACKAGE 	= $(shell $(GO_LIST))
 TARGET_DIST 		:= ./dist
 TARGET_RESULTS 		:= ./results
+
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/venom | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
 ##### =====> Clean <===== #####
 
@@ -63,7 +64,9 @@ TESTPKGS_C = $(foreach PKG, $(TESTPKGS), $(TESTPKGS_C_FILE))
 
 $(TESTPKGS_C): #main_test.go
 	$(info *** compiling test $@)
-	@cd $(dir $@) && $(TEST_C_CMD) -o bin.test .
+	@cd $(dir $@); \
+	TEMP=`$(PKGS_COMMA_SEP)`; \
+	$(TEST_C_CMD) -coverpkg $$TEMP -o bin.test .;
 
 ##### =====> Running Tests <===== #####
 
@@ -94,6 +97,10 @@ GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 $(GO_COBERTURA):
 	go get -u github.com/t-yuki/gocover-cobertura
 
+GO_XUTOOLS = ${GOPATH}/bin/xutools
+$(GO_XUTOOLS):
+	go get -u github.com/richardlt/xutools
+
 mk_go_test: $(GO_COV_MERGE) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS)# Run tests
 	@echo "Generating unit tests coverage..."
 	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_RESULTS)/cover.out
@@ -101,7 +108,7 @@ mk_go_test: $(GO_COV_MERGE) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTP
 	@go tool cover -html=$(TARGET_RESULTS)/cover.out -o=$(TARGET_RESULTS)/cover.html
 	@NB=$$(grep "^FAIL" `find . -type f -name "tests.log"`|grep -v ':0'|wc -l); echo "tests failed $$NB" && exit $$NB
 
-mk_go_test-xunit: $(GO_GOJUNIT) $(TARGET_RESULTS) # Generate test with xunit report
+mk_go_test-xunit: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_RESULTS) # Generate test with xunit report
 	@echo "Generating xUnit Report..."
 	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
@@ -134,38 +141,16 @@ mk_go_test-xunit: $(GO_GOJUNIT) $(TARGET_RESULTS) # Generate test with xunit rep
 			mv $$XML $(TARGET_RESULTS)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	rm -f $(TARGET_RESULTS)/report; \
-	for XML in `find . -name "*.tests-results.xml"`; do \
-		if [ -s $$XML ]; then \
-			if grep -q 'testsuite' $$XML; then \
-				echo "Generating report: " $$XML; \
-				echo "`xmllint --xpath "//testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
-				"`xmllint --xpath "//testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
-				"`xmllint --xpath "//testsuite/@errors" $$XML 2>/dev/null | sed 's/errors=//' | sed 's/"//g'` Errors ;"\
-				"`xmllint --xpath "//testsuite/@failures" $$XML 2>/dev/null | sed 's/failures=//' | sed 's/"//g'` Failures;" \
-				"`xmllint --xpath "//testsuite/@skip" $$XML 2>/dev/null | sed 's/skip=//' | sed 's/"//g'` Skipped;" \
-				>> $(TARGET_RESULTS)/report; \
-			fi; \
-		fi; \
-	done; \
+	xutools pretty --show-failures $(TARGET_RESULTS)/*.xml > $(TARGET_RESULTS)/report; \
+	xutools sort-duration $(TARGET_RESULTS)/*.xml > $(TARGET_RESULTS)/duration; \
 	if [ -e $(TARGET_RESULTS)/report ]; then \
+		echo "Report:"; \
 		cat $(TARGET_RESULTS)/report; \
 	fi; \
-	echo "#########################"; \
-	for XML in `find . -name "*.tests-results.xml"`; do \
-		if [ -s $$XML ]; then \
-			if grep -q 'errors' $$XML && grep -q 'testsuite' $$XML; then \
-				if [ "`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
-					echo "	$$XML : Tests failed";  \
-				fi; \
-			fi; \
-			if grep -q 'failures' $$XML && grep -q 'testsuite' $$XML $$XML; then \
-				if [ "`xmllint --xpath "//testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'`" -gt "0" ]; then  \
-					echo "	$$XML : Tests failed";  \
-				fi; \
-			fi; \
-		fi; \
-	done; \
+	if [ -e $(TARGET_RESULTS)/duration ]; then \
+		echo "Max duration:"; \
+		cat $(TARGET_RESULTS)/duration; \
+	fi; \
 	if [ -e $(TARGET_RESULTS)/fail ]; then \
 		echo "#########################"; \
 		echo "ERROR: Test compilation failure"; \
