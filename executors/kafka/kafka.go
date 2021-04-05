@@ -374,6 +374,7 @@ func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
 
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
 func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	ctx := session.Context()
 	for message := range claim.Messages() {
 		consumeFunction := h.consumeJSON
 		if h.withAVRO {
@@ -385,7 +386,7 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 		}
 		// Pass filter
 		if h.keyFilter != "" && msg.Key != h.keyFilter {
-			venom.Info(context.TODO(), "ignore message with key: %s", msg.Key)
+			venom.Info(ctx, "ignore message with key: %s", msg.Key)
 			continue
 		}
 		h.mutex.Lock()
@@ -398,7 +399,7 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 			session.MarkMessage(message, "")
 		}
 		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
-			venom.Info(context.Background(), "message limit reached")
+			venom.Info(ctx, "message limit reached")
 			return nil
 		}
 		session.MarkMessage(message, "delivered")
