@@ -76,6 +76,9 @@ type (
 		// MarkOffset allows to mark offset when consuming message
 		MarkOffset bool `json:"mark_offset,omitempty" yaml:"markOffset,omitempty"`
 
+		// KeyFilter determines the key to filter from
+		KeyFilter string `json:"key_filter,omitempty" yaml:"keyFilter,omitempty"`
+
 		// Only one of JSON or Avro are currently supported
 		ConsumerEncoding string `json:"consumer_encoding,omitempty" yaml:"consumerEncoding,omitempty"`
 
@@ -312,6 +315,7 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 		markOffset:   e.MarkOffset,
 		messageLimit: e.MessageLimit,
 		schemaReg:    e.schemaReg,
+		keyFilter:    e.KeyFilter,
 	}
 	if err := consumerGroup.Consume(ctx, e.Topics, h); err != nil {
 		if e.WaitFor > 0 && errors.Is(err, context.DeadlineExceeded) {
@@ -353,6 +357,7 @@ type handler struct {
 	markOffset   bool
 	messageLimit int
 	schemaReg    SchemaRegistry
+	keyFilter    string
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
@@ -375,6 +380,11 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 		msg, msgJSON, err := consumeFunction(message)
 		if err != nil {
 			return err
+		}
+		// Pass filter
+		if h.keyFilter != "" && msg.Key != h.keyFilter {
+			venom.Info(context.TODO(), "ignore message with key: %s", msg.Key)
+			continue
 		}
 		h.messages = append(h.messages, msg)
 		h.messagesJSON = append(h.messagesJSON, msgJSON)
