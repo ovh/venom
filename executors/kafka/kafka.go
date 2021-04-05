@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -66,6 +67,8 @@ type (
 		Topics  []string `json:"topics,omitempty" yaml:"topics,omitempty"`
 		// Represents the timeout for reading messages. In Seconds. Default 5
 		Timeout int `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+		// WaitFor represents the time for reading messages without marking the test as failure.
+		WaitFor int `json:"wait_for,omitempty" yaml:"waitFor,omitempty"`
 		// Represents the limit of message will be read. After limit, consumer stop read message
 		MessageLimit int `json:"message_limit,omitempty" yaml:"messageLimit,omitempty"`
 		// InitialOffset represents the initial offset for the consumer. Possible value : newest, oldest. default: newest
@@ -129,6 +132,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	if e.Timeout == 0 {
 		e.Timeout = defaultExecutorTimeoutSeconds
 	}
+	if e.WaitFor > 0 && e.Timeout < e.WaitFor {
+		return nil, fmt.Errorf("can't wait for messages %ds longer than the timeout %ds", e.WaitFor, e.Timeout)
+	}
+
 	switch e.ClientType {
 	case "producer":
 		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
@@ -280,12 +287,20 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 	}
 	defer func() { _ = consumerGroup.Close() }()
 
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout)*time.Second)
+	timeout := time.Duration(e.Timeout) * time.Second
+	if e.WaitFor > 0 {
+		timeout = time.Duration(e.WaitFor) * time.Second
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	// Track errors
 	go func() {
 		for err := range consumerGroup.Errors() {
+			if e.WaitFor > 0 && errors.Is(err, context.DeadlineExceeded) {
+				continue
+			}
+
 			venom.Error(ctx, "error on consume:%s", err)
 		}
 	}()
@@ -299,7 +314,11 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 		schemaReg:    e.schemaReg,
 	}
 	if err := consumerGroup.Consume(ctx, e.Topics, h); err != nil {
-		venom.Error(ctx, "error on consume:%s", err)
+		if e.WaitFor > 0 && errors.Is(err, context.DeadlineExceeded) {
+			venom.Info(ctx, "wait ended")
+		} else {
+			venom.Error(ctx, "error on consume:%s", err)
+		}
 	}
 
 	return h.messages, h.messagesJSON, nil
