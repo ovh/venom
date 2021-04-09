@@ -25,6 +25,8 @@ In your yaml file, you can use:
   - message_limit optional
   - initial_offset optional - Sarama default is newest
   - mark_offset optional
+  - wait_for optional - Wait X seconds before returning the consumed
+  messages from the topic.
 
   # for producer client type:
   - messages
