@@ -27,6 +27,7 @@ In your yaml file, you can use:
   - mark_offset optional
   - wait_for optional - Wait X seconds before returning the consumed
   messages from the topic.
+  - key_filter optional - perform filtering per key
 
   # for producer client type:
   - messages
