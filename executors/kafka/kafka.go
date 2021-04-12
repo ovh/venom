@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -358,6 +359,7 @@ type handler struct {
 	messageLimit int
 	schemaReg    SchemaRegistry
 	keyFilter    string
+	mutex        sync.Mutex
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
@@ -372,6 +374,7 @@ func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
 
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
 func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	ctx := session.Context()
 	for message := range claim.Messages() {
 		consumeFunction := h.consumeJSON
 		if h.withAVRO {
@@ -383,21 +386,25 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 		}
 		// Pass filter
 		if h.keyFilter != "" && msg.Key != h.keyFilter {
-			venom.Info(context.TODO(), "ignore message with key: %s", msg.Key)
+			venom.Info(ctx, "ignore message with key: %s", msg.Key)
 			continue
 		}
+		h.mutex.Lock()
 		h.messages = append(h.messages, msg)
 		h.messagesJSON = append(h.messagesJSON, msgJSON)
+		messagesLen := len(h.messages)
+		h.mutex.Unlock()
 
 		if h.markOffset {
 			session.MarkMessage(message, "")
 		}
-		if h.messageLimit > 0 && len(h.messages) >= h.messageLimit {
-			venom.Info(context.Background(), "message limit reached")
+		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
+			venom.Info(ctx, "message limit reached")
 			return nil
 		}
 		session.MarkMessage(message, "delivered")
 	}
+
 	return nil
 }
 
