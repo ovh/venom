@@ -148,13 +148,34 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 // Process runs tests suite and return a Tests result
 func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	testsResult := &Tests{}
-	Debug(ctx, "nb testsuites: %d", len(v.testsuites))
-	for i := range v.testsuites {
-		v.runTestSuite(ctx, &v.testsuites[i])
-		v.computeStats(testsResult, &v.testsuites[i])
+	Debug(ctx, "nb total testsuites: %d", len(v.testsuites))
+	for _, testsuite := range v.testsuites {
+		if !v.testsuiteShouldRun(&testsuite) {
+			Debug(ctx, "skip testsuites: %s", testsuite.Name)
+			continue
+		}
+
+		v.runTestSuite(ctx, &testsuite)
+		v.computeStats(testsResult, &testsuite)
 	}
 
 	return testsResult, nil
+}
+
+func (v *Venom) testsuiteShouldRun(ts *TestSuite) bool {
+	if len(v.Labels) == 0 {
+		return true
+	}
+
+	for _, tsLabel := range ts.Labels {
+		for _, runLabel := range v.Labels {
+			if tsLabel == runLabel {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (v *Venom) computeStats(testsResult *Tests, ts *TestSuite) {

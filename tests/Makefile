@@ -50,11 +50,12 @@ build-test-binary:
 	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -tags testbincover;
 
 build-test-binary-docker:
-	docker run -v `pwd`/..:/workspace golang:1.16 sh -c "cd /workspace/tests && make build-test-binary"	
+	docker run -v `pwd`/..:/workspace golang:1.16 sh -c "cd /workspace/tests && make build-test-binary"
 
 run-test: wait-for-kafka
 	VENOM_VAR_MY_ENVAR=foo ./venom_wrapper.sh run -vv --format=xml --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml  --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml;
 	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml);
+	./venom_wrapper.sh run --label critical -vv --format=xml --lib-dir=./lib_custom ./*.yml;
 
 .PHONY: wait-for-kafka
 wait-for-kafka:

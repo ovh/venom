@@ -53,6 +53,7 @@ type Venom struct {
 	testsuites []TestSuite
 	variables  H
 
+	Labels        []string
 	LibDir        string
 	OutputFormat  string
 	OutputDir     string

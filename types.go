@@ -87,6 +87,7 @@ type TestSuite struct {
 	Vars         H          `xml:"-" json:"-" yaml:"vars"`
 	ComputedVars H          `xml:"-" json:"-" yaml:"-"`
 	WorkDir      string     `xml:"-" json:"-" yaml:"-"`
+	Labels       []string   `xml:"-" json:"labels" yaml:"labels"`
 }
 
 // Property represents a key/value pair used to define properties.

@@ -46,6 +46,7 @@ var (
 	libDir        string
 	stopOnFailure bool
 	verbose       int
+	labels        []string
 
 	variablesFlag     *[]string
 	formatFlag        *string
@@ -54,6 +55,7 @@ var (
 	libDirFlag        *string
 	stopOnFailureFlag *bool
 	verboseFlag       *int
+	labelsFlag        *[]string
 )
 
 func init() {
@@ -64,6 +66,7 @@ func init() {
 	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	outputDirFlag = Cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
 	libDirFlag = Cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+	labelsFlag = Cmd.Flags().StringSlice("label", []string{""}, "--label critical --label ci")
 }
 
 func initArgs(cmd *cobra.Command) {
@@ -91,7 +94,6 @@ func initFromCommandArguments(f *pflag.Flag) {
 		if formatFlag != nil {
 			format = *formatFlag
 		}
-
 	case "stop-on-failure":
 		if stopOnFailureFlag != nil {
 			stopOnFailure = *stopOnFailureFlag
@@ -120,6 +122,14 @@ func initFromCommandArguments(f *pflag.Flag) {
 		if variablesFlag != nil {
 			for _, varFlag := range *variablesFlag {
 				variables = mergeVariables(varFlag, variables)
+			}
+		}
+	case "label":
+		if labelsFlag != nil {
+			for _, label := range *labelsFlag {
+				if !isInArray(label, labels) {
+					labels = append(labels, label)
+				}
 			}
 		}
 	}
@@ -160,6 +170,7 @@ func initFromConfigFile() error {
 
 type ConfigFileData struct {
 	Format         *string   `json:"format,omitempty" yaml:"format,omitempty"`
+	Labels         *[]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	LibDir         *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
 	OutputDir      *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
 	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
@@ -182,6 +193,13 @@ func initFromReaderConfigFile(reader io.Reader) error {
 
 	if configFileData.Format != nil {
 		format = *configFileData.Format
+	}
+	if configFileData.Labels != nil {
+		for _, label := range *configFileData.Labels {
+			if !isInArray(label, labels) {
+				labels = append(labels, label)
+			}
+		}
 	}
 	if configFileData.LibDir != nil {
 		libDir = *configFileData.LibDir
@@ -255,6 +273,9 @@ func initFromEnv(environ []string) ([]string, error) {
 			return nil, fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
 		}
 	}
+	if os.Getenv("VENOM_LABELS") != "" {
+		labels = strings.Split(os.Getenv("VENOM_LABELS"), " ")
+	}
 	if os.Getenv("VENOM_LIB_DIR") != "" {
 		libDir = os.Getenv("VENOM_LIB_DIR")
 	}
@@ -292,6 +313,7 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option libDir=%v", libDir)
 	venom.Debug(ctx, "option outputDir=%v", outputDir)
 	venom.Debug(ctx, "option stopOnFailure=%v", stopOnFailure)
+	venom.Debug(ctx, "option labels=%v", strings.Join(labels, " "))
 	venom.Debug(ctx, "option variables=%v", strings.Join(variables, " "))
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "option verbose=%v", verbose)
@@ -336,6 +358,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.OutputFormat = format
 		v.StopOnFailure = stopOnFailure
 		v.Verbose = verbose
+		v.Labels = labels
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)

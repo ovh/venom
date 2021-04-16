@@ -46,6 +46,8 @@ Flags:
       --format string           --format:yaml, json, xml, tap (default "xml")
   -h, --help                    help for run
       --lib-dir string          Lib Directory: this directory can contain user executors. This overrides the default lib folder directory
+      --label strings           --label critical --label ci-only: only
+      run testsuites with specified labels.
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
@@ -65,6 +67,7 @@ VENOM_FORMAT=json venom run my-test-suite.yml
       --format           -  example: VENOM_FORMAT=json
       --output-dir       -  example: VENOM_OUTPUT_DIR=.
       --lib-dir          -  example: VENOM_LIB_DIR=/etc/venom/lib:$HOME/venom.d/lib
+      --label            -  example: VENOM_LABEL="critical ci-only"
       --stop-on-failure  -  example: VENOM_STOP_ON_FAILURE=true
       --var              -  example: VENOM_VAR="foo=bar"
       --var-from-file    -  example: VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"
@@ -74,7 +77,7 @@ VENOM_FORMAT=json venom run my-test-suite.yml
 You can define the venom settings using a configuration file `.venomrc`. This configuration file should be placed in the current directory or in the home directory.
 
 ```yml
-variables: 
+variables:
   - foo=bar
 variables_files:
   - my_var_file.yaml
@@ -82,6 +85,9 @@ stop_on_failure: true
 format: xml
 output_dir: output
 lib_dir: lib
+label:
+  - critical
+  - ci-only
 verbosity: 3
 ```
 
