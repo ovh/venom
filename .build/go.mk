@@ -121,9 +121,12 @@ mk_go_test-xunit: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_RESULTS) # Generate test 
 				if [ $$NO_TESTS -gt 0 ]; then \
 					echo "No tests found \t\t\t($$TST)"; \
 				else \
+					PACKAGE=venom_`echo $$TST | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+					TESTS_LOG_OUT=$(TARGET_RESULTS)/$$PACKAGE.log; \
+					cp $$TST $$TESTS_LOG_OUT; \
 					if [ ! -z "${CDS_VERSION}" ]; then \
-						echo "Sending $$TST to CDS"; \
-						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
+						echo "Sending $$TESTS_LOG_OUT to CDS"; \
+						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TESTS_LOG_OUT); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.tests-results.xml"; \
 					cat $$TST | $(GO_GOJUNIT) > $$TST.tests-results.xml; \
