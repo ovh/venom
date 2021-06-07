@@ -54,8 +54,11 @@ build-test-binary-docker:
 
 run-test: wait-for-kafka
 	VENOM_VAR_MY_ENVAR=foo ./venom_wrapper.sh run -vv --format=xml --output-dir=. --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml  --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml; \
+	RESULT_1=$?; \
 	cp test_results.xml test_results_1.xml; \
-	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --format=xml --output-dir=. --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml);
+	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --format=xml --output-dir=. --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml); \
+	RESULT_2=$?; \
+	if [ $${RESULT_1} -ne 0 ] || [ $${RESULT_2} -ne 0 ]; then exit 1; else exit 0; fi; 
 
 .PHONY: wait-for-kafka
 wait-for-kafka:
