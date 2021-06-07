@@ -20,9 +20,8 @@ func (h H) Clone() H {
 }
 
 func (h *H) Add(k string, v interface{}) {
-	if h == nil {
-		var _h = H{}
-		*h = _h
+	if h == nil || *h == nil {
+		*h = make(map[string]interface{})
 	}
 	(*h)[k] = v
 }
