@@ -129,10 +129,10 @@ func sliceStringToSliceInterface(args []string) []interface{} {
 func handleRedisResponse(res interface{}, err error) interface{} {
 	switch p := res.(type) {
 	case []interface{}:
-		var result = []string{}
+		var result []interface{}
 		for i := range p {
 			u := p[i]
-			k, _ := redis.String(u, err) //nolint
+			k := handleRedisResponse(u, err)
 			result = append(result, k)
 		}
 		return result
