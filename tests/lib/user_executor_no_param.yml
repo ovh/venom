@@ -1,0 +1,3 @@
+executor: user_executor_no_param
+steps:
+- script: echo "http://localhost/v1/something/something/1234"
