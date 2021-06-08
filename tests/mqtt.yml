@@ -1,0 +1,60 @@
+name: MQTT testsuite
+vars:
+  addrs: 'tcp://localhost:1883'
+  topic: "venom/mqtt_test/topic"
+  clientId: "client-subscriber-test"
+
+testcases:
+  - name: MQTT publish testcase
+    steps:
+      - type: mqtt
+        addrs: "{{.addrs}}"
+        clientType: publisher
+        clientId: publisher_test
+        messageLimit: 1
+        messages:
+          - topic: venom/mqtt_test/pub_topic
+            payload: '{"a": "b"}'
+
+  - name: MQTT subscribe testcase
+    steps:
+      - type: mqtt
+        addrs: "{{.addrs}}"
+        clientType: persistent_queue
+        topics:
+        - "{{.topic}}"
+        persistSubscription: true
+        clientId: "{{.clientId}}"
+        qos: 2
+      - type: mqtt
+        addrs: "{{.addrs}}"
+        clientType: publisher
+        clientId: publisher-client-id
+        messageLimit: 1
+        messages:
+          - topic: "{{.topic}}"
+            payload: '{"c": "1"}'
+            qos: 2
+      - type: mqtt
+        addrs: "{{.addrs}}"
+        clientType: subscriber
+        clientId: "{{.clientId}}"
+        topics:
+        - "{{.topic}}"
+        persistSubscription: true
+        qos: 2
+        messageLimit: 1
+        assertions:
+          - result.error ShouldBeEmpty
+          - result.messages.__len__ ShouldEqual 1
+          - result.messagesjson.__len__ ShouldEqual 1
+          - result.messagesjson.messagesjson0.c ShouldEqual 1
+          - result.topics.topics0 ShouldEqual "{{.topic}}"
+      - type: mqtt
+        addrs: "{{.addrs}}"
+        clientType: persistent_queue
+        clientId: "{{.clientId}}"
+        topics:
+        - "{{.topic}}"
+        persistSubscription: false
+        qos: 2
