@@ -34,7 +34,7 @@ type Executor struct {
 	ClientID            string `json:"client_id" yaml:"clientId"`
 
 	// Subscription topic
-	Topics []string `json:"topic" yaml:"topic"`
+	Topics []string `json:"topics" yaml:"topics"`
 
 	// Represents the limit of message will be read. After limit, consumer stop read message
 	MessageLimit int `json:"message_limit" yaml:"messageLimit"`
