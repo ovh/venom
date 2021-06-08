@@ -156,6 +156,7 @@ testcases:
 * **http**: https://github.com/ovh/venom/tree/master/executors/http
 * **imap**: https://github.com/ovh/venom/tree/master/executors/imap
 * **kafka** https://github.com/ovh/venom/tree/master/executors/kafka
+* **mqtt** https://github.com/ovh/venom/tree/master/executors/mqtt
 * **odbc**: https://github.com/ovh/venom/tree/master/executors/plugins/odbc
 * **ovhapi**: https://github.com/ovh/venom/tree/master/executors/ovhapi
 * **rabbitmq**: https://github.com/ovh/venom/tree/master/executors/rabbitmq
