@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/ghodss/yaml"
 
@@ -114,6 +115,8 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		ts.Vars.Add("venom.testsuite.workdir", ts.WorkDir)
 		ts.Vars.Add("venom.testsuite.shortName", ts.Name)
 		ts.Vars.Add("venom.testsuite.filename", ts.Filename)
+		ts.Vars.Add("venom.datetime", time.Now().Format(time.RFC3339))
+		ts.Vars.Add("venom.timestamp", fmt.Sprintf("%d", time.Now().Unix()))
 
 		nSteps := 0
 		for _, tc := range ts.TestCases {
