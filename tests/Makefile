@@ -39,7 +39,7 @@ venom-rabbit.cid:
 venom-sshd.cid:
 	$(call docker_run,ghcr.io/linuxserver/openssh-server,sshd,-p 2222:2222 -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e PUBLIC_KEY="$(shell cat ~/.ssh/id_rsa.pub)" -e USER_NAME=venom )
 venom-mqtt.cid:
-	$(call docker_run,eclipse-mosquitto,mqtt-broker,-p 1883:1883 -p 9001:9001)
+	$(call docker_run,eclipse-mosquitto,mqtt-broker,-p 1883:1883 -p 9001:9001 -v $(shell realpath mqtt/mosquitto.conf):/mosquitto/config/mosquitto.conf:ro)
 
 start-test-stack: venom-postgres.cid venom-mysql.cid venom-redis.cid venom-imap.cid venom-kafka.cid venom-rabbit.cid venom-sshd.cid venom-mqtt.cid
 
