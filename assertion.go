@@ -85,28 +85,19 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 	if len(assert) < 2 {
 		return nil, errors.New("assertion syntax error")
 	}
-	actual, ok := dump[assert[0]]
-	if !ok {
-		actual = assert[0]
-	}
+	actual := dump[assert[0]]
 
 	f, ok := assertions.Get(assert[1])
 	if !ok {
 		return nil, errors.New("assertion not supported")
 	}
-
 	args := make([]interface{}, len(assert[2:]))
 	for i, v := range assert[2:] {
 		var err error
-
-		arg, ok := dump[v]
-		if !ok {
-			arg, err = stringToType(v, actual)
-			if err != nil {
-				return nil, fmt.Errorf("mismatched type between '%v' and '%v': %v", assert[0], v, err)
-			}
+		args[i], err = stringToType(v, actual)
+		if err != nil {
+			return nil, fmt.Errorf("mismatched type between '%v' and '%v': %v", assert[0], v, err)
 		}
-		args[i] = arg
 	}
 	return &assertion{
 		Actual: actual,

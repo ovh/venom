@@ -38,11 +38,13 @@ venom-rabbit.cid:
 	$(call docker_run,rabbitmq,rabbitmq,-p 5672:5672 -p 15672:15672)
 venom-sshd.cid:
 	$(call docker_run,ghcr.io/linuxserver/openssh-server,sshd,-p 2222:2222 -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e PUBLIC_KEY="$(shell cat ~/.ssh/id_rsa.pub)" -e USER_NAME=venom )
+venom-mqtt.cid:
+	$(call docker_run,eclipse-mosquitto,mqtt-broker,-p 1883:1883 -p 9001:9001 -v $(shell realpath mqtt/mosquitto.conf):/mosquitto/config/mosquitto.conf:ro)
 venom-qpid.cid:
 	$(call docker_run,scholzj/qpid-cpp:1.39.0,qpid,-p 5673:5672)
 	docker exec venom-qpid qpid-config add queue amqp-test
-
-start-test-stack: venom-postgres.cid venom-mysql.cid venom-redis.cid venom-imap.cid venom-kafka.cid venom-rabbit.cid venom-sshd.cid venom-qpid.cid
+  
+start-test-stack: venom-postgres.cid venom-mysql.cid venom-redis.cid venom-imap.cid venom-kafka.cid venom-rabbit.cid venom-sshd.cid venom-mqtt.cid venom-qpid.cid
 
 stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
@@ -55,9 +57,9 @@ build-test-binary:
 build-test-binary-docker:
 	docker run -v `pwd`/..:/workspace golang:1.16 sh -c "cd /workspace/tests && make build-test-binary"	
 
-run-test: wait-for-kafka
-	VENOM_VAR_MY_ENVAR=foo ./venom_wrapper.sh run -vv --format=xml --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml  --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml;
-	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml);
+run-test: 
+	VENOM_VAR_MY_ENVAR=foo ./venom_wrapper.sh run -vv --format=xml --output-dir=. --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml  --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml && \
+	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --format=xml --output-dir=. --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml);
 
 .PHONY: wait-for-kafka
 wait-for-kafka:

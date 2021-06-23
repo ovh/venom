@@ -5,10 +5,3 @@ testcases:
     - script: echo 1
       assertions:
       - result.systemoutjson ShouldBeIn 1 2
-  - name: ShouldBeLessThan
-    steps:
-    - script: echo '{"zero":0, "two":2, "five":5}'
-      assertions:
-      - 0 ShouldBeLessThan 5
-      - result.systemoutjson.zero ShouldBeLessThan "1"
-      - result.systemoutjson.zero ShouldBeLessThan result.systemoutjson.two
