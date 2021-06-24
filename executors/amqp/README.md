@@ -5,16 +5,16 @@ Step to publish / subscribe to AMQP 1.0 compatible broker (currently implemented
 ## Input
 
 ```yaml
-- Addr         (address of the amqp broker to connect to, in the format "amqp://<host>:<port>")
-- ClientType   (consumer or producer)
+- addr         (address of the amqp broker to connect to, in the format "amqp://<host>:<port>")
+- clientType   (consumer or producer)
 
 # Consumer Parameters
-- SourceAddr   (source topic/queue to consume messages from)
-- MessageLimit (number of messages to read from the broker before returning result)
+- sourceAddr   (source topic/queue to consume messages from)
+- messageLimit (number of messages to read from the broker before returning result)
 
 # Producer Parameters
-- TargetAddr   (topic/queue to which messages should be published)
-- Messages     (array of message bodies to send to the broker)
+- targetAddr   (topic/queue to which messages should be published)
+- messages     (array of message bodies to send to the broker)
 ```
 
 ## Output
@@ -69,4 +69,3 @@ testcases:
           - result.messagesjson.messagesjson3.messagesjson30 ShouldEqual value5
           - result.messagesjson.messagesjson3.messagesjson31 ShouldEqual value6
 ```
-
