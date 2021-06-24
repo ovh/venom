@@ -40,6 +40,7 @@ type Executor struct {
 	Path              string      `json:"path" yaml:"path"`
 	Body              string      `json:"body" yaml:"body"`
 	BodyFile          string      `json:"bodyfile" yaml:"bodyfile"`
+	UnalterBody       bool        `json:"unalter_body" yaml:"unalter_body" mapstructure:"unalter_body"`
 	MultipartForm     interface{} `json:"multipart_form" yaml:"multipart_form"`
 	Headers           Headers     `json:"headers" yaml:"headers"`
 	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
@@ -268,13 +269,17 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 			if err != nil {
 				return nil, err
 			}
-			h := venom.AllVarsFromCtx(ctx)
-			vars, _ := venom.DumpStringPreserveCase(h)
-			stemp, err := interpolate.Do(string(temp), vars)
-			if err != nil {
-				return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+			if e.UnalterBody {
+				body = bytes.NewBuffer(temp)
+			} else {
+				h := venom.AllVarsFromCtx(ctx)
+				vars, _ := venom.DumpStringPreserveCase(h)
+				stemp, err := interpolate.Do(string(temp), vars)
+				if err != nil {
+					return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+				}
+				body = bytes.NewBufferString(stemp)
 			}
-			body = bytes.NewBufferString(stemp)
 		}
 	} else if e.MultipartForm != nil {
 		form, ok := e.MultipartForm.(map[string]interface{})

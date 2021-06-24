@@ -29,6 +29,7 @@ type ExecutorRunner interface {
 	Timeout() int
 	Info() []string
 	Type() string
+	UnalterResult() bool
 	GetExecutor() Executor
 }
 
@@ -37,12 +38,13 @@ var _ Executor = new(executor)
 // ExecutorWrap contains an executor implementation and some attributes
 type executor struct {
 	Executor
-	name    string
-	retry   int      // nb retry a test case if it is in failure.
-	delay   int      // delay between two retries
-	timeout int      // timeout on executor
-	info    []string // info to display after the run and before the assertion
-	stype   string   // builtin, plugin, user
+	name          string
+	retry         int      // nb retry a test case if it is in failure.
+	delay         int      // delay between two retries
+	timeout       int      // timeout on executor
+	info          []string // info to display after the run and before the assertion
+	stype         string   // builtin, plugin, user
+	unalterResult bool
 }
 
 func (e executor) Name() string {
@@ -71,6 +73,10 @@ func (e executor) Info() []string {
 
 func (e executor) GetExecutor() Executor {
 	return e.Executor
+}
+
+func (e executor) UnalterResult() bool {
+	return e.unalterResult
 }
 
 func (e executor) GetDefaultAssertions() *StepAssertions {
@@ -105,15 +111,16 @@ func (e executor) TearDown(ctx context.Context) error {
 	return nil
 }
 
-func newExecutorRunner(e Executor, name, stype string, retry, delay, timeout int, info []string) ExecutorRunner {
+func newExecutorRunner(e Executor, name, stype string, retry, delay, timeout int, info []string, unalterResult bool) ExecutorRunner {
 	return &executor{
-		Executor: e,
-		name:     name,
-		retry:    retry,
-		delay:    delay,
-		timeout:  timeout,
-		info:     info,
-		stype:    stype,
+		Executor:      e,
+		name:          name,
+		retry:         retry,
+		delay:         delay,
+		timeout:       timeout,
+		info:          info,
+		stype:         stype,
+		unalterResult: unalterResult,
 	}
 }
 
@@ -209,6 +216,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	tc.Vars.Add("venom.executor.filename", ux.Filename)
 	tc.Vars.Add("venom.executor.name", ux.Executor)
 	tc.computedVars = H{}
+	tc.computedUnalteredVars = H{}
 
 	Debug(ctx, "running user executor %v", tc.Name)
 	Debug(ctx, "with vars: %v", vrs)
@@ -218,6 +226,14 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	computedVars, err := DumpString(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
+	}
+	computedUnalterdVars, err := DumpString(tc.computedUnalteredVars)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to dump testcase computedUnalteredVars")
+	}
+
+	for k, v := range computedUnalterdVars {
+		computedVars[k] = v
 	}
 
 	type Output struct {

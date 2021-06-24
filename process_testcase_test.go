@@ -17,8 +17,9 @@ func TestProcessVariableAssigments(t *testing.T) {
 		From: "here.some.value",
 	}
 	assign.Assignments["assignVarWithRegex"] = Assignment{
-		From:  "here.some.value",
-		Regex: `this is (?s:(.*))`,
+		From:    "here.some.value",
+		Regex:   `this is (?s:(.*))`,
+		Unalter: true,
 	}
 
 	b, _ := yaml.Marshal(assign)
@@ -26,21 +27,25 @@ func TestProcessVariableAssigments(t *testing.T) {
 
 	tcVars := H{"here.some.value": "this is the \nvalue"}
 
-	result, is, err := processVariableAssigments(context.TODO(), "", tcVars, b)
+	result, unalteredResult, is, err := processVariableAssigments(context.TODO(), "", tcVars, b)
 	assert.True(t, is)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
+	assert.NotNil(t, unalteredResult)
 	t.Log(result)
-	assert.Equal(t, "map[assignVar:this is the \nvalue assignVarWithRegex:the \nvalue]", fmt.Sprint(result))
+	assert.Equal(t, "map[assignVar:this is the \nvalue]", fmt.Sprint(result))
+	assert.Equal(t, "map[assignVarWithRegex:the \nvalue]", fmt.Sprint(unalteredResult))
 
 	var wrongStepIn TestStep
 	b = []byte(`type: exec
 script: echo 'foo'
 `)
 	assert.NoError(t, yaml.Unmarshal(b, &wrongStepIn))
-	result, is, err = processVariableAssigments(context.TODO(), "", tcVars, b)
+	result, unalteredResult, is, err = processVariableAssigments(context.TODO(), "", tcVars, b)
 	assert.False(t, is)
 	assert.NoError(t, err)
 	assert.Nil(t, result)
 	assert.Empty(t, result)
+	assert.Nil(t, unalteredResult)
+	assert.Empty(t, unalteredResult)
 }

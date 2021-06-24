@@ -102,7 +102,11 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			assertRes = applyAssertions(result, *tc, stepNumber, step, nil)
 		}
 
-		tc.computedVars.AddAll(H(mapResult))
+		if e.UnalterResult() {
+			tc.computedUnalteredVars.AddAll(H(mapResult))
+		} else {
+			tc.computedVars.AddAll(H(mapResult))
+		}
 
 		if assertRes.ok {
 			break

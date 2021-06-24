@@ -45,6 +45,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 
 	ts.Vars.Add("venom.testsuite", ts.Name)
 	ts.ComputedVars = H{}
+	ts.ComputedUnalteredVars = H{}
 
 	ctx = context.WithValue(ctx, ContextKey("testsuite"), ts.Name)
 	Info(ctx, "Starting testsuite")
@@ -122,6 +123,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 			return
 		}
 		ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
+		ts.ComputedUnalteredVars.AddAllWithPrefix(tc.Name, tc.computedUnalteredVars)
 	}
 }
 

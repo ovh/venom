@@ -125,12 +125,19 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)
+	tc.UnalteredVars = ts.ComputedUnalteredVars.Clone()
+	tc.allVars = tc.Vars.Clone()
+	tc.allVars.AddAll(tc.UnalteredVars)
 	tc.computedVars = H{}
+	tc.computedUnalteredVars = H{}
 
 	Info(ctx, "Starting testcase")
 
 	for k, v := range tc.Vars {
 		Debug(ctx, "Running testcase with variable %s: %+v", k, v)
+	}
+	for k, v := range tc.UnalteredVars {
+		Debug(ctx, "Running testcase with unaltered variable %s: %+v", k, v)
 	}
 
 	defer Info(ctx, "Ending testcase")
@@ -140,7 +147,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 	for _, skipAssertion := range tc.Skip {
 		Debug(ctx, "evaluating %s", skipAssertion)
-		assert, err := parseAssertions(ctx, skipAssertion, tc.Vars)
+		assert, err := parseAssertions(ctx, skipAssertion, tc.allVars)
 		if err != nil {
 			Error(ctx, "unable to parse skip assertion: %v", err)
 			tc.AppendError(err)
@@ -163,10 +170,18 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		stepVars := tc.Vars.Clone()
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
+		stepUnalteredVars := tc.UnalteredVars.Clone()
+		stepUnalteredVars.AddAllWithPrefix(tc.Name, tc.computedUnalteredVars)
 
 		vars, err := DumpStringPreserveCase(stepVars)
 		if err != nil {
 			Error(ctx, "unable to dump testcase vars: %v", err)
+			tc.AppendError(err)
+			return
+		}
+		unalteredVars, err := DumpStringPreserveCase(stepUnalteredVars)
+		if err != nil {
+			Error(ctx, "unable to dump testcase unaltered vars: %v", err)
 			tc.AppendError(err)
 			return
 		}
@@ -179,6 +194,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				return
 			}
 			vars[k] = content
+		}
+		for k, v := range unalteredVars {
+			vars[k] = v
 		}
 
 		// the value of each var can contains a double-quote -> "
@@ -211,7 +229,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 
 		tc.testSteps = append(tc.testSteps, step)
 		var e ExecutorRunner
-		ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
+		ctx, e, err = v.GetExecutorRunner(ctx, step, tc.allVars)
 		if err != nil {
 			tc.AppendError(err)
 			Error(ctx, "unable to get executor: %v", err)
@@ -221,7 +239,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		_, known := knowExecutors[e.Name()]
 		if !known {
 			knowExecutors[e.Name()] = struct{}{}
-			ctx, err = e.Setup(ctx, tc.Vars)
+			ctx, err = e.Setup(ctx, tc.allVars)
 			if err != nil {
 				tc.AppendError(err)
 				Error(ctx, "unable to setup executor: %v", err)
@@ -259,10 +277,11 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 			break
 		}
 
-		allVars := tc.Vars.Clone()
+		allVars := tc.allVars.Clone()
 		allVars.AddAll(tc.computedVars.Clone())
+		allVars.AddAll(tc.computedUnalteredVars.Clone())
 
-		assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
+		assign, assignUnaltered, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
 		if err != nil {
 			tc.AppendError(err)
 			Error(ctx, "unable to process variable assignments: %v", err)
@@ -270,19 +289,21 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		}
 
 		tc.computedVars.AddAll(assign)
+		tc.computedUnalteredVars.AddAll(assignUnaltered)
 	}
 }
 
-func processVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
+func processVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, H, bool, error) {
 	var stepAssignment AssignStep
 	var result = make(H)
+	var unalteredResult = make(H)
 	if err := yaml.Unmarshal(rawStep, &stepAssignment); err != nil {
 		Error(ctx, "unable to parse assignements (%s): %v", string(rawStep), err)
-		return nil, false, err
+		return nil, nil, false, err
 	}
 
 	if len(stepAssignment.Assignments) == 0 {
-		return nil, false, nil
+		return nil, nil, false, nil
 	}
 
 	var tcVarsKeys []string
@@ -290,41 +311,58 @@ func processVariableAssigments(ctx context.Context, tcName string, tcVars H, raw
 		tcVarsKeys = append(tcVarsKeys, k)
 	}
 
-	for varname, assigment := range stepAssignment.Assignments {
+	for varname, assignment := range stepAssignment.Assignments {
 		Debug(ctx, "Processing %s assignment", varname)
-		varValue, has := tcVars[assigment.From]
+		varValue, has := tcVars[assignment.From]
 		if !has {
-			varValue, has = tcVars[tcName+"."+assigment.From]
+			varValue, has = tcVars[tcName+"."+assignment.From]
 			if !has {
-				err := fmt.Errorf("%s reference not found in %s", assigment.From, strings.Join(tcVarsKeys, "\n"))
+				err := fmt.Errorf("%s reference not found in %s", assignment.From, strings.Join(tcVarsKeys, "\n"))
 				Info(ctx, "%v", err)
-				return nil, true, err
+				return nil, nil, true, err
 			}
 		}
-		if assigment.Regex == "" {
+		if assignment.Regex == "" {
 			Info(ctx, "Assign '%s' value '%s'", varname, varValue)
-			result.Add(varname, varValue)
+			if assignment.Unalter {
+				unalteredResult.Add(varname, varValue)
+			} else {
+				result.Add(varname, varValue)
+			}
 		} else {
-			regex, err := regexp.Compile(assigment.Regex)
+			regex, err := regexp.Compile(assignment.Regex)
 			if err != nil {
-				Warn(ctx, "unable to compile regexp %q", assigment.Regex)
-				return nil, true, err
+				Warn(ctx, "unable to compile regexp %q", assignment.Regex)
+				return nil, nil, true, err
 			}
 			varValueS, ok := varValue.(string)
 			if !ok {
 				Warn(ctx, "%q is not a string value", varname)
-				result.Add(varname, "")
+				if assignment.Unalter {
+					unalteredResult.Add(varname, "")
+				} else {
+					result.Add(varname, "")
+				}
 				continue
 			}
 			submatches := regex.FindStringSubmatch(varValueS)
 			if len(submatches) == 0 {
 				Warn(ctx, "%s: %q doesn't match anything in %q", varname, regex, varValue)
-				result.Add(varname, "")
+				if assignment.Unalter {
+					unalteredResult.Add(varname, "")
+				} else {
+					result.Add(varname, "")
+				}
 				continue
 			}
 			Info(ctx, "Assign %q from regexp %q, values %q", varname, regex, submatches)
-			result.Add(varname, submatches[len(submatches)-1])
+			if assignment.Unalter {
+				unalteredResult.Add(varname, submatches[len(submatches)-1])
+			} else {
+				result.Add(varname, submatches[len(submatches)-1])
+			}
+
 		}
 	}
-	return result, true, nil
+	return result, unalteredResult, true, nil
 }
