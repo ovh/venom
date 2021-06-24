@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors/amqp"
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/grpc"
@@ -329,6 +330,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterExecutorBuiltin(rabbitmq.Name, rabbitmq.New())
 		v.RegisterExecutorBuiltin(sql.Name, sql.New())
 		v.RegisterExecutorBuiltin(mqtt.Name, mqtt.New())
+    v.RegisterExecutorBuiltin(amqp.Name, amqp.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		initArgs(cmd)
