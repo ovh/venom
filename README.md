@@ -53,6 +53,8 @@ Flags:
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
+Globstar support: `venom run ./foo/b*/**/z*.yml`
+
 You can define the arguments with environment variables:
 
 ```bash
@@ -150,6 +152,7 @@ testcases:
 
 # Executors
 
+* **amqp**: https://github.com/ovh/venom/tree/master/executors/amqp
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
 * **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
