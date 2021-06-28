@@ -12,6 +12,8 @@ import (
 
 	"github.com/ghodss/yaml"
 
+	"github.com/mattn/go-zglob"
+
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -28,7 +30,7 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 			p = p + string(os.PathSeparator) + "*.yml"
 		}
 
-		fpaths, err := filepath.Glob(p)
+		fpaths, err := zglob.Glob(p)
 		if err != nil {
 			log.Errorf("error reading files on path %q err:%v", path, err)
 			return nil, errors.Wrapf(err, "error reading files on path %q", path)
@@ -46,7 +48,19 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 	if len(filePaths) == 0 {
 		return nil, fmt.Errorf("no yml file selected")
 	}
-	return filePaths, nil
+	return uniq(filePaths), nil
+}
+
+func uniq(stringSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range stringSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
 
 type partialTestSuite struct {

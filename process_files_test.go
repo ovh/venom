@@ -1,6 +1,7 @@
 package venom
 
 import (
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -93,6 +94,114 @@ func Test_getFilesPath(t *testing.T) {
 				return []string{dir1, dir2}, err
 			},
 			want:    []string{"d1.yml", "d2.yml"},
+			wantErr: false,
+		},
+		{
+			name: "Check globstars",
+			init: func(t *testing.T) ([]string, error) {
+				dir1, err := tempDir(t)
+				if err != nil {
+					return nil, err
+				}
+
+				d1 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+					return nil, err
+				}
+
+				dir2 := path.Join(dir1, randomString(10))
+				t.Logf("Creating directory %s", dir2)
+
+				if err := os.Mkdir(dir2, 0744); err != nil {
+					return nil, err
+				}
+
+				d2 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+					return nil, err
+				}
+
+				dir3 := path.Join(dir2, randomString(10))
+				t.Logf("Creating directory %s", dir3)
+
+				if err := os.Mkdir(dir3, 0744); err != nil {
+					return nil, err
+				}
+
+				d3 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
+					return nil, err
+				}
+
+				dir4 := path.Join(dir3, randomString(10))
+				t.Logf("Creating directory %s", dir3)
+
+				if err := os.Mkdir(dir4, 0744); err != nil {
+					return nil, err
+				}
+
+				d4 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
+					return nil, err
+				}
+
+				return []string{fmt.Sprintf("%s/**/*.yml", dir1)}, err
+			},
+			want:    []string{"d1.yml", "d2.yml", "d3.yml", "d4.yml"},
+			wantErr: false,
+		},
+		{
+			name: "Check globstars with duplicate files",
+			init: func(t *testing.T) ([]string, error) {
+				dir1, err := tempDir(t)
+				if err != nil {
+					return nil, err
+				}
+
+				d1 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+					return nil, err
+				}
+
+				dir2 := path.Join(dir1, randomString(10))
+				t.Logf("Creating directory %s", dir2)
+
+				if err := os.Mkdir(dir2, 0744); err != nil {
+					return nil, err
+				}
+
+				d2 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+					return nil, err
+				}
+
+				dir3 := path.Join(dir2, randomString(10))
+				t.Logf("Creating directory %s", dir3)
+
+				if err := os.Mkdir(dir3, 0744); err != nil {
+					return nil, err
+				}
+
+				d3 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
+					return nil, err
+				}
+
+				dir4 := path.Join(dir3, randomString(10))
+				t.Logf("Creating directory %s", dir3)
+
+				if err := os.Mkdir(dir4, 0744); err != nil {
+					return nil, err
+				}
+
+				d4 := []byte("hello")
+				if err = ioutil.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
+					return nil, err
+				}
+
+				return []string{dir2, dir3, fmt.Sprintf("%s/**/*.yml", dir1)}, err
+			},
+			want:    []string{"d1.yml", "d2.yml", "d3.yml", "d4.yml"},
 			wantErr: false,
 		},
 	}
