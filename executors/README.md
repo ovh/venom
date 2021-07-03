@@ -42,11 +42,11 @@ type Result struct {
 // GetDefaultAssertions return default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
+	return &venom.StepAssertions{Assertions: []string{"result.code ShouldEqual 0"}}
 }
 
 // Run execute TestStep
-func (Executor)	Run(ctx context.Context, step TestStep) (interface{}, error) {
+func (Executor)	Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// transform step to Executor Instance
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -66,7 +66,7 @@ func (Executor)	Run(ctx context.Context, step TestStep) (interface{}, error) {
 		Systemout: systemout, // return Output string
 	}
 
-	return r
+	return r, nil
 }
 
 ```
