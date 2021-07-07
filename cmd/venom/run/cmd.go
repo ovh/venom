@@ -84,16 +84,15 @@ func initArgs(cmd *cobra.Command) {
 }
 
 func initFromCommandArguments(f *pflag.Flag) {
+	if f.Name == "format" && formatFlag != nil {
+		format = *formatFlag
+	}
+
 	if !f.Changed {
 		return
 	}
 
 	switch f.Name {
-	case "format":
-		if formatFlag != nil {
-			format = *formatFlag
-		}
-
 	case "stop-on-failure":
 		if stopOnFailureFlag != nil {
 			stopOnFailure = *stopOnFailureFlag
@@ -315,22 +314,22 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		}
 
 		v = venom.New()
+		v.RegisterExecutorBuiltin(amqp.Name, amqp.New())
+		v.RegisterExecutorBuiltin(dbfixtures.Name, dbfixtures.New())
 		v.RegisterExecutorBuiltin(exec.Name, exec.New())
+		v.RegisterExecutorBuiltin(grpc.Name, grpc.New())
 		v.RegisterExecutorBuiltin(http.Name, http.New())
 		v.RegisterExecutorBuiltin(imap.Name, imap.New())
+		v.RegisterExecutorBuiltin(kafka.Name, kafka.New())
+		v.RegisterExecutorBuiltin(mqtt.Name, mqtt.New())
+		v.RegisterExecutorBuiltin(ovhapi.Name, ovhapi.New())
+		v.RegisterExecutorBuiltin(rabbitmq.Name, rabbitmq.New())
 		v.RegisterExecutorBuiltin(readfile.Name, readfile.New())
+		v.RegisterExecutorBuiltin(redis.Name, redis.New())
 		v.RegisterExecutorBuiltin(smtp.Name, smtp.New())
+		v.RegisterExecutorBuiltin(sql.Name, sql.New())
 		v.RegisterExecutorBuiltin(ssh.Name, ssh.New())
 		v.RegisterExecutorBuiltin(web.Name, web.New())
-		v.RegisterExecutorBuiltin(ovhapi.Name, ovhapi.New())
-		v.RegisterExecutorBuiltin(dbfixtures.Name, dbfixtures.New())
-		v.RegisterExecutorBuiltin(redis.Name, redis.New())
-		v.RegisterExecutorBuiltin(kafka.Name, kafka.New())
-		v.RegisterExecutorBuiltin(grpc.Name, grpc.New())
-		v.RegisterExecutorBuiltin(rabbitmq.Name, rabbitmq.New())
-		v.RegisterExecutorBuiltin(sql.Name, sql.New())
-		v.RegisterExecutorBuiltin(mqtt.Name, mqtt.New())
-    v.RegisterExecutorBuiltin(amqp.Name, amqp.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		initArgs(cmd)
