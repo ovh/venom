@@ -166,7 +166,7 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 	}
 
 	result := make(map[string]interface{})
-	err = json.Unmarshal(outputS, &result)
+	err = JSONUnmarshal(outputS, &result)
 	if err != nil {
 		return ""
 	}
@@ -279,7 +279,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 
 	for k, v := range resultS {
 		var outJSON interface{}
-		if err := json.Unmarshal([]byte(v), &outJSON); err == nil {
+		if err := JSONUnmarshal([]byte(v), &outJSON); err == nil {
 			result[k+"json"] = outJSON
 		}
 	}

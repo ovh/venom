@@ -2,7 +2,6 @@ package mqtt
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -264,9 +263,9 @@ func (e Executor) consumeMessages(ctx context.Context) (messages []interface{}, 
 		venom.Debug(ctx, "message received. topic: %s len(%d), %s", t, len(m), s)
 
 		var bodyJSONArray []interface{}
-		if err := json.Unmarshal(m, &bodyJSONArray); err != nil {
+		if err := venom.JSONUnmarshal(m, &bodyJSONArray); err != nil {
 			bodyJSONMap := map[string]interface{}{}
-			err := json.Unmarshal(m, &bodyJSONMap)
+			err := venom.JSONUnmarshal(m, &bodyJSONMap)
 			if err != nil {
 				venom.Debug(ctx, "unable to decode message as json")
 			}

@@ -276,7 +276,7 @@ func (e Executor) getRequestBody(workdir string) (res interface{}, err error) {
 	}
 	if len(bytes) > 0 {
 		res = new(interface{})
-		err = json.Unmarshal(bytes, res)
+		err = venom.JSONUnmarshal(bytes, res)
 		return
 	}
 	return nil, nil

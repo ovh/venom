@@ -3,7 +3,6 @@ package exec
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -205,12 +204,12 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	result.Systemerr = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemerr, "\n"))
 
 	var outJSON interface{}
-	if err := json.Unmarshal([]byte(result.Systemout), &outJSON); err == nil {
+	if err := venom.JSONUnmarshal([]byte(result.Systemout), &outJSON); err == nil {
 		result.SystemoutJSON = outJSON
 	}
 
 	var errJSON interface{}
-	if err := json.Unmarshal([]byte(result.Systemerr), &errJSON); err == nil {
+	if err := venom.JSONUnmarshal([]byte(result.Systemerr), &errJSON); err == nil {
 		result.SystemerrJSON = errJSON
 	}
 

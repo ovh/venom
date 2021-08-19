@@ -1,7 +1,9 @@
 package venom
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -299,4 +301,10 @@ func AllVarsFromCtx(ctx context.Context) H {
 		res.Add(k, VarFromCtx(ctx, k))
 	}
 	return res
+}
+
+func JSONUnmarshal(btes []byte, i interface{}) error {
+	var d = json.NewDecoder(bytes.NewReader(btes))
+	d.UseNumber()
+	return d.Decode(i)
 }
