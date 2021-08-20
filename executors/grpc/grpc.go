@@ -195,9 +195,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	// parse stdout as JSON
 	var outJSONArray []interface{}
-	if err := json.Unmarshal([]byte(result.Systemout), &outJSONArray); err != nil {
+	if err := venom.JSONUnmarshal([]byte(result.Systemout), &outJSONArray); err != nil {
 		outJSONMap := map[string]interface{}{}
-		if err2 := json.Unmarshal([]byte(result.Systemout), &outJSONMap); err2 == nil {
+		if err2 := venom.JSONUnmarshal([]byte(result.Systemout), &outJSONMap); err2 == nil {
 			result.SystemoutJSON = outJSONMap
 		}
 	} else {
@@ -206,9 +206,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	// parse stderr output as JSON
 	var errJSONArray []interface{}
-	if err := json.Unmarshal([]byte(result.Systemout), &errJSONArray); err != nil {
+	if err := venom.JSONUnmarshal([]byte(result.Systemout), &errJSONArray); err != nil {
 		errJSONMap := map[string]interface{}{}
-		if err2 := json.Unmarshal([]byte(result.Systemout), &errJSONMap); err2 == nil {
+		if err2 := venom.JSONUnmarshal([]byte(result.Systemout), &errJSONMap); err2 == nil {
 			result.SystemoutJSON = errJSONMap
 		}
 	} else {

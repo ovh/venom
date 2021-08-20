@@ -2,7 +2,6 @@ package amqp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -157,7 +156,7 @@ func consumeMessage(ctx context.Context, recv *amqp.Receiver) (msgString string,
 		return "", nil, fmt.Errorf("consuming message: %w", err)
 	}
 
-	if err := json.Unmarshal(msg.GetData(), &msgJSON); err != nil {
+	if err := venom.JSONUnmarshal(msg.GetData(), &msgJSON); err != nil {
 		return string(msg.GetData()), nil, nil
 	}
 

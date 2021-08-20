@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -193,7 +192,7 @@ func (e Executor) produceMessages(workdir string) error {
 				return err
 			}
 			messages := []Message{}
-			err = json.Unmarshal(content, &messages)
+			err = venom.JSONUnmarshal(content, &messages)
 			if err != nil {
 				return err
 			}
@@ -450,10 +449,10 @@ func convertFromMessage2JSON(message *Message, msgJSON *MessageJSON) {
 	// unmarshall the message.Value
 	listMessageJSON := []MessageJSON{}
 	// try to unmarshall into an array
-	if err := json.Unmarshal([]byte(message.Value), &listMessageJSON); err != nil {
+	if err := venom.JSONUnmarshal([]byte(message.Value), &listMessageJSON); err != nil {
 		// try to unmarshall into a map
 		mapMessageJSON := map[string]interface{}{}
-		if err2 := json.Unmarshal([]byte(message.Value), &mapMessageJSON); err2 != nil {
+		if err2 := venom.JSONUnmarshal([]byte(message.Value), &mapMessageJSON); err2 != nil {
 			// try to unmarshall into a string
 			msgJSON.Value = message.Value
 		} else {
@@ -466,10 +465,10 @@ func convertFromMessage2JSON(message *Message, msgJSON *MessageJSON) {
 	// unmarshall the message.Key
 	listMessageJSON = []MessageJSON{}
 	// try to unmarshall into an array
-	if err := json.Unmarshal([]byte(message.Key), &listMessageJSON); err != nil {
+	if err := venom.JSONUnmarshal([]byte(message.Key), &listMessageJSON); err != nil {
 		// try to unmarshall into a map
 		mapMessageJSON := map[string]interface{}{}
-		if err2 := json.Unmarshal([]byte(message.Key), &mapMessageJSON); err2 != nil {
+		if err2 := venom.JSONUnmarshal([]byte(message.Key), &mapMessageJSON); err2 != nil {
 			// try to unmarshall into a string
 			msgJSON.Key = message.Key
 		} else {

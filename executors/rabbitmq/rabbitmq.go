@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -295,9 +294,9 @@ func (e Executor) consumeMessages(ctx context.Context) ([]string, []interface{},
 		body = append(body, string(msg.Body))
 
 		bodyJSONArray := []interface{}{}
-		if err := json.Unmarshal(msg.Body, &bodyJSONArray); err != nil {
+		if err := venom.JSONUnmarshal(msg.Body, &bodyJSONArray); err != nil {
 			bodyJSONMap := map[string]interface{}{}
-			json.Unmarshal(msg.Body, &bodyJSONMap) //nolint
+			venom.JSONUnmarshal(msg.Body, &bodyJSONMap) //nolint
 			bodyJSON = append(bodyJSON, bodyJSONMap)
 		} else {
 			bodyJSON = append(bodyJSON, bodyJSONArray)
