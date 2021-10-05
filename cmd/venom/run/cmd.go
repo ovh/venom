@@ -34,6 +34,7 @@ import (
 	"github.com/ovh/venom/executors/smtp"
 	"github.com/ovh/venom/executors/sql"
 	"github.com/ovh/venom/executors/ssh"
+	"github.com/ovh/venom/executors/tavern"
 	"github.com/ovh/venom/executors/web"
 )
 
@@ -330,6 +331,7 @@ Notice that variables initialized with -var-from-file argument can be overrided 
 		v.RegisterExecutorBuiltin(sql.Name, sql.New())
 		v.RegisterExecutorBuiltin(ssh.Name, ssh.New())
 		v.RegisterExecutorBuiltin(web.Name, web.New())
+		v.RegisterExecutorBuiltin(tavern.Name, tavern.New())
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		initArgs(cmd)

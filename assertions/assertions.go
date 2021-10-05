@@ -63,6 +63,10 @@ func Get(s string) (AssertFunc, bool) {
 	return f, ok
 }
 
+func Set(name string, function AssertFunc) {
+	assertMap[name] = function
+}
+
 func deepEqual(x, y interface{}) bool {
 	if !reflect.DeepEqual(x, y) {
 		return fmt.Sprintf("%v", x) == fmt.Sprintf("%v", y)

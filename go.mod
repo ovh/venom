@@ -39,6 +39,7 @@ require (
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20201113080944-f9d9d58c157a
 	github.com/ovh/go-ovh v1.1.0
 	github.com/pkg/errors v0.9.1
+	github.com/r3labs/diff/v2 v2.14.0
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
 	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible
 	github.com/sijms/go-ora v0.0.0-20201108135513-712ea4f3d160

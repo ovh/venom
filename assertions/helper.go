@@ -49,6 +49,12 @@ func isNil(i interface{}) bool {
 }
 
 func areSameTypes(i, j interface{}) bool {
+	if i == nil && j == nil {
+		return true
+	}
+	if (i == nil && j != nil) || (i != nil && j == nil) {
+		return false
+	}
 	return reflect.DeepEqual(
 		reflect.Zero(reflect.TypeOf(i)).Interface(),
 		reflect.Zero(reflect.TypeOf(j)).Interface(),
