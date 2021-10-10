@@ -148,12 +148,14 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 // Process runs tests suite and return a Tests result
 func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	testsResult := &Tests{}
+	vars := H{}
 	Debug(ctx, "nb testsuites: %d", len(v.testsuites))
 	for i := range v.testsuites {
+		v.testsuites[i].Vars = vars
 		v.runTestSuite(ctx, &v.testsuites[i])
+		vars = v.testsuites[i].ComputedVars
 		v.computeStats(testsResult, &v.testsuites[i])
 	}
-
 	return testsResult, nil
 }
 
