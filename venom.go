@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -189,7 +188,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 
 	for _, f := range executorsPath {
 		log.Info("Reading ", f)
-		btes, err := ioutil.ReadFile(f)
+		btes, err := os.ReadFile(f)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read file %q", f)
 		}

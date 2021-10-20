@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"mime/quotedprintable"
@@ -77,7 +76,7 @@ func extract(ctx context.Context, rsp imap.Response) (*Mail, error) {
 					venom.Debug(ctx, "Error while read Part:%s", err)
 					break
 				}
-				slurp, errm := ioutil.ReadAll(p)
+				slurp, errm := io.ReadAll(p)
 				if errm != nil {
 					venom.Debug(ctx, "Error while ReadAll Part:%s", err)
 					continue
@@ -87,7 +86,7 @@ func extract(ctx context.Context, rsp imap.Response) (*Mail, error) {
 			}
 		}
 	} else {
-		body, err = ioutil.ReadAll(r)
+		body, err = io.ReadAll(r)
 		if err != nil {
 			return nil, err
 		}

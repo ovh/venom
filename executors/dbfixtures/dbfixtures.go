@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 
 	fixtures "github.com/go-testfixtures/testfixtures/v3"
@@ -73,7 +73,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 		for _, s := range e.Schemas {
 			venom.Debug(ctx, "loading schema from file %s\n", s)
 			s = path.Join(workdir, s)
-			sbytes, errs := ioutil.ReadFile(s)
+			sbytes, errs := os.ReadFile(s)
 			if errs != nil {
 				return nil, errs
 			}

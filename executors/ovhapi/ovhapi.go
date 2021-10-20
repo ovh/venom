@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -268,7 +267,7 @@ func (e Executor) getRequestBody(workdir string) (res interface{}, err error) {
 	} else if e.BodyFile != "" {
 		path := filepath.Join(workdir, e.BodyFile)
 		if _, err = os.Stat(path); !os.IsNotExist(err) {
-			bytes, err = ioutil.ReadFile(path)
+			bytes, err = os.ReadFile(path)
 			if err != nil {
 				return nil, err
 			}
