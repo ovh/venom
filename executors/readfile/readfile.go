@@ -88,7 +88,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 func (e *Executor) readfile(workdir string) (Result, error) {
 	result := Result{}
 
-	absPath := filepath.Join(workdir, e.Path)
+	absPath := e.Path
+	if !filepath.IsAbs(absPath) {
+		absPath = filepath.Join(workdir, e.Path)
+	}
 
 	fileInfo, _ := os.Stat(absPath) // nolint
 	if fileInfo != nil && fileInfo.IsDir() {
