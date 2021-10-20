@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -44,7 +43,6 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 		}
 	}
 
-	sort.Strings(filePaths)
 	if len(filePaths) == 0 {
 		return nil, fmt.Errorf("no yml file selected")
 	}

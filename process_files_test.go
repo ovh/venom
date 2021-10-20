@@ -11,6 +11,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func tempDir(t *testing.T) (string, error) {
@@ -233,4 +234,23 @@ func Test_getFilesPath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_getFilesPath_files_order(t *testing.T) {
+	dir1, _ := tempDir(t)
+
+	d1 := []byte("hello")
+	ioutil.WriteFile(path.Join(dir1, "a.yml"), d1, 0644)
+
+	d2 := []byte("hello")
+	ioutil.WriteFile(path.Join(dir1, "A.yml"), d2, 0644)
+
+	input := []string{dir1 + "/a.yml", dir1 + "/A.yml"}
+
+	output, err := getFilesPath(input)
+	require.NoError(t, err)
+	require.Len(t, output, 2)
+	t.Log(output)
+	require.True(t, strings.HasSuffix(output[0], "a.yml"))
+	require.True(t, strings.HasSuffix(output[1], "A.yml"))
 }
