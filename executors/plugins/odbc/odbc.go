@@ -3,7 +3,7 @@ package main
 import (
 	"C"
 	"context"
-	"io/ioutil"
+	"os"
 	"path"
 
 	"github.com/jmoiron/sqlx"
@@ -79,7 +79,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 		file := path.Join(workdir, e.File)
 		venom.Debug(ctx, "loading SQL file from %s\n", file)
-		sbytes, errs := ioutil.ReadFile(file)
+		sbytes, errs := os.ReadFile(file)
 		if errs != nil {
 			return nil, errs
 		}

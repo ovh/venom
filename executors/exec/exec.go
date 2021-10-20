@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -84,7 +83,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	// Create a tmp file
-	tmpscript, err := ioutil.TempFile(os.TempDir(), "venom-")
+	tmpscript, err := os.CreateTemp(os.TempDir(), "venom-")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create tmp file: %s", err)
 	}

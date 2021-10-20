@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -192,7 +191,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		if err != nil {
 			return nil, err
 		}
-		btes, err := ioutil.ReadAll(body)
+		btes, err := io.ReadAll(body)
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +216,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 		if !e.SkipBody {
 			var errr error
-			bb, errr = ioutil.ReadAll(resp.Body)
+			bb, errr = io.ReadAll(resp.Body)
 			if errr != nil {
 				return nil, errr
 			}
@@ -264,7 +263,7 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 	} else if e.BodyFile != "" {
 		path := filepath.Join(workdir, e.BodyFile)
 		if _, err := os.Stat(path); !os.IsNotExist(err) {
-			temp, err := ioutil.ReadFile(path)
+			temp, err := os.ReadFile(path)
 			if err != nil {
 				return nil, err
 			}

@@ -3,7 +3,7 @@ package venom
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,7 +42,7 @@ func (v *Venom) InitLogger() error {
 
 		logrus.SetOutput(v.LogOutput)
 	} else {
-		logrus.SetOutput(ioutil.Discard)
+		logrus.SetOutput(io.Discard)
 	}
 
 	logrus.SetFormatter(&nested.Formatter{

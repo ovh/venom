@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime/pprof"
@@ -171,7 +170,7 @@ type ConfigFileData struct {
 
 // Configuration file overrides the environment variables.
 func initFromReaderConfigFile(reader io.Reader) error {
-	btes, err := ioutil.ReadAll(reader)
+	btes, err := io.ReadAll(reader)
 	if err != nil {
 		return err
 	}
@@ -425,7 +424,7 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 
 	for _, r := range argVarsFiles {
 		var tmpResult = map[string]interface{}{}
-		btes, err := ioutil.ReadAll(r)
+		btes, err := io.ReadAll(r)
 		if err != nil {
 			return nil, err
 		}

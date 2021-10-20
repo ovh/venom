@@ -2,7 +2,6 @@ package venom
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path"
@@ -61,7 +60,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				err = ioutil.WriteFile(path.Join(dir, "d1.yml"), d1, 0644)
+				err = os.WriteFile(path.Join(dir, "d1.yml"), d1, 0644)
 				return []string{dir}, err
 			},
 			want:    []string{"d1.yml"},
@@ -76,7 +75,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
 					return nil, err
 				}
 
@@ -88,7 +87,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d2 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
 					return nil, err
 				}
 
@@ -106,7 +105,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
 					return nil, err
 				}
 
@@ -118,7 +117,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d2 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
 					return nil, err
 				}
 
@@ -130,7 +129,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d3 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
 					return nil, err
 				}
 
@@ -142,7 +141,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d4 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
 					return nil, err
 				}
 
@@ -160,7 +159,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
 					return nil, err
 				}
 
@@ -172,7 +171,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d2 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
 					return nil, err
 				}
 
@@ -184,7 +183,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d3 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
 					return nil, err
 				}
 
@@ -196,7 +195,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d4 := []byte("hello")
-				if err = ioutil.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
 					return nil, err
 				}
 
@@ -240,10 +239,10 @@ func Test_getFilesPath_files_order(t *testing.T) {
 	dir1, _ := tempDir(t)
 
 	d1 := []byte("hello")
-	ioutil.WriteFile(path.Join(dir1, "a.yml"), d1, 0644)
+	os.WriteFile(path.Join(dir1, "a.yml"), d1, 0644)
 
 	d2 := []byte("hello")
-	ioutil.WriteFile(path.Join(dir1, "A.yml"), d2, 0644)
+	os.WriteFile(path.Join(dir1, "A.yml"), d2, 0644)
 
 	input := []string{dir1 + "/a.yml", dir1 + "/A.yml"}
 

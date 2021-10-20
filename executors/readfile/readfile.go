@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -128,7 +127,7 @@ func (e *Executor) readfile(workdir string) (Result, error) {
 		h := md5.New()
 		tee := io.TeeReader(f, h)
 
-		b, errr := ioutil.ReadAll(tee)
+		b, errr := io.ReadAll(tee)
 		if errr != nil {
 			return result, fmt.Errorf("Error while reading file: %s", errr)
 		}

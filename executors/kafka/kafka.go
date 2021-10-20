@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -187,7 +186,7 @@ func (e Executor) produceMessages(workdir string) error {
 	if e.MessagesFile != "" {
 		path := filepath.Join(workdir, e.MessagesFile)
 		if _, err = os.Stat(path); err == nil {
-			content, err := ioutil.ReadFile(path)
+			content, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}
@@ -234,7 +233,7 @@ func (e Executor) getMessageValue(m *Message, workdir string) ([]byte, error) {
 		return nil, fmt.Errorf("no AVRO schema file specified")
 	}
 	shemaPath := path.Join(workdir, m.AvroSchemaFile)
-	schema, err := ioutil.ReadFile(shemaPath)
+	schema, err := os.ReadFile(shemaPath)
 	if err != nil {
 		return nil, fmt.Errorf("can't read from %s: %w", shemaPath, err)
 	}
@@ -264,7 +263,7 @@ func (e Executor) getRAWMessageValue(m *Message, workdir string) ([]byte, error)
 	}
 	// Read from file
 	s := path.Join(workdir, m.ValueFile)
-	value, err := ioutil.ReadFile(s)
+	value, err := os.ReadFile(s)
 	if err != nil {
 		return nil, fmt.Errorf("can't read from %s: %w", s, err)
 	}

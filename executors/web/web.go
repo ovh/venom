@@ -3,7 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -351,5 +351,5 @@ func generateErrorHTMLFile(ctx context.Context, page *agouti.Page, name string) 
 	}
 	filename := name + ".dump.html"
 	venom.Info(ctx, "Content of the HTML page is saved in %s", filename)
-	return ioutil.WriteFile(filename, []byte(html), 0644)
+	return os.WriteFile(filename, []byte(html), 0644)
 }
