@@ -84,15 +84,15 @@ func initArgs(cmd *cobra.Command) {
 }
 
 func initFromCommandArguments(f *pflag.Flag) {
-	if f.Name == "format" && formatFlag != nil {
-		format = *formatFlag
-	}
-
 	if !f.Changed {
 		return
 	}
 
 	switch f.Name {
+	case "format":
+		if formatFlag != nil {
+			format = *formatFlag
+		}
 	case "stop-on-failure":
 		if stopOnFailureFlag != nil {
 			stopOnFailure = *stopOnFailureFlag
