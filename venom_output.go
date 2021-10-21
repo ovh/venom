@@ -100,9 +100,7 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 				continue
 			}
 
-			if tc.IsEvaluated {
-				tapValue.Pass(name)
-			}
+			tapValue.Pass(name)
 		}
 	}
 
