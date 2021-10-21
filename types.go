@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/fatih/color"
@@ -107,7 +108,7 @@ type TestCase struct {
 	Status          string            `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
 	Systemout       InnerResult       `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
 	Systemerr       InnerResult       `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
-	Time            string            `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
+	Time            *time.Time        `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
 	RawTestSteps    []json.RawMessage `xml:"-" json:"steps" yaml:"steps"`
 	testSteps       []TestStep
 	TestSuiteVars   H `xml:"-" json:"-" yaml:"-"`

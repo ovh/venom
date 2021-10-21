@@ -139,7 +139,7 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 	}
 
 	if len(reallyMissingVars) > 0 {
-		return fmt.Errorf("Missing variables %v", reallyMissingVars)
+		return fmt.Errorf("missing variables %v", reallyMissingVars)
 	}
 
 	return nil

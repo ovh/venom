@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/gosimple/slug"
@@ -68,6 +69,8 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
+		now := time.Now()
+		tc.Time = &now
 		v.Print(" \t• %s", tc.Name)
 		tc.Classname = ts.Filename
 		var hasFailure bool

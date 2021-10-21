@@ -91,7 +91,9 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 				continue
 			}
 
-			tapValue.Pass(name)
+			if tc.Time != nil {
+				tapValue.Pass(name)
+			}
 		}
 	}
 
