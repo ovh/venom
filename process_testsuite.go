@@ -69,14 +69,15 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
-		now := time.Now()
-		tc.Time = &now
+		tc.IsEvaluated = true
 		v.Print(" \t• %s", tc.Name)
 		tc.Classname = ts.Filename
 		var hasFailure bool
 		var hasSkipped = len(tc.Skipped) > 0
 		if !hasSkipped {
+			start := time.Now()
 			v.runTestCase(ctx, ts, tc)
+			tc.Time = time.Since(start).Seconds()
 		}
 
 		if len(tc.Failures) > 0 {

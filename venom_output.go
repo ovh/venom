@@ -27,6 +27,15 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 	if v.OutputDir == "" {
 		return nil
 	}
+	for i := range tests.TestSuites {
+		tcFiltered := []TestCase{}
+		for _, tc := range tests.TestSuites[i].TestCases {
+			if tc.IsEvaluated {
+				tcFiltered = append(tcFiltered, tc)
+			}
+		}
+		tests.TestSuites[i].TestCases = tcFiltered
+	}
 	var data []byte
 	var err error
 	switch v.OutputFormat {
@@ -91,7 +100,7 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 				continue
 			}
 
-			if tc.Time != nil {
+			if tc.IsEvaluated {
 				tapValue.Pass(name)
 			}
 		}
