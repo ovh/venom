@@ -387,18 +387,21 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 			venom.Info(ctx, "ignore message with key: %s", msg.Key)
 			continue
 		}
+
 		h.mutex.Lock()
+		// Check if the message limit is hit *before* adding another msg
+		messagesLen := len(h.messages)
+		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
+			venom.Info(ctx, "message limit reached")
+			h.mutex.Unlock()
+			return nil
+		}
 		h.messages = append(h.messages, msg)
 		h.messagesJSON = append(h.messagesJSON, msgJSON)
-		messagesLen := len(h.messages)
 		h.mutex.Unlock()
 
 		if h.markOffset {
 			session.MarkMessage(message, "")
-		}
-		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
-			venom.Info(ctx, "message limit reached")
-			return nil
 		}
 		session.MarkMessage(message, "delivered")
 	}
