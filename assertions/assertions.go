@@ -477,11 +477,14 @@ func ShouldNotBeBetweenOrEqual(actual interface{}, expected ...interface{}) erro
 	return fmt.Errorf("expected '%v' not between or equal to %v and %v but it was", actual, expected[0], expected[1])
 }
 
-// ShouldContain receives exactly two parameters. The first is a slice and the
+// ShouldContain receives exactly two parameters. The first is a slice or a single value and the
 // second is a proposed member. Membership is determined using ShouldEqual.
 func ShouldContain(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
+	}
+	if reflect.TypeOf(actual).Kind() != reflect.Slice {
+		return ShouldEqual(actual, expected[0])
 	}
 	actualSlice, err := cast.ToSliceE(actual)
 	if err != nil {
