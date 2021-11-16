@@ -5,3 +5,7 @@ testcases:
   - script: echo '["foo", "bar", "foo2"]'
     assertions:
     - result.systemoutjson ShouldContain bar
+  - script: echo '{"foo":"bar"}'
+    assertions:
+    - result.systemoutjson ShouldContainKey foo
+    - result.systemoutjson.foo ShouldContain bar
