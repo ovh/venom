@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -164,6 +165,22 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
+		ranged, err := parseRanged(ctx, rawStep, stepVars)
+		if err != nil {
+			Error(ctx, "unable to parse \"range\" attribute: %v", err)
+			tc.AppendError(err)
+			return
+		}
+
+		for rangedIndex, rangedData := range ranged.Items {
+			stepVars.Add("range", ranged.Enabled)
+			if ranged.Enabled {
+				Debug(ctx, "processing step %d", rangedIndex)
+				stepVars.Add("index", rangedIndex)
+				stepVars.Add("key", rangedData.Key)
+				stepVars.Add("value", rangedData.Value)
+			}
+
 		vars, err := DumpStringPreserveCase(stepVars)
 		if err != nil {
 			Error(ctx, "unable to dump testcase vars: %v", err)
@@ -271,7 +288,100 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 
 		tc.computedVars.AddAll(assign)
 		tc.Vars.AddAll(tc.computedVars)
+		}
 	}
+}
+
+//Parse and format range data to allow iterations over user data
+func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error) {
+
+	//Load "range" attribute and perform actions depending on its typing
+	var ranged Range
+	json.Unmarshal([]byte(rawStep), &ranged)
+
+	switch ranged.RawContent.(type) {
+
+	//Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
+	case nil:
+		ranged.Items = append(ranged.Items, RangeData{})
+		return ranged, nil
+
+	//String needs to be parsed and possibly templated
+	case string:
+		Debug(ctx, "attempting to parse \"range\" attribute")
+		rawString := ranged.RawContent.(string)
+		if len(rawString) == 0 {
+			return ranged, fmt.Errorf("\"range\" has been specified without any data")
+		}
+
+		// Try parsing already templated data
+		err := json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
+
+		// ... or fallback
+		if err != nil {
+			//Try templating and escaping data
+			Debug(ctx, "attempting to template \"range\" attribute and parse it again")
+			vars, err := DumpStringPreserveCase(stepVars)
+			if err != nil {
+				break
+			}
+			for i := range vars {
+				vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
+			}
+			content, err := interpolate.Do(string(rawStep), vars)
+			if err != nil {
+				break
+			}
+
+			//Try parsing data
+			err = json.Unmarshal([]byte(content), &ranged)
+			if err != nil {
+				break
+			}
+			switch ranged.RawContent.(type) {
+			case string:
+				rawString = ranged.RawContent.(string)
+				json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
+			}
+		}
+	}
+
+	//Format data
+	switch t := ranged.RawContent.(type) {
+
+	//Array-like data
+	case []interface{}:
+		Debug(ctx, "\"range\" data is array-like")
+		for index, value := range ranged.RawContent.([]interface{}) {
+			key := strconv.Itoa(index)
+			ranged.Items = append(ranged.Items, RangeData{key, value})
+		}
+
+	//Number data
+	case float64:
+		Debug(ctx, "\"range\" data is number-like")
+		upperBound := int(ranged.RawContent.(float64))
+		for i := 0; i < upperBound; i++ {
+			key := strconv.Itoa(i)
+			ranged.Items = append(ranged.Items, RangeData{key, i})
+		}
+
+	//Map-like data
+	case map[string]interface{}:
+		Debug(ctx, "\"range\" data is map-like")
+		for key, value := range ranged.RawContent.(map[string]interface{}) {
+			ranged.Items = append(ranged.Items, RangeData{key, value})
+		}
+
+	//Unsupported data format
+	default:
+		fmt.Println(ranged.RawContent)
+		return ranged, fmt.Errorf("\"range\" was provided an unsupported type %T", t)
+	}
+
+	ranged.Enabled = true
+	ranged.RawContent = nil
+	return ranged, nil
 }
 
 func processVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
