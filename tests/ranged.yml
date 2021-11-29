@@ -32,7 +32,7 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemout ShouldEqual "true {{.value.index}} {{.value.expected}}"
 
-- name: range with harcoded map
+- name: range with harcoded string map
   steps:
   - type: exec
     range:

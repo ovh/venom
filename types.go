@@ -160,7 +160,7 @@ type Range struct {
 
 // RangeData contains a single iterable user value
 type RangeData struct {
-	Key   string
+	Key   interface{}
 	Value interface{}
 }
 

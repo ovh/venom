@@ -297,7 +297,9 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 
 	//Load "range" attribute and perform actions depending on its typing
 	var ranged Range
-	json.Unmarshal([]byte(rawStep), &ranged)
+	if err := json.Unmarshal(rawStep, &ranged); err != nil {
+		return ranged, fmt.Errorf("unable to parse range expression: %v", err)
+	}
 
 	switch ranged.RawContent.(type) {
 
@@ -308,21 +310,21 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 
 	//String needs to be parsed and possibly templated
 	case string:
-		Debug(ctx, "attempting to parse \"range\" attribute")
+		Debug(ctx, "attempting to parse range expression")
 		rawString := ranged.RawContent.(string)
 		if len(rawString) == 0 {
-			return ranged, fmt.Errorf("\"range\" has been specified without any data")
+			return ranged, fmt.Errorf("range expression has been specified without any data")
 		}
 
 		// Try parsing already templated data
 		err := json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
-
 		// ... or fallback
 		if err != nil {
 			//Try templating and escaping data
-			Debug(ctx, "attempting to template \"range\" attribute and parse it again")
+			Debug(ctx, "attempting to template range expression and parse it again")
 			vars, err := DumpStringPreserveCase(stepVars)
 			if err != nil {
+				Warn(ctx, "failed to parse range expression when loading step variables: %v", err)
 				break
 			}
 			for i := range vars {
@@ -330,18 +332,24 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 			}
 			content, err := interpolate.Do(string(rawStep), vars)
 			if err != nil {
+				Warn(ctx, "failed to parse range expression when templating variables: %v", err)
 				break
 			}
 
 			//Try parsing data
 			err = json.Unmarshal([]byte(content), &ranged)
 			if err != nil {
+				Warn(ctx, "failed to parse range expression when parsing data into raw string: %v", err)
 				break
 			}
 			switch ranged.RawContent.(type) {
 			case string:
 				rawString = ranged.RawContent.(string)
-				json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
+				err := json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
+				if err != nil {
+					Warn(ctx, "failed to parse range expression when parsing raw string into data: %v", err)
+					return ranged, fmt.Errorf("unable to parse range expression: unable to transform string data into a supported range expression type")
+				}
 			}
 		}
 	}
@@ -375,7 +383,6 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 
 	//Unsupported data format
 	default:
-		fmt.Println(ranged.RawContent)
 		return ranged, fmt.Errorf("\"range\" was provided an unsupported type %T", t)
 	}
 
