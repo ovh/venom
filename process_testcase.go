@@ -270,6 +270,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		}
 
 		tc.computedVars.AddAll(assign)
+		tc.Vars.AddAll(tc.computedVars)
 	}
 }
 
