@@ -82,7 +82,7 @@ func (Executor) ZeroValueResult() interface{} {
 
 // GetDefaultAssertions return default assertions for this executor
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return &venom.StepAssertions{Assertions: []string{"result.statuscode ShouldEqual 200"}}
+	return &venom.StepAssertions{Assertions: []venom.Assertion{"result.statuscode ShouldEqual 200"}}
 }
 
 // Run execute TestStep

@@ -49,9 +49,12 @@ func (h *H) AddAllWithPrefix(p string, h2 H) {
 	}
 }
 
+// Assertion (usually a string, but could be a dictionary when using logical operators)
+type Assertion interface{}
+
 // StepAssertions contains step assertions
 type StepAssertions struct {
-	Assertions []string `json:"assertions,omitempty" yaml:"assertions,omitempty"`
+	Assertions []Assertion `json:"assertions,omitempty" yaml:"assertions,omitempty"`
 }
 
 // Tests contains all informations about tests in a pipeline build

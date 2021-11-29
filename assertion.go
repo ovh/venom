@@ -106,7 +106,95 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 	}, nil
 }
 
-func check(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
+// check selects the correct assertion function to call depending on typing provided by user
+func check(tc TestCase, stepNumber int, assertion Assertion, r interface{}) (*Failure, *Failure) {
+	var errs *Failure
+	var fails *Failure
+	switch t := assertion.(type) {
+	case string:
+		errs, fails = checkString(tc, stepNumber, assertion.(string), r)
+	case map[string]interface{}:
+		errs, fails = checkBranch(tc, stepNumber, assertion.(map[string]interface{}), r)
+	default:
+		errs = newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion format: %v", t))
+	}
+	return errs, fails
+}
+
+// checkString evaluate a complex assertion containing logical operators
+// it recursively calls checkAssertion for each operand
+func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r interface{}) (*Failure, *Failure) {
+	// Extract logical operator
+	if len(branch) != 1 {
+		return newFailure(tc, stepNumber, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch))), nil
+	}
+	var operator string
+	for k := range branch {
+		operator = k
+	}
+
+	// Extract logical operands
+	var operands []interface{}
+	switch t := branch[operator].(type) {
+	case []interface{}:
+		operands = branch[operator].([]interface{})
+	default:
+		return newFailure(tc, stepNumber, "", fmt.Errorf("expected %s operands to be an []interface{}, got %v", operator, t)), nil
+	}
+	if len(operands) == 0 {
+		return nil, nil
+	}
+
+	// Evaluate assertions (operands)
+	var errsBuf []Failure
+	var failsBuf []Failure
+	var results []string
+	assertionsCount := len(operands)
+	assertionsSuccess := 0
+	for _, assertion := range operands {
+		errs, fails := check(tc, stepNumber, assertion, r)
+		if errs != nil {
+			errsBuf = append(errsBuf, *errs)
+		}
+		if fails != nil {
+			failsBuf = append(failsBuf, *fails)
+			results = append(results, fmt.Sprintf("  - fail: %s", assertion))
+		}
+		if (errs == nil) && (fails == nil) {
+			assertionsSuccess++
+			results = append(results, fmt.Sprintf("  - pass: %s", assertion))
+		}
+	}
+
+	// Evaluate operator behaviour
+	var err error
+	switch operator {
+	case "and":
+		if assertionsSuccess != assertionsCount {
+			err = fmt.Errorf("%d / %d assertions succeeded:\n%s", assertionsSuccess, assertionsCount, strings.Join(results, "\n"))
+		}
+	case "or":
+		if assertionsSuccess == 0 {
+			err = fmt.Errorf("no assertions succeeded:\n%s", strings.Join(results, "\n"))
+		}
+	case "xor":
+		if assertionsSuccess == 0 {
+			err = fmt.Errorf("no assertions succeeded:\n%s", strings.Join(results, "\n"))
+		}
+		if assertionsSuccess > 1 {
+			err = fmt.Errorf("multiple assertions succeeded but expected only one to suceed:\n%s", strings.Join(results, "\n"))
+		}
+	default:
+		return newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion operator %s", operator)), nil
+	}
+	if err != nil {
+		return nil, newFailure(tc, stepNumber, "", err)
+	}
+	return nil, nil
+}
+
+// checkString evaluate a single string assertion
+func checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
 	assert, err := parseAssertions(context.Background(), assertion, r)
 	if err != nil {
 		return nil, newFailure(tc, stepNumber, assertion, err)

@@ -112,7 +112,7 @@ func (Executor) ZeroValueResult() interface{} {
 
 // GetDefaultAssertions return the default assertions of the executor.
 func (e Executor) GetDefaultAssertions() venom.StepAssertions {
-	return venom.StepAssertions{Assertions: []string{}}
+	return venom.StepAssertions{Assertions: []venom.Assertion{}}
 }
 
 // handleRows iter on each SQL rows result sets and serialize it into a []Row.
