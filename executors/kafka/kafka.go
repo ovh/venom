@@ -315,6 +315,7 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 		messageLimit: e.MessageLimit,
 		schemaReg:    e.schemaReg,
 		keyFilter:    e.KeyFilter,
+		done:         make(chan struct{}),
 	}
 	if err := consumerGroup.Consume(ctx, e.Topics, h); err != nil {
 		if e.WaitFor > 0 && errors.Is(err, context.DeadlineExceeded) {
@@ -358,6 +359,8 @@ type handler struct {
 	schemaReg    SchemaRegistry
 	keyFilter    string
 	mutex        sync.Mutex
+	done         chan struct{}
+	once         sync.Once
 }
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
@@ -374,6 +377,12 @@ func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
 func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	ctx := session.Context()
 	for message := range claim.Messages() {
+		// Stop consuming if one of the other handler goroutines already hit the message limit
+		select {
+		case <-h.done:
+			return nil
+		default:
+		}
 		consumeFunction := h.consumeJSON
 		if h.withAVRO {
 			consumeFunction = h.consumeAVRO
@@ -387,18 +396,25 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 			venom.Info(ctx, "ignore message with key: %s", msg.Key)
 			continue
 		}
+
 		h.mutex.Lock()
+		// Check if the message limit is hit *before* adding another msg
+		messagesLen := len(h.messages)
+		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
+			venom.Info(ctx, "message limit reached")
+			// Signal to other handler goroutines that they should stop consuming messages.
+			// Only checking the message length isn't enough in case of filtering by key and never reaching the check.
+			// Using sync.Once to prevent panics from multiple channel closings.
+			h.once.Do(func() { close(h.done) })
+			h.mutex.Unlock()
+			return nil
+		}
 		h.messages = append(h.messages, msg)
 		h.messagesJSON = append(h.messagesJSON, msgJSON)
-		messagesLen := len(h.messages)
 		h.mutex.Unlock()
 
 		if h.markOffset {
 			session.MarkMessage(message, "")
-		}
-		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
-			venom.Info(ctx, "message limit reached")
-			return nil
 		}
 		session.MarkMessage(message, "delivered")
 	}
