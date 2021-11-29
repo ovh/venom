@@ -181,113 +181,113 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				stepVars.Add("value", rangedData.Value)
 			}
 
-		vars, err := DumpStringPreserveCase(stepVars)
-		if err != nil {
-			Error(ctx, "unable to dump testcase vars: %v", err)
-			tc.AppendError(err)
-			return
-		}
-
-		for k, v := range vars {
-			content, err := interpolate.Do(v, vars)
+			vars, err := DumpStringPreserveCase(stepVars)
 			if err != nil {
+				Error(ctx, "unable to dump testcase vars: %v", err)
 				tc.AppendError(err)
-				Error(ctx, "unable to interpolate variable %q: %v", v, err)
 				return
 			}
-			vars[k] = content
-		}
 
-		// the value of each var can contains a double-quote -> "
-		// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
-		// This also avoids injections into the json structure of a step
-		for i := range vars {
-			vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
-		}
-
-		var content string
-		for i := 0; i < 10; i++ {
-			content, err = interpolate.Do(string(rawStep), vars)
-			if err != nil {
-				tc.AppendError(err)
-				Error(ctx, "unable to interpolate step: %v", err)
-				return
-			}
-			if !strings.Contains(content, "{{") {
-				break
-			}
-		}
-
-		Info(ctx, "Step #%d content is: %q", stepNumber, content)
-		var step TestStep
-		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
-			tc.AppendError(err)
-			Error(ctx, "unable to unmarshal step: %v", err)
-			return
-		}
-
-		tc.testSteps = append(tc.testSteps, step)
-		var e ExecutorRunner
-		ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
-		if err != nil {
-			tc.AppendError(err)
-			Error(ctx, "unable to get executor: %v", err)
-			break
-		}
-
-		_, known := knowExecutors[e.Name()]
-		if !known {
-			knowExecutors[e.Name()] = struct{}{}
-			ctx, err = e.Setup(ctx, tc.Vars)
-			if err != nil {
-				tc.AppendError(err)
-				Error(ctx, "unable to setup executor: %v", err)
-				break
-			}
-			defer func(ctx context.Context) {
-				if err := e.TearDown(ctx); err != nil {
+			for k, v := range vars {
+				content, err := interpolate.Do(v, vars)
+				if err != nil {
 					tc.AppendError(err)
-					Error(ctx, "unable to teardown executor: %v", err)
+					Error(ctx, "unable to interpolate variable %q: %v", v, err)
+					return
 				}
-			}(ctx)
-		}
-
-		v.RunTestStep(ctx, e, tc, stepNumber, step)
-
-		tc.testSteps = append(tc.testSteps, step)
-
-		var hasFailed bool
-		if len(tc.Failures) > 0 {
-			for _, f := range tc.Failures {
-				Warning(ctx, "%v", f)
+				vars[k] = content
 			}
-			hasFailed = true
-		}
 
-		if len(tc.Errors) > 0 {
-			Error(ctx, "Errors: ")
-			for _, e := range tc.Errors {
-				Error(ctx, "%v", e)
+			// the value of each var can contains a double-quote -> "
+			// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
+			// This also avoids injections into the json structure of a step
+			for i := range vars {
+				vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
 			}
-			hasFailed = true
-		}
 
-		if hasFailed {
-			break
-		}
+			var content string
+			for i := 0; i < 10; i++ {
+				content, err = interpolate.Do(string(rawStep), vars)
+				if err != nil {
+					tc.AppendError(err)
+					Error(ctx, "unable to interpolate step: %v", err)
+					return
+				}
+				if !strings.Contains(content, "{{") {
+					break
+				}
+			}
 
-		allVars := tc.Vars.Clone()
-		allVars.AddAll(tc.computedVars.Clone())
+			Info(ctx, "Step #%d content is: %q", stepNumber, content)
+			var step TestStep
+			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to unmarshal step: %v", err)
+				return
+			}
 
-		assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
-		if err != nil {
-			tc.AppendError(err)
-			Error(ctx, "unable to process variable assignments: %v", err)
-			break
-		}
+			tc.testSteps = append(tc.testSteps, step)
+			var e ExecutorRunner
+			ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
+			if err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to get executor: %v", err)
+				break
+			}
 
-		tc.computedVars.AddAll(assign)
-		tc.Vars.AddAll(tc.computedVars)
+			_, known := knowExecutors[e.Name()]
+			if !known {
+				knowExecutors[e.Name()] = struct{}{}
+				ctx, err = e.Setup(ctx, tc.Vars)
+				if err != nil {
+					tc.AppendError(err)
+					Error(ctx, "unable to setup executor: %v", err)
+					break
+				}
+				defer func(ctx context.Context) {
+					if err := e.TearDown(ctx); err != nil {
+						tc.AppendError(err)
+						Error(ctx, "unable to teardown executor: %v", err)
+					}
+				}(ctx)
+			}
+
+			v.RunTestStep(ctx, e, tc, stepNumber, step)
+
+			tc.testSteps = append(tc.testSteps, step)
+
+			var hasFailed bool
+			if len(tc.Failures) > 0 {
+				for _, f := range tc.Failures {
+					Warning(ctx, "%v", f)
+				}
+				hasFailed = true
+			}
+
+			if len(tc.Errors) > 0 {
+				Error(ctx, "Errors: ")
+				for _, e := range tc.Errors {
+					Error(ctx, "%v", e)
+				}
+				hasFailed = true
+			}
+
+			if hasFailed {
+				break
+			}
+
+			allVars := tc.Vars.Clone()
+			allVars.AddAll(tc.computedVars.Clone())
+
+			assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
+			if err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to process variable assignments: %v", err)
+				break
+			}
+
+			tc.computedVars.AddAll(assign)
+			tc.Vars.AddAll(tc.computedVars)
 		}
 	}
 }
