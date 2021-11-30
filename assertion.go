@@ -171,18 +171,22 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 	switch operator {
 	case "and":
 		if assertionsSuccess != assertionsCount {
-			err = fmt.Errorf("%d / %d assertions succeeded:\n%s", assertionsSuccess, assertionsCount, strings.Join(results, "\n"))
+			err = fmt.Errorf("%d/%d assertions succeeded:\n%s\n", assertionsSuccess, assertionsCount, strings.Join(results, "\n"))
 		}
 	case "or":
 		if assertionsSuccess == 0 {
-			err = fmt.Errorf("no assertions succeeded:\n%s", strings.Join(results, "\n"))
+			err = fmt.Errorf("no assertions succeeded:\n%s\n", strings.Join(results, "\n"))
 		}
 	case "xor":
 		if assertionsSuccess == 0 {
-			err = fmt.Errorf("no assertions succeeded:\n%s", strings.Join(results, "\n"))
+			err = fmt.Errorf("no assertions succeeded:\n%s\n", strings.Join(results, "\n"))
 		}
 		if assertionsSuccess > 1 {
-			err = fmt.Errorf("multiple assertions succeeded but expected only one to suceed:\n%s", strings.Join(results, "\n"))
+			err = fmt.Errorf("multiple assertions succeeded but expected only one to suceed:\n%s\n", strings.Join(results, "\n"))
+		}
+	case "not":
+		if assertionsSuccess > 0 {
+			err = fmt.Errorf("some assertions succeeded but expected none to suceed:\n%s\n", strings.Join(results, "\n"))
 		}
 	default:
 		return newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion operator %s", operator)), nil
