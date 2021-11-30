@@ -336,7 +336,7 @@ func (e Executor) getKafkaConfig() (*sarama.Config, error) {
 	config.Net.SASL.Password = e.Password
 	config.Consumer.Return.Errors = true
 	config.Net.DialTimeout = defaultDialTimeout
-	config.Version = sarama.V0_10_2_0
+	config.Version = sarama.V2_6_0_0
 
 	if e.KafkaVersion != "" {
 		kafkaVersion, err := sarama.ParseKafkaVersion(e.KafkaVersion)
