@@ -36,6 +36,17 @@ testcases:
           - or:
             - result.systemoutjson ShouldEqual 1
 
+  - name: AssertionsOperatorNested2
+    steps:
+    - script: echo 1
+      assertions:
+        - or:
+          - or:
+            - or:
+              - or:
+                - or:
+                  - result.systemoutjson ShouldEqual 1
+
   - name: AssertionsReadmeExample
     steps:
     - script: echo 1
