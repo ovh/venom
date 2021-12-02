@@ -527,8 +527,6 @@ The following data types are supported, each exposing contexted variables `.inde
 - A templated string which results in one of the above typing (`string`)
   - It can be either inherited from vars file, or interpolated from a previous step result
 
-Within a range context, `.range` contexted variable will be set to `true` (while it'll be `false` in regular contexts)
-
 For instance, the following example will iterate over an array of two items containing maps:
 ```yaml
 - name: range with harcoded array
@@ -537,14 +535,12 @@ For instance, the following example will iterate over an array of two items cont
     range:
       - actual: hello
         expected: hello
-        index: 0
       - actual: world
         expected: world
-        index: 1
-    script: echo "{{.range}} {{.index}} {{.value.actual}}"
+    script: echo "{{.value.actual}}"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual "true {{.value.index}} {{.value.expected}}"
+    - result.systemout ShouldEqual "{{.value.expected}}"
 ```
 
 More examples are available in [`tests/ranged.yml`](/tests/ranged.yml).

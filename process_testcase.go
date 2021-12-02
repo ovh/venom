@@ -173,7 +173,6 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		}
 
 		for rangedIndex, rangedData := range ranged.Items {
-			stepVars.Add("range", ranged.Enabled)
 			if ranged.Enabled {
 				Debug(ctx, "processing step %d", rangedIndex)
 				stepVars.Add("index", rangedIndex)

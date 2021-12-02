@@ -9,14 +9,6 @@ vars:
       index: 1
 testcases:
 
-- name: range context is not enabled when "range" attribute is not present
-  steps:
-  - type: exec
-    script: echo {{.range}}
-    assertions:
-    - result.code ShouldEqual 0
-    - result.systemout ShouldEqual false
-
 - name: range with harcoded array
   steps:
   - type: exec
@@ -27,10 +19,10 @@ testcases:
       - actual: world
         expected: world
         index: 1
-    script: echo "{{.range}} {{.index}} {{.value.actual}}"
+    script: echo "{{.index}} {{.value.actual}}"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual "true {{.value.index}} {{.value.expected}}"
+    - result.systemout ShouldEqual "{{.value.index}} {{.value.expected}}"
 
 - name: range with harcoded string map
   steps:
@@ -44,42 +36,39 @@ testcases:
         actual: world
         expected: world
         key: bar
-    script: echo "{{.range}} {{.key}} {{.value.actual}}"
+    script: echo "{{.key}} {{.value.actual}}"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual "true {{.value.key}} {{.value.expected}}"
+    - result.systemout ShouldEqual "{{.value.key}} {{.value.expected}}"
 
 - name: range with harcoded iterations
   steps:
   - type: exec
     range: 5
-    script: echo "{{.range}} {{.index}}"
+    script: echo "{{.index}}"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual "true {{.value}}"
+    - result.systemout ShouldEqual "{{.value}}"
 
 - name: range with templated items from current context or vars files
   steps:
   - type: exec
     range: '{{.rangedata}}'
-    script: echo "{{.range}} {{.index}} {{.value.actual}}"
+    script: echo "{{.index}} {{.value.actual}}"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual "true {{.value.index}} {{.value.expected}}"
-
-- name: rangeInterpolatedSetup
-  steps:
-  - type: exec
-    script: echo '[{"actual":"hi", "expected":"hi", "index":0}, {"actual":"hey", "expected":"hey", "index":1}]'
-    vars:
-      result:
-        from: result.systemout
+    - result.systemout ShouldEqual "{{.value.index}} {{.value.expected}}"
 
 - name: range with templated items from a previous test case
   steps:
   - type: exec
-    range: '{{.rangeInterpolatedSetup.result}}'
-    script: echo "{{.range}} {{.index}} {{.value.actual}}"
+    script: echo '[{"actual":"hi", "expected":"hi", "index":0}, {"actual":"hey", "expected":"hey", "index":1}]'
+    vars:
+      previousResult:
+        from: result.systemout
+  - type: exec
+    range: '{{.previousResult}}'
+    script: echo "{{.index}} {{.value.actual}}"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual "true {{.value.index}} {{.value.expected}}"
+    - result.systemout ShouldEqual "{{.value.index}} {{.value.expected}}"
