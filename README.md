@@ -24,6 +24,7 @@ It can also generate xUnit result files.
 * [Advanced usage](#advanced-usage)
   * [Debug your testsuites](#debug-your-testsuites)
   * [Skip testcase](#skip-testcase)
+  * [Iterating over data](#iterating-over-data)
 * [Use venom in CI](#use-venom-in-ci)
 * [Hacking](#hacking)
 * [License](#license)
@@ -507,6 +508,42 @@ testcases:
     - result.code ShouldEqual 0
 
 ```
+
+## Iterating over data
+
+It is possible to iterate over data using `range` attribute.
+
+The following data types are supported, each exposing contexted variables `.index`, `.key` and `.value`:
+
+- An array where each value will be iterated over (`[]interface{}`)
+  - `.index`/`.key`: current iteration index
+  - `.value`: current iteration item value
+- A map where each key will be iterated over (`map[string]interface{}`)
+  - `.index`: current iteration index
+  - `.key`: current iteration item key
+  - `.value`: current iteration item value
+- An integer to perform target step `n` times (`int`)
+  - `.index`/`.key`/`.value`: current iteration index
+- A templated string which results in one of the above typing (`string`)
+  - It can be either inherited from vars file, or interpolated from a previous step result
+
+For instance, the following example will iterate over an array of two items containing maps:
+```yaml
+- name: range with harcoded array
+  steps:
+  - type: exec
+    range:
+      - actual: hello
+        expected: hello
+      - actual: world
+        expected: world
+    script: echo "{{.value.actual}}"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldEqual "{{.value.expected}}"
+```
+
+More examples are available in [`tests/ranged.yml`](/tests/ranged.yml).
 
 # FAQ
 

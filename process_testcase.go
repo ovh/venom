@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -164,114 +165,229 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
-		vars, err := DumpStringPreserveCase(stepVars)
+		ranged, err := parseRanged(ctx, rawStep, stepVars)
 		if err != nil {
-			Error(ctx, "unable to dump testcase vars: %v", err)
+			Error(ctx, "unable to parse \"range\" attribute: %v", err)
 			tc.AppendError(err)
 			return
 		}
 
-		for k, v := range vars {
-			content, err := interpolate.Do(v, vars)
+		for rangedIndex, rangedData := range ranged.Items {
+			if ranged.Enabled {
+				Debug(ctx, "processing step %d", rangedIndex)
+				stepVars.Add("index", rangedIndex)
+				stepVars.Add("key", rangedData.Key)
+				stepVars.Add("value", rangedData.Value)
+			}
+
+			vars, err := DumpStringPreserveCase(stepVars)
 			if err != nil {
+				Error(ctx, "unable to dump testcase vars: %v", err)
 				tc.AppendError(err)
-				Error(ctx, "unable to interpolate variable %q: %v", v, err)
 				return
 			}
-			vars[k] = content
-		}
 
-		// the value of each var can contains a double-quote -> "
-		// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
-		// This also avoids injections into the json structure of a step
-		for i := range vars {
-			vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
-		}
-
-		var content string
-		for i := 0; i < 10; i++ {
-			content, err = interpolate.Do(string(rawStep), vars)
-			if err != nil {
-				tc.AppendError(err)
-				Error(ctx, "unable to interpolate step: %v", err)
-				return
-			}
-			if !strings.Contains(content, "{{") {
-				break
-			}
-		}
-
-		Info(ctx, "Step #%d content is: %q", stepNumber, content)
-		var step TestStep
-		if err := yaml.Unmarshal([]byte(content), &step); err != nil {
-			tc.AppendError(err)
-			Error(ctx, "unable to unmarshal step: %v", err)
-			return
-		}
-
-		tc.testSteps = append(tc.testSteps, step)
-		var e ExecutorRunner
-		ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
-		if err != nil {
-			tc.AppendError(err)
-			Error(ctx, "unable to get executor: %v", err)
-			break
-		}
-
-		_, known := knowExecutors[e.Name()]
-		if !known {
-			knowExecutors[e.Name()] = struct{}{}
-			ctx, err = e.Setup(ctx, tc.Vars)
-			if err != nil {
-				tc.AppendError(err)
-				Error(ctx, "unable to setup executor: %v", err)
-				break
-			}
-			defer func(ctx context.Context) {
-				if err := e.TearDown(ctx); err != nil {
+			for k, v := range vars {
+				content, err := interpolate.Do(v, vars)
+				if err != nil {
 					tc.AppendError(err)
-					Error(ctx, "unable to teardown executor: %v", err)
+					Error(ctx, "unable to interpolate variable %q: %v", v, err)
+					return
 				}
-			}(ctx)
-		}
-
-		v.RunTestStep(ctx, e, tc, stepNumber, step)
-
-		tc.testSteps = append(tc.testSteps, step)
-
-		var hasFailed bool
-		if len(tc.Failures) > 0 {
-			for _, f := range tc.Failures {
-				Warning(ctx, "%v", f)
+				vars[k] = content
 			}
-			hasFailed = true
-		}
 
-		if len(tc.Errors) > 0 {
-			Error(ctx, "Errors: ")
-			for _, e := range tc.Errors {
-				Error(ctx, "%v", e)
+			// the value of each var can contains a double-quote -> "
+			// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
+			// This also avoids injections into the json structure of a step
+			for i := range vars {
+				vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
 			}
-			hasFailed = true
+
+			var content string
+			for i := 0; i < 10; i++ {
+				content, err = interpolate.Do(string(rawStep), vars)
+				if err != nil {
+					tc.AppendError(err)
+					Error(ctx, "unable to interpolate step: %v", err)
+					return
+				}
+				if !strings.Contains(content, "{{") {
+					break
+				}
+			}
+
+			Info(ctx, "Step #%d content is: %q", stepNumber, content)
+			var step TestStep
+			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to unmarshal step: %v", err)
+				return
+			}
+
+			tc.testSteps = append(tc.testSteps, step)
+			var e ExecutorRunner
+			ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
+			if err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to get executor: %v", err)
+				break
+			}
+
+			_, known := knowExecutors[e.Name()]
+			if !known {
+				knowExecutors[e.Name()] = struct{}{}
+				ctx, err = e.Setup(ctx, tc.Vars)
+				if err != nil {
+					tc.AppendError(err)
+					Error(ctx, "unable to setup executor: %v", err)
+					break
+				}
+				defer func(ctx context.Context) {
+					if err := e.TearDown(ctx); err != nil {
+						tc.AppendError(err)
+						Error(ctx, "unable to teardown executor: %v", err)
+					}
+				}(ctx)
+			}
+
+			v.RunTestStep(ctx, e, tc, stepNumber, step)
+
+			tc.testSteps = append(tc.testSteps, step)
+
+			var hasFailed bool
+			if len(tc.Failures) > 0 {
+				for _, f := range tc.Failures {
+					Warning(ctx, "%v", f)
+				}
+				hasFailed = true
+			}
+
+			if len(tc.Errors) > 0 {
+				Error(ctx, "Errors: ")
+				for _, e := range tc.Errors {
+					Error(ctx, "%v", e)
+				}
+				hasFailed = true
+			}
+
+			if hasFailed {
+				break
+			}
+
+			allVars := tc.Vars.Clone()
+			allVars.AddAll(tc.computedVars.Clone())
+
+			assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
+			if err != nil {
+				tc.AppendError(err)
+				Error(ctx, "unable to process variable assignments: %v", err)
+				break
+			}
+
+			tc.computedVars.AddAll(assign)
+			tc.Vars.AddAll(tc.computedVars)
 		}
-
-		if hasFailed {
-			break
-		}
-
-		allVars := tc.Vars.Clone()
-		allVars.AddAll(tc.computedVars.Clone())
-
-		assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
-		if err != nil {
-			tc.AppendError(err)
-			Error(ctx, "unable to process variable assignments: %v", err)
-			break
-		}
-
-		tc.computedVars.AddAll(assign)
-		tc.Vars.AddAll(tc.computedVars)
 	}
+}
+
+//Parse and format range data to allow iterations over user data
+func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error) {
+
+	//Load "range" attribute and perform actions depending on its typing
+	var ranged Range
+	if err := json.Unmarshal(rawStep, &ranged); err != nil {
+		return ranged, fmt.Errorf("unable to parse range expression: %v", err)
+	}
+
+	switch ranged.RawContent.(type) {
+
+	//Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
+	case nil:
+		ranged.Items = append(ranged.Items, RangeData{})
+		return ranged, nil
+
+	//String needs to be parsed and possibly templated
+	case string:
+		Debug(ctx, "attempting to parse range expression")
+		rawString := ranged.RawContent.(string)
+		if len(rawString) == 0 {
+			return ranged, fmt.Errorf("range expression has been specified without any data")
+		}
+
+		// Try parsing already templated data
+		err := json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
+		// ... or fallback
+		if err != nil {
+			//Try templating and escaping data
+			Debug(ctx, "attempting to template range expression and parse it again")
+			vars, err := DumpStringPreserveCase(stepVars)
+			if err != nil {
+				Warn(ctx, "failed to parse range expression when loading step variables: %v", err)
+				break
+			}
+			for i := range vars {
+				vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
+			}
+			content, err := interpolate.Do(string(rawStep), vars)
+			if err != nil {
+				Warn(ctx, "failed to parse range expression when templating variables: %v", err)
+				break
+			}
+
+			//Try parsing data
+			err = json.Unmarshal([]byte(content), &ranged)
+			if err != nil {
+				Warn(ctx, "failed to parse range expression when parsing data into raw string: %v", err)
+				break
+			}
+			switch ranged.RawContent.(type) {
+			case string:
+				rawString = ranged.RawContent.(string)
+				err := json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
+				if err != nil {
+					Warn(ctx, "failed to parse range expression when parsing raw string into data: %v", err)
+					return ranged, fmt.Errorf("unable to parse range expression: unable to transform string data into a supported range expression type")
+				}
+			}
+		}
+	}
+
+	//Format data
+	switch t := ranged.RawContent.(type) {
+
+	//Array-like data
+	case []interface{}:
+		Debug(ctx, "\"range\" data is array-like")
+		for index, value := range ranged.RawContent.([]interface{}) {
+			key := strconv.Itoa(index)
+			ranged.Items = append(ranged.Items, RangeData{key, value})
+		}
+
+	//Number data
+	case float64:
+		Debug(ctx, "\"range\" data is number-like")
+		upperBound := int(ranged.RawContent.(float64))
+		for i := 0; i < upperBound; i++ {
+			key := strconv.Itoa(i)
+			ranged.Items = append(ranged.Items, RangeData{key, i})
+		}
+
+	//Map-like data
+	case map[string]interface{}:
+		Debug(ctx, "\"range\" data is map-like")
+		for key, value := range ranged.RawContent.(map[string]interface{}) {
+			ranged.Items = append(ranged.Items, RangeData{key, value})
+		}
+
+	//Unsupported data format
+	default:
+		return ranged, fmt.Errorf("\"range\" was provided an unsupported type %T", t)
+	}
+
+	ranged.Enabled = true
+	ranged.RawContent = nil
+	return ranged, nil
 }
 
 func processVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {

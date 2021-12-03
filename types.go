@@ -151,6 +151,19 @@ func (t TestStep) StringSliceValue(name string) ([]string, error) {
 	return []string{out}, nil
 }
 
+// Range contains data related to iterable user values
+type Range struct {
+	Enabled    bool
+	Items      []RangeData
+	RawContent interface{} `json:"range"`
+}
+
+// RangeData contains a single iterable user value
+type RangeData struct {
+	Key   string
+	Value interface{}
+}
+
 // Skipped contains data related to a skipped test.
 type Skipped struct {
 	Value string `xml:",cdata" json:"value" yaml:"value,omitempty"`
