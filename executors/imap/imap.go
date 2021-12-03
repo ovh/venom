@@ -64,7 +64,7 @@ func (Executor) ZeroValueResult() interface{} {
 
 // GetDefaultAssertions return default assertions for type exec
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return &venom.StepAssertions{Assertions: []string{"result.err ShouldNotExist"}}
+	return &venom.StepAssertions{Assertions: []venom.Assertion{"result.err ShouldNotExist"}}
 }
 
 // Run execute TestStep of type exec

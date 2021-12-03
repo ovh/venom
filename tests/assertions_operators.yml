@@ -1,0 +1,105 @@
+name: Assertions testsuite
+testcases:
+
+  - name: AssertionsOperatorAnd
+    steps:
+    - script: echo 1
+      assertions:
+        - and:
+          - result.systemoutjson ShouldEqual 1 
+          - result.systemoutjson ShouldContain 1
+
+  - name: AssertionsOperatorOr
+    steps:
+    - script: echo 1
+      assertions:
+        - or:
+          - result.systemoutjson ShouldEqual 1 
+          - result.systemoutjson ShouldEqual 2
+
+  - name: AssertionsOperatorXor
+    steps:
+    - script: echo 1
+      assertions:
+        - xor:
+          - result.systemoutjson ShouldEqual 1
+          - result.systemoutjson ShouldEqual 2
+
+  - name: AssertionsOperatorNested
+    steps:
+    - script: echo 1
+      assertions:
+        - or:
+          - and:
+            - result.systemoutjson ShouldBeGreaterThanOrEqualTo 1
+            - result.systemoutjson ShouldBeLessThanOrEqualTo 1
+          - or:
+            - result.systemoutjson ShouldEqual 1
+
+  - name: AssertionsOperatorNested2
+    steps:
+    - script: echo 1
+      assertions:
+        - or:
+          - or:
+            - or:
+              - or:
+                - or:
+                  - result.systemoutjson ShouldEqual 1
+
+  - name: AssertionsReadmeExample
+    steps:
+    - script: echo 1
+      assertions:
+        - or:
+          - result.systemoutjson ShouldEqual 1 
+          - result.systemoutjson ShouldEqual 2
+        # Nested operators
+        - or:
+          - result.systemoutjson ShouldBeGreaterThanOrEqualTo 1
+          - result.systemoutjson ShouldBeLessThanOrEqualTo 1
+          - or:
+            - result.systemoutjson ShouldEqual 1
+
+  - name: AssertionsOperatorNot
+    steps:
+    - script: echo 1
+      assertions:
+        - not: 
+          - result.systemoutjson ShouldEqual 0
+
+  - name: AssertionsOperatorOrError
+    steps:
+    - script: echo 1
+      assertions:
+        - not:
+          - or:
+            - result.systemoutjson ShouldEqual 0
+            - result.systemoutjson ShouldEqual 2
+
+  - name: AssertionsOperatorXorErrorMultiple
+    steps:
+    - script: echo 1
+      assertions:
+        - not:
+          - xor:
+            - result.systemoutjson ShouldEqual 1
+            - result.systemoutjson ShouldContain 1 
+
+  - name: AssertionsOperatorXorErrorNone
+    steps:
+    - script: echo 1
+      assertions:
+        - not:
+          - xor:
+            - result.systemoutjson ShouldEqual 0
+            - result.systemoutjson ShouldContain 0
+
+  - name: AssertionsOperatorAndError
+    steps:
+    - script: echo 1
+      assertions:
+        - not:
+          - and:
+            - result.systemoutjson ShouldEqual 1
+            - result.systemoutjson ShouldContain 0

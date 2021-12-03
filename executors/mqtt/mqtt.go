@@ -69,7 +69,7 @@ type Result struct {
 
 // GetDefaultAssertions return default assertions for type exec
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return &venom.StepAssertions{Assertions: []string{"result.error ShouldBeEmpty"}}
+	return &venom.StepAssertions{Assertions: []venom.Assertion{"result.error ShouldBeEmpty"}}
 }
 
 func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {

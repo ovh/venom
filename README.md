@@ -431,6 +431,30 @@ Available formats: jUnit (xml), json, yaml, tap reports
 * ShouldHappenOnOrAfter - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenOnOrAfter.yml)
 * ShouldHappenBetween - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenBetween.yml)
 
+## Using logical operators
+
+While assertions use `and` operator implicitely, it is possible to use other logical operators to perform complex assertions.
+
+Supported operators are `and`, `or` and `xor`.
+
+```yml
+- name: Assertions operators
+  steps:
+  - script: echo 1
+    assertions:
+      - or:
+        - result.systemoutjson ShouldEqual 1 
+        - result.systemoutjson ShouldEqual 2
+      # Nested operators
+      - or:
+        - result.systemoutjson ShouldBeGreaterThanOrEqualTo 1
+        - result.systemoutjson ShouldBeLessThanOrEqualTo 1
+        - or:
+          - result.systemoutjson ShouldEqual 1
+```
+
+More examples are available in [`tests/assertions_operators.yml`](/tests/assertions_operators.yml).
+
 # Advanced usage
 ## Debug your testsuites
 
