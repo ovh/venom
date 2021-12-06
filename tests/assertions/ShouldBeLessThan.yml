@@ -5,3 +5,13 @@ testcases:
   - script: echo 2.4
     assertions:
     - result.systemout ShouldBeLessThan 2.5
+
+- name:  bodyjson assert comparator test
+  steps:
+  - type: http
+    method: GET
+    url: https://eu.api.ovh.com/1.0/sms/rates/destinations?billingCountry=fr&country=fr
+    headers:
+      Content-type: application/json
+    assertions:
+    - result.bodyjson.credit ShouldBeLessThan 2
