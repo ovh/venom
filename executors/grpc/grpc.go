@@ -3,8 +3,13 @@ package grpc
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -35,12 +40,15 @@ type Executor struct {
 	URL                  string                 `json:"url" yaml:"url"`
 	Service              string                 `json:"service" yaml:"service"`
 	Method               string                 `json:"method" yaml:"method"`
-	Plaintext            bool                   `json:"plaintext,omitempty" yaml:"plaintext,omitempty"`
 	JSONDefaultFields    bool                   `json:"default_fields" yaml:"default_fields"`
 	IncludeTextSeparator bool                   `json:"include_text_separator" yaml:"include_text_separator"`
 	Data                 map[string]interface{} `json:"data" yaml:"data"`
 	Headers              map[string]string      `json:"headers" yaml:"headers"`
 	ConnectTimeout       *int64                 `json:"connect_timeout" yaml:"connect_timeout"`
+	TLSClientCert        string                 `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
+	TLSClientKey         string                 `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
+	TLSRootCA            string                 `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
+	IgnoreVerifySSL      bool                   `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
 }
 
 // Result represents a step result
@@ -128,10 +136,75 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		}
 		ctx, cancel := context.WithTimeout(ctx, dialTime)
 		defer cancel()
+
 		var creds credentials.TransportCredentials
+
+		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+
+		// connect to a TLS server
+		if e.TLSRootCA != "" {
+			TLSRootCAFilepath := filepath.Join(workdir, e.TLSRootCA)
+			var TLSRootCA []byte
+			if _, err := os.Stat(TLSRootCAFilepath); err == nil {
+				TLSRootCA, err = os.ReadFile(TLSRootCAFilepath)
+				if err != nil {
+					return nil, fmt.Errorf("unable to read TLSRootCA from file %s", TLSRootCAFilepath)
+				}
+			} else {
+				TLSRootCA = []byte(e.TLSRootCA)
+			}
+
+			certPool := x509.NewCertPool()
+			if ok := certPool.AppendCertsFromPEM(TLSRootCA); !ok {
+				return nil, errors.New("failed to add root CA's certificate")
+			}
+			creds = credentials.NewTLS(&tls.Config{
+				ClientCAs:          certPool,
+				InsecureSkipVerify: e.IgnoreVerifySSL,
+			})
+
+			// connect to a mutual TLS server
+			var TLSClientCert, TLSClientKey []byte
+			if e.TLSClientCert != "" {
+				TLSClientCertFilepath := filepath.Join(workdir, e.TLSClientCert)
+				if _, err := os.Stat(TLSClientCertFilepath); err == nil {
+					TLSClientCert, err = os.ReadFile(TLSClientCertFilepath)
+					if err != nil {
+						return nil, fmt.Errorf("unable to read TLSClientCert from file %s", TLSClientCertFilepath)
+					}
+				} else {
+					TLSClientCert = []byte(e.TLSClientCert)
+				}
+			}
+
+			if e.TLSClientKey != "" {
+				TLSClientKeyFilepath := filepath.Join(workdir, e.TLSClientKey)
+				if _, err := os.Stat(TLSClientKeyFilepath); err == nil {
+					TLSClientKey, err = os.ReadFile(TLSClientKeyFilepath)
+					if err != nil {
+						return nil, fmt.Errorf("unable to read TLSClientKey from file %s", TLSClientKeyFilepath)
+					}
+				} else {
+					TLSClientKey = []byte(e.TLSClientKey)
+				}
+			}
+
+			if len(TLSClientCert) > 0 && len(TLSClientKey) > 0 {
+				cert, err := tls.X509KeyPair(TLSClientCert, TLSClientKey)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse x509 mTLS certificate or key: %s", err)
+				}
+				creds = credentials.NewTLS(&tls.Config{
+					ClientCAs:          certPool,
+					InsecureSkipVerify: e.IgnoreVerifySSL,
+					Certificates:       []tls.Certificate{cert},
+				})
+			}
+		}
+
 		cc, err := grpcurl.BlockingDial(ctx, "tcp", e.URL, creds)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to dial grpc: %w", err)
 		}
 		return cc, nil
 	}
@@ -143,7 +216,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	refCtx := metadata.NewOutgoingContext(ctx, md)
 	cc, err = dial()
 	if err != nil {
-		return Result{Err: err.Error()}, fmt.Errorf("grpc dial error")
+		return Result{Err: err.Error()}, fmt.Errorf("grpc dial error: %w", err)
 	}
 	refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
 	descSource = grpcurl.DescriptorSourceFromServer(ctx, refClient)

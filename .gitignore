@@ -21,3 +21,5 @@ tests.log
 test_results.xml
 *.prof
 git-template
+tests/grpc/pki
+tests/pki_variables.yml
