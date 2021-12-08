@@ -1,3 +1,8 @@
+PKI_DIR := ./grpc/pki
+PKI_VAR_FILE = ./pki_variables.yml
+
+include ./pki.mk
+
 define docker_run
 	docker run --name venom-$(2) -d $(3) $(1) > venom-$2.cid
 endef
@@ -43,8 +48,21 @@ venom-mqtt.cid:
 venom-qpid.cid:
 	$(call docker_run,scholzj/qpid-cpp:1.39.0,qpid,-p 5673:5672)
 	docker exec venom-qpid qpid-config add queue amqp-test
-  
-start-test-stack: venom-postgres.cid venom-mysql.cid venom-redis.cid venom-imap.cid venom-kafka.cid venom-rabbit.cid venom-sshd.cid venom-mqtt.cid venom-qpid.cid
+venom-grpc.cid:
+	docker build -t venom-grpc-greeter ./grpc
+	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
+
+start-test-stack: venom-postgres.cid
+start-test-stack: venom-mysql.cid
+start-test-stack: venom-redis.cid
+start-test-stack: venom-imap.cid
+start-test-stack: venom-kafka.cid
+start-test-stack: venom-rabbit.cid
+start-test-stack: venom-sshd.cid
+start-test-stack: venom-mqtt.cid
+start-test-stack: venom-qpid.cid
+start-test-stack: $(PKI_DIR)
+start-test-stack: venom-grpc.cid
 
 stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
@@ -57,8 +75,9 @@ build-test-binary:
 build-test-binary-docker:
 	docker run -v `pwd`/..:/workspace golang:1.17 sh -c "cd /workspace/tests && make build-test-binary"	
 
-run-test: 
-	VENOM_VAR_MY_ENVAR=foo ./venom_wrapper.sh run -vv --format=xml --output-dir=. --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml  --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml && \
+run-test: generate-venom-pki
+	VENOM_VAR_MY_ENVAR=foo  ./venom_wrapper.sh run \
+	-vv --format=xml --output-dir=. --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml --var-from-file=$(PKI_VAR_FILE) --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml && \
 	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --format=xml --output-dir=. --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml);
 
 .PHONY: wait-for-kafka
@@ -74,5 +93,5 @@ merge-coverage:
 	@docker run -v `pwd`:/workspace golang:1.16 sh -c "\
 			go get -u github.com/wadey/gocovmerge && \
 			cd /workspace && \
-      gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \
+    gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \
 		"
