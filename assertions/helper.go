@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 )
@@ -49,8 +50,39 @@ func isNil(i interface{}) bool {
 }
 
 func areSameTypes(i, j interface{}) bool {
+	var err error
+	i, j, err = handleJSONNumber(i, j)
+	if err != nil {
+		return false
+	}
 	return reflect.DeepEqual(
 		reflect.Zero(reflect.TypeOf(i)).Interface(),
 		reflect.Zero(reflect.TypeOf(j)).Interface(),
 	)
+}
+
+func handleJSONNumber(actual interface{}, expected interface{}) (interface{}, interface{}, error) {
+	jsNumber, is := actual.(json.Number)
+	if !is {
+		return actual, expected, nil
+	}
+
+	switch expected.(type) {
+	case string:
+		return jsNumber.String(), expected, nil
+	case int64:
+		i, err := jsNumber.Int64()
+		if err != nil {
+			return actual, expected, err
+		}
+		return i, expected, nil
+	case float64:
+		f, err := jsNumber.Float64()
+		if err != nil {
+			return actual, expected, err
+		}
+		return f, expected, nil
+	}
+
+	return jsNumber, expected, nil
 }
