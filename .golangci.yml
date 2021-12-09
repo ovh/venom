@@ -1,12 +1,13 @@
 # options for analysis running
 run:
+  # enables gomod and disable changing of go.mod file
+  modules-download-mode: readonly
+
   # default concurrency is a available CPU number
   concurrency: 4
 
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   deadline: 2m
-
-  # modules-download-mode: vendor
 
 # all available settings of specific linters
 linters-settings:

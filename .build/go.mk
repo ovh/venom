@@ -39,7 +39,7 @@ GOFILES                    := $(call get_recursive_files, '.')
 mk_go_build:
 	$(info *** mk_go_build)
 
-mk_go_build_plugin: 
+mk_go_build_plugin:
 	@mkdir -p dist/lib && \
 	go build -buildmode=plugin -o dist/lib/$(TARGET_NAME).so
 
@@ -138,8 +138,8 @@ mk_go_test-xunit: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_RESULTS) # Generate test 
 	done; \
 	for XML in `find . -name "tests.log.tests-results.xml"`; do \
 		if [ "$$XML" =  "./tests.log.tests-results.xml" ]; then \
-      		PWD=`pwd`; \
-		 	mv $$XML $(TARGET_RESULTS)/`basename $(PWD)`.tests-results.xml; \
+			PWD=`pwd`; \
+			mv $$XML $(TARGET_RESULTS)/`basename $(PWD)`.tests-results.xml; \
 		else \
 			mv $$XML $(TARGET_RESULTS)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
@@ -166,34 +166,41 @@ mk_go_test-xunit: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_RESULTS) # Generate test 
 TMP_DIR = /tmp/ovh/venom
 
 OSNAME=$(shell go env GOOS)
+ARCH = $(shell go env GOARCH)
 CUR_PATH = $(notdir $(shell pwd))
 
-GOLANGCI_DIR = $(TMP_DIR)/$(CUR_PATH)/golangci-lint
-GOLANGCI_TMP_BIN = $(GOLANGCI_DIR)/golangci-lint
+LINT_DIR = $(TMP_DIR)/$(CUR_PATH)/golangci-lint
+LINT_BIN = $(LINT_DIR)/golangci-lint
 
-GOLANGCI_LINT_VERSION=1.31.0
-GOLANGCI_CMD = $(GOLANGCI_TMP_BIN) run --allow-parallel-runners -c .golangci.yml
-GOLANGCI_LINT_ARCHIVE = golangci-lint-$(GOLANGCI_LINT_VERSION)-$(OSNAME)-amd64.tar.gz
+LINT_VERSION=1.31.0
+LINT_CMD = $(LINT_BIN) run --allow-parallel-runners -c .golangci.yml --build-tags $(OSNAME)
+LINT_ARCHIVE = golangci-lint-$(LINT_VERSION)-$(OSNAME)-$(ARCH).tar.gz
+LINT_ARCHIVE_DEST = $(TMP_DIR)/$(LINT_ARCHIVE)
 
 # Run this on localc machine.
 # It downloads a version of golangci-lint and execute it locally.
 # duration first time ~6s
 # duration second time ~2s
 .PHONY: lint
-lint: $(GOLANGCI_TMP_BIN)
-	$(GOLANGCI_DIR)/$(GOLANGCI_CMD)
+lint: $(LINT_BIN)
+	$(LINT_DIR)/$(LINT_CMD)
 
 # install a local golangci-lint if not found.
-$(GOLANGCI_TMP_BIN):
-	curl -OL https://github.com/golangci/golangci-lint/releases/download/v$(GOLANGCI_LINT_VERSION)/$(GOLANGCI_LINT_ARCHIVE)
-	mkdir -p $(GOLANGCI_DIR)/
-	tar -xf $(GOLANGCI_LINT_ARCHIVE) --strip-components=1 -C $(GOLANGCI_DIR)/
-	chmod +x $(GOLANGCI_TMP_BIN)
-	rm -f $(GOLANGCI_LINT_ARCHIVE)
+$(LINT_BIN):
+	curl -L --create-dirs \
+		--retry 6 \
+		--retry-delay 9 \
+		--retry-max-time 60 \
+		https://github.com/golangci/golangci-lint/releases/download/v$(LINT_VERSION)/$(LINT_ARCHIVE) \
+		--output $(LINT_ARCHIVE_DEST)
+	mkdir -p $(LINT_DIR)/
+	tar -xf $(LINT_ARCHIVE_DEST) --strip-components=1 -C $(LINT_DIR)/
+	chmod +x $(LINT_BIN)
+	rm -f $(LINT_ARCHIVE_DEST)
 
 mk_go_lint: $(GOLANG_CI_LINT) # run golangci lint
 	$(info *** running lint)
-	$(GOLANGCI_CMD)
+	$(LINT_CMD)
 
 ##### =====> Internals <===== #####
 

@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/Azure/go-amqp v0.13.7
 	github.com/Shopify/sarama v1.27.2
-	github.com/alexbrainman/odbc v0.0.0-20200426075526-f0492dfa1575
+	github.com/alexbrainman/odbc v0.0.0-20210605012845-39f8520b0d5f
 	github.com/antonfisher/nested-logrus-formatter v1.3.0
 	github.com/confluentinc/bincover v0.2.0
 	github.com/eclipse/paho.mqtt.golang v1.3.4
@@ -55,7 +55,6 @@ require (
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
@@ -75,7 +74,7 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect
-	golang.org/x/sys v0.0.0-20211020064051-0ec99a608a1b // indirect
+	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/genproto v0.0.0-20200331122359-1ee6d9798940 // indirect
 	google.golang.org/protobuf v1.23.0 // indirect
