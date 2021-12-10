@@ -183,6 +183,7 @@ type Failure struct {
 	TestcaseLineNumber int    `xml:"-" json:"-" yaml:"-"`
 	StepNumber         int    `xml:"-" json:"-" yaml:"-"`
 	Assertion          string `xml:"-" json:"-" yaml:"-"`
+	AssertionRequired  bool   `xml:"-" json:"-" yaml:"-"`
 	Error              error  `xml:"-" json:"-" yaml:"-"`
 
 	Value   string `xml:",cdata" json:"value" yaml:"value,omitempty"`

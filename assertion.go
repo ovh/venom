@@ -71,9 +71,10 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 }
 
 type assertion struct {
-	Actual interface{}
-	Func   assertions.AssertFunc
-	Args   []interface{}
+	Actual   interface{}
+	Func     assertions.AssertFunc
+	Args     []interface{}
+	Required bool
 }
 
 func parseAssertions(ctx context.Context, s string, input interface{}) (*assertion, error) {
@@ -86,6 +87,13 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 		return nil, errors.New("assertion syntax error")
 	}
 	actual := dump[assert[0]]
+
+	// "Must" assertions use same tests as "Should" ones, only the flag changes
+	required := false
+	if strings.HasPrefix(assert[1], "Must") {
+		required = true
+		assert[1] = strings.Replace(assert[1], "Must", "Should", 1)
+	}
 
 	f, ok := assertions.Get(assert[1])
 	if !ok {
@@ -100,9 +108,10 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 		}
 	}
 	return &assertion{
-		Actual: actual,
-		Func:   f,
-		Args:   args,
+		Actual:   actual,
+		Func:     f,
+		Args:     args,
+		Required: required,
 	}, nil
 }
 
@@ -205,7 +214,9 @@ func checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (
 	}
 
 	if err := assert.Func(assert.Actual, assert.Args...); err != nil {
-		return nil, newFailure(tc, stepNumber, assertion, err)
+		failure := newFailure(tc, stepNumber, assertion, err)
+		failure.AssertionRequired = true
+		return nil, failure
 	}
 	return nil, nil
 }
