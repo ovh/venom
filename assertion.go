@@ -215,7 +215,7 @@ func checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (
 
 	if err := assert.Func(assert.Actual, assert.Args...); err != nil {
 		failure := newFailure(tc, stepNumber, assertion, err)
-		failure.AssertionRequired = true
+		failure.AssertionRequired = assert.Required
 		return nil, failure
 	}
 	return nil, nil
