@@ -377,6 +377,8 @@ Builtin variables:
 * {{.venom.teststep.number}}
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
+* {{.venom.executable}}
+* {{.venom.libdir}}
 
 # Tests Report
 
