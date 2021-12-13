@@ -1,0 +1,13 @@
+name: testsuite with a user executor in custom dir which has multiple steps and a must assertion
+testcases:
+- name: testfoobar multisteps custom with a must assertion
+  steps:
+  # spawn a venom sub-process and expect it to fail and make assertions on its error messages
+  - type: exec
+    script: '{{.venom.executable}} run failing/must_assertion.yml --lib-dir {{.venom.libdir}}'
+    assertions:
+      - result.code ShouldEqual 2
+      - result.systemout ShouldContainSubstring 'At least one required assertion failed, skipping remaining steps'
+      - result.systemout ShouldContainSubstring '0:' # matches step #0:
+      - result.systemout ShouldNotContainSubstring '1:' # matches step #1:
+      - result.systemerr ShouldBeEmpty

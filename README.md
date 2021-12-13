@@ -21,6 +21,7 @@ It can also generate xUnit result files.
 * [Tests Report](#tests-report)
 * [Assertion](#assertion)
   * [Keywords](#keywords)
+    * [`Must` Keywords](#must-keywords)
 * [Advanced usage](#advanced-usage)
   * [Debug your testsuites](#debug-your-testsuites)
   * [Skip testcase](#skip-testcase)
@@ -376,6 +377,8 @@ Builtin variables:
 * {{.venom.teststep.number}}
 * {{.venom.datetime}}
 * {{.venom.timestamp}}
+* {{.venom.executable}}
+* {{.venom.libdir}}
 
 # Tests Report
 
@@ -430,6 +433,20 @@ Available formats: jUnit (xml), json, yaml, tap reports
 * ShouldHappenAfter - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenAfter.yml)
 * ShouldHappenOnOrAfter - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenOnOrAfter.yml)
 * ShouldHappenBetween - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenBetween.yml)
+
+### `Must` keywords
+
+All the above assertions keywords also have a `Must` counterpart which can be used to create a required passing assertion and prevent test cases (and custom executors) to run remaining steps.
+
+Example:
+```yml
+- steps:
+  - type: exec
+    script: exit 1
+    assertions:
+      - result.code MustEqual 0
+  # Remaining steps in this context will not be executed
+```
 
 ## Using logical operators
 

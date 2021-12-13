@@ -44,6 +44,14 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 		ts.Vars.Add(k, computedV)
 	}
 
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Errorf("failed to get executable path: %v", err)
+	} else {
+		ts.Vars.Add("venom.executable", exePath)
+	}
+
+	ts.Vars.Add("venom.libdir", v.LibDir)
 	ts.Vars.Add("venom.testsuite", ts.Name)
 	ts.ComputedVars = H{}
 

@@ -256,9 +256,11 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 			tc.testSteps = append(tc.testSteps, step)
 
 			var hasFailed bool
+			var isRequired bool
 			if len(tc.Failures) > 0 {
 				for _, f := range tc.Failures {
 					Warning(ctx, "%v", f)
+					isRequired = isRequired || f.AssertionRequired
 				}
 				hasFailed = true
 			}
@@ -272,6 +274,11 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 			}
 
 			if hasFailed {
+				if isRequired {
+					failure := newFailure(*tc, stepNumber, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
+					tc.Failures = append(tc.Failures, *failure)
+					return
+				}
 				break
 			}
 

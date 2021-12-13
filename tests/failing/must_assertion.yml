@@ -1,0 +1,3 @@
+testcases:
+- steps:
+  - type: foobarcustommustassertion
