@@ -58,6 +58,8 @@ var (
 )
 
 func init() {
+	format = "xml"
+
 	formatFlag = Cmd.Flags().String("format", "xml", "--format:yaml, json, xml, tap")
 	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
 	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
