@@ -96,10 +96,15 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			tc.computedInfo = append(tc.computedInfo, info)
 		}
 
-		if h, ok := e.(executorWithDefaultAssertions); ok {
-			assertRes = applyAssertions(result, *tc, stepNumber, step, h.GetDefaultAssertions())
+		if result == nil {
+			Debug(ctx, "empty testcase, applying assertions on variables: %v", AllVarsFromCtx(ctx))
+			assertRes = applyAssertions(AllVarsFromCtx(ctx), *tc, stepNumber, step, nil)
 		} else {
-			assertRes = applyAssertions(result, *tc, stepNumber, step, nil)
+			if h, ok := e.(executorWithDefaultAssertions); ok {
+				assertRes = applyAssertions(result, *tc, stepNumber, step, h.GetDefaultAssertions())
+			} else {
+				assertRes = applyAssertions(result, *tc, stepNumber, step, nil)
+			}
 		}
 
 		tc.computedVars.AddAll(H(mapResult))

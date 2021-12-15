@@ -1,0 +1,10 @@
+name: Assertions only tests suite
+
+vars: 
+  foo: "bar"
+
+testcases:
+  - name: ShouldEqual on global variable
+    steps:
+    - assertions:
+      - foo ShouldEqual bar
