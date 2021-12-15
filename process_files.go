@@ -17,10 +17,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func getFilesPath(path []string) (filePaths []string, err error) {
+func getFilesPath(path []string, extentions ...string) (filePaths []string, err error) {
+	if len(extentions) == 0 {
+		extentions = []string{".yml", ".yaml"}
+	}
 	for _, p := range path {
 		p = strings.TrimSpace(p)
 
+		var fpaths []string
 		// no need to check err on os.stat.
 		// if we put ./test/*.yml, it will fail and it's normal
 		fileInfo, _ := os.Stat(p)
@@ -36,8 +40,8 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 		}
 
 		for _, fp := range fpaths {
-			switch ext := filepath.Ext(fp); ext {
-			case ".yml", ".yaml":
+			ext := filepath.Ext(fp)
+			if IsInArray(ext, extentions) {
 				filePaths = append(filePaths, fp)
 			}
 		}

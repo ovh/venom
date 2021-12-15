@@ -111,7 +111,7 @@ func initFromCommandArguments(f *pflag.Flag) {
 	case "var-from-file":
 		if varFilesFlag != nil {
 			for _, varFile := range *varFilesFlag {
-				if !isInArray(varFile, varFiles) {
+				if !venom.IsInArray(varFile, varFiles) {
 					varFiles = append(varFiles, varFile)
 				}
 			}
@@ -199,7 +199,7 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.VariablesFiles != nil {
 		for _, varFile := range *configFileData.VariablesFiles {
-			if !isInArray(varFile, varFiles) {
+			if !venom.IsInArray(varFile, varFiles) {
 				varFiles = append(varFiles, varFile)
 			}
 		}
@@ -226,15 +226,6 @@ func mergeVariables(varToMerge string, existingVariables []string) []string {
 	}
 	existingVariables = append(existingVariables, varToMerge)
 	return existingVariables
-}
-
-func isInArray(elt string, array []string) bool {
-	for _, item := range array {
-		if item == elt {
-			return true
-		}
-	}
-	return false
 }
 
 func initFromEnv(environ []string) ([]string, error) {

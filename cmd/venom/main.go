@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/venom/cmd/venom/gherkin"
 	"github.com/ovh/venom/cmd/venom/run"
 	"github.com/ovh/venom/cmd/venom/update"
 	"github.com/ovh/venom/cmd/venom/version"
@@ -24,6 +25,7 @@ func main() {
 
 //AddCommands adds child commands to the root command rootCmd.
 func addCommands() {
+	rootCmd.AddCommand(gherkin.Cmd)
 	rootCmd.AddCommand(run.Cmd)
 	rootCmd.AddCommand(version.Cmd)
 	rootCmd.AddCommand(update.Cmd)

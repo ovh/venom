@@ -8,6 +8,8 @@ require (
 	github.com/alexbrainman/odbc v0.0.0-20210605012845-39f8520b0d5f
 	github.com/antonfisher/nested-logrus-formatter v1.3.0
 	github.com/confluentinc/bincover v0.2.0
+	github.com/cucumber/gherkin-go/v19 v19.0.3
+	github.com/cucumber/messages-go/v16 v16.0.0
 	github.com/eclipse/paho.mqtt.golang v1.3.4
 	github.com/fatih/color v1.13.0
 	github.com/fsamin/go-dump v1.2.0
@@ -41,7 +43,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/streadway/amqp v1.0.0
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b
 	golang.org/x/crypto v0.0.0-20201112155050-0c6587e931a9
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f
@@ -55,6 +57,7 @@ require (
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
+	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect

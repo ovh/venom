@@ -264,3 +264,12 @@ func RemoveNotPrintableChar(in string) string {
 	}
 	return strings.Map(m, in)
 }
+
+func IsInArray(elt string, array []string) bool {
+	for _, item := range array {
+		if item == elt {
+			return true
+		}
+	}
+	return false
+}

@@ -29,9 +29,8 @@ var (
 // ContextKey can be added in context to store contextual infos. Also used by logger.
 type ContextKey string
 
-// New instanciates a new venom on venom run cmd
-func New() *Venom {
-	v := &Venom{
+func newVenom() Venom {
+	return Venom{
 		LogOutput:        os.Stdout,
 		PrintFunc:        fmt.Printf,
 		executorsBuiltin: map[string]Executor{},
@@ -40,7 +39,23 @@ func New() *Venom {
 		variables:        map[string]interface{}{},
 		OutputFormat:     "xml",
 	}
-	return v
+}
+
+// New instanciates a new venom on venom run cmd
+func New() *Venom {
+	v := newVenom()
+	return &v
+}
+
+func NewGherkin() *GherkinVenom {
+	v := newVenom()
+	return &GherkinVenom{
+		Venom: v,
+	}
+}
+
+type GherkinVenom struct {
+	Venom
 }
 
 type Venom struct {
