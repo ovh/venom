@@ -234,21 +234,23 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				break
 			}
 
-			_, known := knowExecutors[e.Name()]
-			if !known {
-				knowExecutors[e.Name()] = struct{}{}
-				ctx, err = e.Setup(ctx, tc.Vars)
-				if err != nil {
-					tc.AppendError(err)
-					Error(ctx, "unable to setup executor: %v", err)
-					break
-				}
-				defer func(ctx context.Context) {
-					if err := e.TearDown(ctx); err != nil {
+			if e != nil {
+				_, known := knowExecutors[e.Name()]
+				if !known {
+					knowExecutors[e.Name()] = struct{}{}
+					ctx, err = e.Setup(ctx, tc.Vars)
+					if err != nil {
 						tc.AppendError(err)
-						Error(ctx, "unable to teardown executor: %v", err)
+						Error(ctx, "unable to setup executor: %v", err)
+						break
 					}
-				}(ctx)
+					defer func(ctx context.Context) {
+						if err := e.TearDown(ctx); err != nil {
+							tc.AppendError(err)
+							Error(ctx, "unable to teardown executor: %v", err)
+						}
+					}(ctx)
+				}
 			}
 
 			v.RunTestStep(ctx, e, tc, stepNumber, step)

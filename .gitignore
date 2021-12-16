@@ -19,3 +19,4 @@ tests.log
 *.jpg
 ./.venomrc
 test_results.xml
+*.prof

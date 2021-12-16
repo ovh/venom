@@ -100,7 +100,8 @@ func (v *Venom) RegisterExecutorUser(name string, e Executor) {
 // no type -> exec is default
 func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (context.Context, ExecutorRunner, error) {
 	name, _ := ts.StringValue("type")
-	if name == "" {
+	script, _ := ts.StringValue("script")
+	if name == "" && script != "" {
 		name = "exec"
 	}
 	retry, err := ts.IntValue("retry")
@@ -128,6 +129,10 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 		allKeys = append(allKeys, k)
 	}
 	ctx = context.WithValue(ctx, ContextKey("vars"), allKeys)
+
+	if name == "" {
+		return ctx, newExecutorRunner(nil, name, "builtin", retry, delay, timeout, info), nil
+	}
 
 	if ex, ok := v.executorsBuiltin[name]; ok {
 		return ctx, newExecutorRunner(ex, name, "builtin", retry, delay, timeout, info), nil

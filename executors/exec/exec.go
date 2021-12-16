@@ -28,7 +28,7 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Script string `json:"script,omitempty" yaml:"script,omitempty"`
+	Script *string `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
 // Result represents a step result
@@ -59,11 +59,11 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, err
 	}
 
-	if e.Script == "" {
+	if e.Script != nil && *e.Script == "" {
 		return nil, fmt.Errorf("Invalid command")
 	}
 
-	scriptContent := e.Script
+	scriptContent := *e.Script
 
 	// Default shell is sh
 	shell := "/bin/sh"

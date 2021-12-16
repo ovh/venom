@@ -74,6 +74,9 @@ func (e executor) GetExecutor() Executor {
 }
 
 func (e executor) GetDefaultAssertions() *StepAssertions {
+	if e.Executor == nil {
+		return nil
+	}
 	x, ok := e.Executor.(executorWithDefaultAssertions)
 	if ok {
 		return x.GetDefaultAssertions()
@@ -82,6 +85,9 @@ func (e executor) GetDefaultAssertions() *StepAssertions {
 }
 
 func (e executor) ZeroValueResult() interface{} {
+	if e.Executor == nil {
+		return nil
+	}
 	x, ok := e.Executor.(executorWithZeroValueResult)
 	if ok {
 		return x.ZeroValueResult()
@@ -90,6 +96,9 @@ func (e executor) ZeroValueResult() interface{} {
 }
 
 func (e executor) Setup(ctx context.Context, vars H) (context.Context, error) {
+	if e.Executor == nil {
+		return ctx, nil
+	}
 	x, ok := e.Executor.(ExecutorWithSetup)
 	if ok {
 		return x.Setup(ctx, vars)
@@ -98,11 +107,21 @@ func (e executor) Setup(ctx context.Context, vars H) (context.Context, error) {
 }
 
 func (e executor) TearDown(ctx context.Context) error {
+	if e.Executor == nil {
+		return nil
+	}
 	x, ok := e.Executor.(ExecutorWithSetup)
 	if ok {
 		return x.TearDown(ctx)
 	}
 	return nil
+}
+
+func (e executor) Run(ctx context.Context, step TestStep) (interface{}, error) {
+	if e.Executor == nil {
+		return nil, nil
+	}
+	return e.Executor.Run(ctx, step)
 }
 
 func newExecutorRunner(e Executor, name, stype string, retry, delay, timeout int, info []string) ExecutorRunner {
