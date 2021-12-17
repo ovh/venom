@@ -151,6 +151,16 @@ func file2lines(filePath string) ([]string, error) {
 	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
+
+	//By default, maximum size of buffer is 64K
+	//We will use size of file to determine the buffer size of the scanner
+	info, err := f.Stat()
+	if err != nil {
+		return lines, err
+	}
+	maxSize := int(info.Size())
+	buffer := make([]byte, 0, maxSize+1)
+	scanner.Buffer(buffer, maxSize)
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
