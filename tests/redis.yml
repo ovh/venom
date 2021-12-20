@@ -39,6 +39,19 @@ testcases:
         - result.commands.commands3.response ShouldEqual OK
         - result.commands.commands4.response ShouldEqual {"test":"go o"}
 
+- name: Long_Value_File_Test_Case
+  steps:
+    - type: redis
+      redis.dialURL: "redis://{{.redisHost}}:{{.redisPort}}/0"
+      commands:
+        - FLUSHALL
+
+    - type: redis
+      path: redis/testredis/very_long_value.txt
+      redis.dialURL: "redis://{{.redisHost}}:{{.redisPort}}/0"
+      assertions:
+        - result.commands.commands0.response ShouldEqual OK
+
 - name: Commands_Nested_Array_Response_Test_Case
   steps:
   - type: redis
