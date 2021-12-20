@@ -58,9 +58,9 @@ type StepAssertions struct {
 type Tests struct {
 	XMLName      xml.Name    `xml:"testsuites" json:"-" yaml:"-"`
 	Total        int         `xml:"-" json:"total"`
-	TotalOK      int         `xml:"-" json:"ok"`
-	TotalKO      int         `xml:"-" json:"ko"`
-	TotalSkipped int         `xml:"-" json:"skipped"`
+	TotalOK      int         `xml:"-" json:"ok"`      // contains the number of testcases OK
+	TotalKO      int         `xml:"-" json:"ko"`      // contains the number of testcases KO
+	TotalSkipped int         `xml:"-" json:"skipped"` // contains the number of testcases skipped
 	TestSuites   []TestSuite `xml:"testsuite" json:"test_suites"`
 }
 
