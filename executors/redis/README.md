@@ -27,7 +27,7 @@ Keys *
 ```yaml
 name: Redis testsuite
 vars: 
-  dialURL: "redis://localhost:6379/0"
+  redis.dialURL: "redis://localhost:6379/0"
   
 testcases:
 - name: test-commands
