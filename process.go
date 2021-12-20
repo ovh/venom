@@ -160,12 +160,12 @@ func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 func (v *Venom) computeStats(testsResult *Tests, ts *TestSuite) {
 	testsResult.TestSuites = append(testsResult.TestSuites, *ts)
 	if ts.Failures > 0 || ts.Errors > 0 {
-		testsResult.TotalKO += (ts.Failures + ts.Errors)
+		testsResult.TotalKO++
 	} else {
-		testsResult.TotalOK += len(ts.TestCases) - (ts.Failures + ts.Errors)
+		testsResult.TotalOK++
 	}
 	if ts.Skipped > 0 {
-		testsResult.TotalSkipped += ts.Skipped
+		testsResult.TotalSkipped++
 	}
 
 	testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
