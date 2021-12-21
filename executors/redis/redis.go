@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path"
 
@@ -150,13 +151,38 @@ func file2lines(filePath string) ([]string, error) {
 	}
 	defer f.Close()
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	/*
+	Thanks to Mark Karamyar to write this blog post : https://devmarkpro.com/working-big-files-golang
+	"bufio package has a maximum token size which equals 64 * 1024 (~65.6kb).
+	So if one line of our lines is bigger than this size, we got this error token too long error."
+	To avoid this error, we will use Readline method and check isPrefix return value
+	*/
+	reader := bufio.NewReader(f)
+	for {
+		line, err := read(reader)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		lines = append(lines, string(line))
 	}
 
 	return lines, nil
+}
+
+func read(r *bufio.Reader) ([]byte, error) {
+	var (
+		isPrefix = true
+		err      error
+		line, ln []byte
+	)
+
+	for isPrefix && err == nil {
+		line, isPrefix, err = r.ReadLine()
+		ln = append(ln, line...)
+	}
+
+	return ln, err
 }
