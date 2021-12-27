@@ -1,0 +1,35 @@
+---
+name: Interpolation POC
+vars:
+  accept: "text/html"
+
+testcases:
+  - name: GetVar
+    steps:
+      - type: http
+        method: GET
+        url: "http://example.com"
+        assertions:
+          - result.statuscode ShouldEqual 200
+        vars:
+          accept:
+            from: result.headers.content-type
+
+  - name: UseVar
+    steps:
+      - type: http
+        method: GET
+        url: "http://example.com"
+        headers:
+          test: "{{ .GetVar.accept }}"
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.headers.x-cache ShouldEqual "HIT"
+      - type: http
+        method: GET
+        url: "http://example.com"
+        headers:
+          test: "{{ .GetVar.accept }}"
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.headers.accept-ranges ShouldEqual "bytes"
