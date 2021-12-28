@@ -17,7 +17,8 @@ import (
 )
 
 func init() {
-	if strings.ToLower(os.Getenv("IS_TTY")) == "true" || os.Getenv("IS_TTY") == "1" {
+	color.NoColor = true
+	if os.Getenv("IS_TTY") == "" || strings.ToLower(os.Getenv("IS_TTY")) == "true" || os.Getenv("IS_TTY") == "1" {
 		color.NoColor = false
 	}
 }

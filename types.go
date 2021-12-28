@@ -195,7 +195,7 @@ func newFailure(tc TestCase, stepNumber int, assertion string, err error) *Failu
 	var lineNumber = findLineNumber(tc.Classname, tc.originalName, stepNumber, assertion, -1)
 	var value string
 	if assertion != "" {
-		value = color.YellowString(`Testcase %q, step #%d: Assertion %q failed. %s (%v:%d)`,
+		value = fmt.Sprintf(`Testcase %q, step #%d: Assertion %q failed. %s (%v:%d)`,
 			tc.originalName,
 			stepNumber,
 			RemoveNotPrintableChar(assertion),
@@ -204,7 +204,7 @@ func newFailure(tc TestCase, stepNumber int, assertion string, err error) *Failu
 			lineNumber,
 		)
 	} else {
-		value = color.YellowString(`Testcase %q, step #%d: %s (%v:%d)`,
+		value = fmt.Sprintf(`Testcase %q, step #%d: %s (%v:%d)`,
 			tc.originalName,
 			stepNumber,
 			RemoveNotPrintableChar(err.Error()),
@@ -228,10 +228,10 @@ func newFailure(tc TestCase, stepNumber int, assertion string, err error) *Failu
 
 func (f Failure) String() string {
 	if f.Value != "" {
-		return f.Value
+		return color.YellowString(f.Value)
 	}
 	if f.Error != nil {
-		return f.Error.Error()
+		return color.YellowString(f.Error.Error())
 	}
 	return f.Message
 }
