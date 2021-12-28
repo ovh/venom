@@ -39,6 +39,7 @@ type Executor struct {
 	Path              string      `json:"path" yaml:"path"`
 	Body              string      `json:"body" yaml:"body"`
 	BodyFile          string      `json:"bodyfile" yaml:"bodyfile"`
+	PreserveBodyFile  bool        `json:"preserve_bodyfile" yaml:"preserve_bodyfile" mapstructure:"preserve_bodyfile"`
 	MultipartForm     interface{} `json:"multipart_form" yaml:"multipart_form"`
 	Headers           Headers     `json:"headers" yaml:"headers"`
 	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
@@ -115,20 +116,11 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	var opts []func(*http.Transport) error
 	opts = append(opts, WithProxyFromEnv())
 
-	if e.IgnoreVerifySSL {
-		opts = append(opts, WithTLSInsecureSkipVerify(true))
+	tlsOptions, err := e.TLSOptions(ctx)
+	if err != nil {
+		return nil, err
 	}
-
-	if e.TLSClientCert != "" {
-		cert, err := tls.X509KeyPair([]byte(e.TLSClientCert), []byte(e.TLSClientKey))
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse x509 mTLS certificate or key: %s", err)
-		}
-		opts = append(opts, WithTLSClientAuth(cert))
-	}
-	if e.TLSRootCA != "" {
-		opts = append(opts, WithTLSRootCA(ctx, []byte(e.TLSRootCA)))
-	}
+	opts = append(opts, tlsOptions...)
 
 	tr, err := GetTransport(opts...)
 	if err != nil {
@@ -214,7 +206,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	if resp.Body != nil {
 		defer resp.Body.Close()
 
-		if !e.SkipBody {
+		if !e.SkipBody && isBodySupported(resp) {
 			var errr error
 			bb, errr = io.ReadAll(resp.Body)
 			if errr != nil {
@@ -222,11 +214,13 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			}
 			r.Body = string(bb)
 
-			var m interface{}
-			decoder := json.NewDecoder(strings.NewReader(string(bb)))
-			decoder.UseNumber()
-			if err := decoder.Decode(&m); err == nil {
-				r.BodyJSON = m
+			if isBodyJSONSupported(resp) {
+				var m interface{}
+				decoder := json.NewDecoder(strings.NewReader(string(bb)))
+				decoder.UseNumber()
+				if err := decoder.Decode(&m); err == nil {
+					r.BodyJSON = m
+				}
 			}
 		}
 	}
@@ -256,24 +250,29 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 	if (e.Body != "" || e.BodyFile != "") && e.MultipartForm != nil {
 		return nil, fmt.Errorf("Can only use one of 'body', 'body_file' and 'multipart_form'")
 	}
+
 	body := &bytes.Buffer{}
 	var writer *multipart.Writer
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
-		path := filepath.Join(workdir, e.BodyFile)
-		if _, err := os.Stat(path); !os.IsNotExist(err) {
-			temp, err := os.ReadFile(path)
+		bodyfilePath := filepath.Join(workdir, e.BodyFile)
+		if _, err := os.Stat(bodyfilePath); !os.IsNotExist(err) {
+			temp, err := os.ReadFile(bodyfilePath)
 			if err != nil {
 				return nil, err
 			}
-			h := venom.AllVarsFromCtx(ctx)
-			vars, _ := venom.DumpStringPreserveCase(h)
-			stemp, err := interpolate.Do(string(temp), vars)
-			if err != nil {
-				return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+			if e.PreserveBodyFile {
+				body = bytes.NewBuffer(temp)
+			} else {
+				h := venom.AllVarsFromCtx(ctx)
+				vars, _ := venom.DumpStringPreserveCase(h)
+				stemp, err := interpolate.Do(string(temp), vars)
+				if err != nil {
+					return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+				}
+				body = bytes.NewBufferString(stemp)
 			}
-			body = bytes.NewBufferString(stemp)
 		}
 	} else if e.MultipartForm != nil {
 		form, ok := e.MultipartForm.(map[string]interface{})
@@ -333,4 +332,85 @@ func writeFile(part io.Writer, filename string) error {
 
 	_, err = io.Copy(part, file)
 	return err
+}
+
+// given https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+func isBodySupported(resp *http.Response) bool {
+	contentType := resp.Header.Get("Content-Type")
+	switch {
+	case strings.HasPrefix(contentType, "image/"), strings.HasPrefix(contentType, "audio/"), strings.HasPrefix(contentType, "video/"),
+		strings.HasPrefix(contentType, "font/"), strings.HasPrefix(contentType, "application/vnd."):
+		return false
+	case strings.HasPrefix(contentType, "application/"):
+		x := strings.SplitN(contentType, "/", 2)[1]
+		switch x {
+		case "x-abiword", "vnd.amazon.ebook", "x-bzip", "x-bzip2", "x-csh", "msword", "epub+zip", "java-archive", "ogg", "pdf",
+			"x-rar-compressed", "rtf", "x-sh", "x-shockwave-flash", "x-tar", "zip", "x-7z-compressed":
+			return false
+		}
+	}
+	return true
+}
+
+func isBodyJSONSupported(resp *http.Response) bool {
+	return resp.Header.Get("Content-Type") == "application/json"
+}
+
+func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error, error) {
+	var opts []func(*http.Transport) error
+
+	if e.IgnoreVerifySSL {
+		opts = append(opts, WithTLSInsecureSkipVerify(true))
+	}
+
+	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+
+	if e.TLSRootCA != "" {
+		TLSRootCAFilepath := filepath.Join(workdir, e.TLSRootCA)
+		var TLSRootCA []byte
+		if _, err := os.Stat(TLSRootCAFilepath); err == nil {
+			TLSRootCA, err = os.ReadFile(TLSRootCAFilepath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read TLSRootCA from file %s", TLSRootCAFilepath)
+			}
+		} else {
+			TLSRootCA = []byte(e.TLSRootCA)
+		}
+		opts = append(opts, WithTLSRootCA(ctx, TLSRootCA))
+	}
+
+	var TLSClientCert, TLSClientKey []byte
+	if e.TLSClientCert != "" {
+		TLSClientCertFilepath := filepath.Join(workdir, e.TLSClientCert)
+		if _, err := os.Stat(TLSClientCertFilepath); err == nil {
+			TLSClientCert, err = os.ReadFile(TLSClientCertFilepath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read TLSClientCert from file %s", TLSClientCertFilepath)
+			}
+		} else {
+			TLSClientCert = []byte(e.TLSClientCert)
+		}
+	}
+
+	if e.TLSClientKey != "" {
+		TLSClientKeyFilepath := filepath.Join(workdir, e.TLSClientKey)
+		if _, err := os.Stat(TLSClientKeyFilepath); err == nil {
+			TLSClientKey, err = os.ReadFile(TLSClientKeyFilepath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read TLSClientKey from file %s", TLSClientKeyFilepath)
+			}
+		} else {
+			TLSClientKey = []byte(e.TLSClientKey)
+		}
+	}
+
+	if len(TLSClientCert) > 0 && len(TLSClientKey) > 0 {
+		cert, err := tls.X509KeyPair(TLSClientCert, TLSClientKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse x509 mTLS certificate or key: %s", err)
+		}
+		opts = append(opts, WithTLSClientAuth(cert))
+	}
+
+	return opts, nil
 }

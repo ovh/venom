@@ -6,24 +6,25 @@ Step for execute a HTTP Request
 In your yaml file, you can use:
 
 ```yaml
-  - method optional, default value: GET
+  - method (optional), default value: GET
   - url mandatory
-  - unix_sock optional
-  - path optional
-  - body optional
-  - bodyFile optional
-  - headers optional
-  - proxy optional: set to use a proxy server for connection to url
-  - resolve optional: array of custom resolver of host and port pair. example: foo.com:443:127.0.0.1
-  - ignore_verify_ssl optional: set to true if you use a self-signed SSL on remote for example
-  - basic_auth_user optional: username to use for HTTP basic authentification
-  - basic_auth_password optional: password to use for HTTP basic authentification
-  - no_follow_redirect optional: indicates that you don't want to follow Location if server returns a Redirect (301/302/...)
+  - unix_sock (optional)
+  - path (optional)
+  - body (optional)
+  - bodyFile (optional)
+  - preserve_bodyfile (optionnal) skip file content interpolation
+  - headers (optional)
+  - proxy (optional): set to use a proxy server for connection to url
+  - resolve (optional): array of custom resolver of host and port pair. example: foo.com:443:127.0.0.1
+  - ignore_verify_ssl (optional): set to true if you use a self-signed SSL on remote for example
+  - basic_auth_user (optional): username to use for HTTP basic authentification
+  - basic_auth_password (optional): password to use for HTTP basic authentification
+  - no_follow_redirect (optional): indicates that you don't want to follow Location if server returns a Redirect (301/302/...)
   - skip_body: skip the body and bodyjson result
   - skip_headers: skip the headers result
-  - tls_client_cert optional: a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enable mutual TLS authentication
-  - tls_client_key optional: private key corresponding to the certificate.
-  - tls_root_ca optional: defines additional root CAs to perform the call. can contains multiple CAs concatenated together
+  - tls_client_cert (optional): a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enable mutual TLS authentication. Set the PEM content or the path to the PEM file.
+  - tls_client_key (optional): private key corresponding to the certificate. Set the PEM content or the path to the PEM file.
+  - tls_root_ca (optional): defines additional root CAs to perform the call. Can contains multiple CAs concatenated together Set the PEM content or the path to the PEM file.
 
 ```
 

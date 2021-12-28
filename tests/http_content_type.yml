@@ -1,0 +1,16 @@
+name: HTTP with various content type
+testcases:
+- name: getImage
+  steps:
+  - type: http
+    method: GET
+    url: 'http://imgs.xkcd.com/comics/self_driving_issues.png'
+    assertions:
+    - result.statuscode ShouldEqual 200
+- name: getImageAgain
+  steps:
+  - type: http
+    method: GET
+    url: 'http://imgs.xkcd.com/comics/self_driving_issues.png'
+    assertions:
+    - result.statuscode ShouldEqual 200
