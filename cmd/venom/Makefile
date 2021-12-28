@@ -21,5 +21,6 @@ include ../../.build/go.mk
 build: $(CROSS_COMPILED_BINARIES) ## Run build
 
 clean:
+	@rm -f *.dump.json *_profile.prof test_results.xml venom.log
 	@rm -f venom
 	@rm -rf dist

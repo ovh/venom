@@ -66,6 +66,7 @@ run: ## build binary for current OS only and run it. For development purpose onl
 lint: mk_go_lint ## install and run golangci-lint on all go files. doc https://github.com/golangci/golangci-lint
 
 clean: mk_go_clean ## delete directories dist and results and all temp files (coverage, tests, reports)
+	@rm -f *.dump.json *_profile.prof test_results.xml venom.log
 	@rm -rf ${DIST_DIR}
 	@rm -rf ${RESULTS_DIR}
 	$(MAKE) clean -C cmd/venom
