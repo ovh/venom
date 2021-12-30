@@ -353,7 +353,7 @@ func isBodySupported(resp *http.Response) bool {
 }
 
 func isBodyJSONSupported(resp *http.Response) bool {
-	return resp.Header.Get("Content-Type") == "application/json"
+	return strings.Contains(resp.Header.Get("Content-Type"), "application/json")
 }
 
 func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error, error) {
