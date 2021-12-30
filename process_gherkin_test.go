@@ -75,7 +75,8 @@ func TestFindSuitableExecutor_HTTP(t *testing.T) {
 
 	step, err := v.FindSuitableExecutor(gStep)
 	require.NoError(t, err)
-	assert.Len(t, step, 2)
+	assert.Len(t, step, 3)
+	assert.Equal(t, "http", step["type"])
 	assert.Equal(t, "Get", step["method"])
 	assert.Equal(t, "https://eu.api.ovh.com/1.0/", step["url"])
 }
