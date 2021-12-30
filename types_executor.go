@@ -159,10 +159,8 @@ type ExecutorWithSetup interface {
 	TearDown(ctx context.Context) error
 }
 
-type executorWithGherkinSupport interface {
-	Given() *regexp.Regexp
-	When() *regexp.Regexp
-	Then() *regexp.Regexp
+type ExecutorWithGherkinSupport interface {
+	GherkinRegExpr() []*regexp.Regexp
 }
 
 func GetExecutorResult(r interface{}) map[string]interface{} {

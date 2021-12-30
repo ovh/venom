@@ -16,7 +16,7 @@ import (
 
 // InitLogger initializes venom logger
 func (v *Venom) InitLogger() error {
-	v.testsuites = []TestSuite{}
+	v.Testsuites = []TestSuite{}
 	if v.Verbose == 0 {
 		logrus.SetLevel(logrus.WarnLevel)
 	} else {
@@ -29,9 +29,9 @@ func (v *Venom) InitLogger() error {
 		}
 	}
 
-	if v.Verbose > 0 {
+	if v.Verbose > 0 && v.VerboseOutput != "stdout" {
 		var err error
-		var logFile = filepath.Join(v.OutputDir, "venom.log")
+		var logFile = filepath.Join(v.OutputDir, v.VerboseOutput)
 		_ = os.RemoveAll(logFile)
 		v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
 		if err != nil {
@@ -41,6 +41,8 @@ func (v *Venom) InitLogger() error {
 		v.PrintlnTrace("writing " + logFile)
 
 		logrus.SetOutput(v.LogOutput)
+	} else if v.Verbose > 0 && v.VerboseOutput == "stdout" {
+		logrus.SetOutput(os.Stdout)
 	} else {
 		logrus.SetOutput(io.Discard)
 	}
@@ -69,8 +71,8 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 
 	missingVars := []string{}
 	extractedVars := []string{}
-	for i := range v.testsuites {
-		ts := &v.testsuites[i]
+	for i := range v.Testsuites {
+		ts := &v.Testsuites[i]
 		ts.Vars.Add("venom.testsuite", ts.Name)
 
 		Info(ctx, "Parsing testsuite %s : %+v", ts.Package, ts.Vars)
@@ -148,10 +150,10 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 // Process runs tests suite and return a Tests result
 func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	testsResult := &Tests{}
-	Debug(ctx, "nb testsuites: %d", len(v.testsuites))
-	for i := range v.testsuites {
-		v.runTestSuite(ctx, &v.testsuites[i])
-		v.computeStats(testsResult, &v.testsuites[i])
+	Debug(ctx, "nb testsuites: %d", len(v.Testsuites))
+	for i := range v.Testsuites {
+		v.runTestSuite(ctx, &v.Testsuites[i])
+		v.computeStats(testsResult, &v.Testsuites[i])
 	}
 
 	return testsResult, nil

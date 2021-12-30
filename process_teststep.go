@@ -127,7 +127,13 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 	if retry > 1 && (len(assertRes.failures) > 0 || len(assertRes.errors) > 0) {
 		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempts", retry)})
 	}
+	if tc.Systemout == nil {
+		tc.Systemout = new(InnerResult)
+	}
 	tc.Systemout.Value += assertRes.systemout
+	if tc.Systemerr == nil {
+		tc.Systemerr = new(InnerResult)
+	}
 	tc.Systemerr.Value += assertRes.systemerr
 
 	return result

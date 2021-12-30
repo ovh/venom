@@ -143,7 +143,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		}
 		ts.Total = len(ts.TestCases)
 
-		v.testsuites = append(v.testsuites, ts)
+		v.Testsuites = append(v.Testsuites, ts)
 	}
 	return nil
 }

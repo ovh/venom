@@ -1,15 +1,12 @@
-Feature: HTTP Gherkin test suite
+Feature: HTTP Gherkin test suite on jsonplaceholder.typicode.com 
 
-Scenario: HTTP Get test
-    When    HTTP Get https://eu.api.ovh.com/1.0/
-    Then    Body ShouldContainSubstring /dedicated/server
-    And     Body ShouldContainSubstring /ipLoadbalancing
-    And     Statuscode ShouldEqual 200
-    And     Bodyjson.apis.apis0.path ShouldEqual /allDom
+Scenario: HTTP Get posts
+    When    HTTP GET https://jsonplaceholder.typicode.com/posts
+    Then    result.statuscode ShouldEqual 200
+    Then    HTTP GET https://jsonplaceholder.typicode.com/posts/1
+    And     result.bodyjson.id ShouldEqual 1
+    And     result.bodyjson.title ShouldNotBeEmpty
 
-Scenario: HTTP Post test
-    When    HTTP Get https://eu.api.ovh.com/1.0/
-    Then    Body ShouldContainSubstring /dedicated/server
-    And     Body ShouldContainSubstring /ipLoadbalancing
-    And     Statuscode ShouldEqual 200
-    And     Bodyjson.apis.apis0.path ShouldEqual /allDom
+Scenario: HTTP Post a new post
+    When    HTTP POST https://jsonplaceholder.typicode.com/posts
+    Then    result.statuscode ShouldEqual 201

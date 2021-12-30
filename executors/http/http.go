@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -84,6 +85,25 @@ func (Executor) ZeroValueResult() interface{} {
 // GetDefaultAssertions return default assertions for this executor
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 	return &venom.StepAssertions{Assertions: []venom.Assertion{"result.statuscode ShouldEqual 200"}}
+}
+
+func (Executor) GherkinRegExpr() []*regexp.Regexp {
+	methodRegExpr := `(?P<method>\w+)`
+	urlRegExpr := `(?P<url>https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b[-a-zA-Z0-9@:%_\+.~#?&//=]*)`
+	separatorRegExpr := `[ \t\n\r]*`
+	andOrWithRegexpr := `(?:With|And)?`
+	funcParamRegExpr := func(param string) string {
+		return "(?:" + andOrWithRegexpr + `(?P<` + param + `>.*)? ?(?:as ` + param + `))?`
+	}
+
+	return []*regexp.Regexp{
+		regexp.MustCompile("^HTTP " + methodRegExpr + " " + urlRegExpr +
+			separatorRegExpr + andOrWithRegexpr + funcParamRegExpr("body") +
+			separatorRegExpr + andOrWithRegexpr + funcParamRegExpr("bodyfile") +
+			separatorRegExpr + andOrWithRegexpr + funcParamRegExpr("headers"),
+		),
+		regexp.MustCompile(`^Try (?P<retry>\d+) times every (?P<delay>\d+) seconds HTTP ` + methodRegExpr + " " + urlRegExpr + "$"),
+	}
 }
 
 // Run execute TestStep

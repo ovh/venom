@@ -9,9 +9,10 @@ require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.0
 	github.com/confluentinc/bincover v0.2.0
 	github.com/cucumber/gherkin-go/v19 v19.0.3
-	github.com/cucumber/messages-go/v16 v16.0.0
+	github.com/cucumber/messages-go/v16 v16.0.1
 	github.com/eclipse/paho.mqtt.golang v1.3.4
 	github.com/fatih/color v1.13.0
+	github.com/fatih/structs v1.1.0
 	github.com/fsamin/go-dump v1.2.0
 	github.com/fullstorydev/grpcurl v1.7.0
 	github.com/garyburd/redigo v1.6.2

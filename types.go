@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/fatih/color"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cast"
 )
 
@@ -67,28 +68,32 @@ type Tests struct {
 	TestSuites   []TestSuite `xml:"testsuite" json:"test_suites"`
 }
 
-// TestSuite is a single JUnit test suite which may contain many
-// testcases.
+// TestSuite is a single JUnit test suite which may contain many testcases.
 type TestSuite struct {
 	XMLName      xml.Name   `xml:"testsuite" json:"-" yaml:"-"`
-	Disabled     int        `xml:"disabled,attr,omitempty" json:"disabled" yaml:""`
-	Errors       int        `xml:"errors,attr,omitempty" json:"errors" yaml:"-"`
-	Failures     int        `xml:"failures,attr,omitempty" json:"failures" yaml:"-"`
-	Hostname     string     `xml:"hostname,attr,omitempty" json:"hostname" yaml:"-"`
-	ID           string     `xml:"id,attr,omitempty" json:"id" yaml:"-"`
+	Disabled     int        `xml:"disabled,attr,omitempty" json:"disabled,omitempty" yaml:"-"`
+	Errors       int        `xml:"errors,attr,omitempty" json:"errors,omitempty" yaml:"-"`
+	Failures     int        `xml:"failures,attr,omitempty" json:"failures,omitempty" yaml:"-"`
+	Hostname     string     `xml:"hostname,attr,omitempty" json:"hostname,omitempty" yaml:"-"`
+	ID           string     `xml:"id,attr,omitempty" json:"id,omitempty" yaml:"-"`
 	Name         string     `xml:"name,attr" json:"name" yaml:"name"`
 	Filename     string     `xml:"-" json:"-" yaml:"-"`
-	Package      string     `xml:"package,attr,omitempty" json:"package" yaml:"-"`
-	Properties   []Property `xml:"-" json:"properties" yaml:"-"`
-	Skipped      int        `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
-	Total        int        `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
+	Package      string     `xml:"package,attr,omitempty" json:"package,omitempty" yaml:"-"`
+	Properties   []Property `xml:"-" json:"properties,omitempty" yaml:"-"`
+	Skipped      int        `xml:"skipped,attr,omitempty" json:"skipped,omitempty" yaml:"skipped,omitempty"`
+	Total        int        `xml:"tests,attr" json:"total,omitempty" yaml:"total,omitempty"`
 	TestCases    []TestCase `xml:"testcase" json:"testcases" yaml:"testcases"`
-	Version      string     `xml:"version,omitempty" json:"version" yaml:"version,omitempty"`
-	Time         string     `xml:"time,attr,omitempty" json:"time" yaml:"-"`
-	Timestamp    string     `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
+	Version      string     `xml:"version,omitempty" json:"version,omitempty" yaml:"version,omitempty"`
+	Time         string     `xml:"time,attr,omitempty" json:"time,omitempty" yaml:"-"`
+	Timestamp    string     `xml:"timestamp,attr,omitempty" json:"timestamp,omitempty" yaml:"-"`
 	Vars         H          `xml:"-" json:"-" yaml:"vars"`
 	ComputedVars H          `xml:"-" json:"-" yaml:"-"`
 	WorkDir      string     `xml:"-" json:"-" yaml:"-"`
+}
+
+func (s TestSuite) String() string {
+	btes, _ := yaml.Marshal(s)
+	return string(btes)
 }
 
 // Property represents a key/value pair used to define properties.
@@ -101,16 +106,16 @@ type Property struct {
 // TestCase is a single test case with its result.
 type TestCase struct {
 	XMLName         xml.Name  `xml:"testcase" json:"-" yaml:"-"`
-	Classname       string    `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
-	Errors          []Failure `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
-	Failures        []Failure `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
+	Classname       string    `xml:"classname,attr,omitempty" json:"classname,omitempty" yaml:"-"`
+	Errors          []Failure `xml:"error,omitempty" json:"errors,omitempty" yaml:"errors,omitempty"`
+	Failures        []Failure `xml:"failure,omitempty" json:"failures,omitempty" yaml:"failures,omitempty"`
 	Name            string    `xml:"name,attr" json:"name" yaml:"name"`
 	originalName    string
-	Skipped         []Skipped         `xml:"skipped,omitempty" json:"skipped" yaml:"skipped,omitempty"`
-	Status          string            `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
-	Systemout       InnerResult       `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
-	Systemerr       InnerResult       `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
-	Time            float64           `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
+	Skipped         []Skipped         `xml:"skipped,omitempty" json:"skipped,omitempty" yaml:"skipped,omitempty"`
+	Status          string            `xml:"status,attr,omitempty" json:"status,omitempty" yaml:"status,omitempty"`
+	Systemout       *InnerResult      `xml:"system-out,omitempty" json:"systemout,omitempty" yaml:"systemout,omitempty"`
+	Systemerr       *InnerResult      `xml:"system-err,omitempty" json:"systemerr,omitempty" yaml:"systemerr,omitempty"`
+	Time            float64           `xml:"time,attr,omitempty" json:"time,omitempty" yaml:"time,omitempty"`
 	RawTestSteps    []json.RawMessage `xml:"-" json:"steps" yaml:"steps"`
 	testSteps       []TestStep
 	TestSuiteVars   H `xml:"-" json:"-" yaml:"-"`
@@ -118,7 +123,7 @@ type TestCase struct {
 	computedVars    H
 	computedInfo    []string
 	computedVerbose []string
-	Skip            []string `xml:"-" json:"skip" yaml:"skip"`
+	Skip            []string `xml:"-" json:"skip,omitempty" yaml:"skip"`
 	IsExecutor      bool     `xml:"-" json:"-" yaml:"-"`
 	IsEvaluated     bool     `xml:"-" json:"-" yaml:"-"`
 }

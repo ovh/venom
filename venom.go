@@ -38,6 +38,7 @@ func newVenom() Venom {
 		executorsUser:    map[string]Executor{},
 		variables:        map[string]interface{}{},
 		OutputFormat:     "xml",
+		VerboseOutput:    "venom.log",
 	}
 }
 
@@ -45,17 +46,6 @@ func newVenom() Venom {
 func New() *Venom {
 	v := newVenom()
 	return &v
-}
-
-func NewGherkin() *GherkinVenom {
-	v := newVenom()
-	return &GherkinVenom{
-		Venom: v,
-	}
-}
-
-type GherkinVenom struct {
-	Venom
 }
 
 type Venom struct {
@@ -66,7 +56,7 @@ type Venom struct {
 	executorsPlugin  map[string]Executor
 	executorsUser    map[string]Executor
 
-	testsuites []TestSuite
+	Testsuites []TestSuite
 	variables  H
 
 	LibDir        string
@@ -74,6 +64,7 @@ type Venom struct {
 	OutputDir     string
 	StopOnFailure bool
 	Verbose       int
+	VerboseOutput string
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()
@@ -109,6 +100,20 @@ func (v *Venom) RegisterExecutorPlugin(name string, e Executor) {
 // RegisterExecutorUser register User sxecutors
 func (v *Venom) RegisterExecutorUser(name string, e Executor) {
 	v.executorsUser[name] = e
+}
+
+func (v *Venom) Executors() map[string]Executor {
+	res := make(map[string]Executor, len(v.executorsBuiltin)+len(v.executorsPlugin)+len(v.executorsUser))
+	for k, v := range v.executorsBuiltin {
+		res[k] = v
+	}
+	for k, v := range v.executorsPlugin {
+		res[k] = v
+	}
+	for k, v := range v.executorsUser {
+		res[k] = v
+	}
+	return res
 }
 
 // GetExecutorRunner initializes a test by name
@@ -281,6 +286,14 @@ func (v *Venom) registerPlugin(ctx context.Context, name string, vars map[string
 	return nil
 }
 
+func (v *Venom) GetTestSuitesString() string {
+	var testsuiteStrings []string
+	for _, testsuite := range v.Testsuites {
+		testsuiteStrings = append(testsuiteStrings, testsuite.String())
+	}
+	return strings.Join(testsuiteStrings, "\n")
+}
+
 func VarFromCtx(ctx context.Context, varname string) interface{} {
 	i := ctx.Value(ContextKey("var." + varname))
 	return i
@@ -330,4 +343,26 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 	var d = json.NewDecoder(bytes.NewReader(btes))
 	d.UseNumber()
 	return d.Decode(i)
+}
+
+func NewGherkin() *GherkinVenom {
+	v := newVenom()
+	return &GherkinVenom{
+		Venom: v,
+	}
+}
+
+type GherkinVenom struct {
+	Venom
+	Features []GherkinFeature
+}
+
+func (v GherkinVenom) GetFeaturesString() string {
+	var features []string
+	for _, f := range v.Features {
+		features = append(features, f.String())
+	}
+
+	s := strings.Join(features, "\n")
+	return s
 }

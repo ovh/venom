@@ -40,31 +40,42 @@ var (
 	path []string
 	v    *venom.Venom
 
-	variables     []string
-	format        string = "xml" // Set the default value for formatFlag
-	varFiles      []string
-	outputDir     string
-	libDir        string
-	stopOnFailure bool
-	verbose       int = 1 // Set the default value for verboseFlag
+	Options = struct {
+		Format        string
+		Variables     []string
+		VarFiles      []string
+		OutputDir     string
+		LibDir        string
+		StopOnFailure bool
+		Verbose       int
+	}{
+		Format:  "xml", // Set the default value for formatFlag
+		Verbose: 1,     // Set the default value for verboseFlag
+	}
 
-	variablesFlag     *[]string
-	formatFlag        *string
-	varFilesFlag      *[]string
-	outputDirFlag     *string
-	libDirFlag        *string
-	stopOnFailureFlag *bool
-	verboseFlag       *int
+	Flags = struct {
+		VariablesFlag     *[]string
+		FormatFlag        *string
+		VarFilesFlag      *[]string
+		OutputDirFlag     *string
+		LibDirFlag        *string
+		StopOnFailureFlag *bool
+		VerboseFlag       *int
+	}{}
 )
 
+func InitCmdFlags(cmd *cobra.Command) {
+	Flags.FormatFlag = cmd.Flags().String("format", "xml", "--format:yaml, json, xml, tap")
+	Flags.StopOnFailureFlag = cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
+	Flags.VerboseFlag = cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
+	Flags.VarFilesFlag = cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
+	Flags.VariablesFlag = cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
+	Flags.OutputDirFlag = cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
+	Flags.LibDirFlag = cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+}
+
 func init() {
-	formatFlag = Cmd.Flags().String("format", "xml", "--format:yaml, json, xml, tap")
-	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
-	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
-	varFilesFlag = Cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
-	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
-	outputDirFlag = Cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
-	libDirFlag = Cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+	InitCmdFlags(Cmd)
 }
 
 func initArgs(cmd *cobra.Command) {
@@ -89,37 +100,37 @@ func initFromCommandArguments(f *pflag.Flag) {
 
 	switch f.Name {
 	case "format":
-		if formatFlag != nil {
-			format = *formatFlag
+		if Flags.FormatFlag != nil {
+			Options.Format = *Flags.FormatFlag
 		}
 	case "stop-on-failure":
-		if stopOnFailureFlag != nil {
-			stopOnFailure = *stopOnFailureFlag
+		if Flags.StopOnFailureFlag != nil {
+			Options.StopOnFailure = *Flags.StopOnFailureFlag
 		}
 	case "output-dir":
-		if outputDirFlag != nil {
-			outputDir = *outputDirFlag
+		if Flags.OutputDirFlag != nil {
+			Options.OutputDir = *Flags.OutputDirFlag
 		}
 	case "lib-dir":
-		if libDirFlag != nil {
-			libDir = *libDirFlag
+		if Flags.LibDirFlag != nil {
+			Options.LibDir = *Flags.LibDirFlag
 		}
 	case "verbose":
-		if verboseFlag != nil {
-			verbose = *verboseFlag
+		if Flags.VerboseFlag != nil {
+			Options.Verbose = *Flags.VerboseFlag
 		}
 	case "var-from-file":
-		if varFilesFlag != nil {
-			for _, varFile := range *varFilesFlag {
-				if !venom.IsInArray(varFile, varFiles) {
-					varFiles = append(varFiles, varFile)
+		if Flags.VarFilesFlag != nil {
+			for _, varFile := range *Flags.VarFilesFlag {
+				if !venom.IsInArray(varFile, Options.VarFiles) {
+					Options.VarFiles = append(Options.VarFiles, varFile)
 				}
 			}
 		}
 	case "var":
-		if variablesFlag != nil {
-			for _, varFlag := range *variablesFlag {
-				variables = mergeVariables(varFlag, variables)
+		if Flags.VariablesFlag != nil {
+			for _, varFlag := range *Flags.VariablesFlag {
+				Options.Variables = mergeVariables(varFlag, Options.Variables)
 			}
 		}
 	}
@@ -181,31 +192,31 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 
 	if configFileData.Format != nil {
-		format = *configFileData.Format
+		Options.Format = *configFileData.Format
 	}
 	if configFileData.LibDir != nil {
-		libDir = *configFileData.LibDir
+		Options.LibDir = *configFileData.LibDir
 	}
 	if configFileData.OutputDir != nil {
-		outputDir = *configFileData.OutputDir
+		Options.OutputDir = *configFileData.OutputDir
 	}
 	if configFileData.StopOnFailure != nil {
-		stopOnFailure = *configFileData.StopOnFailure
+		Options.StopOnFailure = *configFileData.StopOnFailure
 	}
 	if configFileData.Variables != nil {
 		for _, varFromFile := range *configFileData.Variables {
-			variables = mergeVariables(varFromFile, variables)
+			Options.Variables = mergeVariables(varFromFile, Options.Variables)
 		}
 	}
 	if configFileData.VariablesFiles != nil {
 		for _, varFile := range *configFileData.VariablesFiles {
-			if !venom.IsInArray(varFile, varFiles) {
-				varFiles = append(varFiles, varFile)
+			if !venom.IsInArray(varFile, Options.VarFiles) {
+				Options.VarFiles = append(Options.VarFiles, varFile)
 			}
 		}
 	}
 	if configFileData.Verbosity != nil {
-		verbose = *configFileData.Verbosity
+		Options.Verbose = *configFileData.Verbosity
 	}
 
 	return nil
@@ -231,26 +242,26 @@ func mergeVariables(varToMerge string, existingVariables []string) []string {
 func initFromEnv(environ []string) ([]string, error) {
 	if os.Getenv("VENOM_VAR") != "" {
 		v := strings.Split(os.Getenv("VENOM_VAR"), " ")
-		variables = v
+		Options.Variables = v
 	}
 	if os.Getenv("VENOM_VAR_FROM_FILE") != "" {
-		varFiles = strings.Split(os.Getenv("VENOM_VAR_FROM_FILE"), " ")
+		Options.VarFiles = strings.Split(os.Getenv("VENOM_VAR_FROM_FILE"), " ")
 	}
 	if os.Getenv("VENOM_FORMAT") != "" {
-		format = os.Getenv("VENOM_FORMAT")
+		Options.Format = os.Getenv("VENOM_FORMAT")
 	}
 	if os.Getenv("VENOM_STOP_ON_FAILURE") != "" {
 		var err error
-		stopOnFailure, err = strconv.ParseBool(os.Getenv("VENOM_STOP_ON_FAILURE"))
+		Options.StopOnFailure, err = strconv.ParseBool(os.Getenv("VENOM_STOP_ON_FAILURE"))
 		if err != nil {
 			return nil, fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
 		}
 	}
 	if os.Getenv("VENOM_LIB_DIR") != "" {
-		libDir = os.Getenv("VENOM_LIB_DIR")
+		Options.LibDir = os.Getenv("VENOM_LIB_DIR")
 	}
 	if os.Getenv("VENOM_OUTPUT_DIR") != "" {
-		outputDir = os.Getenv("VENOM_OUTPUT_DIR")
+		Options.OutputDir = os.Getenv("VENOM_OUTPUT_DIR")
 	}
 	if os.Getenv("VENOM_VERBOSE") != "" {
 		v, err := strconv.ParseInt(os.Getenv("VENOM_VERBOSE"), 10, 64)
@@ -258,7 +269,7 @@ func initFromEnv(environ []string) ([]string, error) {
 			return nil, fmt.Errorf("invalid value for VENOM_VERBOSE, must be 1, 2 or 3")
 		}
 		v2 := int(v)
-		verbose = v2
+		Options.Verbose = v2
 	}
 
 	var cast = func(vS string) interface{} {
@@ -271,21 +282,21 @@ func initFromEnv(environ []string) ([]string, error) {
 		if strings.HasPrefix(env, "VENOM_VAR_") {
 			tuple := strings.Split(env, "=")
 			k := strings.TrimPrefix(tuple[0], "VENOM_VAR_")
-			variables = append(variables, fmt.Sprintf("%v=%v", k, cast(tuple[1])))
+			Options.Variables = append(Options.Variables, fmt.Sprintf("%v=%v", k, cast(tuple[1])))
 		}
 	}
 
-	return variables, nil
+	return Options.Variables, nil
 }
 
 func displayArg(ctx context.Context) {
-	venom.Debug(ctx, "option format=%v", format)
-	venom.Debug(ctx, "option libDir=%v", libDir)
-	venom.Debug(ctx, "option outputDir=%v", outputDir)
-	venom.Debug(ctx, "option stopOnFailure=%v", stopOnFailure)
-	venom.Debug(ctx, "option variables=%v", strings.Join(variables, " "))
-	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
-	venom.Debug(ctx, "option verbose=%v", verbose)
+	venom.Debug(ctx, "option format=%v", Options.Format)
+	venom.Debug(ctx, "option libDir=%v", Options.LibDir)
+	venom.Debug(ctx, "option outputDir=%v", Options.OutputDir)
+	venom.Debug(ctx, "option stopOnFailure=%v", Options.StopOnFailure)
+	venom.Debug(ctx, "option variables=%v", strings.Join(Options.Variables, " "))
+	venom.Debug(ctx, "option varFiles=%v", strings.Join(Options.VarFiles, " "))
+	venom.Debug(ctx, "option verbose=%v", Options.Verbose)
 }
 
 // Cmd run
@@ -309,106 +320,101 @@ var Cmd = &cobra.Command{
 		} else {
 			path = args[0:]
 		}
-
 		v = venom.New()
-		v.RegisterExecutorBuiltin(amqp.Name, amqp.New())
-		v.RegisterExecutorBuiltin(dbfixtures.Name, dbfixtures.New())
-		v.RegisterExecutorBuiltin(exec.Name, exec.New())
-		v.RegisterExecutorBuiltin(grpc.Name, grpc.New())
-		v.RegisterExecutorBuiltin(http.Name, http.New())
-		v.RegisterExecutorBuiltin(imap.Name, imap.New())
-		v.RegisterExecutorBuiltin(kafka.Name, kafka.New())
-		v.RegisterExecutorBuiltin(mqtt.Name, mqtt.New())
-		v.RegisterExecutorBuiltin(ovhapi.Name, ovhapi.New())
-		v.RegisterExecutorBuiltin(rabbitmq.Name, rabbitmq.New())
-		v.RegisterExecutorBuiltin(readfile.Name, readfile.New())
-		v.RegisterExecutorBuiltin(redis.Name, redis.New())
-		v.RegisterExecutorBuiltin(smtp.Name, smtp.New())
-		v.RegisterExecutorBuiltin(sql.Name, sql.New())
-		v.RegisterExecutorBuiltin(ssh.Name, ssh.New())
-		v.RegisterExecutorBuiltin(web.Name, web.New())
+		RegisterExecutorsBuiltin(v)
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		initArgs(cmd)
-
-		v.OutputDir = outputDir
-		v.LibDir = libDir
-		v.OutputFormat = format
-		v.StopOnFailure = stopOnFailure
-		v.Verbose = verbose
-
-		if err := v.InitLogger(); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		if err := InitCmdWithVenom(v, cmd, nil); err != nil {
 			return err
 		}
-
-		if v.Verbose == 3 {
-			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
-			if err != nil {
-				log.Errorf("error while create profile file %v", err)
-			}
-			fMem, err := os.Create(filepath.Join(v.OutputDir, "pprof_mem_profile.prof"))
-			if err != nil {
-				log.Errorf("error while create profile file %v", err)
-			}
-			if fCPU != nil && fMem != nil {
-				pprof.StartCPUProfile(fCPU) //nolint
-				p := pprof.Lookup("heap")
-				defer p.WriteTo(fMem, 1) //nolint
-				defer pprof.StopCPUProfile()
-			}
-		}
-		if verbose >= 2 {
-			displayArg(context.Background())
-		}
-
-		var readers = []io.Reader{}
-		for _, f := range varFiles {
-			if f == "" {
-				continue
-			}
-			fi, err := os.Open(f)
-			if err != nil {
-				return fmt.Errorf("unable to open var-from-file %s: %v", f, err)
-			}
-			defer fi.Close()
-			readers = append(readers, fi)
-		}
-
-		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
-		if err != nil {
-			return err
-		}
-		v.AddVariables(mapvars)
-
-		start := time.Now()
-
-		if err := v.Parse(context.Background(), path); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
-			return err
-		}
-
-		tests, err := v.Process(context.Background(), path)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
-			return err
-		}
-
-		elapsed := time.Since(start)
-		if err := v.OutputResult(*tests, elapsed); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
-			return err
-		}
-		if tests.TotalKO > 0 {
-			os.Exit(2)
-		}
-
-		return nil
+		return RunCmdWithVenom(v, cmd, path)
 	},
+}
+
+func InitCmdWithVenom(v *venom.Venom, cmd *cobra.Command, _ []string) error {
+	initArgs(cmd)
+
+	v.OutputDir = Options.OutputDir
+	v.LibDir = Options.LibDir
+	v.OutputFormat = Options.Format
+	v.StopOnFailure = Options.StopOnFailure
+	v.Verbose = Options.Verbose
+
+	if err := v.InitLogger(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return err
+	}
+
+	if v.Verbose >= 2 {
+		displayArg(context.Background())
+	}
+
+	return nil
+}
+
+func RunCmdWithVenom(v *venom.Venom, cmd *cobra.Command, path []string) error {
+	if v.Verbose == 3 {
+		fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
+		if err != nil {
+			log.Errorf("error while create profile file %v", err)
+		}
+		fMem, err := os.Create(filepath.Join(v.OutputDir, "pprof_mem_profile.prof"))
+		if err != nil {
+			log.Errorf("error while create profile file %v", err)
+		}
+		if fCPU != nil && fMem != nil {
+			pprof.StartCPUProfile(fCPU) //nolint
+			p := pprof.Lookup("heap")
+			defer p.WriteTo(fMem, 1) //nolint
+			defer pprof.StopCPUProfile()
+		}
+	}
+
+	var readers = []io.Reader{}
+	for _, f := range Options.VarFiles {
+		if f == "" {
+			continue
+		}
+		fi, err := os.Open(f)
+		if err != nil {
+			return fmt.Errorf("unable to open var-from-file %s: %v", f, err)
+		}
+		defer fi.Close()
+		readers = append(readers, fi)
+	}
+
+	mapvars, err := readInitialVariables(context.Background(), Options.Variables, readers, os.Environ())
+	if err != nil {
+		return err
+	}
+	v.AddVariables(mapvars)
+
+	start := time.Now()
+
+	if err := v.Parse(context.Background(), path); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+		return err
+	}
+
+	tests, err := v.Process(context.Background(), path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+		return err
+	}
+
+	elapsed := time.Since(start)
+	if err := v.OutputResult(*tests, elapsed); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+		return err
+	}
+	if tests.TotalKO > 0 {
+		os.Exit(2)
+	}
+
+	return nil
 }
 
 func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
@@ -448,4 +454,23 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 	}
 
 	return result, nil
+}
+
+func RegisterExecutorsBuiltin(v *venom.Venom) {
+	v.RegisterExecutorBuiltin(amqp.Name, amqp.New())
+	v.RegisterExecutorBuiltin(dbfixtures.Name, dbfixtures.New())
+	v.RegisterExecutorBuiltin(exec.Name, exec.New())
+	v.RegisterExecutorBuiltin(grpc.Name, grpc.New())
+	v.RegisterExecutorBuiltin(http.Name, http.New())
+	v.RegisterExecutorBuiltin(imap.Name, imap.New())
+	v.RegisterExecutorBuiltin(kafka.Name, kafka.New())
+	v.RegisterExecutorBuiltin(mqtt.Name, mqtt.New())
+	v.RegisterExecutorBuiltin(ovhapi.Name, ovhapi.New())
+	v.RegisterExecutorBuiltin(rabbitmq.Name, rabbitmq.New())
+	v.RegisterExecutorBuiltin(readfile.Name, readfile.New())
+	v.RegisterExecutorBuiltin(redis.Name, redis.New())
+	v.RegisterExecutorBuiltin(smtp.Name, smtp.New())
+	v.RegisterExecutorBuiltin(sql.Name, sql.New())
+	v.RegisterExecutorBuiltin(ssh.Name, ssh.New())
+	v.RegisterExecutorBuiltin(web.Name, web.New())
 }
