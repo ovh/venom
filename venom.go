@@ -17,7 +17,6 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 )
 
@@ -189,7 +188,10 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 		}
 	}
 	libpaths = append(libpaths, path.Join(vars["venom.testsuite.workdir"], "lib"))
+	return v.getUserExecutorFilesPathFrom(libpaths)
+}
 
+func (v *Venom) getUserExecutorFilesPathFrom(libpaths []string) (filePaths []string, err error) {
 	for _, p := range libpaths {
 		p = strings.TrimSpace(p)
 
@@ -216,7 +218,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 	}
 
 	for _, f := range executorsPath {
-		log.Info("Reading ", f)
+		Info(ctx, "Reading ", f)
 		btes, err := os.ReadFile(f)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read file %q", f)
@@ -365,4 +367,35 @@ func (v GherkinVenom) GetFeaturesString() string {
 
 	s := strings.Join(features, "\n")
 	return s
+}
+
+func (v *GherkinVenom) registerAllUserExecutorsFromDir(ctx context.Context, dir string) error {
+	v.executorsUser = make(map[string]Executor)
+	var libpaths []string
+	if v.LibDir != "" {
+		for _, p := range strings.Split(v.LibDir, string(os.PathListSeparator)) {
+			libpaths = append(libpaths, p)
+		}
+	}
+	libpaths = append(libpaths, dir)
+	executorsFiles, err := v.getUserExecutorFilesPathFrom(libpaths)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range executorsFiles {
+		Info(ctx, "Reading ", f)
+		btes, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("unable to read file %q: %v", f, err)
+		}
+
+		ux := UserExecutor{Filename: f}
+		if err := yaml.Unmarshal(btes, &ux); err != nil {
+			return fmt.Errorf("unable to parse file %q: %v", f, err)
+		}
+		v.RegisterExecutorUser(ux.Executor, ux)
+	}
+
+	return nil
 }

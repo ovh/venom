@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -33,6 +34,8 @@ func (v *GherkinVenom) ParseGherkin(ctx context.Context, path []string) error {
 	}
 
 	for _, gFeature := range v.Features {
+		v.registerAllUserExecutorsFromDir(ctx, filepath.Base(gFeature.Filename))
+
 		testsuite, err := v.HandleGherkinFeature(gFeature)
 		if err != nil {
 			return fmt.Errorf("unable to parse feature %q (%q): %v", gFeature.Text, gFeature.Filename, err)
