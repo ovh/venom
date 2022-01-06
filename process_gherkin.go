@@ -34,7 +34,7 @@ func (v *GherkinVenom) ParseGherkin(ctx context.Context, path []string) error {
 
 	for _, gFeature := range v.Features {
 		if err := v.registerAllUserExecutorsFromDir(ctx); err != nil {
-			return err
+			Warn(ctx, "%v", err)
 		}
 		testsuite, err := v.HandleGherkinFeature(gFeature)
 		if err != nil {
