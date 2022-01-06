@@ -29,11 +29,11 @@ var CmdRun = &cobra.Command{
 $ venom gherkin run *.feature`,
 	PreRun: preRun,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		if err := run.InitCmdWithVenom(&v.Venom, cmd, nil); err != nil {
+		if err := run.InitCmdWithVenom(v.Venom, cmd, nil); err != nil {
 			return err
 		}
 
-		venom.Info(context.Background(), "Running venom in gherkin mode (beta)")
+		venom.Warn(context.Background(), "Running venom in gherkin mode (beta)")
 
 		// path is set by preRun
 		if err := v.ParseGherkin(context.Background(), path); err != nil {
@@ -59,7 +59,7 @@ $ venom gherkin run *.feature`,
 			return err
 		}
 
-		if err := run.RunCmdWithVenom(&v.Venom, cmd, generatedFiles); err != nil {
+		if err := run.RunCmdWithVenom(v.Venom, cmd, generatedFiles); err != nil {
 			return err
 		}
 

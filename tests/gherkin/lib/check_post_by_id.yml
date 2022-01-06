@@ -1,0 +1,13 @@
+executor: check_post_by_id
+gherkin: ^check post with id (?P<id>\d*)$
+input:
+  id: {}
+steps:
+- type: http
+  method: GET
+  url: "https://jsonplaceholder.typicode.com/posts/{{.input.id}}"
+  assertions:
+  - result.bodyjson.id ShouldEqual {{.input.id}}
+  - result.bodyjson.title ShouldNotBeEmpty
+output:
+  post: "{{.result.bodyjson}}"

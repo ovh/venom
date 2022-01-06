@@ -50,6 +50,14 @@ func isNil(i interface{}) bool {
 }
 
 func areSameTypes(i, j interface{}) bool {
+	if i == nil && j == nil {
+		return true
+	}
+
+	if i == nil || j == nil {
+		return false
+	}
+
 	var err error
 	i, j, err = handleJSONNumber(i, j)
 	if err != nil {

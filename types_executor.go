@@ -172,11 +172,19 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 }
 
 type UserExecutor struct {
-	Executor     string            `json:"executor" yaml:"executor"`
-	Input        H                 `json:"input" yaml:"input"`
-	RawTestSteps []json.RawMessage `json:"steps" yaml:"steps"`
-	Output       json.RawMessage   `json:"output" yaml:"output"`
-	Filename     string            `json:"-" yaml:"-"`
+	Executor          string            `json:"executor" yaml:"executor"`
+	Input             H                 `json:"input" yaml:"input"`
+	RawTestSteps      []json.RawMessage `json:"steps" yaml:"steps"`
+	Output            json.RawMessage   `json:"output" yaml:"output"`
+	Filename          string            `json:"-" yaml:"-"`
+	GerkhinRegexprStr string            `json:"gherkin" yaml:"gherkin"`
+}
+
+func (ux UserExecutor) GherkinRegExpr() []*regexp.Regexp {
+	if ux.GerkhinRegexprStr != "" {
+		return []*regexp.Regexp{regexp.MustCompile(ux.GerkhinRegexprStr)}
+	}
+	return []*regexp.Regexp{nil}
 }
 
 // Run is not implemented on user executor

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -34,8 +33,9 @@ func (v *GherkinVenom) ParseGherkin(ctx context.Context, path []string) error {
 	}
 
 	for _, gFeature := range v.Features {
-		v.registerAllUserExecutorsFromDir(ctx, filepath.Base(gFeature.Filename))
-
+		if err := v.registerAllUserExecutorsFromDir(ctx); err != nil {
+			return err
+		}
 		testsuite, err := v.HandleGherkinFeature(gFeature)
 		if err != nil {
 			return fmt.Errorf("unable to parse feature %q (%q): %v", gFeature.Text, gFeature.Filename, err)
@@ -150,7 +150,9 @@ func (v *GherkinVenom) HandleGherkinScenario(gScenario GherkinScenario) (*TestCa
 		if err != nil && err != ErrNoExecutor {
 			return nil, err
 		} else if err == nil {
-			(*currentStep)["assertions"] = currentAssertions
+			if len(currentAssertions) > 0 {
+				(*currentStep)["assertions"] = currentAssertions
+			}
 			testcase.testSteps = append(testcase.testSteps, *currentStep)
 			btes, _ := json.Marshal(currentStep)
 			testcase.RawTestSteps = append(testcase.RawTestSteps, json.RawMessage(btes))
@@ -166,7 +168,9 @@ func (v *GherkinVenom) HandleGherkinScenario(gScenario GherkinScenario) (*TestCa
 		}
 	}
 	if currentStep != nil {
-		(*currentStep)["assertions"] = currentAssertions
+		if len(currentAssertions) > 0 {
+			(*currentStep)["assertions"] = currentAssertions
+		}
 		testcase.testSteps = append(testcase.testSteps, *currentStep)
 		btes, _ := json.Marshal(currentStep)
 		testcase.RawTestSteps = append(testcase.RawTestSteps, json.RawMessage(btes))
@@ -189,6 +193,23 @@ func (v GherkinVenom) FindSuitableExecutor(gStep GherkinStep) (TestStep, error) 
 		gherkingExecutor, is := executor.(ExecutorWithGherkinSupport)
 		if is {
 			for _, regxp := range gherkingExecutor.GherkinRegExpr() {
+				if regxp == nil {
+					continue
+				}
+				if regxp.MatchString(gStep.Text) {
+					return v.TransformGherkinStepToExecutor(gStep, name, gherkingExecutor, regxp)
+				}
+			}
+		}
+	}
+
+	for name, executor := range v.executorsUser {
+		gherkingExecutor, is := executor.(ExecutorWithGherkinSupport)
+		if is {
+			for _, regxp := range gherkingExecutor.GherkinRegExpr() {
+				if regxp == nil {
+					continue
+				}
 				if regxp.MatchString(gStep.Text) {
 					return v.TransformGherkinStepToExecutor(gStep, name, gherkingExecutor, regxp)
 				}
@@ -215,7 +236,14 @@ func (v GherkinVenom) TransformGherkinStepToExecutor(gStep GherkinStep, name str
 		}
 	}
 
-	executorMap := v.TransformExecutorToMap(gherkinExecutor)
+	var executorMap map[string]interface{}
+
+	gherkinUserExecutor, is := gherkinExecutor.(UserExecutor)
+	if is {
+		executorMap = v.TransformUserExecutorToMap(gherkinUserExecutor)
+	} else {
+		executorMap = v.TransformExecutorToMap(gherkinExecutor)
+	}
 
 	for key, val := range executorMap {
 		param, has := paramsMap[key]
@@ -344,13 +372,22 @@ func CastStringParamTo(param string, target *interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("unable to cast %q to %T", param, *target)
 }
 
+func (v GherkinVenom) TransformUserExecutorToMap(userExecutor UserExecutor) map[string]interface{} {
+	return userExecutor.Input
+}
+
 func (v GherkinVenom) TransformExecutorToMap(gherkinExecutor ExecutorWithGherkinSupport) map[string]interface{} {
 	var concreteExecutor, is = gherkinExecutor.(Executor)
 	if !is {
 		panic("wrong gherkin executor implementation")
 	}
 	var iExecutor Executor = concreteExecutor
-	val := reflect.ValueOf(iExecutor).Elem()
+	var val reflect.Value
+	if reflect.TypeOf(iExecutor).Kind() == reflect.Ptr {
+		val = reflect.ValueOf(iExecutor).Elem()
+	} else {
+		val = reflect.ValueOf(iExecutor)
+	}
 	newConcreteExecutor := reflect.New(val.Type()).Interface()
 	iNewConcreteExecutor := newConcreteExecutor.(Executor)
 
@@ -375,7 +412,7 @@ func (v GherkinVenom) TransformGherkinStepToAssertion(gStep GherkinStep) (Assert
 	}
 
 	var a Assertion
-	assert := splitAssertion(gStep.Text)
+	assert := splitAssertion(strings.TrimSpace(gStep.Text))
 	if len(assert) < 2 {
 		return nil, errors.New("assertion syntax error")
 	}
@@ -398,6 +435,6 @@ func (v GherkinVenom) TransformGherkinStepToAssertion(gStep GherkinStep) (Assert
 
 	as := actualRef + " " + assertFunc + " "
 	as += strings.Join(optionnalExpectations, " ")
-	a = as
+	a = strings.TrimSpace(as)
 	return a, nil
 }

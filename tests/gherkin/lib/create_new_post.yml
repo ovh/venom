@@ -1,0 +1,10 @@
+executor: create_new_post
+gherkin: ^create a new post$
+steps:
+- method: POST
+  type: http
+  url: https://jsonplaceholder.typicode.com/posts
+  assertions:
+  - result.statuscode ShouldEqual 201
+output:
+  post: "{{.result.bodyjson}}"

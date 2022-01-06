@@ -90,7 +90,7 @@ clean:
 	@rm -f *.prof *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
 
 merge-coverage:
-	@docker run -v `pwd`:/workspace golang:1.16 sh -c "\
+	@docker run -v `pwd`:/workspace golang:1.17 sh -c "\
 			go get -u github.com/wadey/gocovmerge && \
 			cd /workspace && \
     gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \

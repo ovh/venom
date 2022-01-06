@@ -72,7 +72,7 @@ type partialTestSuite struct {
 
 func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 	for _, f := range filesPath {
-		log.Info("Reading ", f)
+		Info(ctx, "Reading %s", f)
 		btes, err := os.ReadFile(f)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read file %q", f)

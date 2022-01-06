@@ -180,7 +180,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
 
-func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []string, err error) {
+func (v *Venom) getUserExecutorFilesPath(ctx context.Context, vars map[string]string) (filePaths []string, err error) {
 	var libpaths []string
 	if v.LibDir != "" {
 		for _, p := range strings.Split(v.LibDir, string(os.PathListSeparator)) {
@@ -212,13 +212,12 @@ func (v *Venom) getUserExecutorFilesPathFrom(libpaths []string) (filePaths []str
 }
 
 func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestStep, vars map[string]string) error {
-	executorsPath, err := v.getUserExecutorFilesPath(vars)
+	executorsPath, err := v.getUserExecutorFilesPath(ctx, vars)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range executorsPath {
-		Info(ctx, "Reading ", f)
 		btes, err := os.ReadFile(f)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read file %q", f)
@@ -253,14 +252,17 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 
 		ux := UserExecutor{Filename: f}
 		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
-			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
+			return fmt.Errorf("unable to parse file %q with content %v: %v", f, content, err)
 		}
 
 		for k, vr := range varsComputed {
 			ux.Input.Add(k, vr)
 		}
 
-		v.RegisterExecutorUser(ux.Executor, ux)
+		if name == ux.Executor {
+			v.RegisterExecutorUser(ux.Executor, ux)
+			break
+		}
 	}
 	return nil
 }
@@ -350,12 +352,12 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 func NewGherkin() *GherkinVenom {
 	v := newVenom()
 	return &GherkinVenom{
-		Venom: v,
+		Venom: &v,
 	}
 }
 
 type GherkinVenom struct {
-	Venom
+	*Venom
 	Features []GherkinFeature
 }
 
@@ -369,7 +371,7 @@ func (v GherkinVenom) GetFeaturesString() string {
 	return s
 }
 
-func (v *GherkinVenom) registerAllUserExecutorsFromDir(ctx context.Context, dir string) error {
+func (v *GherkinVenom) registerAllUserExecutorsFromDir(ctx context.Context) error {
 	v.executorsUser = make(map[string]Executor)
 	var libpaths []string
 	if v.LibDir != "" {
@@ -377,14 +379,12 @@ func (v *GherkinVenom) registerAllUserExecutorsFromDir(ctx context.Context, dir 
 			libpaths = append(libpaths, p)
 		}
 	}
-	libpaths = append(libpaths, dir)
 	executorsFiles, err := v.getUserExecutorFilesPathFrom(libpaths)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range executorsFiles {
-		Info(ctx, "Reading ", f)
 		btes, err := os.ReadFile(f)
 		if err != nil {
 			return fmt.Errorf("unable to read file %q: %v", f, err)
@@ -395,6 +395,7 @@ func (v *GherkinVenom) registerAllUserExecutorsFromDir(ctx context.Context, dir 
 			return fmt.Errorf("unable to parse file %q: %v", f, err)
 		}
 		v.RegisterExecutorUser(ux.Executor, ux)
+		Info(ctx, "Executor %q registered", ux.Executor)
 	}
 
 	return nil

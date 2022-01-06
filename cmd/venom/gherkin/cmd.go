@@ -23,5 +23,5 @@ func preRun(cmd *cobra.Command, args []string) {
 	}
 
 	v = venom.NewGherkin()
-	run.RegisterExecutorsBuiltin(&v.Venom)
+	run.RegisterExecutorsBuiltin(v.Venom)
 }

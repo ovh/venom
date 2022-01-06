@@ -11,6 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Flags = struct {
+	LibDirFlag *string
+}{}
+
+func init() {
+	Flags.LibDirFlag = CmdConvert.Flags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+}
+
 var CmdConvert = &cobra.Command{
 	Use:   "convert",
 	Short: "Convert gherkin feature files to venom testsuites",
@@ -19,7 +27,8 @@ $ venom gherkin convert *.feature`,
 	PreRun: preRun,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		v.VerboseOutput = "stdout"
-		v.Verbose = 2
+		v.Verbose = 3
+		v.LibDir = *Flags.LibDirFlag
 		v.InitLogger()
 		err := v.ParseGherkin(context.Background(), path)
 		if err != nil {

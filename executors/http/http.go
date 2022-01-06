@@ -215,6 +215,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	r.Request.PostForm = cReq.PostForm
 
 	start := time.Now()
+	venom.Debug(ctx, "performing request %s %s", req.Method, req.URL.String())
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

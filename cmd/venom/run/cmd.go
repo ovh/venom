@@ -11,9 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/structs"
 	"github.com/ghodss/yaml"
 	"github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -40,38 +42,27 @@ var (
 	path []string
 	v    *venom.Venom
 
-	Options = struct {
-		Format        string
-		Variables     []string
-		VarFiles      []string
-		OutputDir     string
-		LibDir        string
-		StopOnFailure bool
-		Verbose       int
-	}{
-		Format:  "xml", // Set the default value for formatFlag
-		Verbose: 1,     // Set the default value for verboseFlag
-	}
-
-	Flags = struct {
-		VariablesFlag     *[]string
-		FormatFlag        *string
-		VarFilesFlag      *[]string
-		OutputDirFlag     *string
-		LibDirFlag        *string
-		StopOnFailureFlag *bool
-		VerboseFlag       *int
-	}{}
+	Options *cmdOptions = new(cmdOptions)
 )
 
+type cmdOptions struct {
+	Format        string   `flag:"format"`
+	Variables     []string `flag:"var"`
+	VarFiles      []string `flag:"var-from-file"`
+	OutputDir     string   `flag:"output-dir"`
+	LibDir        string   `flag:"lib-dir"`
+	StopOnFailure bool     `flag:"stop-on-failure"`
+	Verbose       int      `flag:"verbose"`
+}
+
 func InitCmdFlags(cmd *cobra.Command) {
-	Flags.FormatFlag = cmd.Flags().String("format", "xml", "--format:yaml, json, xml, tap")
-	Flags.StopOnFailureFlag = cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
-	Flags.VerboseFlag = cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
-	Flags.VarFilesFlag = cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
-	Flags.VariablesFlag = cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
-	Flags.OutputDirFlag = cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
-	Flags.LibDirFlag = cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+	cmd.Flags().String("format", "xml", "--format:yaml, json, xml, tap")
+	cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
+	cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
+	cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
+	cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
+	cmd.Flags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
+	cmd.Flags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
 }
 
 func init() {
@@ -79,18 +70,52 @@ func init() {
 }
 
 func initArgs(cmd *cobra.Command) {
+	// flags default values
+	cmd.LocalFlags().VisitAll(setDefaultValuesFromCommandArguments)
 	// command line flags overrides the configuration file.
 	// Configuration file overrides the environment variables.
 	if _, err := initFromEnv(os.Environ()); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
 	}
-
 	if err := initFromConfigFile(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
 	}
 	cmd.LocalFlags().VisitAll(initFromCommandArguments)
+}
+
+func setDefaultValuesFromCommandArguments(f *pflag.Flag) {
+	s := structs.New(Options)
+	for _, field := range s.Fields() {
+		tag := field.Tag("flag")
+		if f.Name == tag {
+			var val interface{}
+
+			switch f.Value.Type() {
+			case "string":
+				val = f.DefValue
+			case "bool":
+				val = cast.ToBool(f.DefValue)
+			case "float64":
+				val = cast.ToFloat64(f.DefValue)
+			case "int64":
+				val = cast.ToInt64(f.DefValue)
+			case "stringSlice", "stringArray":
+				val = f.Value.(pflag.SliceValue).GetSlice()
+			case "intSlice", "intArray":
+				val = cast.ToIntSlice(f.Value.(pflag.SliceValue).GetSlice())
+			case "count":
+				val = cast.ToInt(f.DefValue)
+			default:
+				panic(f.Value.Type() + " not supported")
+			}
+
+			if err := field.Set(val); err != nil {
+				panic(err)
+			}
+		}
+	}
 }
 
 func initFromCommandArguments(f *pflag.Flag) {
@@ -100,38 +125,26 @@ func initFromCommandArguments(f *pflag.Flag) {
 
 	switch f.Name {
 	case "format":
-		if Flags.FormatFlag != nil {
-			Options.Format = *Flags.FormatFlag
-		}
+		Options.Format = f.Value.String()
 	case "stop-on-failure":
-		if Flags.StopOnFailureFlag != nil {
-			Options.StopOnFailure = *Flags.StopOnFailureFlag
-		}
+		Options.StopOnFailure = cast.ToBool(f.Value.String())
 	case "output-dir":
-		if Flags.OutputDirFlag != nil {
-			Options.OutputDir = *Flags.OutputDirFlag
-		}
+		Options.OutputDir = f.Value.String()
 	case "lib-dir":
-		if Flags.LibDirFlag != nil {
-			Options.LibDir = *Flags.LibDirFlag
-		}
+		Options.LibDir = f.Value.String()
 	case "verbose":
-		if Flags.VerboseFlag != nil {
-			Options.Verbose = *Flags.VerboseFlag
-		}
+		Options.Verbose = cast.ToInt(f.Value.String())
 	case "var-from-file":
-		if Flags.VarFilesFlag != nil {
-			for _, varFile := range *Flags.VarFilesFlag {
-				if !venom.IsInArray(varFile, Options.VarFiles) {
-					Options.VarFiles = append(Options.VarFiles, varFile)
-				}
+		slice := f.Value.(pflag.SliceValue).GetSlice()
+		for _, varFile := range slice {
+			if !venom.IsInArray(varFile, Options.VarFiles) {
+				Options.VarFiles = append(Options.VarFiles, varFile)
 			}
 		}
 	case "var":
-		if Flags.VariablesFlag != nil {
-			for _, varFlag := range *Flags.VariablesFlag {
-				Options.Variables = mergeVariables(varFlag, Options.Variables)
-			}
+		slice := f.Value.(pflag.SliceValue).GetSlice()
+		for _, varFlag := range slice {
+			Options.Variables = mergeVariables(varFlag, Options.Variables)
 		}
 	}
 }
@@ -289,7 +302,7 @@ func initFromEnv(environ []string) ([]string, error) {
 	return Options.Variables, nil
 }
 
-func displayArg(ctx context.Context) {
+func (options *cmdOptions) Log(ctx context.Context) {
 	venom.Debug(ctx, "option format=%v", Options.Format)
 	venom.Debug(ctx, "option libDir=%v", Options.LibDir)
 	venom.Debug(ctx, "option outputDir=%v", Options.OutputDir)
@@ -346,7 +359,7 @@ func InitCmdWithVenom(v *venom.Venom, cmd *cobra.Command, _ []string) error {
 	}
 
 	if v.Verbose >= 2 {
-		displayArg(context.Background())
+		Options.Log(context.Background())
 	}
 
 	return nil
