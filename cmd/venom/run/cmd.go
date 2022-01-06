@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
@@ -74,7 +75,7 @@ func initArgs(cmd *cobra.Command) {
 	cmd.LocalFlags().VisitAll(setDefaultValuesFromCommandArguments)
 	// command line flags overrides the configuration file.
 	// Configuration file overrides the environment variables.
-	if _, err := initFromEnv(os.Environ()); err != nil {
+	if err := initFromEnv(os.Environ()); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
 	}
@@ -102,9 +103,20 @@ func setDefaultValuesFromCommandArguments(f *pflag.Flag) {
 			case "int64":
 				val = cast.ToInt64(f.DefValue)
 			case "stringSlice", "stringArray":
-				val = f.Value.(pflag.SliceValue).GetSlice()
+				if f.DefValue == "[]" {
+					continue
+				}
+				stringReader := strings.NewReader(f.DefValue)
+				csvReader := csv.NewReader(stringReader)
+				val, _ = csvReader.Read()
 			case "intSlice", "intArray":
-				val = cast.ToIntSlice(f.Value.(pflag.SliceValue).GetSlice())
+				if f.DefValue == "[]" {
+					continue
+				}
+				stringReader := strings.NewReader(f.DefValue)
+				csvReader := csv.NewReader(stringReader)
+				vals, _ := csvReader.Read()
+				val = cast.ToIntSlice(vals)
 			case "count":
 				val = cast.ToInt(f.DefValue)
 			default:
@@ -252,7 +264,7 @@ func mergeVariables(varToMerge string, existingVariables []string) []string {
 	return existingVariables
 }
 
-func initFromEnv(environ []string) ([]string, error) {
+func initFromEnv(environ []string) error {
 	if os.Getenv("VENOM_VAR") != "" {
 		v := strings.Split(os.Getenv("VENOM_VAR"), " ")
 		Options.Variables = v
@@ -267,7 +279,7 @@ func initFromEnv(environ []string) ([]string, error) {
 		var err error
 		Options.StopOnFailure, err = strconv.ParseBool(os.Getenv("VENOM_STOP_ON_FAILURE"))
 		if err != nil {
-			return nil, fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
+			return fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
 		}
 	}
 	if os.Getenv("VENOM_LIB_DIR") != "" {
@@ -279,7 +291,7 @@ func initFromEnv(environ []string) ([]string, error) {
 	if os.Getenv("VENOM_VERBOSE") != "" {
 		v, err := strconv.ParseInt(os.Getenv("VENOM_VERBOSE"), 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid value for VENOM_VERBOSE, must be 1, 2 or 3")
+			return fmt.Errorf("invalid value for VENOM_VERBOSE, must be 1, 2 or 3")
 		}
 		v2 := int(v)
 		Options.Verbose = v2
@@ -299,7 +311,7 @@ func initFromEnv(environ []string) ([]string, error) {
 		}
 	}
 
-	return Options.Variables, nil
+	return nil
 }
 
 func (options *cmdOptions) Log(ctx context.Context) {

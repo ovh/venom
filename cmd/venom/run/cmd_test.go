@@ -91,7 +91,8 @@ func Test_mergeVariables(t *testing.T) {
 
 func Test_initFromEnv(t *testing.T) {
 	env := []string{`VENOM_VAR_a=1`, `VENOM_VAR_b="B"`, `VENOM_VAR_c=[1,2,3]`}
-	found, err := initFromEnv(env)
+	err := initFromEnv(env)
+	found := Options.Variables
 	require.NoError(t, err)
 	require.Equal(t, 3, len(found))
 	var nb int

@@ -30,6 +30,7 @@ testcases:
         url: "http://example.com"
         headers:
           test: "{{ .GetVar.accept }}"
+        info: "headers accept-ranges is {{.result.headers.accept-ranges}}"
         assertions:
           - result.statuscode ShouldEqual 200
           - result.headers.accept-ranges ShouldEqual "bytes"
