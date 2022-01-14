@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"io"
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/crypto/ssh"
 
@@ -32,6 +32,7 @@ type Executor struct {
 	User       string `json:"user,omitempty" yaml:"user,omitempty"`
 	Password   string `json:"password,omitempty" yaml:"password,omitempty"`
 	PrivateKey string `json:"privatekey,omitempty" yaml:"privatekey,omitempty"`
+	Sudo	   string `json:"sudo,omitempty" yaml:"sudo,omitempty"*`
 }
 
 // Result represents a step result
@@ -77,7 +78,17 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 		session.Stderr = stderr
 		session.Stdout = stdout
-		if err := session.Run(e.Command); err != nil {
+		stdin, _ := session.StdinPipe()
+
+		// Handle sudo password	
+		command := e.Command
+		quit := make(chan bool)
+		if e.Sudo != "" {
+			command = "sudo -u " + e.Sudo + " " + e.Command
+			go handleSshSudo(stdin, stdout, quit, e.Password)
+		}
+
+		if err := session.Run(command); err != nil {
 			if exiterr, ok := err.(*ssh.ExitError); ok {
 				status := exiterr.ExitStatus()
 				result.Code = strconv.Itoa(status)
@@ -92,6 +103,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			result.Code = "0"
 		}
 
+		if e.Sudo != "" {
+			quit <- true
+		}
 		result.Systemerr = stderr.String()
 		result.Systemout = stdout.String()
 	}
@@ -100,6 +114,22 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	result.TimeSeconds = elapsed.Seconds()
 
 	return result, nil
+}
+
+func handleSshSudo(in io.Writer, out *bytes.Buffer, quit chan bool, password string) {
+	for {
+		select {
+		case <- quit:
+			return
+		default:
+			if strings.Contains(string(out.Bytes()), "[sudo] password for ") {
+				_, err := in.Write([]byte(password + "\n"))
+				if err != nil {
+					break
+				}
+			}	
+		}
+	}
 }
 
 func connectToHost(u, pass, key, host string) (*ssh.Client, *ssh.Session, error) {
@@ -112,9 +142,9 @@ func connectToHost(u, pass, key, host string) (*ssh.Client, *ssh.Session, error)
 		u = osUser.Username
 	}
 
-	//If password is set, use it
+	//If password is set, and we don't have key use it
 	var auth []ssh.AuthMethod
-	if pass != "" {
+	if pass != "" && key == "" {
 		auth = []ssh.AuthMethod{ssh.Password(pass)}
 	} else {
 		//Load the the private key
