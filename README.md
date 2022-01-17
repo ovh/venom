@@ -850,6 +850,7 @@ Please read the [contributing guide](./CONTRIBUTING.md) to learn about how you c
 There is no small contribution, don't hesitate!
 
 Our awesome contributors:
+
 <a href="https://github.com/ovh/venom/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ovh/venom" />
 </a>
