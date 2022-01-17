@@ -2,9 +2,10 @@
 
 Venom is a CLI (Command Line Interface) that aim to create, manage and run your integration tests with efficiency.
 
+<a href="https://github.com/ovh/venom/releases/latest"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ovh/venom.svg?logo=github&style=flat-square"></a>
 [![GoDoc](https://godoc.org/github.com/ovh/venom?status.svg)](https://godoc.org/github.com/ovh/venom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
-[![Discord](https://img.shields.io/badge/Discord-OVHcloud-brightgreen)](https://gophers.slack.com/archives/CD3LP1199)
+[![Dicussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
 
 # Table of content
 
