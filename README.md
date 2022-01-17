@@ -1,5 +1,7 @@
 # 🐍 Venom
 
+![Venom](venom.png)
+
 Venom is a CLI (Command Line Interface) that aim to create, manage and run your integration tests with efficiency.
 
 <a href="https://github.com/ovh/venom/releases/latest"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ovh/venom.svg?logo=github&style=flat-square"></a>
