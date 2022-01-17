@@ -849,6 +849,11 @@ $ make build
 Please read the [contributing guide](./CONTRIBUTING.md) to learn about how you can contribute to Venom ;-).
 There is no small contribution, don't hesitate!
 
+Our awesome contributors:
+<a href="https://github.com/ovh/venom/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ovh/venom" />
+</a>
+
 # License
 
 Copyright 2021 OVH SAS
