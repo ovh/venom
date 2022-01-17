@@ -1,38 +1,149 @@
 # 🐍 Venom
 
-Venom execute "executors" (script, HTTP Request, etc. ) and assertions.
-It can also generate xUnit result files.
+Venom is a CLI (Command Line Interface) that aim to create, manage and run your integration tests with efficiency.
 
-<img src="./venom.gif" alt="Venom Demonstration">
+[![GoDoc](https://godoc.org/github.com/ovh/venom?status.svg)](https://godoc.org/github.com/ovh/venom)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
+[![Discord](https://img.shields.io/badge/Discord-OVHcloud-brightgreen)](https://gophers.slack.com/archives/CD3LP1199)
 
-* [Command Line](#command-line)
+# Table of content
+
+* [Overview](#overview)
+* [Installing](#installing)
+* [Updating](#updating)
 * [Docker image](#docker-image)
-* [TestSuites](#testsuites)
-* [Executors](#executors)
-  * [User defined executors](#user-defined-executors)
-* [Variables](#variables)
-  * [Testsuite variables](#testsuite-variables)
-    * [Variable on Command Line](#variable-on-command-line)
+* [CLI usage](#cli-usage)
+  * [Globstar support](#globstar-support)
+  * [Variables](#variables)
     * [Variable Definitions Files](#variable-definitions-files)
     * [Environment Variables](#environment-variables)
+  * [Arguments](#arguments)
+    * [Define arguments with environment variables](#define-arguments-with-environment-variables)
+    * [Use a configuration file](#use-a-configuration-file)
+* [Concepts](#concepts)
+  * [TestSuites](#testsuites)
+  * [Executors](#executors)
+    * [User defined executors](#user-defined-executors)
+  * [Variables](#variables)
+    * [Testsuite variables](#testsuite-variables)
     * [Variable helpers](#variable-helpers)
-  * [How to use outputs from a test step as input of another test step](#how-to-use-outputs-from-a-test-step-as-input-of-another-test-step)
+  * [Use outputs from a test step as input of another test step](#use-outputs-from-a-test-step-as-input-of-another-test-step)
   * [Builtin venom variables](#builtin-venom-variables)
-* [Tests Report](#tests-report)
-* [Assertion](#assertion)
-  * [Keywords](#keywords)
-    * [`Must` Keywords](#must-keywords)
+  * [Assertion](#assertion)
+    * [Keywords](#keywords)
+      * [`Must` Keywords](#must-keywords)
+    * [Using logical operators](#using-logical-operators)
+* [Write and run your first test suite](#write-and-run-your-first-test-suite)
+* [Export tests report](#export-tests-report)
 * [Advanced usage](#advanced-usage)
   * [Debug your testsuites](#debug-your-testsuites)
   * [Skip testcase](#skip-testcase)
   * [Iterating over data](#iterating-over-data)
-* [Use venom in CI](#use-venom-in-ci)
+* [FAQ](#faq)
+  * [Common errors with quotes](#common-errors-with-quotes)
+* [Use venom in CI/CD pipelines](#use-venom-in-ci-cd-pipelines)
 * [Hacking](#hacking)
+* [Contributing](#contributing)
 * [License](#license)
 
-# Command Line
+# Overview
 
-Download latest binary release from https://github.com/ovh/venom/releases
+Venom allow you to handle integration test in the same way you code your application.
+With Venom, test cases can be managed like code: the readability of the test description means that the tests are part of the code reviews. Thanks to that, write and execute testsuites become easier for developers and teams.
+
+Concretely, you have to write testsuite in a YAML file.
+Venom run executors (scripts, HTTP Request, web, IMAP, etc.) and apply assertions. 
+It can also generate xUnit result files.
+
+<img src="./venom.gif" alt="Venom Demonstration">
+
+# Installing
+
+## Install from binaries
+
+1. Download latest binary release from: https://github.com/ovh/venom/releases/latest/
+
+You can directly download a specific version for a specific environment, version 1.0.1 for Linux for example to a binary file named `venom`
+
+```bash
+$ curl -LO https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 venom
+```
+
+2. Make binary executable
+
+```bash
+$ chmod +x ./venom
+```
+
+3. Move binary in your PATH
+
+```bash
+$ sudo mv ./venom /usr/local/bin/venom
+```
+
+4. Test in orer to check everything is working
+
+```bash
+$ venom -h
+```
+
+# Updating
+
+You can update to the latest version with `venom update` command:
+
+```bash
+$ venom update
+```
+
+The `venom update` command will download the latest version and replace the current binary:
+
+```bash
+Url to update venom: https://github.com/ovh/venom/releases/download/v1.0.1/venom.darwin-amd64
+Getting latest release from: https://github.com/ovh/venom/releases/download/v1.0.1/venom.darwin-amd64 ...
+Update done.
+```
+
+Check the new version with `venom version` command:
+
+```bash
+$ venom version
+Version venom: v1.0.1 
+```
+
+# Docker image
+
+Instead of installing (and updating) Venom locally, Venom can be started as a Docker image with following commands:
+
+```bash
+$ git clone git@github.com:ovh/venom.git
+$ cd venom
+$ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
+```
+
+# CLI Usage
+
+`venom` CLI is composed of several commands:
+
+```bash
+$ venom -h
+Venom - RUN Integration Tests
+
+Usage:
+  venom [command]
+
+Available Commands:
+  help        Help about any command
+  run         Run Tests
+  update      Update venom to the latest release version: venom update
+  version     Display Version of venom: venom version
+
+Flags:
+  -h, --help   help for venom
+
+Use "venom [command] --help" for more information about a command.
+```
+
+You can see the help of a command with `venom [command] -h`:
 
 ```bash
 $ venom run -h
@@ -47,7 +158,7 @@ Usage:
 Flags:
       --format string           --format:yaml, json, xml, tap (default "xml")
   -h, --help                    help for run
-      --lib-dir string          Lib Directory: this directory can contain user executors. This overrides the default lib folder directory
+      --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
@@ -55,27 +166,95 @@ Flags:
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
-Globstar support: `venom run ./foo/b*/**/z*.yml`
+## Globstar support
 
-You can define the arguments with environment variables:
+The `venom` CLI supports globstar:
+
+```
+$ venom run ./foo/b*/**/z*.yml
+```
+
+## Variables
+
+To specify individual variables on the command line, use the `--var` option when running the `venom run` commands:
 
 ```bash
-venom run my-test-suite.yml --format=json
+$ venom run --var="foo=bar"
+$ venom run --var='foo_list=["biz","buz"]'
+$ venom run --var='foo={"biz":"bar","biz":"barr"}'
+```
+
+The `--var` option can be used many times in a single command.
+
+### Variable Definitions Files
+
+To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a YAML dictionnary and you have specify that file on the command line with `--var-from-file`:
+
+```bash
+venom run --var-from-file variables.yaml
+```
+
+### Environment Variables
+
+As a fallback for the other ways of defining variables, `venom` tool searches the environment of its own process for environment variables named `VENOM_VAR_` followed by the name of a declared variable.
+
+```bash
+$ export VENOM_VAR_foo=bar
+$ venom run *.yml
+```
+
+You can also define the environment variable and run your testsuite in one line:
+
+```bash
+$ VENOM_VAR_FOO=bar venom run *.yml
+```
+
+## Arguments
+
+You can define arguments on the command line using the flag name.
+
+Flags are listed in the result of help command.
+
+List of available flags for `venom run` command:
+
+```
+Flags:
+      --format string           --format:yaml, json, xml, tap (default "xml")
+  -h, --help                    help for run
+      --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
+      --output-dir string       Output Directory: create tests results file inside this directory
+      --stop-on-failure         Stop running Test Suite on first Test Case failure
+      --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
+      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
+  -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
+```
+
+### Define arguments with environment variables
+
+You can also define the arguments with environment variables:
+
+```bash
 # is the same as
 VENOM_FORMAT=json venom run my-test-suite.yml
+
+# is equivalent to
+venom run my-test-suite.yml --format=json
 ```
 
-```
-      --format           -  example: VENOM_FORMAT=json
-      --output-dir       -  example: VENOM_OUTPUT_DIR=.
-      --lib-dir          -  example: VENOM_LIB_DIR=/etc/venom/lib:$HOME/venom.d/lib
-      --stop-on-failure  -  example: VENOM_STOP_ON_FAILURE=true
-      --var              -  example: VENOM_VAR="foo=bar"
-      --var-from-file    -  example: VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"
-      -v                 -  example: VENOM_VERBOSE=2 is the same as -vv
-```
+Flags and their equivalent with environment variables usage:
 
-You can define the venom settings using a configuration file `.venomrc`. This configuration file should be placed in the current directory or in the home directory.
+- `--format="json"` flag is equivalent to `VENOM_FORMAT="json"` environment variable
+- `--lib-dir="/etc/venom/lib:$HOME/venom.d/lib"` flag is equivalent to `VENOM_LIB_DIR="/etc/venom/lib"` environment variable
+- `--output-dir="test-results"` flag is equivalent to `VENOM_OUTPUT_DIR="test-results"` environment variable
+- `--stop-on-failure` flag is equivalent to `VENOM_STOP_ON_FAILURE=true` environment variable
+- `--var foo=bar` flag is equivalent to `VENOM_VAR_FOO='bar'` environment variable
+- `--var-from-file fileA.yml fileB.yml` flag is equivalent to `VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"` environment variable
+- `-v` flag is equivalent to `VENOM_VERBOSE=1` environment variable
+- `-vv` flag is equivalent to `VENOM_VERBOSE=2` environment variable
+
+## Use a configuration file
+
+You can define the Venom settings using a configuration file `.venomrc`. This configuration file should be placed in the current directory or in the `home` directory.
 
 ```yml
 variables: 
@@ -91,23 +270,16 @@ verbosity: 3
 
 Please note that command line flags overrides the configuration file. Configuration file overrides the environment variables.
 
-# Docker image
+# Concepts
 
-Venom can be started inside a docker image with:
-```bash
-$ git clone git@github.com:ovh/venom.git
-$ cd venom
-$ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
-```
-
-# TestSuites
+## TestSuites
 
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has a specified set of behaviors.
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
 In `venom` the testcases are executed sequentially within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enable some specific kind of behavior.
 
-In `venom` a testsuite is written in one `yaml` file respecting the following structure.
+In `venom` a testsuite is written in one `YAML` file respecting the following structure:
 
 ```yaml
 
@@ -152,7 +324,7 @@ testcases:
 
 ```
 
-# Executors
+## Executors
 
 * **amqp**: https://github.com/ovh/venom/tree/master/executors/amqp
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
@@ -172,13 +344,14 @@ testcases:
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
 
-## User defined executors
+### User defined executors
 
-You can define an executor with a single yaml file. This is a good way to abstract technical or functional behaviors and reuse them in complex testsuites.
+You can define an executor with a single YAML file. This is a good way to abstract technical or functional behaviors and reuse them in complex testsuites.
 
 Example:
 
-file `lib/customA.yml`
+file `lib/customA.yml`:
+
 ```yml
 executor: hello
 input:
@@ -193,7 +366,8 @@ output:
   all: "{{.result.systemoutjson}}"
 ```
 
-file `testsuite.yml`
+file `testsuite.yml`:
+
 ```yml
 name: testsuite with a user executor
 testcases:
@@ -219,9 +393,9 @@ $ venom run testsuite.yml
 $ venom run --lib-dir=/etc/venom/lib:$HOME/venom.d/lib testsuite.yml 
 ```
 
-# Variables
+## Variables
 
-## Testsuite variables
+### Testsuite variables
 
 You can define variable on the `testsuite` level.
 
@@ -255,32 +429,6 @@ Each user variable used in testsuite must be declared in this section. You can o
 - Individually, with the `--var` command line option.
 - In variable definitions files, either specified on the command line `--var-from-file`.
 - As environment variables.
-
-
-### Variable on Command Line
-
-To specify individual variables on the command line, use the `--var` option when running the `venom run` commands:
-
-```
-venom run --var="foo=bar"
-venom run --var='foo_list=["biz","buz"]'
-venom run --var='foo={"biz":"bar","biz":"barr"}'
-```
-
-The `--var` option can be used many times in a single command.
-
-### Variable Definitions Files
-
-To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a YAML dictionnary and you have specify that file on the command line with `--var-from-file`
-
-### Environment Variables
-
-As a fallback for the other ways of defining variables, `venom` searches the environment of its own process for environment variables named `VENOM_VAR_` followed by the name of a declared variable.
-
-```bash
-$ export VENOM_VAR_foo=bar
-$ venom run *.yml
-```
 
 ### Variable helpers
 
@@ -325,8 +473,7 @@ Available helpers and some examples:
 - `b64dec` {{.result.bodyjson | b64enc}}
 - `escape`: replace ‘_‘, ‘/’, ‘.’ by ‘-’
 
-
-## How to use outputs from a test step as input of another test step
+## Use outputs from a test step as input of another test step
 
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
@@ -380,17 +527,9 @@ Builtin variables:
 * {{.venom.executable}}
 * {{.venom.libdir}}
 
-# Tests Report
+## Assertion
 
-```bash
-venom run --format=xml --output-dir="."
-```
-
-Available formats: jUnit (xml), json, yaml, tap reports
-
-# Assertion
-
-## Keywords
+### Keywords
 
 * ShouldEqual - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldEqual.yml)
 * ShouldNotEqual - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldNotEqual.yml)
@@ -434,7 +573,7 @@ Available formats: jUnit (xml), json, yaml, tap reports
 * ShouldHappenOnOrAfter - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenOnOrAfter.yml)
 * ShouldHappenBetween - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenBetween.yml)
 
-### `Must` keywords
+#### `Must` keywords
 
 All the above assertions keywords also have a `Must` counterpart which can be used to create a required passing assertion and prevent test cases (and custom executors) to run remaining steps.
 
@@ -448,7 +587,7 @@ Example:
   # Remaining steps in this context will not be executed
 ```
 
-## Using logical operators
+### Using logical operators
 
 While assertions use `and` operator implicitely, it is possible to use other logical operators to perform complex assertions.
 
@@ -472,13 +611,71 @@ Supported operators are `and`, `or` and `xor`.
 
 More examples are available in [`tests/assertions_operators.yml`](/tests/assertions_operators.yml).
 
+# Write and run your first test suite 
+
+To try to understand how the Venom works, we will create and run a first testsuite together.
+
+The first test that we will do, in this testsuite, is to test whether the site we want to test (a public REST API, OVHcloud API for example):
+- is accessible (respond with a 200 status code)
+- respond quickly (less than 1 second)
+- if its answer is not empty
+- if the expected elements are in its response (which is in JSON format)
+
+First, create your testsuite in a file called `testsuite.yml` for example.
+Open it in your favorite editor or IDE and fill it with this content:
+
+```yaml
+name: APIIntegrationTest
+
+vars:
+  url: https://eu.api.ovh.com/
+
+testcases:
+- name: GET http testcase, with 5 seconds timeout
+  steps:
+  - type: http
+    method: GET
+    url: {{.url}}/1.0/
+    timeout: 5
+    assertions:
+    - result.statuscode ShouldEqual 200
+    - result.timeseconds ShouldBeLessThan 1
+    - result.bodyjson ShouldContainKey apis
+    - result.body ShouldContainSubstring /dedicated/server
+    - result.body ShouldContainSubstring /ipLoadbalancing
+```
+
+Then, run your testsuite with the following command:
+
+```bash
+$ venom run 
+
+ • APIIntegrationTest (testsuite.yml)
+ 	• GET-http-testcase-with-5-seconds-timeout SUCCESS
+```
+
+You wrote and executed your first testsuite with the HTTP executor! :)
+
+# Export tests report
+
+You can export your testsuite results as a report in several available formats: xUnit (XML), JSON, YAML, TAP.
+
+You can specify the output directory with the `--output-dir` flag and the format with the `--format` flag (XML by default):
+
+```bash
+$ venom run --format=xml --output-dir="."
+```
+
+Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see resuts run after run.
+
 # Advanced usage
+
 ## Debug your testsuites
 
 There is two ways to debug a testsuite:
  - use `-v` flag on venom binary.
-   - `$ venom run -v test.yml` will output a venom.log file
-   - `$ venom run -vv test.yml` will output a venom.log file and dump.json files for each teststep.
+   - `$ venom run -v test.yml` will output a *venom.log* file
+   - `$ venom run -vv test.yml` will output a *venom.log* and *dump.json* files for each teststep.
  - use `info` keyword your teststep:
 `test.yml` file:
 ```yml
@@ -505,13 +702,13 @@ $ venom run test.yml
 # output:
 
  • Exec testsuite (exec.yml)
- 	• testA SUCCESS
-	  [info] this a first info (exec.yml:8)
-	  [info] and a second... (exec.yml:9)
- 	• testB SUCCESS
- 	• sleep 1 SUCCESS
- 	• cat json SUCCESS
-	  [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
+  • testA SUCCESS
+    [info] this a first info (exec.yml:8)
+    [info] and a second... (exec.yml:9)
+  • testB SUCCESS
+  • sleep 1 SUCCESS
+  • cat json SUCCESS
+    [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
 ```
 
 ## Skip testcase
@@ -596,7 +793,7 @@ If you have this kind of error:
 err:unable to parse file "foo.yaml": error converting YAML to JSON: yaml: line 8: did not find expected key
 ```
 
-this is probably because you try to use a json value instead of a string. You should have more details in venom.log file.
+this is probably because you try to use a json value instead of a string. You should have more details in `venom.log` file.
 
 Wrong:
 
@@ -633,8 +830,7 @@ steps:
 
 Note the simple quote on the value of `body`.
 
-
-# Use venom in CI
+# Use venom in CI/CD pipelines
 
 Venom can be use on dev environement or your CI server.
 To display correctly the venom output, you probably will have to export the environment variable `IS_TTY=true` before running venom.
@@ -647,6 +843,11 @@ How to compile?
 ```bash
 $ make build
 ```
+
+# Contributing
+
+Please read the [contributing guide](./CONTRIBUTING.md) to learn about how you can contribute to Venom ;-).
+There is no small contribution, don't hesitate!
 
 # License
 
