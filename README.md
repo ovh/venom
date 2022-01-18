@@ -64,7 +64,7 @@ It can also generate xUnit result files.
 
 1. Download latest binary release from: https://github.com/ovh/venom/releases/latest/
 
-You can directly download a specific version for a specific environment, version 1.0.1 for Linux for example to a binary file named `venom`
+Example for Linux:
 
 ```bash
 $ curl -LO https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 venom
