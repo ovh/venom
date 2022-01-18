@@ -67,7 +67,8 @@ You can find latest binary release from: https://github.com/ovh/venom/releases/l
 Example for Linux:
 
 ```bash
-$ curl -LO https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 venom
+$ curl https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 -L -o /usr/local/bin/venom && chmod +x /usr/local/bin/venom
+$ venom -h
 ```
 
 2. Make binary executable
