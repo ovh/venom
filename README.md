@@ -617,7 +617,7 @@ More examples are available in [`tests/assertions_operators.yml`](/tests/asserti
 
 To understand how the Venom is working, let's create and run a first testsuite together.
 
-The first test that we will do, in this testsuite, is to test whether the site we want to test (a public REST API, OVHcloud API for example):
+The first assertions that we will do, in this testsuite, are to check whether the site we want to test (a public REST API, OVHcloud API for example):
 - is accessible (respond with a 200 status code)
 - respond in less than 5 seconds
 - if its answer is not empty
