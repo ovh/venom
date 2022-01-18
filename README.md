@@ -603,7 +603,7 @@ The first assertions that we will do, in this testsuite, are to check whether th
 - is accessible (respond with a 200 status code)
 - respond in less than 5 seconds
 - if its answer is not empty
-- if the expected elements are in its response (which is in JSON format)
+- returns a valid response (which is in JSON format)
 
 First, create your testsuite in a file called `testsuite.yml` for example.
 Open it in your favorite editor or IDE and fill it with this content:
