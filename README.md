@@ -602,7 +602,6 @@ To understand how the Venom is working, let's create and run a first testsuite t
 The first assertions that we will do, in this testsuite, are to check whether the site we want to test (a public REST API, OVHcloud API for example):
 - is accessible (respond with a 200 status code)
 - respond in less than 5 seconds
-- if its answer is not empty
 - returns a valid response (which is in JSON format)
 
 First, create your testsuite in a file called `testsuite.yml` for example.
