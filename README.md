@@ -614,7 +614,7 @@ More examples are available in [`tests/assertions_operators.yml`](/tests/asserti
 
 # Write and run your first test suite 
 
-To try to understand how the Venom works, we will create and run a first testsuite together.
+To understand how the Venom is working, let's create and run a first testsuite together.
 
 The first test that we will do, in this testsuite, is to test whether the site we want to test (a public REST API, OVHcloud API for example):
 - is accessible (respond with a 200 status code)
