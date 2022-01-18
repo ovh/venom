@@ -62,7 +62,7 @@ It can also generate xUnit result files.
 
 ## Install from binaries
 
-1. Download latest binary release from: https://github.com/ovh/venom/releases/latest/
+You can find latest binary release from: https://github.com/ovh/venom/releases/latest/.
 
 Example for Linux:
 
