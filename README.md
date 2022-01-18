@@ -528,7 +528,7 @@ Builtin variables:
 * {{.venom.executable}}
 * {{.venom.libdir}}
 
-## Assertion
+## Assertions
 
 ### Keywords
 
