@@ -30,7 +30,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
     * [Variable helpers](#variable-helpers)
   * [Use outputs from a test step as input of another test step](#use-outputs-from-a-test-step-as-input-of-another-test-step)
   * [Builtin venom variables](#builtin-venom-variables)
-  * [Assertion](#assertion)
+  * [Assertions](#assertions)
     * [Keywords](#keywords)
       * [`Must` Keywords](#must-keywords)
     * [Using logical operators](#using-logical-operators)
