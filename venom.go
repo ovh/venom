@@ -108,6 +108,10 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	if err != nil {
 		return nil, nil, err
 	}
+	retryIf, err := ts.StringSliceValue("retry_if")
+	if err != nil {
+		return nil, nil, err
+	}
 	delay, err := ts.IntValue("delay")
 	if err != nil {
 		return nil, nil, err
@@ -131,11 +135,11 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	ctx = context.WithValue(ctx, ContextKey("vars"), allKeys)
 
 	if name == "" {
-		return ctx, newExecutorRunner(nil, name, "builtin", retry, delay, timeout, info), nil
+		return ctx, newExecutorRunner(nil, name, "builtin", retry, retryIf, delay, timeout, info), nil
 	}
 
 	if ex, ok := v.executorsBuiltin[name]; ok {
-		return ctx, newExecutorRunner(ex, name, "builtin", retry, delay, timeout, info), nil
+		return ctx, newExecutorRunner(ex, name, "builtin", retry, retryIf, delay, timeout, info), nil
 	}
 
 	if err := v.registerUserExecutors(ctx, name, ts, vars); err != nil {
@@ -143,7 +147,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	}
 
 	if ex, ok := v.executorsUser[name]; ok {
-		return ctx, newExecutorRunner(ex, name, "user", retry, delay, timeout, info), nil
+		return ctx, newExecutorRunner(ex, name, "user", retry, retryIf, delay, timeout, info), nil
 	}
 
 	if err := v.registerPlugin(ctx, name, vars); err != nil {
@@ -152,7 +156,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 
 	// then add the executor plugin to the map to not have to load it on each step
 	if ex, ok := v.executorsUser[name]; ok {
-		return ctx, newExecutorRunner(ex, name, "plugin", retry, delay, timeout, info), nil
+		return ctx, newExecutorRunner(ex, name, "plugin", retry, retryIf, delay, timeout, info), nil
 	}
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }

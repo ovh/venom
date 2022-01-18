@@ -1,0 +1,15 @@
+name: testsuite with retry if
+testcases:
+- name: testsuite with retry if
+  steps:
+  # spawn a venom sub-process and expect it to fail 
+  - type: exec
+    script: '{{.venom.executable}} run failing/retry_if.yml'
+    assertions:
+      - result.code ShouldEqual 2
+      - result.systemerr ShouldBeEmpty
+      # classic retry
+      - result.systemout ShouldContainSubstring "It's a failure after 3 attempts"
+      # retry with condition (sleep 2 * 5 retries = max 10 seconds)
+      - result.timeseconds ShouldBeLessThan 10
+      - result.systemout ShouldContainSubstring "retry conditions not fulfilled, skipping 5 remaining retries"

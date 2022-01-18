@@ -139,22 +139,18 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
-	for _, skipAssertion := range tc.Skip {
-		Debug(ctx, "evaluating %s", skipAssertion)
-		assert, err := parseAssertions(ctx, skipAssertion, tc.Vars)
-		if err != nil {
-			Error(ctx, "unable to parse skip assertion: %v", err)
-			tc.AppendError(err)
-			return
-		}
-		if err := assert.Func(assert.Actual, assert.Args...); err != nil {
-			s := fmt.Sprintf("skipping testcase %q: %v", tc.originalName, err)
+
+	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
+	if err != nil {
+		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
+		tc.AppendError(err)
+		return
+	}
+	if len(results) > 0 {
+		for _, s := range results {
 			tc.Skipped = append(tc.Skipped, Skipped{Value: s})
 			Warn(ctx, s)
 		}
-	}
-
-	if len(tc.Skipped) > 0 {
 		return
 	}
 
