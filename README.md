@@ -71,24 +71,6 @@ $ curl https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 -
 $ venom -h
 ```
 
-2. Make binary executable
-
-```bash
-$ chmod +x ./venom
-```
-
-3. Move binary in your PATH
-
-```bash
-$ sudo mv ./venom /usr/local/bin/venom
-```
-
-4. Test in orer to check everything is working
-
-```bash
-$ venom -h
-```
-
 # Updating
 
 You can update to the latest version with `venom update` command:
