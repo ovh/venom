@@ -1,6 +1,21 @@
 name: testsuite with retry if
 testcases:
-- name: testsuite with retry if
+- name: testsuite with retry if (success)
+  steps:
+  - type: exec
+    # we use a tmp file as "memory" to know whether we're on first attempt or second one
+    script: |
+      test -f /tmp/retry-if-first-attempt
+      RC=$?
+      touch /tmp/retry-if-first-attempt
+      exit $RC
+    retry: 1
+    retry_if: 
+      - result.code ShouldNotEqual 0
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: testsuite with retry if (failing)
   steps:
   # spawn a venom sub-process and expect it to fail 
   - type: exec

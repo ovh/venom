@@ -13,6 +13,7 @@ testcases:
   - type: exec
     script: sleep 2 && echo error
     retry: 5
-    retry_if: result.systemout ShouldEqual pending
+    retry_if: 
+      - result.systemout ShouldEqual pending
     assertions: 
       - result.systemout ShouldEqual ok
