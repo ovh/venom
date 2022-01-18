@@ -50,7 +50,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 # Overview
 
 Venom allows you to handle integration tests the same way you code your application.
-With Venom, test cases can be managed like code: the readability of the test description means that the tests are part of the code reviews. Thanks to that, write and execute testsuites become easier for developers and teams.
+With Venom, testcases will be managed as code: the readability of the tests means that the tests are part of the code reviews. Thanks to that, write and execute testsuites become easier for developers and teams.
 
 Concretely, you have to write testsuite in a YAML file.
 Venom run executors (scripts, HTTP Request, web, IMAP, etc.) and apply assertions. 
