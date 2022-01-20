@@ -20,3 +20,4 @@ tests.log
 ./.venomrc
 test_results.xml
 *.prof
+git-template
