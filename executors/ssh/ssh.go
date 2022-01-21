@@ -1,24 +1,24 @@
 package ssh
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/ovh/venom"
+	"golang.org/x/crypto/ssh"
+	"io"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-	"io"
-	"github.com/mitchellh/mapstructure"
-	"golang.org/x/crypto/ssh"
-
-	"github.com/ovh/venom"
+	"unicode/utf8"
 )
 
 // Name for test ssh
 const Name = "ssh"
+const sudoprompt = "sudo_venom"
 
 // New returns a new Test Exec
 func New() venom.Executor {
@@ -27,12 +27,13 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Host       string `json:"host,omitempty" yaml:"host,omitempty"`
-	Command    string `json:"command,omitempty" yaml:"command,omitempty"`
-	User       string `json:"user,omitempty" yaml:"user,omitempty"`
-	Password   string `json:"password,omitempty" yaml:"password,omitempty"`
-	PrivateKey string `json:"privatekey,omitempty" yaml:"privatekey,omitempty"`
-	Sudo	   string `json:"sudo,omitempty" yaml:"sudo,omitempty"*`
+	Host         string `json:"host,omitempty" yaml:"host,omitempty"`
+	Command      string `json:"command,omitempty" yaml:"command,omitempty"`
+	User         string `json:"user,omitempty" yaml:"user,omitempty"`
+	Password     string `json:"password,omitempty" yaml:"password,omitempty"`
+	PrivateKey   string `json:"privatekey,omitempty" yaml:"privatekey,omitempty"`
+	Sudo         string `json:"sudo,omitempty" yaml:"sudo,omitempty"`
+	SudoPassword string `json:"sudopassword,omitempty" yaml:"sudopassword,omitempty"`
 }
 
 // Result represents a step result
@@ -68,24 +69,27 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	start := time.Now()
 	result := Result{}
 
-	client, session, err := connectToHost(e.User, e.Password, e.PrivateKey, e.Host)
+	client, session, err := connectToHost(e.User, e.Password, e.PrivateKey, e.Host, e.Sudo)
 	if err != nil {
 		result.Err = err.Error()
 	} else {
 		defer client.Close()
-		stdout := &bytes.Buffer{}
-		stderr := &bytes.Buffer{}
+		stdout := &Buffer{}
+		stderr := &Buffer{}
 
 		session.Stderr = stderr
 		session.Stdout = stdout
 		stdin, _ := session.StdinPipe()
 
-		// Handle sudo password	
+		// Handle sudo password
 		command := e.Command
 		quit := make(chan bool)
 		if e.Sudo != "" {
-			command = "sudo -u " + e.Sudo + " " + e.Command
-			go handleSshSudo(stdin, stdout, quit, e.Password)
+			command = "TERM=xterm-mono sudo -S -p " + sudoprompt + " -u " + e.Sudo + " " + command
+			if e.SudoPassword == "" {
+				e.SudoPassword = e.Password
+			}
+			go handleSudo(stdin, stdout, quit, e.SudoPassword)
 		}
 
 		if err := session.Run(command); err != nil {
@@ -106,8 +110,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		if e.Sudo != "" {
 			quit <- true
 		}
-		result.Systemerr = stderr.String()
-		result.Systemout = stdout.String()
+		result.Systemerr = strings.TrimSpace(stderr.String())
+		result.Systemout = strings.TrimSpace(stdout.String())
 	}
 
 	elapsed := time.Since(start)
@@ -116,23 +120,26 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	return result, nil
 }
 
-func handleSshSudo(in io.Writer, out *bytes.Buffer, quit chan bool, password string) {
+func handleSudo(in io.Writer, out *Buffer, quit chan bool, password string) {
+	sudopromptlen := len(sudoprompt)
 	for {
 		select {
-		case <- quit:
+		case <-quit:
 			return
 		default:
-			if strings.Contains(string(out.Bytes()), "[sudo] password for ") {
-				_, err := in.Write([]byte(password + "\n"))
-				if err != nil {
-					break
-				}
-			}	
+			content := out.String()
+			bufferLen := utf8.RuneCountInString(content)
+
+			// Check if we have to enter password
+			if bufferLen >= sudopromptlen && strings.Contains(content[bufferLen-sudopromptlen:], sudoprompt) {
+				in.Write([]byte(password + "\n"))
+				out.Truncate(0)
+			}
 		}
 	}
 }
 
-func connectToHost(u, pass, key, host string) (*ssh.Client, *ssh.Session, error) {
+func connectToHost(u, pass, key, host, sudo string) (*ssh.Client, *ssh.Session, error) {
 	//Default user is current username
 	if u == "" {
 		osUser, err := user.Current()
@@ -177,6 +184,18 @@ func connectToHost(u, pass, key, host string) (*ssh.Client, *ssh.Session, error)
 	if err != nil {
 		client.Close()
 		return nil, nil, err
+	}
+
+	// Request PTY for sudo cmd
+	if sudo != "" {
+		modes := ssh.TerminalModes{
+			ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
+			ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
+		}
+
+		if err := session.RequestPty("xterm", 40, 80, modes); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return client, session, nil

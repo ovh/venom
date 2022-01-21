@@ -37,7 +37,7 @@ venom-kafka.cid:
 venom-rabbit.cid:
 	$(call docker_run,rabbitmq,rabbitmq,-p 5672:5672 -p 15672:15672)
 venom-sshd.cid:
-	$(call docker_run,ghcr.io/linuxserver/openssh-server,sshd,-p 2222:2222 -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e PUBLIC_KEY="$(shell cat ~/.ssh/id_rsa.pub)" -e USER_NAME=venom )
+	$(call docker_run,ghcr.io/linuxserver/openssh-server,sshd,-p 2222:2222 -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e PUBLIC_KEY="$(shell cat ~/.ssh/id_rsa.pub)" -e USER_NAME=venom -e USER_PASSWORD=testvenom -e SUDO_ACCESS=true)
 venom-mqtt.cid:
 	$(call docker_run,eclipse-mosquitto,mqtt-broker,-p 1883:1883 -p 9001:9001 -v $(shell realpath mqtt/mosquitto.conf):/mosquitto/config/mosquitto.conf:ro)
 venom-qpid.cid:
