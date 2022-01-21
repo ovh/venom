@@ -32,9 +32,9 @@ testcases:
     host: localhost:2222
     privatekey: "$HOME/.ssh/id_rsa"
     command: whoami
-    sudo: root
+    sudo: venom
     sudopassword: testvenom
     assertions:
     - result.code ShouldEqual 0
-    - result.systemout ShouldEqual root
+    - result.systemout ShouldEqual venom
     - result.timeseconds ShouldBeLessThan 10
