@@ -353,3 +353,22 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string,
 
 	return countLine
 }
+
+//This evaluates a string of assertions with a given vars scope, and returns a slice of failures (i.e. empty slice = all pass)
+func testConditionalStatement(ctx context.Context, tc *TestCase, assertions []string, vars H, text string) ([]string, error) {
+	var failures []string
+	for _, assertion := range assertions {
+		Debug(ctx, "evaluating %s", assertion)
+		assert, err := parseAssertions(ctx, assertion, vars)
+		if err != nil {
+			Error(ctx, "unable to parse assertion: %v", err)
+			tc.AppendError(err)
+			return failures, err
+		}
+		if err := assert.Func(assert.Actual, assert.Args...); err != nil {
+			s := fmt.Sprintf(text, tc.originalName, err)
+			failures = append(failures, s)
+		}
+	}
+	return failures, nil
+}

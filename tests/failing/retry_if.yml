@@ -1,0 +1,19 @@
+testcases:
+
+- name: test retry
+  steps:
+  - type: exec
+    script: echo pending
+    retry: 2
+    assertions: 
+      - result.systemout ShouldEqual ok
+
+- name: test retry and retry_if
+  steps:
+  - type: exec
+    script: sleep 2 && echo error
+    retry: 5
+    retry_if: 
+      - result.systemout ShouldEqual pending
+    assertions: 
+      - result.systemout ShouldEqual ok

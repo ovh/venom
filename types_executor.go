@@ -25,6 +25,7 @@ type ExecutorRunner interface {
 	ExecutorWithSetup
 	Name() string
 	Retry() int
+	RetryIf() []string
 	Delay() int
 	Timeout() int
 	Info() []string
@@ -39,6 +40,7 @@ type executor struct {
 	Executor
 	name    string
 	retry   int      // nb retry a test case if it is in failure.
+	retryIf []string // retry conditions to check before performing any retries
 	delay   int      // delay between two retries
 	timeout int      // timeout on executor
 	info    []string // info to display after the run and before the assertion
@@ -55,6 +57,10 @@ func (e executor) Type() string {
 
 func (e executor) Retry() int {
 	return e.retry
+}
+
+func (e executor) RetryIf() []string {
+	return e.retryIf
 }
 
 func (e executor) Delay() int {
@@ -124,11 +130,12 @@ func (e executor) Run(ctx context.Context, step TestStep) (interface{}, error) {
 	return e.Executor.Run(ctx, step)
 }
 
-func newExecutorRunner(e Executor, name, stype string, retry, delay, timeout int, info []string) ExecutorRunner {
+func newExecutorRunner(e Executor, name, stype string, retry int, retryIf []string, delay, timeout int, info []string) ExecutorRunner {
 	return &executor{
 		Executor: e,
 		name:     name,
 		retry:    retry,
+		retryIf:  retryIf,
 		delay:    delay,
 		timeout:  timeout,
 		info:     info,

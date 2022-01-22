@@ -302,6 +302,8 @@ testcases:
     method: GET
     url: https://eu.api.ovh.com/1.0/
     retry: 3
+    retry_if: # (optional, lets you early break unrecoverable errors)
+    - result.statuscode ShouldNotEqual 403
     delay: 2
     assertions:
     - result.statuscode ShouldEqual 200

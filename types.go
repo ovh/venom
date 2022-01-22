@@ -151,6 +151,10 @@ func (t TestStep) StringSliceValue(name string) ([]string, error) {
 		}
 		return out, nil
 	}
+	//If string is empty, return an empty slice instead
+	if len(out) == 0 {
+		return []string{}, nil
+	}
 	return []string{out}, nil
 }
 
