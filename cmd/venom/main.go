@@ -11,7 +11,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "venom",
-	Short: "Venom - RUN Integration Tests",
+	Short: "Venom aim to create, manage and run your integration tests with efficiency",
 }
 
 func main() {
