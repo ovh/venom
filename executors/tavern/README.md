@@ -157,7 +157,7 @@ testcases:
         ID:        1
         FirstName: "Adeline"
         LastName:  "Durand"
-      jsonExcludes: &excludes
+      jsonExcludes: *excludes
 ...
 
 *Enjoy!*
