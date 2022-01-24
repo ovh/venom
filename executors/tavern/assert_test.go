@@ -384,22 +384,22 @@ func TestPathToRegexp(t *testing.T) {
 	}
 	path = "*/bar"
 	regex = PathToRegexp(path)
-	if regex != "^[^/]*?/bar$" {
+	if regex != "^[^/]+/bar$" {
 		t.Fatalf("bad path regexp: %s", regex)
 	}
 	path = "foo/*"
 	regex = PathToRegexp(path)
-	if regex != "^foo/[^/]*?$" {
+	if regex != "^foo/[^/]+$" {
 		t.Fatalf("bad path regexp: %s", regex)
 	}
 	path = "foo/**"
 	regex = PathToRegexp(path)
-	if regex != "^foo/.*?$" {
+	if regex != "^foo/(.*?/)?$" {
 		t.Fatalf("bad path regexp: %s", regex)
 	}
 	path = "**/bar"
 	regex = PathToRegexp(path)
-	if regex != "^.*?/bar$" {
+	if regex != "^(.*?/)?bar$" {
 		t.Fatalf("bad path regexp: %s", regex)
 	}
 }

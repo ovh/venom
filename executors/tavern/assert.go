@@ -125,12 +125,12 @@ func PathToRegexp(path string) string {
 	var parts []string
 	for _, element := range elements {
 		if element == "*" {
-			parts = append(parts, "[^/]*?")
+			parts = append(parts, "[^/]+/")
 		} else if element == "**" {
-			parts = append(parts, ".*?")
+			parts = append(parts, "(.*?/)?")
 		} else {
-			parts = append(parts, element)
+			parts = append(parts, element+"/")
 		}
 	}
-	return "^" + strings.Join(parts, "/") + "$"
+	return "^" + strings.TrimSuffix(strings.Join(parts, ""), "/") + "$"
 }
