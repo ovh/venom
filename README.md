@@ -150,6 +150,17 @@ Flags:
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
+## Run test suites in a specific order
+
+- `venom run 01_foo.yml 02_foo.yml` will run 01 before 02. 
+- `venom run 02_foo.yml 01_foo.yml` will run 02 before 01.
+
+If you want to sort many testsuite files, you can use standard commands, example:
+
+```bash
+venom run `find . -type f -name "*.yml"|sort`
+```
+
 ## Globstar support
 
 The `venom` CLI supports globstar:
@@ -253,6 +264,7 @@ verbosity: 3
 ```
 
 Please note that command line flags overrides the configuration file. Configuration file overrides the environment variables.
+
 
 # Concepts
 
