@@ -25,7 +25,8 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 		// if we put ./test/*.yml, it will fail and it's normal
 		fileInfo, _ := os.Stat(p)
 		if fileInfo != nil && fileInfo.IsDir() {
-			p = p + string(os.PathSeparator) + "*.yml"
+			//check if *.yml or *.yaml files exists in the path
+			p = p + string(os.PathSeparator) + "*.y*ml"
 		}
 
 		fpaths, err := zglob.Glob(p)
@@ -43,7 +44,7 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 	}
 
 	if len(filePaths) == 0 {
-		return nil, fmt.Errorf("no yml file selected")
+		return nil, fmt.Errorf("no YAML (*.yml or *.yaml) file found or defined")
 	}
 	return uniq(filePaths), nil
 }
