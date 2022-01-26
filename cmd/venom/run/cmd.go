@@ -301,12 +301,12 @@ func displayArg(ctx context.Context) {
 var Cmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run Tests",
-	Example: `  Run all testsuites containing in files ending with *.yml: venom run
+	Example: `  Run all testsuites containing in files ending with *.yml or *.yaml: venom run
   Run a single testsuite: venom run mytestfile.yml
   Run a single testsuite and export the result in JSON format in test/ folder: venom run mytestfile.yml --format=json --output-dir=test
   Run a single testsuite and specify a variable: venom run mytestfile.yml --var="foo=bar"
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
-  Run all testsuites containing in files ending with *.yml with verbosity: VENOM_VERBOSE=2 venom run
+  Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
   
   Notice that variables initialized with -var-from-file argument can be overrided with -var argument
   
