@@ -7,6 +7,8 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
 [![Dicussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
 
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/ovh/venom.git)
+
 # Table of content
 
 * [Overview](#overview)
