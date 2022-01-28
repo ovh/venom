@@ -1,0 +1,6 @@
+tasks:
+  - init: go get -v -t -d ./...
+    command: go run cmd/venom/main.go -h
+vscode:
+  extensions:
+    - golang.go
