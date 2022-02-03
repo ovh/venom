@@ -80,18 +80,18 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 				continue
 			}
 			filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
-			originalName := tc.originalName
 			lineNumber := findLineNumber(filename, tc.originalName, stepNumber, i, ninfo+1)
 			if lineNumber > 0 {
 				info += fmt.Sprintf(" (%s:%d)", filename, lineNumber)
 			} else if tc.IsExecutor {
 				filename = StringVarFromCtx(ctx, "venom.executor.filename")
-				originalName = StringVarFromCtx(ctx, "venom.executor.name")
+				originalName := StringVarFromCtx(ctx, "venom.executor.name")
 				lineNumber = findLineNumber(filename, originalName, stepNumber, i, ninfo+1)
+				if lineNumber > 0 {
+					info += fmt.Sprintf(" (%s:%d)", filename, lineNumber)
+				}
 			}
-			if lineNumber > 0 {
-				info += fmt.Sprintf(" (%s:%d)", filename, lineNumber)
-			}
+
 			Info(ctx, info)
 			tc.computedInfo = append(tc.computedInfo, info)
 		}
