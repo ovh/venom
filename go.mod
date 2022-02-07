@@ -30,7 +30,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
-	github.com/ovh/cds/sdk/interpolate v0.0.0-20211227153055-8d8a5b43e036
+	github.com/ovh/cds/sdk/interpolate v0.0.0-20220131161934-68475820df4d
 	github.com/ovh/go-ovh v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
