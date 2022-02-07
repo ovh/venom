@@ -13,6 +13,8 @@ In your yaml file, you can use:
   - user optional (default is OS username)
   - password optional (mandatory if no privatekey is found)
   - privatekey optional (default is $HOME/.ssh/id_rsa)
+  - sudo optional
+  - sudopassword optional (default to password)
 ```
 
 Example
@@ -30,7 +32,29 @@ testcases:
     - result.code ShouldEqual 0
     - result.timeseconds ShouldBeLessThan 1
 
+- name: Use specific privatekey
+  steps:
+  - type: ssh
+    host: 10.0.1.5:2222
+    command: echo 'foo'
+    user: bar
+    privatekey: /home/foo/.ssh/id_rsa
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: Execute command as another user than bar
+  steps:
+  - type: ssh
+    host: 10.0.1.5:2222
+    command: echo 'foo'
+    user: bar
+    sudo: root
+    sudopassword: '{{.mypassword}}'
+    assertions:
+    - result.code ShouldEqual 0
+
 ```
+*NB: Sudo option uses a pseudotty*
 
 ## Output
 

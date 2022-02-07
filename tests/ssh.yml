@@ -10,3 +10,31 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - result.timeseconds ShouldBeLessThan 10
+
+- name: ssh sudo as root
+  steps:
+  - type: ssh
+    user: venom
+    host: localhost:2222
+    privatekey: "$HOME/.ssh/id_rsa"
+    command: whoami
+    sudo: root
+    sudopassword: testvenom
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldEqual root
+    - result.timeseconds ShouldBeLessThan 10
+
+- name: ssh sudo as self
+  steps:
+  - type: ssh
+    user: venom
+    host: localhost:2222
+    privatekey: "$HOME/.ssh/id_rsa"
+    command: whoami
+    sudo: venom
+    sudopassword: testvenom
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldEqual venom
+    - result.timeseconds ShouldBeLessThan 10
