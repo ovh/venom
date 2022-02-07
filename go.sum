@@ -543,8 +543,8 @@ github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5/go.mod h1:/wsWhb9smxS
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
-github.com/ovh/cds/sdk/interpolate v0.0.0-20211227153055-8d8a5b43e036 h1:nIJrAJgC3XO7YJLTEc+TlPN7MfF5vZmHFpfGGQDQxbM=
-github.com/ovh/cds/sdk/interpolate v0.0.0-20211227153055-8d8a5b43e036/go.mod h1:+/vVZRh6akednyc18VGtayD6knR4FmPpLILRybxH5LY=
+github.com/ovh/cds/sdk/interpolate v0.0.0-20220131161934-68475820df4d h1:SyydmkztJDUj6QH/9lu/9CgaIlH7t0GTltaLylCkgCc=
+github.com/ovh/cds/sdk/interpolate v0.0.0-20220131161934-68475820df4d/go.mod h1:+/vVZRh6akednyc18VGtayD6knR4FmPpLILRybxH5LY=
 github.com/ovh/go-ovh v1.1.0 h1:bHXZmw8nTgZin4Nv7JuaLs0KG5x54EQR7migYTd1zrk=
 github.com/ovh/go-ovh v1.1.0/go.mod h1:AxitLZ5HBRPyUd+Zl60Ajaag+rNTdVXWIkzfrVuTXWA=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
