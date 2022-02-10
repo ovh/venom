@@ -580,6 +580,7 @@ Builtin variables:
 * ShouldHappenAfter - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenAfter.yml)
 * ShouldHappenOnOrAfter - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenOnOrAfter.yml)
 * ShouldHappenBetween - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldHappenBetween.yml)
+* ShouldTimeEqual - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldTimeEqual.yml)
 
 #### `Must` keywords
 

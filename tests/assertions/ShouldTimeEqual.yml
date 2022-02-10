@@ -1,0 +1,11 @@
+name: test ShouldTimeEqual - use RFC3339 format
+vars:
+  time_expected: 2006-01-02T13:04:00Z
+  time: 2006-01-02T15:04:00+02:00
+testcases:
+  - name: test assertion
+    steps:
+      - type: exec
+        script: "echo {{.time}}"
+        assertions:
+          - result.systemout ShouldTimeEqual "{{.time_expected}}"
