@@ -166,7 +166,7 @@ mk_go_test-xunit: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_RESULTS) # Generate test 
 TMP_DIR = /tmp/ovh/venom
 
 OSNAME=$(shell go env GOOS)
-ARCH = $(shell go env GOARCH)
+LINT_ARCH = $(shell go env GOARCH)
 CUR_PATH = $(notdir $(shell pwd))
 
 LINT_DIR = $(TMP_DIR)/$(CUR_PATH)/golangci-lint
@@ -174,7 +174,7 @@ LINT_BIN = $(LINT_DIR)/golangci-lint
 
 LINT_VERSION=1.31.0
 LINT_CMD = $(LINT_BIN) run --allow-parallel-runners -c .golangci.yml --build-tags $(OSNAME)
-LINT_ARCHIVE = golangci-lint-$(LINT_VERSION)-$(OSNAME)-$(ARCH).tar.gz
+LINT_ARCHIVE = golangci-lint-$(LINT_VERSION)-$(OSNAME)-$(LINT_ARCH).tar.gz
 LINT_ARCHIVE_DEST = $(TMP_DIR)/$(LINT_ARCHIVE)
 
 # Run this on localc machine.
