@@ -24,6 +24,21 @@ testcases:
       valueFile: "kafka/values/message2.json"
       avroSchemaFile: "kafka/schemas/message.avsc"
   - type: kafka
+    clientType: producer
+    withSASL: false
+    withTLS: false
+    withAVRO: true
+    user: "{{.kafkaUser}}"
+    password: "{{.kafkaPwd}}"
+    addrs:
+      - "{{.kafkaHost}}:{{.kafkaPort}}"
+    schemaRegistryAddr: "{{.kafkaSchemaRegistryHost}}"
+    messages:
+    - topic: test-topic-avro
+      key: '{"id":3}'
+      valueFile: "kafka/values/message3.json"
+      # Don't provide avro schema as already registered
+  - type: kafka
     clientType: consumer
     withTLS: false
     withSASL: false
@@ -32,7 +47,7 @@ testcases:
     password: "{{.kafkaPwd}}"
     markOffset: true
     initialOffset: oldest
-    messageLimit: 2
+    messageLimit: 3
     groupID: venom
     addrs:
       - "{{.kafkaHost}}:{{.kafkaPort}}"
@@ -42,4 +57,6 @@ testcases:
     assertions:
     - result.messagesjson.messagesjson0.value.id ShouldEqual 1
     - result.messagesjson.messagesjson0.value.message ShouldEqual "Some test"
-    - result.messages.__len__ ShouldEqual 2
+    - result.messagesjson.messagesjson1.value.id ShouldEqual 2
+    - result.messagesjson.messagesjson2.value.id ShouldEqual 3
+    - result.messages.__len__ ShouldEqual 3

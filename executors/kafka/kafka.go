@@ -227,27 +227,40 @@ func (e Executor) getMessageValue(m *Message, workdir string) ([]byte, error) {
 		return value, nil
 	}
 	// This is test with Avro
-	// 1. Read schema from file
+	var (
+		schemaID int
+		schema string
+	)
+	// 1. Get schema with its ID
+	// 1.1 Try with the file, if provided
+	subject := fmt.Sprintf("%s-value", m.Topic)  // Using topic name strategy
 	schemaFile := strings.Trim(m.AvroSchemaFile, " ")
-	if len(schemaFile) == 0 {
-		return nil, fmt.Errorf("no AVRO schema file specified")
+	if len(schemaFile) != 0 {
+		schemaPath := path.Join(workdir, schemaFile)
+		schemaBlob, err := os.ReadFile(schemaPath)
+		if err != nil {
+			return nil, fmt.Errorf("can't read from %s: %w", schemaPath, err)
+		}
+		schema = string(schemaBlob)
+		// 1.2 Push schema to Schema Registry
+		schemaID, err = e.schemaReg.RegisterNewSchema(subject, schema)
+		if err != nil {
+			return nil, fmt.Errorf("can't register new schame in SchemaRegistry: %s", err)
+		}
+	} else {
+		// 1.3 Get schema from Schema Registry
+		schemaID, schema, err = e.schemaReg.GetLatestSchema(subject)
+		if err != nil {
+			return nil, fmt.Errorf("can't get latest schema for subject %s-value: %w", m.Topic, err)
+		}
 	}
-	shemaPath := path.Join(workdir, m.AvroSchemaFile)
-	schema, err := os.ReadFile(shemaPath)
-	if err != nil {
-		return nil, fmt.Errorf("can't read from %s: %w", shemaPath, err)
-	}
+	
 	// 2. Encode Value with schema
 	avroMsg, err := Convert2Avro(value, string(schema))
 	if err != nil {
 		return nil, fmt.Errorf("can't convert value 2 avro with schema: %w", err)
 	}
-	// 3. Push schema 2 Schema Registry
-	schemaID, err := e.schemaReg.RegisterNewSchema(fmt.Sprintf("%s-value", m.Topic), string(schema))
-	if err != nil {
-		return nil, fmt.Errorf("can't register new schame in SchemaRegistry: %s", err)
-	}
-	// 4. Create Kafka message with majic byte and schema ID
+	// 3. Create Kafka message with magic byte and schema ID
 	encodedAvroMsg, err := CreateMessage(avroMsg, schemaID)
 	if err != nil {
 		return nil, fmt.Errorf("can't encode avro message with schemaID: %s", err)

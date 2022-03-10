@@ -13,6 +13,7 @@ type (
 	SchemaRegistry interface {
 		GetSchemaByID(id int) (string, error)
 		RegisterNewSchema(subject, schema string) (int, error)
+		GetLatestSchema(subject string) (int, string, error)
 	}
 
 	client struct {
@@ -48,10 +49,20 @@ func (c client) GetSchemaByID(id int) (string, error) {
 }
 
 // RegisterNewSchema either register a new schema and return the ID or get the ID of an already created schema.
-func (c client) RegisterNewSchema(topic, schema string) (int, error) {
-	schemaID, err := c.client.RegisterNewSchema(topic, schema)
+func (c client) RegisterNewSchema(subject, schema string) (int, error) {
+	schemaID, err := c.client.RegisterNewSchema(subject, schema)
 	if err != nil {
 		return 0, fmt.Errorf("failed to register new schema or fetch already created schema ID: %w", err)
 	}
 	return schemaID, nil
+}
+
+// GetLatestSchema gets latest schema identifier from the given subject.
+func (c client) GetLatestSchema(subject string) (int, string, error) {
+	schema, err := c.client.GetLatestSchema(subject)
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to get latest schema ID: %w", err)
+	}
+	
+	return schema.ID, schema.Schema, nil
 }
