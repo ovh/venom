@@ -61,7 +61,7 @@ func (Executor) ZeroValueResult() interface{} {
 func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error) {
 	var webCtx WebContext
 	var driver = venom.StringVarFromCtx(ctx, "web.driver") // Possible values: chrome, phantomjs, gecko
-	var args = venom.StringVarFromCtx(ctx, "web.args")
+	var args = venom.StringSliceVarFromCtx(ctx, "web.args")
 	var prefs = venom.StringMapInterfaceVarFromCtx(ctx, "web.prefs")
 
 	switch driver {
