@@ -1,6 +1,7 @@
 name: "Skip testsuite"
 vars:
   foo: bar
+  cmdResult: "ok"
 
 testcases:
 - name: init
@@ -26,3 +27,21 @@ testcases:
     script: command_not_found
     assertions:
     - result.code ShouldEqual 0
+
+- name: do-not-skip-this-case-sensitive
+  skip: 
+    - cmdResult ShouldEqual ok
+  steps:
+  - type: exec
+    script: exit 0
+
+- name: skip-this-case-sensitive
+  skip: 
+    - cmdResult ShouldNotEqual ok
+  steps:
+  - type: exec
+    script: command_not_found
+    assertions:
+    - result.code ShouldEqual 0
+
+
