@@ -15,6 +15,17 @@ func Dump(v interface{}) (map[string]interface{}, error) {
 	return e.ToMap(v)
 }
 
+func DumpPreserveCase(v interface{}) (map[string]interface{}, error) {
+	e := dump.NewDefaultEncoder()
+	e.ExtraFields.Len = true
+	e.ExtraFields.Type = true
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
+
+	return e.ToMap(v)
+}
+
 // DumpString dumps v as a map[string]string{}, key in lowercase
 func DumpString(v interface{}) (map[string]string, error) {
 	e := dump.NewDefaultEncoder()
