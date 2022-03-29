@@ -109,7 +109,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	// dirty: mapstructure doesn't like decoding map[interface{}]interface{}, let's force manually
-	e.Request.MultipartForm = step["multipart_form"]
+	request := step["request"]
+	mapRequest := request.(map[string]interface{})
+	e.Request.MultipartForm = mapRequest["multipart_form"]
 
 	r := Result{}
 
@@ -249,8 +251,21 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 	if method == "" {
 		method = "GET"
 	}
-	if (e.Request.Body != "" || e.Request.File != "" || e.Request.JSON != "") && e.Request.MultipartForm != nil {
-		return nil, fmt.Errorf("can only use one of 'body', 'body_file' and 'multipart_form'")
+	n := 0
+	if e.Request.Body != "" {
+		n++
+	}
+	if e.Request.File != "" {
+		n++
+	}
+	if e.Request.JSON != nil {
+		n++
+	}
+	if e.Request.MultipartForm != nil {
+		n++
+	}
+	if n > 1 {
+		return nil, fmt.Errorf("can only use one of 'body', 'body_file', 'json' and 'multipart_form'")
 	}
 	body := &bytes.Buffer{}
 	var writer *multipart.Writer
@@ -271,7 +286,7 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 			}
 			body = bytes.NewBufferString(stemp)
 		}
-	} else if e.Request.JSON != "" {
+	} else if e.Request.JSON != nil {
 		jsonBytes, err := json.Marshal(e.Request.JSON)
 		if err != nil {
 			return nil, fmt.Errorf("could not marshal bodyJson: %v", err)
