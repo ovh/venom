@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -200,6 +201,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
+	}
+
+	if e.Response.Body != "" && e.Response.JSON != nil {
+		return nil, errors.New("you can't set both body and json on response")
 	}
 
 	start := time.Now()
