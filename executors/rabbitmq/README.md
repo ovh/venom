@@ -27,7 +27,7 @@ In your yaml file, you can use:
 
   # For publisher only
   - messages
-    - durable optional      (true or false) (default alse)
+    - durable optional      (true or false) (default false)
     - contentType optional  
     - contentEncoding optional
     - persistent optional (default true)
