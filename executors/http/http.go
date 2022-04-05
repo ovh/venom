@@ -338,6 +338,8 @@ func writeFile(part io.Writer, filename string) error {
 func isBodySupported(resp *http.Response) bool {
 	contentType := resp.Header.Get("Content-Type")
 	switch {
+	case strings.HasSuffix(contentType, "+json"):
+		return true
 	case strings.HasPrefix(contentType, "image/"), strings.HasPrefix(contentType, "audio/"), strings.HasPrefix(contentType, "video/"),
 		strings.HasPrefix(contentType, "font/"), strings.HasPrefix(contentType, "application/vnd."):
 		return false
@@ -353,7 +355,8 @@ func isBodySupported(resp *http.Response) bool {
 }
 
 func isBodyJSONSupported(resp *http.Response) bool {
-	return strings.Contains(resp.Header.Get("Content-Type"), "application/json")
+	contentType := resp.Header.Get("Content-Type")
+	return strings.Contains(contentType, "application/json") || strings.HasSuffix(contentType, "+json")
 }
 
 func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error, error) {
