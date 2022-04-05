@@ -56,6 +56,7 @@ var assertMap = map[string]AssertFunc{
 	"ShouldHappenAfter":            ShouldHappenAfter,
 	"ShouldHappenOnOrAfter":        ShouldHappenOnOrAfter,
 	"ShouldHappenBetween":          ShouldHappenBetween,
+	"ShouldTimeEqual":              ShouldTimeEqual,
 }
 
 func Get(s string) (AssertFunc, bool) {
@@ -1045,6 +1046,41 @@ func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 	return fmt.Errorf("expected '%v' to be between '%v' and '%v' ", actualTime, min, max)
+}
+
+// ShouldTimeEqual receives exactly 2 time.Time arguments and does a time equality check.
+// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+//
+// Example of testsuite file:
+//
+//  name: test ShouldTimeEqual
+//  vars:
+//    time_expected: 2006-01-02T13:04:00Z
+//    time: 2006-01-02T15:04:00+02:00
+//  testcases:
+//  - name: test assertion
+//    steps:
+//    - type: exec
+//      script: "echo {{.time}}"
+//      assertions:
+//        - result.systemout ShouldTimeEqual "{{.time_expected}}"
+func ShouldTimeEqual(actual interface{}, expected ...interface{}) error {
+	if err := need(1, expected); err != nil {
+		return err
+	}
+
+	actualTime, err := getTimeFromString(actual)
+	if err != nil {
+		return err
+	}
+	expectedTime, err := getTimeFromString(expected[0])
+	if err != nil {
+		return err
+	}
+	if actualTime.Equal(expectedTime) {
+		return nil
+	}
+	return fmt.Errorf("expected '%v' to be time equals to '%v' ", actualTime, expectedTime)
 }
 
 func getTimeFromString(in interface{}) (time.Time, error) {

@@ -1344,3 +1344,57 @@ func TestShouldHappenBetween(t *testing.T) {
 		})
 	}
 }
+
+func TestShouldTimeEqual(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+
+	Parisloc, _ := time.LoadLocation("Europe/Paris")
+
+	now := time.Now()
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			args: args{
+				actual:   now,
+				expected: []interface{}{now.In(Parisloc)},
+			},
+		},
+		{
+			name: "ko",
+			args: args{
+				actual:   now,
+				expected: []interface{}{now.Add(1 * time.Second)},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ok",
+			args: args{
+				actual:   "2006-01-02T15:04:00+02:00",
+				expected: []interface{}{"2006-01-02T13:04:00Z"},
+			},
+		},
+		{
+			name: "ko",
+			args: args{
+				actual:   "2006-01-02T15:04:00+07:00",
+				expected: []interface{}{"2006-01-02T15:04:05Z"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldTimeEqual(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldTimeEqual() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
