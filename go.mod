@@ -28,7 +28,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.10
 	github.com/mattn/go-zglob v0.0.3
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.3.3
+	github.com/mitchellh/mapstructure v1.4.3
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20220131161934-68475820df4d
 	github.com/ovh/go-ovh v1.1.0
@@ -36,7 +36,7 @@ require (
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
 	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible
 	github.com/sijms/go-ora v0.0.0-20201108135513-712ea4f3d160
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
@@ -62,6 +62,7 @@ require (
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
+	github.com/kevinramage/venomWeb v0.0.0-20220406201155-88f7528ae3de // indirect
 	github.com/klauspost/compress v1.11.0 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
@@ -74,7 +75,7 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
+	golang.org/x/sys v0.0.0-20220406163625-3f8b81556e12 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20200331122359-1ee6d9798940 // indirect
 	google.golang.org/protobuf v1.23.0 // indirect
