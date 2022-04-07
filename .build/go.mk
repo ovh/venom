@@ -78,7 +78,7 @@ $(HOME)/.richstyle.yml:
 
 GO_RICHGO = ${GOPATH}/bin/richgo
 $(GO_RICHGO): $(HOME)/.richstyle.yml
-	go install github.com/kyoh86/richgo
+	go install github.com/kyoh86/richgo@latest
 
 EXIT_TESTS := 0
 $(TESTPKGS_RESULTS): $(GOFILES) $(TESTPKGS_C) $(GO_RICHGO)
@@ -87,19 +87,19 @@ $(TESTPKGS_RESULTS): $(GOFILES) $(TESTPKGS_C) $(GO_RICHGO)
 
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 $(GO_COV_MERGE):
-	go install github.com/wadey/gocovmerge
+	go install github.com/wadey/gocovmerge@latest
 
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 $(GO_GOJUNIT):
-	go install github.com/jstemmer/go-junit-report
+	go install github.com/jstemmer/go-junit-report@latest
 
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 $(GO_COBERTURA):
-	go install github.com/t-yuki/gocover-cobertura
+	go install github.com/t-yuki/gocover-cobertura@latest
 
 GO_XUTOOLS = ${GOPATH}/bin/xutools
 $(GO_XUTOOLS):
-	go install github.com/richardlt/xutools
+	go install github.com/richardlt/xutools@latest
 
 mk_go_test: $(GO_COV_MERGE) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS)# Run tests
 	@echo "Generating unit tests coverage..."
