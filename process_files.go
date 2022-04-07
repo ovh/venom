@@ -48,7 +48,7 @@ func getFilesPath(path []string, extentions ...string) (filePaths []string, err 
 	}
 
 	if len(filePaths) == 0 {
-		return nil, fmt.Errorf("no YAML (*.yml or *.yaml) file found or defined")
+		return nil, fmt.Errorf("no file found or defined (extentions: %v)", extentions)
 	}
 	return uniq(filePaths), nil
 }

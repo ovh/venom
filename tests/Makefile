@@ -79,7 +79,7 @@ run-test: generate-venom-pki
 	VENOM_VAR_MY_ENVAR=foo  ./venom_wrapper.sh run \
 	-vv --format=xml --output-dir=. --lib-dir=./lib_custom --var='array_from_var=["biz","buz"]' --var-from-file ./kafka/testVariables.yml --var-from-file=$(PKI_VAR_FILE) --var-from-file ./vars/vars.yml ./*.yml ./assertions/*.yml && \
 	(cd ./vars_override && VENOM_VAR_foo=from-env VENOM_VAR_FOO2=from-env2 VENOM_VAR_FOO3=from-env3 ../venom_wrapper.sh run -vv --format=xml --output-dir=. --var foo='from-cmd-arg' --var='array_from_var=["biz","buz"]' ./mytc.yml);
-	./venom_wrapper.sh run gherkin \
+	./venom_wrapper.sh  gherkin run \
 	-vv --format=xml --output-dir=. --lib-dir ./gherkin/lib gherkin/*.feature;
 
 .PHONY: wait-for-kafka
