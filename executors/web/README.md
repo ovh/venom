@@ -1,33 +1,37 @@
 # Venom - Executor Web
 
-Navigate in a web application
+Navigate within a web application
 
-Use case: You have a web application and you want to check some behaviours?
-Venom allows you to navigate into it and execute actions.
+Use case: You have a web application and you want to check some behaviors.
+
+The web executor allows you to navigate into your web application and execute actions.
 
 ## Input
 
 * Action (https://github.com/ovh/venom/tree/master/executors/web/types.go)
-* Format
+* `screenshot` allows to dump the display of the current web page in a .png file
 
-Web context allows you to configure the browser used for navigation. All parameters are optional:
+
+You can define parameters to configure the browser used during the test suite. All parameters are optional:
 * width: Width of the browser page
 * height: Height of the browser page
-* driver: `chrome`, `gecko` or `phantomjs` (default: `phantomjs`)
+* driver (default: `phantomjs`): 
+  * `phantomjs` (the `phantomjs` binary must be installed - see [here](https://phantomjs.org/))
+  * `gecko` (the `geckodriver` binary must be installed - see [here](https://github.com/mozilla/geckodriver/releases)) 
+  * `chrome` (the `chromedriver` binary must be installed - see [here](https://chromedriver.chromium.org/downloads)) 
 * args: List of arguments for `chrome` driver (see [here](https://peter.sh/experiments/chromium-command-line-switches/))
 * prefs: List of user preferences for `chrome` driver, using dot notation (see [here](http://www.chromium.org/administrators/configuring-other-preferences) and [here](https://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/pref_names.cc?view=markup))
-* timeout: Timeout in seconds (default: 180)
-* debug: Boolean enabling the debug mode of the web driver (default: false)
+* timeout: Timeout in seconds (default: `180`)
+* debug: Boolean, enabling/disabling the debug mode of the web driver (default: `false`)
+
 
 ```yaml
 name: TestSuite Web
-testcases:
-- name: TestCase Google search
-  context:
-    type: web
+vars:
+  web:
+    driver: chrome
     width: 1920
     height: 1080
-    driver: phantomjs
     args:
     - 'browser-test'
     prefs:
@@ -35,256 +39,302 @@ testcases:
       profile.default_content_setting_values.notifications: 1
     timeout: 60
     debug: true
+testcases:
+- name: TestCase Google search
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://www.google.fr
     assertions:
     - result.title ShouldEqual Google
     - result.url ShouldEqual https://www.google.fr
-  - action:
+  - type: web
+    action:
       find: input[name="q"]
     assertions:
      - result.find ShouldEqual 1
-  - action:
+  - type: web
+    action:
       fill:
       - find: input[name="q"]
         text: "venom ovh"
-  - action:
+  - type: web
+    action:
       click:
         find: input[value="Recherche Google"]
         wait: 1
-    screenshot: googlesearch.jpg
+    screenshot: googlesearch.png
 
 ```
 
-Select frame and Select root frame actions help you to navigate into your differents frames.
-After the frame selection, you can manipulate web elements presents in a frame.
-Two statements:
-* SelectFrame: One find parameter to select the frame with CSS selector
-* SelectRootFrame: One boolean parameter, must be true to activate the statement
+
+The `selectFrame` and `selectRootFrame` actions allow to navigate into the different frames of the web page.
+After the frame selection, you can manipulate web elements present in this frame.
+
+`selectFrame` has one parameter (`find`) to select the frame with its CSS selector.
+
+`selectRootFrame` has one boolean parameter which must be set to `true` to activate the action.
+
 Example:
 
 ```yaml
 name: TestSuite SelectFrame
-testcases:
-- name: TestCase SelectFrame 
-  context:
-    type: web
+vars:
+  web:
     driver: phantomjs
     debug: true
+testcases:
+- name: TestCase SelectFrame 
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_win_open
-  - action:
+  - type: web
+    action:
       selectFrame:
         find: iframe[id='iframeResult']
-  - action:
+  - type: web
+    action:
       find: body > button
     assertions:
     - result.find ShouldEqual 1
-  - action:
+  - type: web
+    action:
       find: a#tryhome
     assertions:
     - result.find ShouldEqual 0
-  - action:
+  - type: web
+    action:
       selectRootFrame: true
-  - action:
+  - type: web
+    action:
       find: body > button
     assertions:
     - result.find ShouldEqual 0
-  - action:
+  - type: web
+    action:
       find: a#tryhome
     assertions:
     - result.find ShouldEqual 1
 ```
 
-Next Window action allow you to change the current window
-Next Window have one boolean parameter, this parameter must be true
+The `nextWindow` action allows to change the current window. This action has one boolean parameter which must be set to `true` to activate the action.
+
 Example:
 
 ```yaml
 name: TestSuite NextWindow
-testcases:
-- name: TestCase NextWindow 
-  context:
-    type: web
+vars:
+  web:
     driver: chrome
     debug: true
+testcases:
+- name: TestCase NextWindow 
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://javascript.info/popup-windows
-  - action:
+  - type: web
+    action:
       click:
         find: article > div:nth-child(3) > div:nth-child(17) a[data-action='run']
         wait: 4
     screenshot: beforeNextWindow.png
-  - action:
+  - type: web
+    action:
       nextWindow: true
     screenshot: resultNextWindow.png
     assertions:
       - result.url ShouldStartWith https://www.google.com
 ```
 
-Upload file actiow allow you to upload file with file input web component
+The `uploadFile` action allows to upload a file into a web page.
+
 Example:
 
 ```yaml
 name: TestSuiteUploadFile
-testcases:
-- name: TestCaseUploadFile
-  context:
-    type: web
+vars:
+  web:
     driver: chrome
     debug: true
+testcases:
+- name: TestCaseUploadFile
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_input_type_file
-  - action:
+  - type: web
+    action:
       selectFrame:
         find: iframe[id='iframeResult']
-  - action:
+  - type: web
+    action:
       uploadFile:
         find: form:nth-child(3) input#myfile
         files:
         - myFile.png
-    screenshot: "result.png"
+    screenshot: result.png
 ```
 
-Select statement allow to manipulate select web element
-Select statement have 3 parameters
-* find: CSS selector to identify the select web element
-* text: Text to use to selection the option
-* wait: optionnal parameter to wait after the statement (in seconds)
-Example
+The `select` action allows to select an item into a list (a select web element) in a web page.
+
+This action has 3 parameters:
+
+* `find`: the CSS selector to identify the select web element
+* `text`: the item to select in the list
+* `wait`: (optional) pause after the selection is made
+
+Example:
 
 ```yaml
 name: TestSuite Select
-testcases:
-- name: TestCase Select 
-  context:
-    type: web
+vars:
+  web:
     driver: phantomjs
     debug: true
+testcases:
+- name: TestCase Select 
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://html.com/tags/select/
-  - action:
+  - type: web
+    action:
       select:
         find: article[id='post-289'] select
         text: 'Andean flamingo'
         wait: 1
     screenshot: selectAndean.png
-  - action:
+  - type: web
+    action:
       select:
         find: article[id='post-289'] select
         text: 'American flamingo'
     screenshot: selectAmerican.png
 ```
 
-ConfirmPopup and CancelPopup actions allow you to manipulate modal dialog initialized by the alert and confirm javascript statement.
-These two actions have one boolean parameter and the parameter value must be true to activate the action.
-These actions are not compatible with PhantomJS driver.
+The `confirmPopup` and `cancelPopup` actions allow to manipulate modal dialog boxes displayed by the alert and the confirm javascript statements.
+
+Both actions have one boolean parameter which must be set to `true` to activate the action. 
+
+Warning: These actions are not compatible with the `phantomJS` driver.
 
 Example:
 
 ```yaml
 name: TestSuite Popup
-testcases:
-- name: TestCase Popup 
-  context:
-    type: web
+vars:
+  web:
     driver: chrome
     debug: true
+testcases:
+- name: TestCase Popup 
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://javascript.info/alert-prompt-confirm
-  - action:
+  - type: web
+    action:
       click:
         find: article > div:nth-child(3) > div:nth-child(8) a[data-action='run']
         wait: 1
-  - action:
+  - type: web
+    action:
       ConfirmPopup: true
-  - action:
+  - type: web
+    action:
       click:
         find: article > div:nth-child(3) > div:nth-child(26) a[data-action='run']
         wait: 1
-  - action:
+  - type: web
+    action:
       ConfirmPopup: true
-  - action:
+  - type: web
+    action:
       ConfirmPopup: true
-  - action:
+  - type: web
+    action:
       click:
         find: article > div:nth-child(3) > div:nth-child(26) a[data-action='run']
         wait: 1
-  - action:
+  - type: web
+    action:
       CancelPopup: true
-  - action:
+  - type: web
+    action:
       ConfirmPopup: true
 ```
 
-History actions allow you to manipulate browser history actions. The following actions are available:
-* back
-* refresh
-* forward
+The `historyAction` action is provided to manage the browser history.
+
+This action has three possible values:
+* `back`
+* `refresh`
+* `forward`
 
 Example:
 
 ```yaml
 name: TestSuiteNavigationHistory
-testcases:
-- name: TestCaseNavigationHistory
-  context:
-    type: web
+vars:
+  web:
     driver: chrome
     debug: true
+testcases:
+- name: TestCaseNavigationHistory
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://www.google.com
-  - action:
+  - type: web
+    action:
         fill:
         - find: input[name='q']
           text: ovh venom github
     screenshot: search.png
-  - action:
+  - type: web
+    action:
         click:
             find: div[jsname='VlcLAe'] input[name='btnK']
             wait: 2
-  - action:
+  - type: web
+    action:
         historyAction: back
-  - action:
+  - type: web
+    action:
         historyAction: refresh
-  - action:
+  - type: web
+    action:
         historyAction: forward
 ```
 
 ## Output
 
-* result.url
-* result.timeseconds
-* result.title
-* result.find
+* result.url: URL of the current page
+* result.timeseconds: duration of the action execution
+* result.title: title of the current page
+* result.find: equals to 1 if the requested web element has been found
 
 
 ## Chrome
-This section describes some features specific to the Chrome browser
+This section describes some features specific to the Chrome browser.
 
 ### CI
-If you want to include Chrome Driver tests in your integration pipeline, you must execute Chrome in headless mode.
+If you want to include some Chrome Driver tests in your integration pipeline, you must execute Chrome in headless mode.
 
 Example
 ```yaml
 name: TestSuite Web
-testcases:
-- name: Test disable same site security
-  context:
-    type: web
+vars:
+  web:
     width: 1920
     height: 1080
     driver: chrome
@@ -292,39 +342,40 @@ testcases:
     - 'headless'
     timeout: 60
     debug: true
+testcases:
+- name: Test disable same site security
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://www.google.fr
 ```
 
-
 ### Flags
 
-In Chrome, you can turn experimental features on or off to test the behavior of upcoming features.
-You can do this manually with chrome://flags url with Chrome browser.
-In Venom, to enable a feature, add an instance of the enable-features argument.
-To disable a feature, add a disable-features argument instance
+In the Chrome browser, you can turn experimental features on or off to test the behavior of upcoming features (check the chrome://flags url).
+
+In the web executor, to enable a feature, use the `enable-features` argument.
+
+To disable a feature, use the `disable-features` argument.
 
 Example
 ```yaml
 name: TestSuite Web
-testcases:
-- name: Test disable same site security
-  context:
-    type: web
-    width: 1920
-    height: 1080
+vars:
+  web:
     driver: chrome
     args:
     - 'disable-features=SameSiteByDefaultCookies'
     - 'enable-features=CookiesWithoutSameSiteMustBeSecure'
-    timeout: 60
-    debug: true
+testcases:
+- name: Test disable same site security
   steps:
-  - action:
+  - type: web
+    action:
       navigate:
         url: https://samesite-sandbox.glitch.me/
-  - action:
+  - type: web
+    action:
       wait: 5
 ```
