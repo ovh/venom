@@ -2,13 +2,13 @@
 
 ### Write your executor
 
-An executor have to implement this interface
+An executor has to implement this interface
 
 ```go
 
-// Executor execute a testStep.
+// Executor executes a testStep.
 type Executor interface {
-	// Run run a Test Step
+	// Run runs a Test Step
 	Run(ctx context.Content, TestStep) (interface{}, error)
 }
 ```
@@ -39,13 +39,13 @@ type Result struct {
 	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
 }
 
-// GetDefaultAssertions return default assertions for this executor
+// GetDefaultAssertions returns the default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 	return &venom.StepAssertions{Assertions: []venom.Assertion{"result.code ShouldEqual 0"}}
 }
 
-// Run execute TestStep
+// Run executes TestStep
 func (Executor)	Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
 	// transform step to Executor Instance
 	var e Executor
