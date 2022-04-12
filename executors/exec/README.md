@@ -1,6 +1,6 @@
 # Venom - Executor Exec
 
-Step for execute a script
+Step used to execute a script
 
 
 ## Input
@@ -13,7 +13,8 @@ name: Title of TestSuite
 testcases:
 - name: Check if exit code != 1 and echo command response in less than 1s
   steps:
-  - script: echo 'foo'
+  - type: exec
+    script: echo 'foo'
     assertions:
     - result.code ShouldEqual 0
     - result.timeseconds ShouldBeLessThan 1
@@ -27,7 +28,8 @@ name: Title of TestSuite
 testcases:
 - name: multiline script
   steps:
-  - script: |
+  - type: exec
+    script: |
             echo "Foo" \
             echo "Bar"
 ```
@@ -44,12 +46,12 @@ code
 timeseconds
 ```
 
-- result.timeseconds: time of execution
-- result.err: if exists, this field contains error
-- result.systemout: Standard Output of executed script
-- result.systemoutjson: Standard Output of executed script parsed as a JSON object
-- result.systemerr: Error output of executed script
-- result.systemerrjson: Error output of executed script parsed as a JSON object
+- result.timeseconds: duration of execution
+- result.err: if exists, this field contains error details
+- result.systemout: Standard Output of the executed script
+- result.systemoutjson: Standard Output of the executed script parsed as a JSON object
+- result.systemerr: Error output of the executed script
+- result.systemerrjson: Error output of the executed script parsed as a JSON object
 - result.code: Exit code
 
 ## Default assertion
