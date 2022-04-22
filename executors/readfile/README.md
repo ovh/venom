@@ -1,11 +1,11 @@
 # Venom - Executor Read file
 
-Step for Read file
+Step used to read a file
 
-Use case: you software write a file. Venom checks that file is produced, read it,
-and return content. Content can be used by another steps of testsuite.
+Use case: your application writes a file on disk. Venom can check that this file is produced, read it,
+and return its content. Content can be used by another steps of testsuite.
 
-Path can contains a fullpath, a wildcard or a directory:
+Path can contain a fullpath, a wildcard or a directory:
 
 ```
 - path: /a/full/path/file.txt
@@ -41,13 +41,15 @@ testcases:
 ```
 
 - result.timeseconds: execution duration
-- result.err: if exist, this field contains error
-- result.content: content of readed file
-- result.contentjson: content of readed file if it's a json. You can access json data as result.contentjson.yourkey for example
-- result.size.filename: size of file 'filename'
-- result.md5sum.filename: md5 of file 'fifename'
-- result.modtime.filename: date modification of file 'filename', example: 1487698253
+- result.err: if the file does not exist, this field contains an error
+- result.content: content of the read file
+- result.contentjson: content of the read file if it's a json file. You can access json data as result.contentjson.yourkey for example
+- result.size.filename: size of the file 'filename'
+- result.md5sum.filename: md5 of the file 'fifename'
+- result.modtime.filename: modification date of the file 'filename', example: 1487698253
 - result.mod.filename: rights on file 'filename', example: -rw-r--r--
+
+Note: the value of 'filename' is equal to the path, where all letters are in lower case and where all '/' have been replaced by '_'.
 
 ## Default assertion
 
