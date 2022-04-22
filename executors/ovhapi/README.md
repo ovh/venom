@@ -2,7 +2,7 @@
 
 ## Step to test OVH API
 
-Use case: you software need to make call to OVH API.<br>
+Use case: your software needs to make call to OVH API.<br>
 You will need OVH credentials to make API call. Please follow this tutorial to get all needed keys: <br>
 EN: https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/
 
