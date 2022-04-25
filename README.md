@@ -6,7 +6,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 [![GoDoc](https://godoc.org/github.com/ovh/venom?status.svg)](https://godoc.org/github.com/ovh/venom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
 [![Dicussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
-
+ 
 # Table of content
 
 * [Overview](#overview)
@@ -193,7 +193,7 @@ The `--var` option can be used many times in a single command.
 
 ### Variable Definitions Files
 
-To set lots of variables, it is more convenient to specify their values in a variable definitions file. This file is a YAML dictionnary and you have specify that file on the command line with `--var-from-file`:
+To set a lot of variables, it is more convenient to specify their values in a variable definitions file. This file is a YAML dictionary. You have to specify that file on the command line with `--var-from-file`:
 
 ```bash
 venom run --var-from-file variables.yaml
@@ -211,7 +211,7 @@ $ venom run *.yml
 You can also define the environment variable and run your testsuite in one line:
 
 ```bash
-$ VENOM_VAR_FOO=bar venom run *.yml
+$ VENOM_VAR_foo=bar venom run *.yml
 ```
 
 ## Arguments
@@ -252,7 +252,7 @@ Flags and their equivalent with environment variables usage:
 - `--lib-dir="/etc/venom/lib:$HOME/venom.d/lib"` flag is equivalent to `VENOM_LIB_DIR="/etc/venom/lib"` environment variable
 - `--output-dir="test-results"` flag is equivalent to `VENOM_OUTPUT_DIR="test-results"` environment variable
 - `--stop-on-failure` flag is equivalent to `VENOM_STOP_ON_FAILURE=true` environment variable
-- `--var foo=bar` flag is equivalent to `VENOM_VAR_FOO='bar'` environment variable
+- `--var foo=bar` flag is equivalent to `VENOM_VAR_foo='bar'` environment variable
 - `--var-from-file fileA.yml fileB.yml` flag is equivalent to `VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"` environment variable
 - `-v` flag is equivalent to `VENOM_VERBOSE=1` environment variable
 - `-vv` flag is equivalent to `VENOM_VERBOSE=2` environment variable
@@ -273,7 +273,7 @@ lib_dir: lib
 verbosity: 3
 ```
 
-Please note that command line flags overrides the configuration file. Configuration file overrides the environment variables.
+Please note that the command line flags overrides the configuration file. The configuration file overrides the environment variables.
 
 
 # Concepts
@@ -405,7 +405,7 @@ $ venom run --lib-dir=/etc/venom/lib:$HOME/venom.d/lib testsuite.yml
 
 ### Testsuite variables
 
-You can define variable on the `testsuite` level.
+You can define variables at the `testsuite` level.
 
 ```yaml
 name: myTestSuite
@@ -486,7 +486,7 @@ Available helpers and some examples:
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
 After the first step execution, `venom` extracts a value using a regular expression `foo with a ([a-z]+) here` from the content of the `result.systemout` property returned by the `executor`.
-Then it is able to reuse this variable with the name `testA.myvariable` with `testA` corresponding to the name of the testcase.
+Then this variable can be reused in another test, with the name `testA.myvariable` with `testA` corresponding to the name of the testcase.
 
 ```yaml
 name: MyTestSuite
@@ -622,11 +622,11 @@ More examples are available in [`tests/assertions_operators.yml`](/tests/asserti
 
 # Write and run your first test suite 
 
-To understand how the Venom is working, let's create and run a first testsuite together.
+To understand how Venom is working, let's create and run a first testsuite together.
 
 The first assertions that we will do, in this testsuite, are to check whether the site we want to test (a public REST API, OVHcloud API for example):
 - is accessible (respond with a 200 status code)
-- respond in less than 5 seconds
+- responds in less than 5 seconds
 - returns a valid response (which is in JSON format)
 
 First, create your testsuite in a file called `testsuite.yml` for example.
@@ -674,17 +674,17 @@ You can specify the output directory with the `--output-dir` flag and the format
 $ venom run --format=xml --output-dir="."
 ```
 
-Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see resuts run after run.
+Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see results run after run.
 
 # Advanced usage
 
 ## Debug your testsuites
 
-There is two ways to debug a testsuite:
+There are two ways to debug a testsuite:
  - use `-v` flag on venom binary.
    - `$ venom run -v test.yml` will output a *venom.log* file
    - `$ venom run -vv test.yml` will output a *venom.log* and *dump.json* files for each teststep.
- - use `info` keyword your teststep:
+ - use `info` keyword in your teststep:
 `test.yml` file:
 ```yml
 name: Exec testsuite
@@ -840,8 +840,8 @@ Note the simple quote on the value of `body`.
 
 # Use venom in CI/CD pipelines
 
-Venom can be use on dev environement or your CI server.
-To display correctly the venom output, you probably will have to export the environment variable `IS_TTY=true` before running venom.
+Venom can be used in dev environment or on your CI server.
+To display properly the venom output, you probably will have to export the environment variable `IS_TTY=true` before running venom.
 
 # Hacking
 
