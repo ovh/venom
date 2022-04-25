@@ -86,14 +86,14 @@ func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error
 	webCtx.wd.Debug = venom.BoolVarFromCtx(ctx, "web.debug")
 
 	if err := webCtx.wd.Start(); err != nil {
-		return ctx, errors.Wrapf(err, "Unable start web driver")
+		return ctx, errors.Wrapf(err, "Unable to start the web driver")
 	}
 
 	// Init Page
 	var err error
 	webCtx.Page, err = webCtx.wd.NewPage()
 	if err != nil {
-		return ctx, errors.Wrapf(err, "Unable create new page")
+		return ctx, errors.Wrapf(err, "Unable to create the new page")
 	}
 
 	var resizePage bool
@@ -106,7 +106,7 @@ func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error
 	// Resize Page
 	if resizePage {
 		if err := webCtx.Page.Size(width, height); err != nil {
-			return ctx, fmt.Errorf("Unable resize page: %s", err)
+			return ctx, fmt.Errorf("Unable to resize the page: %s", err)
 		}
 	}
 
@@ -140,7 +140,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	result, err := e.runAction(ctx, webCtx.Page)
 	if err != nil {
 		if errg := generateErrorHTMLFile(ctx, webCtx.Page, slug.Make(webCtx.Page.String())); errg != nil {
-			venom.Warn(ctx, "Error while generate HTML file: %v", errg)
+			venom.Warn(ctx, "Error while generating the HTML file: %v", errg)
 			return nil, err
 		}
 		return nil, err
@@ -152,7 +152,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			return nil, err
 		}
 		if err := generateErrorHTMLFile(ctx, webCtx.Page, slug.Make(webCtx.Page.String())); err != nil {
-			venom.Warn(ctx, "Error while generate HTML file: %v", err)
+			venom.Warn(ctx, "Error while generating the HTML file: %v", err)
 			return nil, err
 		}
 	}
