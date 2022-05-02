@@ -139,7 +139,6 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
-
 	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
 	if err != nil {
 		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
@@ -155,9 +154,11 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 	}
 
 	var knowExecutors = map[string]struct{}{}
+	var previousStepVars = H{}
 
 	for stepNumber, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
+		stepVars.AddAll(previousStepVars)
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
@@ -249,7 +250,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				}
 			}
 
-			v.RunTestStep(ctx, e, tc, stepNumber, step)
+			result := v.RunTestStep(ctx, e, tc, stepNumber, step)
+			mapResult := GetExecutorResult(result)
+			previousStepVars.AddAll(H(mapResult))
 
 			tc.testSteps = append(tc.testSteps, step)
 
@@ -291,7 +294,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 			}
 
 			tc.computedVars.AddAll(assign)
-			tc.Vars.AddAll(tc.computedVars)
+			previousStepVars.AddAll(assign)
 		}
 	}
 }
