@@ -1,0 +1,14 @@
+executor: foobar_http_get
+input:
+  id: {}
+  res: {}
+steps:
+  - type: foobar_http
+    id: "{{.input.id}}"
+    res: "{{.input.res}}"
+    method: "GET"
+    assertions:
+      - result.statuscode ShouldEqual 200
+output:
+  statuscode: "{{.result.statuscode}}"
+  body: "{{.result.bodyjson}}"
