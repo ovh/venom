@@ -682,7 +682,7 @@ func ShouldHaveLength(actual interface{}, expected ...interface{}) error {
 		}
 	}
 
-	return fmt.Errorf("expected '%v' have length of %d but it wasn't (%d)", actual, length, length)
+	return fmt.Errorf("expected '%v' have length of %d but it wasn't (%d)", actual, length, actualLength)
 
 }
 
