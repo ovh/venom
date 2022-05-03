@@ -81,8 +81,10 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			return errors.Wrapf(err, "unable to get vars from file %q", f)
 		}
 
+		fmt.Println(fromPartial)
+
 		var varsFromPartial map[string]string
-		if len(varsFromPartial) > 0 {
+		if len(fromPartial) > 0 {
 			varsFromPartial, err = DumpStringPreserveCase(fromPartial)
 			if err != nil {
 				return errors.Wrapf(err, "unable to parse variables")
