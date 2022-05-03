@@ -664,18 +664,20 @@ func ShouldHaveLength(actual interface{}, expected ...interface{}) error {
 		return err
 	}
 
+	var actualLength int
+
 	value := reflect.ValueOf(actual)
 	switch value.Kind() {
 	case reflect.Slice, reflect.Chan, reflect.Map, reflect.String:
-		length = int64(value.Len())
+		actualLength = value.Len()
 		if value.Len() == int(length) {
 			return nil
 		}
 	case reflect.Ptr:
 		elem := value.Elem()
 		kind := elem.Kind()
-		length = int64(elem.Len())
-		if (kind == reflect.Slice || kind == reflect.Array) && elem.Len() == int(length) {
+		actualLength = elem.Len()
+		if (kind == reflect.Slice || kind == reflect.Array) && actualLength == int(length) {
 			return nil
 		}
 	}
