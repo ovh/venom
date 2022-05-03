@@ -116,6 +116,10 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 
 	reallyMissingVars := []string{}
 	for _, k := range missingVars {
+		// Skip "range" builtin variables
+		if strings.HasPrefix(k, "value") || k == "index" || k == "key" {
+			continue
+		}
 		var varExtracted bool
 		for _, e := range extractedVars {
 			if k == e || strings.HasPrefix(k, e) {

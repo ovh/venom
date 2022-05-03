@@ -84,6 +84,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 				extractedVars = append(extractedVars, s)
 				continue
 			}
+			if strings.HasPrefix(k, "range.") {
+				continue
+			}
 			if strings.HasPrefix(k, "extracts.") {
 				s := tc.Name + "." + strings.Split(k[9:], ".")[0]
 				extractedVars = append(extractedVars, s)
@@ -101,19 +104,26 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 
-				s := varRegEx.FindString(v)
-				for i := 0; i < len(extractedVars); i++ {
-					prefix := "{{." + extractedVars[i]
-					if strings.HasPrefix(s, prefix) {
-						found = true
-						break
+				submatches := varRegEx.FindStringSubmatch(v)
+				for submatcheIndex, s := range submatches {
+					if submatcheIndex == 0 {
+						continue
 					}
-				}
-				if !found {
-					s = strings.ReplaceAll(s, "{{ .", "")
-					s = strings.ReplaceAll(s, "{{.", "")
-					s = strings.ReplaceAll(s, "}}", "")
-					vars = append(vars, s)
+					for i := 0; i < len(extractedVars); i++ {
+						prefix := "{{." + extractedVars[i]
+						if strings.HasPrefix(s, prefix) {
+							found = true
+							break
+						}
+					}
+					if !found {
+						vars = append(vars, s)
+
+						s = strings.ReplaceAll(s, "{{ .", "")
+						s = strings.ReplaceAll(s, "{{.", "")
+						s = strings.ReplaceAll(s, "}}", "")
+						vars = append(vars, s)
+					}
 				}
 			}
 		}
