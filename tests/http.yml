@@ -47,7 +47,9 @@ testcases:
     multipart_form:
       file: '@./venom.gif'
     assertions:
-    - result.statuscode ShouldEqual 401
+    - or:
+      - result.statuscode ShouldEqual 401
+      - result.statuscode ShouldEqual 415
 
 - name: post http enhanced assertions
   steps:

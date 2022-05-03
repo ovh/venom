@@ -199,7 +199,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				content, err := interpolate.Do(v, vars)
 				if err != nil {
 					tc.AppendError(err)
-					Error(ctx, "unable to interpolate variable %q: %v", v, err)
+					Error(ctx, "unable to interpolate variable %q: %v", k, err)
 					return
 				}
 				vars[k] = content
