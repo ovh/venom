@@ -110,6 +110,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 				if !found {
+					s = strings.ReplaceAll(s, "{{ .", "")
 					s = strings.ReplaceAll(s, "{{.", "")
 					s = strings.ReplaceAll(s, "}}", "")
 					vars = append(vars, s)
