@@ -25,7 +25,6 @@ testcases:
     assertions:
     - result.statuscode ShouldEqual 401
     - result.headers.x-ovh-queryid ShouldNotBeEmpty
-    - result.headers ShouldHaveLength 11
     - result.timeseconds ShouldBeLessThan 5
 
 - name: post http testcase with body file
