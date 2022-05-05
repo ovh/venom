@@ -236,6 +236,11 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		}
 	}
 
+	requestContentType := r.Request.Header.Get("Content-Type")
+	if !isContentTypeSupported(requestContentType) {
+		r.Request.Body = ""
+	}
+
 	r.StatusCode = resp.StatusCode
 	return r, nil
 }
@@ -337,6 +342,10 @@ func writeFile(part io.Writer, filename string) error {
 // given https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 func isBodySupported(resp *http.Response) bool {
 	contentType := resp.Header.Get("Content-Type")
+	return isContentTypeSupported(contentType)
+}
+
+func isContentTypeSupported(contentType string) bool {
 	switch {
 	case strings.HasSuffix(contentType, "+json"):
 		return true
@@ -346,10 +355,12 @@ func isBodySupported(resp *http.Response) bool {
 	case strings.HasPrefix(contentType, "application/"):
 		x := strings.SplitN(contentType, "/", 2)[1]
 		switch x {
-		case "x-abiword", "vnd.amazon.ebook", "x-bzip", "x-bzip2", "x-csh", "msword", "epub+zip", "java-archive", "ogg", "pdf",
+		case "octet-stream", "x-abiword", "vnd.amazon.ebook", "x-bzip", "x-bzip2", "x-csh", "msword", "epub+zip", "java-archive", "ogg", "pdf",
 			"x-rar-compressed", "rtf", "x-sh", "x-shockwave-flash", "x-tar", "zip", "x-7z-compressed":
 			return false
 		}
+	case strings.Contains(contentType, "multipart/form-data"):
+		return false
 	}
 	return true
 }

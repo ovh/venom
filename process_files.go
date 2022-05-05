@@ -81,26 +81,35 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			return errors.Wrapf(err, "unable to get vars from file %q", f)
 		}
 
-		varsFromPartial, err := DumpStringPreserveCase(fromPartial)
-		if err != nil {
-			return errors.Wrapf(err, "unable to parse variables")
+		var varsFromPartial map[string]string
+		if len(fromPartial) > 0 {
+			varsFromPartial, err = DumpStringPreserveCase(fromPartial)
+			if err != nil {
+				return errors.Wrapf(err, "unable to parse variables")
+			}
 		}
 
 		// we take default vars from the testsuite, only if it's not already is global vars
 		for k, value := range varsFromPartial {
+			if k == "" {
+				continue
+			}
 			if _, ok := varCloned[k]; !ok || (varCloned[k] == "{}" && varCloned["__Len__"] == "0") {
 				// we interpolate the value of vars here, to do it only once per ts
 				valueInterpolated, err := interpolate.Do(value, varsFromPartial)
 				if err != nil {
 					return errors.Wrapf(err, "unable to parse variable %q", k)
 				}
-				varCloned[k] = valueInterpolated
+				varCloned.Add(k, valueInterpolated)
 			}
 		}
 
-		vars, err := DumpStringPreserveCase(varCloned)
-		if err != nil {
-			return errors.Wrapf(err, "unable to parse variables")
+		var vars map[string]string
+		if len(varCloned) > 0 {
+			vars, err = DumpStringPreserveCase(varCloned)
+			if err != nil {
+				return errors.Wrapf(err, "unable to parse variables")
+			}
 		}
 
 		content, err := interpolate.Do(string(btes), vars)

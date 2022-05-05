@@ -84,6 +84,9 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 				extractedVars = append(extractedVars, s)
 				continue
 			}
+			if strings.HasPrefix(k, "range.") {
+				continue
+			}
 			if strings.HasPrefix(k, "extracts.") {
 				s := tc.Name + "." + strings.Split(k[9:], ".")[0]
 				extractedVars = append(extractedVars, s)
@@ -101,18 +104,26 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 					}
 				}
 
-				s := varRegEx.FindString(v)
-				for i := 0; i < len(extractedVars); i++ {
-					prefix := "{{." + extractedVars[i]
-					if strings.HasPrefix(s, prefix) {
-						found = true
-						break
+				submatches := varRegEx.FindStringSubmatch(v)
+				for submatcheIndex, s := range submatches {
+					if submatcheIndex == 0 {
+						continue
 					}
-				}
-				if !found {
-					s = strings.ReplaceAll(s, "{{.", "")
-					s = strings.ReplaceAll(s, "}}", "")
-					vars = append(vars, s)
+					for i := 0; i < len(extractedVars); i++ {
+						prefix := "{{." + extractedVars[i]
+						if strings.HasPrefix(s, prefix) {
+							found = true
+							break
+						}
+					}
+					if !found {
+						vars = append(vars, s)
+
+						s = strings.ReplaceAll(s, "{{ .", "")
+						s = strings.ReplaceAll(s, "{{.", "")
+						s = strings.ReplaceAll(s, "}}", "")
+						vars = append(vars, s)
+					}
 				}
 			}
 		}
@@ -139,7 +150,6 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
-
 	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
 	if err != nil {
 		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
@@ -155,9 +165,11 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 	}
 
 	var knowExecutors = map[string]struct{}{}
+	var previousStepVars = H{}
 
 	for stepNumber, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
+		stepVars.AddAll(previousStepVars)
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
@@ -187,7 +199,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				content, err := interpolate.Do(v, vars)
 				if err != nil {
 					tc.AppendError(err)
-					Error(ctx, "unable to interpolate variable %q: %v", v, err)
+					Error(ctx, "unable to interpolate variable %q: %v", k, err)
 					return
 				}
 				vars[k] = content
@@ -249,7 +261,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				}
 			}
 
-			v.RunTestStep(ctx, e, tc, stepNumber, step)
+			result := v.RunTestStep(ctx, e, tc, stepNumber, step)
+			mapResult := GetExecutorResult(result)
+			previousStepVars.AddAll(H(mapResult))
 
 			tc.testSteps = append(tc.testSteps, step)
 
@@ -291,7 +305,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 			}
 
 			tc.computedVars.AddAll(assign)
-			tc.Vars.AddAll(tc.computedVars)
+			previousStepVars.AddAll(assign)
 		}
 	}
 }

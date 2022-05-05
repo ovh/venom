@@ -208,9 +208,12 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 		}
 
 		// varsFromInput contains the default vars from the executor
-		varsFromInputMap, err := DumpStringPreserveCase(varsFromInput)
-		if err != nil {
-			return errors.Wrapf(err, "unable to parse variables")
+		var varsFromInputMap map[string]string
+		if len(varsFromInput) > 0 {
+			varsFromInputMap, err = DumpStringPreserveCase(varsFromInput)
+			if err != nil {
+				return errors.Wrapf(err, "unable to parse variables")
+			}
 		}
 
 		varsComputed := map[string]string{}

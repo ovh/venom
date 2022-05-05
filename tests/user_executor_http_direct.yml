@@ -1,0 +1,58 @@
+name: user_executor_http
+testcases:
+  - name: call foobar_http_get_user
+    steps:
+      - type: foobar_http_get_user
+        id: 1
+        assertions:
+          - result.bodyjson.id ShouldEqual 1
+
+      - type: foobar_http_get_user
+        id: 2
+        assertions:
+          - result.bodyjson.id ShouldEqual 2
+
+      - type: foobar_http_get_user
+        id: 3
+        assertions:
+          - result.bodyjson.id ShouldEqual 3
+
+      - type: foobar_http_get_user
+        id: 4
+        assertions:
+          - result.bodyjson.id ShouldEqual 4
+
+      - type: foobar_http_get_user
+        id: 5
+        assertions:
+          - result.bodyjson.id ShouldEqual 5
+
+      - type: foobar_http_get_user
+        id: 6
+        assertions:
+          - result.bodyjson.id ShouldEqual 6
+
+      - type: foobar_http_get_user
+        id: 5
+        assertions:
+          - result.bodyjson.id ShouldEqual 5
+
+      - type: foobar_http_get_user
+        id: 7
+        assertions:
+          - result.bodyjson.id ShouldEqual 7
+
+      - type: foobar_http_get_user
+        id: 8
+        assertions:
+          - result.bodyjson.id ShouldEqual 8
+
+      - type: foobar_http_get_user
+        id: 9
+        assertions:
+          - result.bodyjson.id ShouldEqual 9
+
+      - type: foobar_http_get_user
+        id: 10
+        assertions:
+          - result.bodyjson.id ShouldEqual 10

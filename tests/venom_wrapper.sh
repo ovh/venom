@@ -35,4 +35,10 @@ do
   fi
 done < $DIR/$NANO_TIMESTAMP.out
 
+echo "---- output ----"
+cat $DIR/$NANO_TIMESTAMP.out
+
+echo "---- error output ----"
+cat $DIR/$NANO_TIMESTAMP.error.out
+
 exit $EXI
