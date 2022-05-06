@@ -5,3 +5,19 @@ testcases:
   - script: echo '["foo", "bar", "foo2"]'
     assertions:
     - result.systemoutjson.__len__ ShouldBeGreaterThan 2
+
+- name: ShouldBeGreaterThan100
+  steps:
+  - type: exec
+    script: echo 100
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldBeGreaterThan 29
+
+- name: ShouldBeGreaterThan100FromJSON
+  steps:
+  - type: exec
+    script: echo '{"nb":100}'
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.nb ShouldBeGreaterThan 29
