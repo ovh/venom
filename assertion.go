@@ -78,7 +78,7 @@ type assertion struct {
 }
 
 func parseAssertions(ctx context.Context, s string, input interface{}) (*assertion, error) {
-	dump, err := Dump(input)
+	dump, err := DumpPreserveCase(input)
 	if err != nil {
 		return nil, errors.New("assertion syntax error")
 	}
