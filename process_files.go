@@ -83,7 +83,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 
 		var varsFromPartial map[string]string
 		if len(fromPartial) > 0 {
-			varsFromPartial, err = DumpStringPreserveCase(fromPartial)
+			varsFromPartial, err = v.DumpString(fromPartial)
 			if err != nil {
 				return errors.Wrapf(err, "unable to parse variables")
 			}
@@ -106,7 +106,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 
 		var vars map[string]string
 		if len(varCloned) > 0 {
-			vars, err = DumpStringPreserveCase(varCloned)
+			vars, err = v.DumpString(varCloned)
 			if err != nil {
 				return errors.Wrapf(err, "unable to parse variables")
 			}

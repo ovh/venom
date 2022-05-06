@@ -158,8 +158,8 @@ type ExecutorWithSetup interface {
 	TearDown(ctx context.Context) error
 }
 
-func GetExecutorResult(r interface{}) map[string]interface{} {
-	d, err := Dump(r)
+func (v *Venom) GetExecutorResult(r interface{}) map[string]interface{} {
+	d, err := v.Dump(r)
 	if err != nil {
 		panic(err)
 	}
@@ -241,7 +241,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 
 	v.runTestSteps(ctx, tc)
 
-	computedVars, err := DumpString(tc.computedVars)
+	computedVars, err := v.DumpString(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
 	}
@@ -293,12 +293,12 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	//
 	// test is in file user_executor.yml
 
-	result, err := Dump(outputResult)
+	result, err := v.Dump(outputResult)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to compute result")
 	}
 
-	resultS, err := DumpString(outputResult)
+	resultS, err := v.DumpString(outputResult)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to compute result")
 	}

@@ -17,7 +17,7 @@ var varRegEx = regexp.MustCompile("{{.*}}")
 
 //Parse the testcase to find unreplaced and extracted variables
 func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
-	dvars, err := DumpStringPreserveCase(tc.Vars)
+	dvars, err := v.DumpString(tc.Vars)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -49,7 +49,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 		defaultResult := exec.ZeroValueResult()
 		if defaultResult != nil {
-			dumpE, err := DumpString(defaultResult)
+			dumpE, err := v.DumpString(defaultResult)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -73,7 +73,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 			}
 		}
 
-		dumpE, err := DumpStringPreserveCase(step)
+		dumpE, err := v.DumpString(step)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -150,7 +150,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
-	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
+	results, err := v.testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
 	if err != nil {
 		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
 		tc.AppendError(err)
@@ -173,7 +173,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
-		ranged, err := parseRanged(ctx, rawStep, stepVars)
+		ranged, err := v.parseRanged(ctx, rawStep, stepVars)
 		if err != nil {
 			Error(ctx, "unable to parse \"range\" attribute: %v", err)
 			tc.AppendError(err)
@@ -188,7 +188,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				stepVars.Add("value", rangedData.Value)
 			}
 
-			vars, err := DumpStringPreserveCase(stepVars)
+			vars, err := v.DumpString(stepVars)
 			if err != nil {
 				Error(ctx, "unable to dump testcase vars: %v", err)
 				tc.AppendError(err)
@@ -262,7 +262,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 			}
 
 			result := v.RunTestStep(ctx, e, tc, stepNumber, step)
-			mapResult := GetExecutorResult(result)
+			mapResult := v.GetExecutorResult(result)
 			previousStepVars.AddAll(H(mapResult))
 
 			tc.testSteps = append(tc.testSteps, step)
@@ -311,7 +311,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 }
 
 //Parse and format range data to allow iterations over user data
-func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error) {
+func (v *Venom) parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error) {
 
 	//Load "range" attribute and perform actions depending on its typing
 	var ranged Range
@@ -340,7 +340,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 		if err != nil {
 			//Try templating and escaping data
 			Debug(ctx, "attempting to template range expression and parse it again")
-			vars, err := DumpStringPreserveCase(stepVars)
+			vars, err := v.DumpString(stepVars)
 			if err != nil {
 				Warn(ctx, "failed to parse range expression when loading step variables: %v", err)
 				break

@@ -44,8 +44,8 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		}
 
 		Debug(ctx, "result of runTestStepExecutor: %+v", result)
-		mapResult := GetExecutorResult(result)
-		mapResultString, _ := DumpString(result)
+		mapResult := v.GetExecutorResult(result)
+		mapResultString, _ := v.DumpString(result)
 
 		if v.Verbose >= 2 {
 			fdump := dumpFile{
@@ -97,12 +97,12 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 
 		if result == nil {
 			Debug(ctx, "empty testcase, applying assertions on variables: %v", AllVarsFromCtx(ctx))
-			assertRes = applyAssertions(AllVarsFromCtx(ctx), *tc, stepNumber, step, nil)
+			assertRes = v.applyAssertions(AllVarsFromCtx(ctx), *tc, stepNumber, step, nil)
 		} else {
 			if h, ok := e.(executorWithDefaultAssertions); ok {
-				assertRes = applyAssertions(result, *tc, stepNumber, step, h.GetDefaultAssertions())
+				assertRes = v.applyAssertions(result, *tc, stepNumber, step, h.GetDefaultAssertions())
 			} else {
-				assertRes = applyAssertions(result, *tc, stepNumber, step, nil)
+				assertRes = v.applyAssertions(result, *tc, stepNumber, step, nil)
 			}
 		}
 
@@ -111,7 +111,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		if assertRes.ok {
 			break
 		}
-		failures, err := testConditionalStatement(ctx, tc, e.RetryIf(), tc.computedVars, "")
+		failures, err := v.testConditionalStatement(ctx, tc, e.RetryIf(), tc.computedVars, "")
 		if err != nil {
 			return fmt.Errorf("Error while evaluating retry condition: %v", err)
 		}

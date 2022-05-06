@@ -35,7 +35,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 
 	// Intialiaze the testsuite varibles and compute a first interpolation over them
 	ts.Vars.AddAll(v.variables.Clone())
-	vars, _ := DumpStringPreserveCase(ts.Vars)
+	vars, _ := v.DumpString(ts.Vars)
 	for k, v := range vars {
 		computedV, err := interpolate.Do(fmt.Sprintf("%v", v), vars)
 		if err != nil {

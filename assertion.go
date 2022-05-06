@@ -24,7 +24,7 @@ type assertionsApplied struct {
 	systemerr string
 }
 
-func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+func (v *Venom) applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -44,11 +44,11 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 		sa = *defaultAssertions
 	}
 
-	executorResult := GetExecutorResult(r)
+	executorResult := v.GetExecutorResult(r)
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, executorResult)
+		errs, fails := v.check(tc, stepNumber, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -77,8 +77,8 @@ type assertion struct {
 	Required bool
 }
 
-func parseAssertions(ctx context.Context, s string, input interface{}) (*assertion, error) {
-	dump, err := Dump(input)
+func (v *Venom) parseAssertions(ctx context.Context, s string, input interface{}) (*assertion, error) {
+	dump, err := v.Dump(input)
 	if err != nil {
 		return nil, errors.New("assertion syntax error")
 	}
@@ -116,14 +116,14 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 }
 
 // check selects the correct assertion function to call depending on typing provided by user
-func check(tc TestCase, stepNumber int, assertion Assertion, r interface{}) (*Failure, *Failure) {
+func (v *Venom) check(tc TestCase, stepNumber int, assertion Assertion, r interface{}) (*Failure, *Failure) {
 	var errs *Failure
 	var fails *Failure
 	switch t := assertion.(type) {
 	case string:
-		errs, fails = checkString(tc, stepNumber, assertion.(string), r)
+		errs, fails = v.checkString(tc, stepNumber, assertion.(string), r)
 	case map[string]interface{}:
-		errs, fails = checkBranch(tc, stepNumber, assertion.(map[string]interface{}), r)
+		errs, fails = v.checkBranch(tc, stepNumber, assertion.(map[string]interface{}), r)
 	default:
 		errs = newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion format: %v", t))
 	}
@@ -132,7 +132,7 @@ func check(tc TestCase, stepNumber int, assertion Assertion, r interface{}) (*Fa
 
 // checkString evaluate a complex assertion containing logical operators
 // it recursively calls checkAssertion for each operand
-func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r interface{}) (*Failure, *Failure) {
+func (v *Venom) checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r interface{}) (*Failure, *Failure) {
 	// Extract logical operator
 	if len(branch) != 1 {
 		return newFailure(tc, stepNumber, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch))), nil
@@ -161,7 +161,7 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 	assertionsCount := len(operands)
 	assertionsSuccess := 0
 	for _, assertion := range operands {
-		errs, fails := check(tc, stepNumber, assertion, r)
+		errs, fails := v.check(tc, stepNumber, assertion, r)
 		if errs != nil {
 			errsBuf = append(errsBuf, *errs)
 		}
@@ -207,8 +207,8 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 }
 
 // checkString evaluate a single string assertion
-func checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
-	assert, err := parseAssertions(context.Background(), assertion, r)
+func (v *Venom) checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
+	assert, err := v.parseAssertions(context.Background(), assertion, r)
 	if err != nil {
 		return nil, newFailure(tc, stepNumber, assertion, err)
 	}
@@ -355,11 +355,11 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string,
 }
 
 //This evaluates a string of assertions with a given vars scope, and returns a slice of failures (i.e. empty slice = all pass)
-func testConditionalStatement(ctx context.Context, tc *TestCase, assertions []string, vars H, text string) ([]string, error) {
+func (v *Venom) testConditionalStatement(ctx context.Context, tc *TestCase, assertions []string, vars H, text string) ([]string, error) {
 	var failures []string
 	for _, assertion := range assertions {
 		Debug(ctx, "evaluating %s", assertion)
-		assert, err := parseAssertions(ctx, assertion, vars)
+		assert, err := v.parseAssertions(ctx, assertion, vars)
 		if err != nil {
 			Error(ctx, "unable to parse assertion: %v", err)
 			tc.AppendError(err)

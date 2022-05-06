@@ -10,7 +10,7 @@ require (
 	github.com/confluentinc/bincover v0.2.0
 	github.com/eclipse/paho.mqtt.golang v1.3.4
 	github.com/fatih/color v1.13.0
-	github.com/fsamin/go-dump v1.4.1
+	github.com/fsamin/go-dump v1.5.0
 	github.com/fullstorydev/grpcurl v1.7.0
 	github.com/garyburd/redigo v1.6.2
 	github.com/ghodss/yaml v1.0.0

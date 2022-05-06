@@ -59,6 +59,12 @@ type Venom struct {
 	OutputDir     string
 	StopOnFailure bool
 	Verbose       int
+
+	Options struct {
+		DisableNewArraySyntax          bool
+		DisablePreserveCaseOnAssertion bool
+		EnableExtraField               bool
+	}
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()
@@ -122,7 +128,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	}
 
 	info, _ := ts.StringSliceValue("info")
-	vars, err := DumpStringPreserveCase(h)
+	vars, err := v.DumpString(h)
 	if err != nil {
 		return ctx, nil, err
 	}
@@ -210,7 +216,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 		// varsFromInput contains the default vars from the executor
 		var varsFromInputMap map[string]string
 		if len(varsFromInput) > 0 {
-			varsFromInputMap, err = DumpStringPreserveCase(varsFromInput)
+			varsFromInputMap, err = v.DumpString(varsFromInput)
 			if err != nil {
 				return errors.Wrapf(err, "unable to parse variables")
 			}
