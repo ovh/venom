@@ -438,7 +438,7 @@ func ShouldBeLessThanOrEqualTo(actual interface{}, expected ...interface{}) erro
 				return err
 			}
 
-			if actualS < expectedS {
+			if actualS <= expectedS {
 				return nil
 			}
 
