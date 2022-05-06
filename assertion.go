@@ -213,10 +213,6 @@ func checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (
 		return nil, newFailure(tc, stepNumber, assertion, err)
 	}
 
-	if assert.Actual == nil {
-		return nil, newFailure(tc, stepNumber, assertion, errors.New("actual value is null"))
-	}
-
 	if err := assert.Func(assert.Actual, assert.Args...); err != nil {
 		failure := newFailure(tc, stepNumber, assertion, err)
 		failure.AssertionRequired = assert.Required
