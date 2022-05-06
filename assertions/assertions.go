@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
@@ -261,24 +262,33 @@ func ShouldBeGreaterThan(actual interface{}, expected ...interface{}) error {
 		return newAssertionError(needSameType)
 	}
 
-	actualF, err := cast.ToFloat64E(actual)
-	if err != nil {
-		actualS, err := cast.ToStringE(actual)
+	var actualF float64
+	var err error
+	switch x := actual.(type) {
+	case json.Number:
+		actualF, err = x.Float64()
 		if err != nil {
 			return err
 		}
-
-		expectedS, err := cast.ToStringE(expected[0])
+	default:
+		actualF, err = cast.ToFloat64E(actual)
 		if err != nil {
-			return err
+			actualS, err := cast.ToStringE(actual)
+			if err != nil {
+				return err
+			}
+
+			expectedS, err := cast.ToStringE(expected[0])
+			if err != nil {
+				return err
+			}
+
+			if actualS > expectedS {
+				return nil
+			}
+
+			return fmt.Errorf("expected: %v greater than %v but it wasn't", actual, expected[0])
 		}
-
-		if actualS > expectedS {
-			return nil
-		}
-
-		return fmt.Errorf("expected: %v greater than %v but it wasn't", actual, expected[0])
-
 	}
 
 	expectedF, err := cast.ToFloat64E(expected[0])
@@ -303,24 +313,34 @@ func ShouldBeGreaterThanOrEqualTo(actual interface{}, expected ...interface{}) e
 		return newAssertionError(needSameType)
 	}
 
-	actualF, err := cast.ToFloat64E(actual)
-	if err != nil {
-		actualS, err := cast.ToStringE(actual)
+	var actualF float64
+	var err error
+	switch x := actual.(type) {
+	case json.Number:
+		actualF, err = x.Float64()
 		if err != nil {
 			return err
 		}
-
-		expectedS, err := cast.ToStringE(expected[0])
+	default:
+		actualF, err = cast.ToFloat64E(actual)
 		if err != nil {
-			return err
+			actualS, err := cast.ToStringE(actual)
+			if err != nil {
+				return err
+			}
+
+			expectedS, err := cast.ToStringE(expected[0])
+			if err != nil {
+				return err
+			}
+
+			if actualS >= expectedS {
+				return nil
+			}
+
+			return fmt.Errorf("expected: %v greater than or equals to %v but it wasn't", actual, expected[0])
+
 		}
-
-		if actualS >= expectedS {
-			return nil
-		}
-
-		return fmt.Errorf("expected: %v greater than or equals to %v but it wasn't", actual, expected[0])
-
 	}
 
 	expectedF, err := cast.ToFloat64E(expected[0])
@@ -345,23 +365,34 @@ func ShouldBeLessThan(actual interface{}, expected ...interface{}) error {
 		return newAssertionError(needSameType)
 	}
 
-	actualF, err := cast.ToFloat64E(actual)
-	if err != nil {
-		actualS, err := cast.ToStringE(actual)
+	var actualF float64
+	var err error
+	switch x := actual.(type) {
+	case json.Number:
+		actualF, err = x.Float64()
 		if err != nil {
 			return err
 		}
-
-		expectedS, err := cast.ToStringE(expected[0])
+	default:
+		actualF, err = cast.ToFloat64E(actual)
 		if err != nil {
-			return err
-		}
+			actualS, err := cast.ToStringE(actual)
+			if err != nil {
+				return err
+			}
 
-		if actualS < expectedS {
-			return nil
-		}
+			expectedS, err := cast.ToStringE(expected[0])
+			if err != nil {
+				return err
+			}
 
-		return fmt.Errorf("expected: %v less than %v but it wasn't", actual, expected[0])
+			if actualS < expectedS {
+				return nil
+			}
+
+			return fmt.Errorf("expected: %v less than %v but it wasn't", actual, expected[0])
+
+		}
 	}
 
 	expectedF, err := cast.ToFloat64E(expected[0])
@@ -386,23 +417,33 @@ func ShouldBeLessThanOrEqualTo(actual interface{}, expected ...interface{}) erro
 		return newAssertionError(needSameType)
 	}
 
-	actualF, err := cast.ToFloat64E(actual)
-	if err != nil {
-		actualS, err := cast.ToStringE(actual)
+	var actualF float64
+	var err error
+	switch x := actual.(type) {
+	case json.Number:
+		actualF, err = x.Float64()
 		if err != nil {
 			return err
 		}
-
-		expectedS, err := cast.ToStringE(expected[0])
+	default:
+		actualF, err = cast.ToFloat64E(actual)
 		if err != nil {
-			return err
-		}
+			actualS, err := cast.ToStringE(actual)
+			if err != nil {
+				return err
+			}
 
-		if actualS <= expectedS {
-			return nil
-		}
+			expectedS, err := cast.ToStringE(expected[0])
+			if err != nil {
+				return err
+			}
 
-		return fmt.Errorf("expected: %v less than or equals to %v but it wasn't", actual, expected[0])
+			if actualS <= expectedS {
+				return nil
+			}
+
+			return fmt.Errorf("expected: %v less than or equals to %v but it wasn't", actual, expected[0])
+		}
 	}
 
 	expectedF, err := cast.ToFloat64E(expected[0])
