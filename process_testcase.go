@@ -432,9 +432,12 @@ func processVariableAssigments(ctx context.Context, tcName string, tcVars H, raw
 		if !has {
 			varValue, has = tcVars[tcName+"."+assigment.From]
 			if !has {
-				err := fmt.Errorf("%s reference not found in %s", assigment.From, strings.Join(tcVarsKeys, "\n"))
-				Info(ctx, "%v", err)
-				return nil, true, err
+				if assigment.Default == "" {
+					err := fmt.Errorf("%s reference not found in %s", assigment.From, strings.Join(tcVarsKeys, "\n"))
+					Info(ctx, "%v", err)
+					return nil, true, err
+				}
+				varValue = assigment.Default
 			}
 		}
 		if assigment.Regex == "" {
