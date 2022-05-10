@@ -350,11 +350,12 @@ func parseContentType(contentType string) string {
 
 // given https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 func isBodySupported(resp *http.Response) bool {
-	contentType := parseContentType(resp.Header.Get("Content-Type"))
+	contentType := resp.Header.Get("Content-Type")
 	return isContentTypeSupported(contentType)
 }
 
 func isContentTypeSupported(contentType string) bool {
+	contentType = parseContentType(contentType)
 	switch {
 	case strings.HasSuffix(contentType, "+json"):
 		return true
