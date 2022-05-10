@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -339,9 +340,17 @@ func writeFile(part io.Writer, filename string) error {
 	return err
 }
 
+func parseContentType(contentType string) string {
+	parsed, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return contentType
+	}
+	return parsed
+}
+
 // given https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
 func isBodySupported(resp *http.Response) bool {
-	contentType := resp.Header.Get("Content-Type")
+	contentType := parseContentType(resp.Header.Get("Content-Type"))
 	return isContentTypeSupported(contentType)
 }
 
@@ -366,7 +375,7 @@ func isContentTypeSupported(contentType string) bool {
 }
 
 func isBodyJSONSupported(resp *http.Response) bool {
-	contentType := resp.Header.Get("Content-Type")
+	contentType := parseContentType(resp.Header.Get("Content-Type"))
 	return strings.Contains(contentType, "application/json") || strings.HasSuffix(contentType, "+json")
 }
 
