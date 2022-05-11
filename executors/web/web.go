@@ -62,32 +62,38 @@ func (Executor) ZeroValueResult() interface{} {
 }
 
 func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error) {
+	venom.Info(ctx, "Setup")
 	var webCtx WebContext
-	var driver = venom.StringVarFromCtx(ctx, "web.driver") // Possible values: chrome, phantomjs, gecko
+	var driver = venom.StringVarFromCtx(ctx, "web.driver") // Possible values: chrome, gecko
 	var args = venom.StringSliceVarFromCtx(ctx, "web.args")
-	//var prefs = venom.StringMapInterfaceVarFromCtx(ctx, "web.prefs")
+	var prefs = venom.StringMapInterfaceVarFromCtx(ctx, "web.prefs")
 
+	// Instanciate web driver (chrome by default)
 	switch driver {
 	case "gecko":
-		webCtx.wd = venomWeb.GeckoDriver(args)
+		webCtx.wd = venomWeb.GeckoDriver(args, prefs)
 	default:
-		webCtx.wd = venomWeb.ChromeDriver(args)
+		webCtx.wd = venomWeb.ChromeDriver(args, prefs)
 	}
 
-	var timeout = venom.IntVarFromCtx(ctx, "web.timeout")
-	if timeout > 0 {
-		//webCtx.wd.t = time.Duration(timeout) * time.Second
-	} else {
-		//webCtx.wd.Timeout = 180 * time.Second // default value
+	// Configure web driver
+	if timeout := venom.IntVarFromCtx(ctx, "web.timeout"); timeout > 0 {
+		webCtx.wd.Timeout = time.Duration(timeout) * time.Second
 	}
-
-	webCtx.wd.Proxy = venom.StringVarFromCtx(ctx, "web.proxy")
-	webCtx.wd.Headless = venom.BoolVarFromCtx(ctx, "web.headless")
-	webCtx.wd.Detach = venom.BoolVarFromCtx(ctx, "web.detach")
-	webCtx.wd.LogLevel = venom.StringVarFromCtx(ctx, "web.logLevel")
-
-	if err := webCtx.wd.Start(); err != nil {
-		return ctx, errors.Wrapf(err, "Unable to start the web driver")
+	if debug := venom.BoolVarFromCtx(ctx, "web.debug"); debug {
+		webCtx.wd.LogLevel = common.DEBUG
+	}
+	if proxy := venom.StringVarFromCtx(ctx, "web.proxy"); proxy != "" {
+		webCtx.wd.Proxy = proxy
+	}
+	if headless := venom.BoolVarFromCtx(ctx, "web.headless"); headless {
+		webCtx.wd.Headless = headless
+	}
+	if detach := venom.BoolVarFromCtx(ctx, "web.detach"); detach {
+		webCtx.wd.Detach = detach
+	}
+	if logLevel := venom.StringVarFromCtx(ctx, "web.logLevel"); logLevel != "" {
+		webCtx.wd.LogLevel = logLevel
 	}
 
 	// Init session
@@ -111,7 +117,7 @@ func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error
 	// Resize Page
 	if resizePage {
 		if err := webCtx.session.Size(width, height); err != nil {
-			return ctx, fmt.Errorf("Unable to resize the page: %s", err)
+			return ctx, fmt.Errorf("unable resize page: %s", err)
 		}
 	}
 
@@ -127,6 +133,7 @@ func getWebCtx(ctx context.Context) *WebContext {
 }
 
 func (Executor) TearDown(ctx context.Context) error {
+	venom.Info(ctx, "TearDown")
 	return getWebCtx(ctx).wd.Stop()
 }
 
@@ -163,26 +170,24 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	// Get page title (Check the absence of popup before the page title collect to avoid error)
-	/*
-		if _, err := webCtx.Page.PopupText(); err != nil {
-			title, err := webCtx.session.GetTitle()
-			if err != nil {
-				return nil, err
-			}
-			result.Title = title
+	result.Title = ""
+	if _, err := webCtx.session.GetAlertText(); err != nil {
+		title, err := webCtx.session.GetTitle()
+		if err != nil {
+			return nil, err
 		}
-	*/
+		result.Title = title
+	}
 
 	// Get page url (Check the absence of popup before the page url collect to avoid error)
-	/*
-		if _, err := webCtx.Page.PopupText(); err != nil {
-			url, errU := webCtx.session.URL()
-			if errU != nil {
-				return nil, fmt.Errorf("Cannot get URL: %s", errU)
-			}
-			result.URL = url
+	result.URL = ""
+	if _, err := webCtx.session.GetAlertText(); err != nil {
+		url, err := webCtx.session.GetURL()
+		if err != nil {
+			return nil, fmt.Errorf("cannot get url: %s", err)
 		}
-	*/
+		result.URL = url
+	}
 
 	elapsed := time.Since(start)
 	result.TimeSeconds = elapsed.Seconds()
@@ -192,20 +197,30 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 func (e Executor) runAction(ctx context.Context, session venomWeb.Session) (*Result, error) {
 	r := &Result{}
+
+	// Click
 	if e.Action.Click != nil {
-		elt, err := findOne(session, e.Action.Click.Find)
+
+		// Find element
+		elt, err := findOne(ctx, session, e.Action.Click.Find, e.Action.Click.SyncTimeout)
 		if err != nil {
 			return nil, err
 		}
+
+		// Click on element
 		if err := elt.Click(); err != nil {
 			return nil, err
 		}
+
+		// Wait
 		if e.Action.Click.Wait != 0 {
 			time.Sleep(time.Duration(e.Action.Click.Wait) * time.Second)
 		}
+
+		// Fill
 	} else if e.Action.Fill != nil {
 		for _, f := range e.Action.Fill {
-			elt, err := findOne(session, f.Find)
+			elt, err := findOne(ctx, session, f.Find, f.SyncTimeout)
 			if err != nil {
 				return nil, err
 			}
@@ -218,11 +233,11 @@ func (e Executor) runAction(ctx context.Context, session venomWeb.Session) (*Res
 				}
 			}
 		}
-	} else if e.Action.Find != "" {
-		elts, err := find(session, e.Action.Find, r)
+	} else if e.Action.Find != nil {
+		elts, err := find(ctx, session, e.Action.Find, r)
 		if err != nil {
 			return nil, err
-		} else if elts != nil && len(elts) > 0 {
+		} else if len(elts) > 0 {
 			if text, err := elts[0].GetElementText(); err == nil {
 				r.Text = text
 			}
@@ -230,36 +245,37 @@ func (e Executor) runAction(ctx context.Context, session venomWeb.Session) (*Res
 				r.Value = value
 			}
 		}
+
+		// Navigate
 	} else if e.Action.Navigate != nil {
+		if e.Action.Navigate.Reset {
+			if err := session.Reset(); err != nil {
+				return nil, err
+			}
+		}
 		if err := session.Navigate(e.Action.Navigate.URL); err != nil {
 			return nil, err
 		}
-		/*
-			if e.Action.Navigate.Reset {
-				if err := session.Reset(); err != nil {
-					return nil, err
-				}
-				if err := session.Navigate(e.Action.Navigate.URL); err != nil {
-					return nil, err
-				}
-			}
-		*/
+
+		// Wait
 	} else if e.Action.Wait != 0 {
 		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
+
+		// Confirm popup
 	} else if e.Action.ConfirmPopup {
-		/*
-			if err := page.ConfirmPopup(); err != nil {
-				return nil, err
-			}
-		*/
+		if err := session.AcceptAlert(); err != nil {
+			return nil, err
+		}
+
+		// Cancel popup
 	} else if e.Action.CancelPopup {
-		/*
-			if err := session.CancelPopup(); err != nil {
-				return nil, err
-			}
-		*/
+		if err := session.DismissAlert(); err != nil {
+			return nil, err
+		}
+
+		// Select
 	} else if e.Action.Select != nil {
-		elt, err := findOne(session, e.Action.Select.Find)
+		elt, err := findOne(ctx, session, e.Action.Select.Find, e.Action.Select.SyncTimeout)
 		if err != nil {
 			return nil, err
 		}
@@ -269,8 +285,10 @@ func (e Executor) runAction(ctx context.Context, session venomWeb.Session) (*Res
 		if e.Action.Select.Wait != 0 {
 			time.Sleep(time.Duration(e.Action.Select.Wait) * time.Second)
 		}
+
+		// Upload file
 	} else if e.Action.UploadFile != nil {
-		elt, err := findOne(session, e.Action.UploadFile.Find)
+		elt, err := findOne(ctx, session, e.Action.UploadFile.Find, e.Action.UploadFile.SyncTimeout)
 		if err != nil {
 			return nil, err
 		}
@@ -282,22 +300,31 @@ func (e Executor) runAction(ctx context.Context, session venomWeb.Session) (*Res
 		if e.Action.UploadFile.Wait != 0 {
 			time.Sleep(time.Duration(e.Action.UploadFile.Wait) * time.Second)
 		}
+
+		// Select frame
 	} else if e.Action.SelectFrame != nil {
-		elt, err := findOne(session, e.Action.SelectFrame.Find)
+		elt, err := findOne(ctx, session, e.Action.SelectFrame.Find, e.Action.SelectFrame.SyncTimeout)
 		if err != nil {
 			return nil, err
 		}
-		return nil, session.SwitchToFrame(elt)
+		err = session.SwitchToFrame(elt)
+		if err != nil {
+			return nil, err
+		}
+
+		// Select root frame
 	} else if e.Action.SelectRootFrame {
 		if err := session.SwitchToParentFrame(); err != nil {
 			return nil, err
 		}
+
+		// Next window
 	} else if e.Action.NextWindow {
-		/*
-			if err := session.NextWindow(); err != nil {
-				return nil, err
-			}
-		*/
+		if err := session.NextWindow(); err != nil {
+			return nil, err
+		}
+
+		// Back, Forward, Refresh
 	} else if e.Action.HistoryAction != "" {
 		switch strings.ToLower(e.Action.HistoryAction) {
 		case "back":
@@ -313,24 +340,87 @@ func (e Executor) runAction(ctx context.Context, session venomWeb.Session) (*Res
 				return nil, err
 			}
 		default:
-			return nil, fmt.Errorf("History action '%s' is invalid", e.Action.HistoryAction)
+			return nil, fmt.Errorf("history action '%s' is invalid", e.Action.HistoryAction)
+		}
+
+		// Execute
+	} else if e.Action.Execute != nil {
+		args := []string{}
+		if e.Action.Execute.Args != nil && len(e.Action.Execute.Args) > 0 {
+			args = e.Action.Execute.Args
+		}
+		err := session.ExecuteScript(e.Action.Execute.Command, args)
+		if err != nil {
+			return nil, err
 		}
 	}
+
 	return r, nil
 }
 
-func find(session venomWeb.Session, search string, r *Result) ([]venomWeb.Element, error) {
-	elts, err := session.FindElements(search, common.CSS_SELECTOR)
+func find(ctx context.Context, session venomWeb.Session, findElement interface{}, r *Result) ([]venomWeb.Element, error) {
+
+	// Identify selector and locator strategy
+	selector, locator, err := readFindElement(ctx, findElement)
+	if err != nil {
+		return nil, err
+	}
+
+	// Search elements
+	elts, err := session.FindElements(selector, locator)
 	if err != nil {
 		return nil, err
 	}
 	r.Find = len(elts)
+
+	// Update result
+	if r.Find == 1 {
+		r.Text, _ = elts[0].GetElementText()
+		r.Value, _ = elts[0].GetElementProperty("value")
+	}
+
 	return elts, nil
 }
 
 // Find element from a selector
-func findOne(session venomWeb.Session, search string) (venomWeb.Element, error) {
-	return session.FindElement(search, common.CSS_SELECTOR)
+func findOne(ctx context.Context, session venomWeb.Session, findElement interface{}, syncTimeout int64) (venomWeb.Element, error) {
+
+	// Identify selector and locator strategy
+	selector, locator, err := readFindElement(ctx, findElement)
+	if err != nil {
+		return venomWeb.Element{}, err
+	}
+
+	// Synchronize element
+	if syncTimeout > 0 {
+		if err := session.SyncElement(selector, locator, syncTimeout*1000); err != nil {
+			return venomWeb.Element{}, err
+		}
+	}
+
+	// Find element
+	return session.FindElement(selector, locator)
+}
+
+// Identify selector and locator from a find element
+func readFindElement(ctx context.Context, findElement interface{}) (string, string, error) {
+	selector := ""
+	locator := common.CSS_SELECTOR
+	if find, ok := findElement.(string); ok {
+		venom.Warning(ctx, "web - findElement : this find element syntax is obsolete and will be not supported in next version")
+		selector = find
+	} else if find, ok := findElement.(map[string]interface{}); ok {
+		selector = find["selector"].(string)
+		if find["locator"] == "XPATH" {
+			locator = common.XPATH_SELECTOR
+		} else if find["locator"] != "CSS" {
+			return "", "", fmt.Errorf("invalid find element locator '%s' (must be CSS or XPATH)", find["locator"])
+		}
+	} else {
+		return "", "", fmt.Errorf("invalid find element structure %v\n (must be a string or a element with selector and locator attribute)", findElement)
+	}
+
+	return selector, locator, nil
 }
 
 // generateErrorHTMLFile generates an HTML file in error case to identify clearly the error

@@ -62,7 +62,7 @@ require (
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
-	github.com/kevinramage/venomWeb v0.0.0-20220406201155-88f7528ae3de // indirect
+	github.com/kevinramage/venomWeb v0.0.0-20220511170148-10f8568779d9 // indirect
 	github.com/klauspost/compress v1.11.0 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
