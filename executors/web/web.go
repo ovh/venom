@@ -407,7 +407,7 @@ func readFindElement(ctx context.Context, findElement interface{}) (string, stri
 	selector := ""
 	locator := common.CSS_SELECTOR
 	if find, ok := findElement.(string); ok {
-		venom.Warning(ctx, "web - findElement : this find element syntax is obsolete and will be not supported in next version")
+		venom.Warning(ctx, "web - findElement : this find element syntax deprecated and will be not supported in next version")
 		selector = find
 	} else if find, ok := findElement.(map[string]interface{}); ok {
 		selector = find["selector"].(string)
