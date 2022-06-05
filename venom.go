@@ -166,9 +166,8 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []string, err error) {
 	var libpaths []string
 	if v.LibDir != "" {
-		for _, p := range strings.Split(v.LibDir, string(os.PathListSeparator)) {
-			libpaths = append(libpaths, p)
-		}
+		p := strings.Split(v.LibDir, string(os.PathListSeparator))
+		libpaths = append(libpaths, p...)
 	}
 	libpaths = append(libpaths, path.Join(vars["venom.testsuite.workdir"], "lib"))
 
