@@ -32,13 +32,14 @@ type ContextKey string
 // New instanciates a new venom on venom run cmd
 func New() *Venom {
 	v := &Venom{
-		LogOutput:        os.Stdout,
-		PrintFunc:        fmt.Printf,
-		executorsBuiltin: map[string]Executor{},
-		executorsPlugin:  map[string]Executor{},
-		executorsUser:    map[string]Executor{},
-		variables:        map[string]interface{}{},
-		OutputFormat:     "xml",
+		LogOutput:         os.Stdout,
+		PrintFunc:         fmt.Printf,
+		executorsBuiltin:  map[string]Executor{},
+		executorsPlugin:   map[string]Executor{},
+		executorsUser:     map[string]Executor{},
+		executorFileCache: map[string][]byte{},
+		variables:         map[string]interface{}{},
+		OutputFormat:      "xml",
 	}
 	return v
 }
@@ -46,10 +47,11 @@ func New() *Venom {
 type Venom struct {
 	LogOutput io.Writer
 
-	PrintFunc        func(format string, a ...interface{}) (n int, err error)
-	executorsBuiltin map[string]Executor
-	executorsPlugin  map[string]Executor
-	executorsUser    map[string]Executor
+	PrintFunc         func(format string, a ...interface{}) (n int, err error)
+	executorsBuiltin  map[string]Executor
+	executorsPlugin   map[string]Executor
+	executorsUser     map[string]Executor
+	executorFileCache map[string][]byte
 
 	testsuites []TestSuite
 	variables  H
@@ -197,9 +199,13 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 
 	for _, f := range executorsPath {
 		log.Info("Reading ", f)
-		btes, err := os.ReadFile(f)
-		if err != nil {
-			return errors.Wrapf(err, "unable to read file %q", f)
+		btes, ok := v.executorFileCache[f]
+		if !ok {
+			btes, err = os.ReadFile(f)
+			if err != nil {
+				return errors.Wrapf(err, "unable to read file %q", f)
+			}
+			v.executorFileCache[f] = btes
 		}
 
 		varsFromInput, err := getUserExecutorInputYML(ctx, btes)
