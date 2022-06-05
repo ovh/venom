@@ -181,6 +181,9 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 			}
 			return nil
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	sort.Strings(filePaths)
