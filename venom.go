@@ -144,7 +144,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 		return ctx, newExecutorRunner(ex, name, "builtin", retry, retryIf, delay, timeout, info), nil
 	}
 
-	if err := v.registerUserExecutors(ctx, name, ts, vars); err != nil {
+	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
 	}
 
@@ -193,7 +193,7 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 	return filePaths, nil
 }
 
-func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestStep, vars map[string]string) error {
+func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
 	executorsPath, err := v.getUserExecutorFilesPath(vars)
 	if err != nil {
 		return err
