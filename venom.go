@@ -32,13 +32,14 @@ type ContextKey string
 // New instanciates a new venom on venom run cmd
 func New() *Venom {
 	v := &Venom{
-		LogOutput:        os.Stdout,
-		PrintFunc:        fmt.Printf,
-		executorsBuiltin: map[string]Executor{},
-		executorsPlugin:  map[string]Executor{},
-		executorsUser:    map[string]Executor{},
-		variables:        map[string]interface{}{},
-		OutputFormat:     "xml",
+		LogOutput:         os.Stdout,
+		PrintFunc:         fmt.Printf,
+		executorsBuiltin:  map[string]Executor{},
+		executorsPlugin:   map[string]Executor{},
+		executorsUser:     map[string]Executor{},
+		executorFileCache: map[string][]byte{},
+		variables:         map[string]interface{}{},
+		OutputFormat:      "xml",
 	}
 	return v
 }
@@ -46,10 +47,11 @@ func New() *Venom {
 type Venom struct {
 	LogOutput io.Writer
 
-	PrintFunc        func(format string, a ...interface{}) (n int, err error)
-	executorsBuiltin map[string]Executor
-	executorsPlugin  map[string]Executor
-	executorsUser    map[string]Executor
+	PrintFunc         func(format string, a ...interface{}) (n int, err error)
+	executorsBuiltin  map[string]Executor
+	executorsPlugin   map[string]Executor
+	executorsUser     map[string]Executor
+	executorFileCache map[string][]byte
 
 	testsuites []TestSuite
 	variables  H
@@ -142,7 +144,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 		return ctx, newExecutorRunner(ex, name, "builtin", retry, retryIf, delay, timeout, info), nil
 	}
 
-	if err := v.registerUserExecutors(ctx, name, ts, vars); err != nil {
+	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
 	}
 
@@ -164,9 +166,8 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []string, err error) {
 	var libpaths []string
 	if v.LibDir != "" {
-		for _, p := range strings.Split(v.LibDir, string(os.PathListSeparator)) {
-			libpaths = append(libpaths, p)
-		}
+		p := strings.Split(v.LibDir, string(os.PathListSeparator))
+		libpaths = append(libpaths, p...)
 	}
 	libpaths = append(libpaths, path.Join(vars["venom.testsuite.workdir"], "lib"))
 
@@ -180,6 +181,9 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 			}
 			return nil
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	sort.Strings(filePaths)
@@ -189,7 +193,7 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 	return filePaths, nil
 }
 
-func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestStep, vars map[string]string) error {
+func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
 	executorsPath, err := v.getUserExecutorFilesPath(vars)
 	if err != nil {
 		return err
@@ -197,9 +201,13 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, ts TestS
 
 	for _, f := range executorsPath {
 		log.Info("Reading ", f)
-		btes, err := os.ReadFile(f)
-		if err != nil {
-			return errors.Wrapf(err, "unable to read file %q", f)
+		btes, ok := v.executorFileCache[f]
+		if !ok {
+			btes, err = os.ReadFile(f)
+			if err != nil {
+				return errors.Wrapf(err, "unable to read file %q", f)
+			}
+			v.executorFileCache[f] = btes
 		}
 
 		varsFromInput, err := getUserExecutorInputYML(ctx, btes)
