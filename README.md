@@ -486,7 +486,7 @@ Available helpers and some examples:
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
 After the first step execution, `venom` extracts a value using a regular expression `foo with a ([a-z]+) here` from the content of the `result.systemout` property returned by the `executor`.
-Then this variable can be reused in another test, with the name `testA.myvariable` with `testA` corresponding to the name of the testcase.
+Then this variable can be reused in another test, with the name `testA.myvariable` with `testA` corresponding to the name of the testcase. A default value could also be supplied if the variable can't be extracted from the output, which can commonly happen when parsing json output.
 
 ```yaml
 name: MyTestSuite
@@ -499,6 +499,7 @@ testcases:
       myvariable:
         from: result.systemout
         regex: foo with a ([a-z]+) here
+        default: "somevalue"
 
 - name: testB
   steps:

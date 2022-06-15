@@ -250,8 +250,9 @@ type AssignStep struct {
 }
 
 type Assignment struct {
-	From  string `json:"from" yaml:"from"`
-	Regex string `json:"regex" yaml:"regex"`
+	From    string      `json:"from" yaml:"from"`
+	Regex   string      `json:"regex" yaml:"regex"`
+	Default interface{} `json:"default" yaml:"default"`
 }
 
 // RemoveNotPrintableChar removes not printable chararacter from a string
