@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
@@ -146,10 +147,11 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	}
 
 	defer Info(ctx, "Ending testcase")
-	v.runTestSteps(ctx, tc)
+	v.runTestSteps(ctx, tc, nil)
 }
 
-func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
+func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepResult) {
+
 	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
 	if err != nil {
 		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
@@ -166,6 +168,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 
 	var knowExecutors = map[string]struct{}{}
 	var previousStepVars = H{}
+	fromUserExecutor := tsIn != nil
 
 	for stepNumber, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
@@ -181,8 +184,10 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 		}
 
 		for rangedIndex, rangedData := range ranged.Items {
+			tc.TestStepResults = append(tc.TestStepResults, TestStepResult{})
+			ts := &tc.TestStepResults[len(tc.TestStepResults)-1]
 			if ranged.Enabled {
-				Debug(ctx, "processing step %d", rangedIndex)
+				Debug(ctx, "processing range index: %d", rangedIndex)
 				stepVars.Add("index", rangedIndex)
 				stepVars.Add("key", rangedData.Key)
 				stepVars.Add("value", rangedData.Value)
@@ -225,7 +230,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				}
 			}
 
-			Info(ctx, "Step #%d content is: %q", stepNumber, content)
+			Info(ctx, "Step #%d-%d content is: %q", stepNumber, rangedIndex, content)
 			var step TestStep
 			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
 				tc.AppendError(err)
@@ -261,7 +266,10 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 				}
 			}
 
-			result := v.RunTestStep(ctx, e, tc, stepNumber, step)
+			printStepName := v.Verbose >= 2 && !fromUserExecutor
+			v.setTestStepName(ts, e, step, &ranged, &rangedData, printStepName)
+
+			result := v.RunTestStep(ctx, e, tc, ts, stepNumber, rangedIndex, step)
 			mapResult := GetExecutorResult(result)
 			previousStepVars.AddAll(H(mapResult))
 
@@ -269,17 +277,17 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 
 			var hasFailed bool
 			var isRequired bool
-			if len(tc.Failures) > 0 {
-				for _, f := range tc.Failures {
+			if len(ts.Failures) > 0 {
+				for _, f := range ts.Failures {
 					Warning(ctx, "%v", f)
 					isRequired = isRequired || f.AssertionRequired
 				}
 				hasFailed = true
 			}
 
-			if len(tc.Errors) > 0 {
+			if len(ts.Errors) > 0 {
 				Error(ctx, "Errors: ")
-				for _, e := range tc.Errors {
+				for _, e := range ts.Errors {
 					Error(ctx, "%v", e)
 				}
 				hasFailed = true
@@ -287,12 +295,15 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 
 			if hasFailed {
 				if isRequired {
-					failure := newFailure(*tc, stepNumber, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
-					tc.Failures = append(tc.Failures, *failure)
+					failure := newFailure(*tc, stepNumber, rangedIndex, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
+					ts.appendFailure(tc, *failure)
+					v.printTestStepResult(tc, ts, tsIn, stepNumber, true)
 					return
 				}
-				break
+				v.printTestStepResult(tc, ts, tsIn, stepNumber, false)
+				continue
 			}
+			v.printTestStepResult(tc, ts, tsIn, stepNumber, false)
 
 			allVars := tc.Vars.Clone()
 			allVars.AddAll(tc.computedVars.Clone())
@@ -306,6 +317,63 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase) {
 
 			tc.computedVars.AddAll(assign)
 			previousStepVars.AddAll(assign)
+		}
+	}
+}
+
+//Set test step name (defaults to executor name, excepted if it got a "name" attribute. in range, also print key)
+func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestStep, ranged *Range, rangedData *RangeData, print bool) {
+	name := e.Name()
+	if value, ok := step["name"]; ok {
+		switch value := value.(type) {
+		case string:
+			name = value
+		}
+	}
+	if ranged.Enabled {
+		name = fmt.Sprintf("%s (range=%s)", name, rangedData.Key)
+	}
+	ts.Name = name
+
+	if print {
+		v.Print(" \t\t• %s", ts.Name)
+	}
+}
+
+//Print a single step result (if verbosity is enabled)
+func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
+	if v.Verbose >= 2 {
+		fromUserExecutor := tsIn != nil
+		var red = color.New(color.FgRed).SprintFunc()
+		var green = color.New(color.FgGreen).SprintFunc()
+		var gray = color.New(color.Attribute(90)).SprintFunc()
+
+		//Within an user executor, we instead transfer errors to original test step which will print it for use
+		if fromUserExecutor {
+			tsIn.appendError(tc, ts.Errors...)
+			tsIn.appendFailure(tc, ts.Failures...)
+		} else { //Else print step status
+			if len(ts.Skipped) > 0 {
+				v.Println(" %s", gray("SKIPPED"))
+			} else if len(ts.Failures) > 0 || len(ts.Errors) > 0 {
+				v.Println(" %s", red("FAILURE"))
+				for _, f := range ts.Failures {
+					v.Println(" \t\t  %s", red(f))
+				}
+				for _, f := range ts.Errors {
+					v.Println(" \t\t  %s", red(f.Value))
+				}
+				if mustAssertionFailed {
+					skipped := len(tc.RawTestSteps) - stepNumber - 1
+					if skipped == 1 {
+						v.Println(" \t\t  %s", gray(fmt.Sprintf("%d other step was skipped", skipped)))
+					} else {
+						v.Println(" \t\t  %s", gray(fmt.Sprintf("%d other steps were skipped", skipped)))
+					}
+				}
+			} else {
+				v.Println(" %s", green("SUCCESS"))
+			}
 		}
 	}
 }

@@ -113,6 +113,7 @@ type TestCase struct {
 	Time            float64           `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
 	RawTestSteps    []json.RawMessage `xml:"-" json:"steps" yaml:"steps"`
 	testSteps       []TestStep
+	TestStepResults []TestStepResult
 	TestSuiteVars   H `xml:"-" json:"-" yaml:"-"`
 	Vars            H `xml:"-" json:"-" yaml:"vars"`
 	computedVars    H
@@ -121,6 +122,13 @@ type TestCase struct {
 	Skip            []string `xml:"-" json:"skip" yaml:"skip"`
 	IsExecutor      bool     `xml:"-" json:"-" yaml:"-"`
 	IsEvaluated     bool     `xml:"-" json:"-" yaml:"-"`
+}
+
+type TestStepResult struct {
+	Name     string    `xml:"name,attr" json:"name" yaml:"name"`
+	Skipped  []Skipped `xml:"skipped,omitempty" json:"skipped" yaml:"skipped,omitempty"`
+	Errors   []Failure `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
+	Failures []Failure `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
 }
 
 // TestStep represents a testStep
@@ -195,22 +203,24 @@ type Failure struct {
 	Message string `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
 }
 
-func newFailure(tc TestCase, stepNumber int, assertion string, err error) *Failure {
+func newFailure(tc TestCase, stepNumber int, rangedIndex int, assertion string, err error) *Failure {
 	var lineNumber = findLineNumber(tc.Classname, tc.originalName, stepNumber, assertion, -1)
 	var value string
 	if assertion != "" {
-		value = fmt.Sprintf(`Testcase %q, step #%d: Assertion %q failed. %s (%v:%d)`,
+		value = fmt.Sprintf(`Testcase %q, step #%d-%d: Assertion %q failed. %s (%v:%d)`,
 			tc.originalName,
 			stepNumber,
+			rangedIndex,
 			RemoveNotPrintableChar(assertion),
 			RemoveNotPrintableChar(err.Error()),
 			tc.Classname,
 			lineNumber,
 		)
 	} else {
-		value = fmt.Sprintf(`Testcase %q, step #%d: %s (%v:%d)`,
+		value = fmt.Sprintf(`Testcase %q, step #%d-%d: %s (%v:%d)`,
 			tc.originalName,
 			stepNumber,
+			rangedIndex,
 			RemoveNotPrintableChar(err.Error()),
 			tc.Classname,
 			lineNumber,

@@ -72,6 +72,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 	var green = color.New(color.FgGreen).SprintFunc()
 	var cyan = color.New(color.FgCyan).SprintFunc()
 	var gray = color.New(color.Attribute(90)).SprintFunc()
+	verboseReport := v.Verbose >= 2
 
 	v.Println(" • %s (%s)", ts.Name, ts.Package)
 
@@ -79,6 +80,9 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		tc := &ts.TestCases[i]
 		tc.IsEvaluated = true
 		v.Print(" \t• %s", tc.Name)
+		if verboseReport {
+			v.Print("\n")
+		}
 		tc.Classname = ts.Filename
 		var hasFailure bool
 		var hasSkipped = len(tc.Skipped) > 0
@@ -101,28 +105,35 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 			hasSkipped = true
 		}
 
-		if hasSkipped {
-			v.Println(" %s", gray("SKIPPED"))
-			continue
-		}
-
-		if hasFailure {
-			v.Println(" %s", red("FAILURE"))
+		// Verbose mode already reported tests status, so just print them when non-verbose
+		indent := ""
+		if verboseReport {
+			indent = "\t  "
 		} else {
-			v.Println(" %s", green("SUCCESS"))
+			if hasSkipped {
+				v.Println(" %s", gray("SKIPPED"))
+				continue
+			}
+
+			if hasFailure {
+				v.Println(" %s", red("FAILURE"))
+			} else {
+				v.Println(" %s", green("SUCCESS"))
+			}
 		}
 
 		for _, i := range tc.computedInfo {
-			v.Println("\t  %s %s", cyan("[info]"), cyan(i))
+			v.Println("\t  %s%s %s", indent, cyan("[info]"), cyan(i))
 		}
 
 		for _, i := range tc.computedVerbose {
-			v.PrintlnTrace(i)
+			v.PrintlnIndentedTrace(i, indent)
 		}
 
-		if hasFailure {
+		// Verbose mode already reported failures, so just print them when non-verbose
+		if !verboseReport && hasFailure {
 			for _, f := range tc.Failures {
-				v.Println("%s", red(f.Value))
+				v.Println("%s", red(f))
 			}
 			for _, f := range tc.Errors {
 				v.Println("%s", red(f.Value))

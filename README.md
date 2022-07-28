@@ -257,6 +257,8 @@ Flags and their equivalent with environment variables usage:
 - `-v` flag is equivalent to `VENOM_VERBOSE=1` environment variable
 - `-vv` flag is equivalent to `VENOM_VERBOSE=2` environment variable
 
+It is possible to set `NO_COLOR=1` environment variable to disable colors from output.
+
 ## Use a configuration file
 
 You can define the Venom settings using a configuration file `.venomrc`. This configuration file should be placed in the current directory or in the `home` directory.

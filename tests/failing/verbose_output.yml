@@ -1,0 +1,54 @@
+name: Test detailed output
+testcases:
+- name: Test single step 
+  steps:
+    - type: exec
+      script: echo foo
+      assertions:
+        - result.systemout ShouldEqual foo
+- name: Test named step 
+  steps:
+    - name: hello-world
+      type: exec
+      script: echo foo
+      assertions:
+        - result.systemout ShouldEqual foo
+- name: Test multi step
+  steps:
+    - name: step1
+      type: exec
+      script: echo foo
+      assertions:
+        - result.systemout ShouldEqual foo
+    - name: step2
+      type: exec
+      script: echo bar
+      assertions:
+        - result.systemout ShouldEqual foo
+        - result.systemout ShouldEqual baz
+- name: Test ranged steps
+  steps:
+    - type: exec
+      script: echo {{.value.v}}
+      assertions:
+        - result.systemout ShouldEqual foo
+      range:
+        - k: a
+          v: foo
+        - k: b
+          v: bar
+        - k: c
+          v: foo
+- name: Test must assertions
+  steps:
+    - name: must1
+      type: exec
+      script: echo foo
+      assertions:
+        - result.systemout MustEqual bar
+    - name: must2
+      type: exec
+      script: echo foo
+    - name: must3
+      type: exec
+      script: echo bar

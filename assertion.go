@@ -24,7 +24,7 @@ type assertionsApplied struct {
 	systemerr string
 }
 
-func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+func applyAssertions(r interface{}, tc TestCase, stepNumber int, rangedIndex int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -48,7 +48,7 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, executorResult)
+		errs, fails := check(tc, stepNumber, rangedIndex, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -116,26 +116,26 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 }
 
 // check selects the correct assertion function to call depending on typing provided by user
-func check(tc TestCase, stepNumber int, assertion Assertion, r interface{}) (*Failure, *Failure) {
+func check(tc TestCase, stepNumber int, rangedIndex int, assertion Assertion, r interface{}) (*Failure, *Failure) {
 	var errs *Failure
 	var fails *Failure
 	switch t := assertion.(type) {
 	case string:
-		errs, fails = checkString(tc, stepNumber, assertion.(string), r)
+		errs, fails = checkString(tc, stepNumber, rangedIndex, assertion.(string), r)
 	case map[string]interface{}:
-		errs, fails = checkBranch(tc, stepNumber, assertion.(map[string]interface{}), r)
+		errs, fails = checkBranch(tc, stepNumber, rangedIndex, assertion.(map[string]interface{}), r)
 	default:
-		errs = newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion format: %v", t))
+		errs = newFailure(tc, stepNumber, rangedIndex, "", fmt.Errorf("unsupported assertion format: %v", t))
 	}
 	return errs, fails
 }
 
 // checkString evaluate a complex assertion containing logical operators
 // it recursively calls checkAssertion for each operand
-func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r interface{}) (*Failure, *Failure) {
+func checkBranch(tc TestCase, stepNumber int, rangedIndex int, branch map[string]interface{}, r interface{}) (*Failure, *Failure) {
 	// Extract logical operator
 	if len(branch) != 1 {
-		return newFailure(tc, stepNumber, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch))), nil
+		return newFailure(tc, stepNumber, rangedIndex, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch))), nil
 	}
 	var operator string
 	for k := range branch {
@@ -148,7 +148,7 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 	case []interface{}:
 		operands = branch[operator].([]interface{})
 	default:
-		return newFailure(tc, stepNumber, "", fmt.Errorf("expected %s operands to be an []interface{}, got %v", operator, t)), nil
+		return newFailure(tc, stepNumber, rangedIndex, "", fmt.Errorf("expected %s operands to be an []interface{}, got %v", operator, t)), nil
 	}
 	if len(operands) == 0 {
 		return nil, nil
@@ -161,7 +161,7 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 	assertionsCount := len(operands)
 	assertionsSuccess := 0
 	for _, assertion := range operands {
-		errs, fails := check(tc, stepNumber, assertion, r)
+		errs, fails := check(tc, stepNumber, rangedIndex, assertion, r)
 		if errs != nil {
 			errsBuf = append(errsBuf, *errs)
 		}
@@ -198,23 +198,23 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 			err = fmt.Errorf("some assertions succeeded but expected none to suceed:\n%s\n", strings.Join(results, "\n"))
 		}
 	default:
-		return newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion operator %s", operator)), nil
+		return newFailure(tc, stepNumber, rangedIndex, "", fmt.Errorf("unsupported assertion operator %s", operator)), nil
 	}
 	if err != nil {
-		return nil, newFailure(tc, stepNumber, "", err)
+		return nil, newFailure(tc, stepNumber, rangedIndex, "", err)
 	}
 	return nil, nil
 }
 
 // checkString evaluate a single string assertion
-func checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
+func checkString(tc TestCase, stepNumber int, rangedIndex int, assertion string, r interface{}) (*Failure, *Failure) {
 	assert, err := parseAssertions(context.Background(), assertion, r)
 	if err != nil {
-		return nil, newFailure(tc, stepNumber, assertion, err)
+		return nil, newFailure(tc, stepNumber, rangedIndex, assertion, err)
 	}
 
 	if err := assert.Func(assert.Actual, assert.Args...); err != nil {
-		failure := newFailure(tc, stepNumber, assertion, err)
+		failure := newFailure(tc, stepNumber, rangedIndex, assertion, err)
 		failure.AssertionRequired = assert.Required
 		return nil, failure
 	}
