@@ -74,7 +74,11 @@ func (v *Venom) Println(format string, a ...interface{}) {
 }
 
 func (v *Venom) PrintlnTrace(s string) {
-	v.Println("\t  %s %s", trace("[trac]"), trace(s)) // nolint
+	v.PrintlnIndentedTrace(s, "")
+}
+
+func (v *Venom) PrintlnIndentedTrace(s string, indent string) {
+	v.Println("\t  %s%s %s", indent, trace("[trac]"), trace(s)) // nolint
 }
 
 func (v *Venom) AddVariables(variables map[string]interface{}) {

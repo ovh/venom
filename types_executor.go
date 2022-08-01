@@ -199,7 +199,7 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 	return result
 }
 
-func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, step TestStep) (interface{}, error) {
+func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, tsIn *TestStepResult, step TestStep) (interface{}, error) {
 	vrs := tcIn.TestSuiteVars.Clone()
 	uxIn := runner.GetExecutor().(UserExecutor)
 
@@ -239,7 +239,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	Debug(ctx, "running user executor %v", tc.Name)
 	Debug(ctx, "with vars: %v", vrs)
 
-	v.runTestSteps(ctx, tc)
+	v.runTestSteps(ctx, tc, tsIn)
 
 	computedVars, err := DumpString(tc.computedVars)
 	if err != nil {
