@@ -1,0 +1,4 @@
+tasks:
+  - init: make test && make build OS=linux ARCH=amd64
+    command: make integration-test
+    
