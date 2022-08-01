@@ -1,4 +1,4 @@
 tasks:
   - init: make test && make build OS=linux ARCH=amd64 && cp dist/venom.linux-amd64 tests/venom && cd tests && make start-test-stack && sleep 10 && make build-test-binary-docker
-    command: cd tests && make run-test
+    command: make run-test
     
