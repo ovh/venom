@@ -858,7 +858,7 @@ $ make build
 
 # Contributing
 
-<a href="https://gitpod.io/#<your-project-url>"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
+<a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
 
 Please read the [contributing guide](./CONTRIBUTING.md) to learn about how you can contribute to Venom ;-).
 There is no small contribution, don't hesitate!
