@@ -31,8 +31,7 @@ func (v *Venom) InitLogger() error {
 
 	if v.Verbose > 0 {
 		var err error
-		var logFile = filepath.Join(v.OutputDir, "venom.log")
-		_ = os.RemoveAll(logFile)
+		var logFile = filepath.Join(v.OutputDir, computeVenomLogFilename())
 		v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
 		if err != nil {
 			return errors.Wrapf(err, "unable to write log file")
@@ -54,6 +53,26 @@ func (v *Venom) InitLogger() error {
 	slug.Lowercase = false
 
 	return nil
+}
+
+func computeVenomLogFilename() string {
+	if !fileExists("venom.log") {
+		return "venom.log"
+	}
+	for i := 0; ; i++ {
+		filename := fmt.Sprintf("venom.%d.log", i)
+		if !fileExists(filename) {
+			return filename
+		}
+	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 // Parse parses tests suite to check context and variables
