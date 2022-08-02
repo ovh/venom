@@ -6,6 +6,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 [![GoDoc](https://godoc.org/github.com/ovh/venom?status.svg)](https://godoc.org/github.com/ovh/venom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
 [![Dicussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
+<a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
  
 # Table of content
 
@@ -856,6 +857,8 @@ $ make build
 ```
 
 # Contributing
+
+<a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
 
 Please read the [contributing guide](./CONTRIBUTING.md) to learn about how you can contribute to Venom ;-).
 There is no small contribution, don't hesitate!
