@@ -155,22 +155,8 @@ func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	Debug(ctx, "nb testsuites: %d", len(v.testsuites))
 	for i := range v.testsuites {
 		v.runTestSuite(ctx, &v.testsuites[i])
-		v.computeStats(testsResult, &v.testsuites[i])
+		computeStats(testsResult, &v.testsuites[i])
 	}
 
 	return testsResult, nil
-}
-
-func (v *Venom) computeStats(testsResult *Tests, ts *TestSuite) {
-	testsResult.TestSuites = append(testsResult.TestSuites, *ts)
-	if ts.Failures > 0 || ts.Errors > 0 {
-		testsResult.TotalKO++
-	} else {
-		testsResult.TotalOK++
-	}
-	if ts.Skipped > 0 {
-		testsResult.TotalSkipped++
-	}
-
-	testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
 }

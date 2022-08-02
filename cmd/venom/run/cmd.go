@@ -407,7 +407,7 @@ var Cmd = &cobra.Command{
 		}
 
 		elapsed := time.Since(start)
-		if err := v.OutputResult(*tests, elapsed); err != nil {
+		if err := v.OutputResult(elapsed); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err

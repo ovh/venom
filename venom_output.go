@@ -24,52 +24,70 @@ func init() {
 }
 
 // OutputResult output result to sdtout, files...
-func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
+func (v *Venom) OutputResult(elapsed time.Duration) error {
 	if v.OutputDir == "" {
 		return nil
 	}
-	for i := range tests.TestSuites {
+	for i := range v.testsuites {
 		tcFiltered := []TestCase{}
-		for _, tc := range tests.TestSuites[i].TestCases {
+		for _, tc := range v.testsuites[i].TestCases {
 			if tc.IsEvaluated {
 				tcFiltered = append(tcFiltered, tc)
 			}
 		}
-		tests.TestSuites[i].TestCases = tcFiltered
-	}
-	var data []byte
-	var err error
-	switch v.OutputFormat {
-	case "json":
-		data, err = json.MarshalIndent(tests, "", "  ")
-		if err != nil {
-			log.Fatalf("Error: cannot format output json (%s)", err)
-		}
-	case "tap":
-		data, err = outputTapFormat(tests)
-		if err != nil {
-			log.Fatalf("Error: cannot format output tap (%s)", err)
-		}
-	case "yml", "yaml":
-		data, err = yaml.Marshal(tests)
-		if err != nil {
-			log.Fatalf("Error: cannot format output yaml (%s)", err)
-		}
-	default:
-		dataxml, errm := xml.MarshalIndent(tests, "", "  ")
-		if errm != nil {
-			log.Fatalf("Error: cannot format xml output: %s", errm)
-		}
-		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
-	}
+		v.testsuites[i].TestCases = tcFiltered
 
-	filename := path.Join(v.OutputDir, "test_results."+v.OutputFormat)
-	if err := os.WriteFile(filename, data, 0600); err != nil {
-		return fmt.Errorf("Error while creating file %s: %v", filename, err)
+		testsResult := &Tests{}
+		computeStats(testsResult, &v.testsuites[i])
+
+		var data []byte
+		var err error
+		switch v.OutputFormat {
+		case "json":
+			data, err = json.MarshalIndent(testsResult, "", "  ")
+			if err != nil {
+				log.Fatalf("Error: cannot format output json (%s)", err)
+			}
+		case "tap":
+			data, err = outputTapFormat(*testsResult)
+			if err != nil {
+				log.Fatalf("Error: cannot format output tap (%s)", err)
+			}
+		case "yml", "yaml":
+			data, err = yaml.Marshal(testsResult)
+			if err != nil {
+				log.Fatalf("Error: cannot format output yaml (%s)", err)
+			}
+		default:
+			dataxml, errm := xml.MarshalIndent(testsResult, "", "  ")
+			if errm != nil {
+				log.Fatalf("Error: cannot format xml output: %s", errm)
+			}
+			data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
+		}
+
+		filename := path.Join(v.OutputDir, "test_results."+v.testsuites[i].Filename+"."+v.OutputFormat)
+		if err := os.WriteFile(filename, data, 0600); err != nil {
+			return fmt.Errorf("Error while creating file %s: %v", filename, err)
+		}
+		v.PrintFunc("Writing file %s\n", filename)
 	}
-	v.PrintFunc("Writing file %s\n", filename)
 
 	return nil
+}
+
+func computeStats(testsResult *Tests, ts *TestSuite) {
+	testsResult.TestSuites = append(testsResult.TestSuites, *ts)
+	if ts.Failures > 0 || ts.Errors > 0 {
+		testsResult.TotalKO++
+	} else {
+		testsResult.TotalOK++
+	}
+	if ts.Skipped > 0 {
+		testsResult.TotalSkipped++
+	}
+
+	testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
 }
 
 func outputTapFormat(tests Tests) ([]byte, error) {
