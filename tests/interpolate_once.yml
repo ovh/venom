@@ -14,4 +14,4 @@ testcases:
     script: "echo myvar {{.randomvar}}"
     info: "{{.result.systemout}}"
     assertions:
-    - "{{.result.systemout}} ShouldContainSubstring {{.myvar_first.result.systemout}}"
+    - result.systemout ShouldContainSubstring "{{.myvar_first.result.systemout}}"
