@@ -250,13 +250,13 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			if e != nil {
 				_, known := knowExecutors[e.Name()]
 				if !known {
-					knowExecutors[e.Name()] = struct{}{}
 					ctx, err = e.Setup(ctx, tc.Vars)
 					if err != nil {
 						tc.AppendError(err)
 						Error(ctx, "unable to setup executor: %v", err)
 						break
 					}
+					knowExecutors[e.Name()] = struct{}{}
 					defer func(ctx context.Context) {
 						if err := e.TearDown(ctx); err != nil {
 							tc.AppendError(err)
