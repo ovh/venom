@@ -528,16 +528,18 @@ testcases:
 
 Builtin variables:
 
-* {{.venom.testsuite}}
+* {{.venom.datetime}}
+* {{.venom.executable}}
+* {{.venom.libdir}}
+* {{.venom.outputdir}}
+* {{.venom.testcase}}
+* {{.venom.teststep.number}}
 * {{.venom.testsuite.filename}}
 * {{.venom.testsuite.shortName}}
 * {{.venom.testsuite.workdir}}
-* {{.venom.testcase}}
-* {{.venom.teststep.number}}
-* {{.venom.datetime}}
+* {{.venom.testsuite}}
 * {{.venom.timestamp}}
-* {{.venom.executable}}
-* {{.venom.libdir}}
+
 
 ## Assertions
 

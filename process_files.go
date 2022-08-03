@@ -130,7 +130,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		}
 
 		ts.Package = f
-		ts.Filename = f
+		ts.Filename = strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
 		ts.Vars = varCloned
 
 		ts.Vars.Add("venom.testsuite.workdir", ts.WorkDir)

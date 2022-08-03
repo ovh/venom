@@ -31,8 +31,7 @@ func (v *Venom) InitLogger() error {
 
 	if v.Verbose > 0 {
 		var err error
-		var logFile = filepath.Join(v.OutputDir, "venom.log")
-		_ = os.RemoveAll(logFile)
+		var logFile = filepath.Join(v.OutputDir, computeVenomLogFilename())
 		v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
 		if err != nil {
 			return errors.Wrapf(err, "unable to write log file")
@@ -54,6 +53,26 @@ func (v *Venom) InitLogger() error {
 	slug.Lowercase = false
 
 	return nil
+}
+
+func computeVenomLogFilename() string {
+	if !fileExists("venom.log") {
+		return "venom.log"
+	}
+	for i := 0; ; i++ {
+		filename := fmt.Sprintf("venom.%d.log", i)
+		if !fileExists(filename) {
+			return filename
+		}
+	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 // Parse parses tests suite to check context and variables
@@ -155,22 +174,8 @@ func (v *Venom) Process(ctx context.Context, path []string) (*Tests, error) {
 	Debug(ctx, "nb testsuites: %d", len(v.testsuites))
 	for i := range v.testsuites {
 		v.runTestSuite(ctx, &v.testsuites[i])
-		v.computeStats(testsResult, &v.testsuites[i])
+		computeStats(testsResult, &v.testsuites[i])
 	}
 
 	return testsResult, nil
-}
-
-func (v *Venom) computeStats(testsResult *Tests, ts *TestSuite) {
-	testsResult.TestSuites = append(testsResult.TestSuites, *ts)
-	if ts.Failures > 0 || ts.Errors > 0 {
-		testsResult.TotalKO++
-	} else {
-		testsResult.TotalOK++
-	}
-	if ts.Skipped > 0 {
-		testsResult.TotalSkipped++
-	}
-
-	testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
 }

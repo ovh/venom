@@ -51,6 +51,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 		ts.Vars.Add("venom.executable", exePath)
 	}
 
+	ts.Vars.Add("venom.outputdir", v.OutputDir)
 	ts.Vars.Add("venom.libdir", v.LibDir)
 	ts.Vars.Add("venom.testsuite", ts.Name)
 	ts.ComputedVars = H{}
