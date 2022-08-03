@@ -58,6 +58,8 @@ var assertMap = map[string]AssertFunc{
 	"ShouldHappenOnOrAfter":        ShouldHappenOnOrAfter,
 	"ShouldHappenBetween":          ShouldHappenBetween,
 	"ShouldTimeEqual":              ShouldTimeEqual,
+	"ShouldBeArray":                ShouldBeArray,
+	"ShouldBeMap":                  ShouldBeMap,
 }
 
 func Get(s string) (AssertFunc, bool) {
@@ -70,6 +72,28 @@ func deepEqual(x, y interface{}) bool {
 		return fmt.Sprintf("%v", x) == fmt.Sprintf("%v", y)
 	}
 	return true
+}
+
+func ShouldBeArray(actual interface{}, expected ...interface{}) error {
+	if err := need(0, expected); err != nil {
+		return err
+	}
+	_, err := cast.ToSliceE(actual)
+	if err != nil {
+		return fmt.Errorf("expected: %v to be an array but was not", actual)
+	}
+	return nil
+}
+
+func ShouldBeMap(actual interface{}, expected ...interface{}) error {
+	if err := need(0, expected); err != nil {
+		return err
+	}
+	_, err := cast.ToStringMapE(actual)
+	if err != nil {
+		return fmt.Errorf("expected: %v to be a map but was not", actual)
+	}
+	return nil
 }
 
 // ShouldEqual receives exactly two parameters and does an equality check.

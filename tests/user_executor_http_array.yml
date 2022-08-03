@@ -1,0 +1,20 @@
+name: HTTP array testsuite
+testcases:
+- name: get http testcase
+  steps:
+  - type: get_http
+    url: https://jsonplaceholder.typicode.com/users
+    info: result body is {{.result.bodyjson}}
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson ShouldBeArray
+      - result.bodyjson ShouldHaveLength 10
+      - result.bodyjson.bodyjson0 ShouldNotBeNil
+      - result.bodyjson.bodyjson0.name ShouldEqual "Leanne Graham"
+
+  - type: get_http
+    url: https://jsonplaceholder.typicode.com/users/1
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson ShouldBeMap
+      - result.bodyjson.name ShouldEqual "Leanne Graham"
