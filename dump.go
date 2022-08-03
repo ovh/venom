@@ -3,6 +3,20 @@ package venom
 import "github.com/fsamin/go-dump"
 
 // Dump dumps v as a map[string]interface{}.
+func DumpWithPrefix(v interface{}, prefix string) (map[string]interface{}, error) {
+	e := dump.NewDefaultEncoder()
+	e.ExtraFields.Len = true
+	e.ExtraFields.Type = true
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
+	e.Prefix = prefix
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+
+	return e.ToMap(v)
+}
+
+// Dump dumps v as a map[string]interface{}.
 func Dump(v interface{}) (map[string]interface{}, error) {
 	e := dump.NewDefaultEncoder()
 	e.ExtraFields.Len = true

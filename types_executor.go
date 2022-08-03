@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -298,15 +299,34 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, errors.Wrapf(err, "unable to compute result")
 	}
 
-	resultS, err := DumpString(outputResult)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to compute result")
-	}
-
-	for k, v := range resultS {
-		var outJSON interface{}
-		if err := JSONUnmarshal([]byte(v), &outJSON); err == nil {
-			result[k+"json"] = outJSON
+	for k, v := range result {
+		switch z := v.(type) {
+		case string:
+			var outJSON interface{}
+			if err := JSONUnmarshal([]byte(z), &outJSON); err == nil {
+				result[k+"json"] = outJSON
+				// Now we have to dump this object, but the key will change if this is a array or not
+				if reflect.ValueOf(outJSON).Kind() == reflect.Slice {
+					prefix := k + "json"
+					splittedPrefix := strings.Split(prefix, ".")
+					prefix += "." + splittedPrefix[len(splittedPrefix)-1]
+					outJSONDump, err := Dump(outJSON)
+					if err != nil {
+						return nil, errors.Wrapf(err, "unable to compute result")
+					}
+					for ko, vo := range outJSONDump {
+						result[prefix+ko] = vo
+					}
+				} else {
+					outJSONDump, err := DumpWithPrefix(outJSON, k+"json")
+					if err != nil {
+						return nil, errors.Wrapf(err, "unable to compute result")
+					}
+					for ko, vo := range outJSONDump {
+						result[ko] = vo
+					}
+				}
+			}
 		}
 	}
 	return result, nil
