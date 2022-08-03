@@ -1,0 +1,11 @@
+executor: multilines
+input:
+  script: "bar"
+steps:
+- type: exec
+  script: |
+    echo "{{.input.script}}"
+  assertions:
+  - result.code ShouldEqual 0
+output:
+  all: '{{.result.systemoutjson}}'

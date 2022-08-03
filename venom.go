@@ -230,12 +230,12 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 
 		varsComputed := map[string]string{}
 		for k, v := range vars {
-			varsComputed[k] = v
+			varsComputed[k] = strings.ReplaceAll(v, "\n", "    ")
 		}
 		for k, v := range varsFromInputMap {
 			// we only take vars from varsFromInputMap if it's not already exist in vars from teststep vars
 			if _, ok := vars[k]; !ok {
-				varsComputed[k] = v
+				varsComputed[k] = strings.ReplaceAll(v, "\n", "    ")
 			}
 		}
 
