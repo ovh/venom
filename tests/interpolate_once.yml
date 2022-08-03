@@ -1,0 +1,17 @@
+---
+name: e
+version: 2
+testcases:
+- name: myvar_first
+  steps:
+  - type: exec
+    script: "echo myvar {{.randomvar}}"
+    info: "{{.result.systemout}}"
+
+- name: myvar_second
+  steps:
+  - type: exec
+    script: "echo myvar {{.randomvar}}"
+    info: "{{.result.systemout}}"
+    assertions:
+    - result.systemout ShouldContainSubstring "{{.myvar_first.result.systemout}}"
