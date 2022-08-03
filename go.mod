@@ -22,6 +22,7 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/jhump/protoreflect v1.12.0
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/kevinramage/venomWeb v0.0.0-20220511170148-10f8568779d9
 	github.com/landoop/schema-registry v0.0.0-20190327143759-50a5701c1891
 	github.com/lib/pq v1.10.6
 	github.com/linkedin/goavro/v2 v2.11.1
@@ -34,7 +35,6 @@ require (
 	github.com/ovh/go-ovh v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.1.2
-	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible
 	github.com/sijms/go-ora v1.2.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cast v1.5.0
@@ -76,8 +76,6 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/onsi/gomega v1.20.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
