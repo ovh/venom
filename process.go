@@ -45,8 +45,10 @@ func (v *Venom) InitLogger() error {
 	}
 
 	logrus.SetFormatter(&nested.Formatter{
-		HideKeys:    true,
-		FieldsOrder: []string{"testsuite", "testcase", "step", "executor"},
+		HideKeys:       true,
+		FieldsOrder:    []string{"testsuite", "testcase", "step", "executor"},
+		NoColors:       true,
+		NoFieldsColors: true,
 	})
 	logger = logrus.NewEntry(logrus.StandardLogger())
 
