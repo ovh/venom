@@ -3,6 +3,7 @@ name: Variables testsuite
 vars:
   service.id: '{{.CreateService.id}}'
   thevar: 'thevalue'
+  randomvar: '{{ randAlpha 3 }}'
 
 testcases:
 

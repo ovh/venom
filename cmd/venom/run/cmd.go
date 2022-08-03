@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/executors/amqp"
 	"github.com/ovh/venom/executors/dbfixtures"
@@ -435,9 +436,16 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 		if err != nil {
 			return nil, err
 		}
-		if err := yaml.Unmarshal(btes, &tmpResult); err != nil {
+
+		stemp, err := interpolate.Do(string(btes), nil)
+		if err != nil {
+			return nil, fmt.Errorf("unable to interpolate file %v", err)
+		}
+
+		if err := yaml.Unmarshal([]byte(stemp), &tmpResult); err != nil {
 			return nil, err
 		}
+
 		for k, v := range tmpResult {
 			result[k] = v
 			venom.Debug(ctx, "Adding variable from vars-files %s=%s", k, v)
@@ -452,7 +460,11 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 		if len(tuple) < 2 {
 			return nil, fmt.Errorf("invalid variable declaration: %v", arg)
 		}
-		result[tuple[0]] = cast(tuple[1])
+		stemp, err := interpolate.Do(tuple[1], nil)
+		if err != nil {
+			return nil, fmt.Errorf("unable to interpolate arg %s: %v", arg, err)
+		}
+		result[tuple[0]] = cast(stemp)
 		venom.Debug(ctx, "Adding variable from vars arg %s=%s", tuple[0], result[tuple[0]])
 	}
 
