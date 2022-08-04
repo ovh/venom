@@ -396,6 +396,39 @@ Notice the variable `alljson`. All variables declared in output are automaticall
 Venom will load user's executors from the directory `lib/` relative to the testsuite path. You add executors source path using the flag `--lib-dir`. 
 Note that all folders listed with `--lib-dir` will be scanned recursively to find `.yml` files as user executors.
 
+The user defined executors work with templating, you can check the templating result in `venom.log`. In this file, if you see an error as `error converting YAML to JSON: yaml: line 14: found unexpected end of stream`, you probably need to adjust indentation with the templating function `indent`. 
+
+Example:
+
+```yml
+name: testsuite with a user executor multilines
+testcases:
+- name: test
+  steps:
+  - type: multilines
+    script: |
+      echo "4"
+      echo "5"
+    assertions:
+    - result.alljson ShouldEqual 5
+```
+
+using this executor:
+
+```yml
+executor: multilines
+input:
+  script: "echo 'foo'"
+steps:
+- type: exec
+  script: {{ .input.script | nindent 4 }}
+  assertions:
+  - result.code ShouldEqual 0
+output:
+  all: '{{.result.systemoutjson}}'
+```
+
+
 ```bash
 # lib/*.yml files will be loaded as executors.
 $ venom run testsuite.yml 

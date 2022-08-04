@@ -230,12 +230,12 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 
 		varsComputed := map[string]string{}
 		for k, v := range vars {
-			varsComputed[k] = strings.ReplaceAll(v, "\n", "\n    ") // see multilines.yml testsuite
+			varsComputed[k] = v
 		}
 		for k, v := range varsFromInputMap {
 			// we only take vars from varsFromInputMap if it's not already exist in vars from teststep vars
 			if _, ok := vars[k]; !ok {
-				varsComputed[k] = strings.ReplaceAll(v, "\n", "\n    ")
+				varsComputed[k] = v
 			}
 		}
 
@@ -248,6 +248,8 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
 			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
 		}
+
+		log.Debugf("User exector %q revolved with content %v", f, content)
 
 		for k, vr := range varsComputed {
 			ux.Input.Add(k, vr)

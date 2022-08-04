@@ -1,10 +1,9 @@
-executor: multilines
+executor: foo
 input:
   script: "bar"
 steps:
 - type: exec
-  script: |
-    echo "{{.input.script}}"
+  script: {{ .input.script | nindent 4 }}
   assertions:
   - result.code ShouldEqual 0
 output:
