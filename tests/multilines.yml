@@ -1,0 +1,10 @@
+name: testsuite with a user executor multilines
+testcases:
+- name: testA
+  steps:
+  - type: multilines
+    script: |
+      # test multilines
+      echo "5"
+    assertions:
+    - result.alljson ShouldEqual 5
