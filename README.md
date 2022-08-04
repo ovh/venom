@@ -97,13 +97,16 @@ Version venom: v1.0.1
 
 # Docker image
 
-Instead of installing (and updating) Venom locally, Venom can be started as a Docker image with following commands:
+Instead of installing (and updating) Venom locally, Venom can be started as a Docker image with following commands. 
+
+Considering your testsuites are in `./tests` directory in your current directory and your test library is under `./tests/lib`, the results will be available under the `results` directory.
 
 ```bash
-$ git clone git@github.com:ovh/venom.git
-$ cd venom
-$ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
+$ mkdir -p results
+$ docker run --mount type=bind,source=$(pwd)/tests,target=/workdir/tests --mount type=bind,source=$(pwd)/results,target=/workdir/results ovhcom/venom:latest 
 ```
+
+Please refer to https://hub.docker.com/r/ovhcom/venom/tags to get the available image tags.
 
 # CLI Usage
 
