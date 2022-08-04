@@ -1,4 +1,4 @@
-executor: foo
+executor: multilines
 input:
   script: "bar"
 steps:
