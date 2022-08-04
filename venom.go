@@ -249,7 +249,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
 		}
 
-		log.Debugf("User exector %q revolved with content %v", f, content)
+		log.Debugf("User executor %q revolved with content %v", f, content)
 
 		for k, vr := range varsComputed {
 			ux.Input.Add(k, vr)
