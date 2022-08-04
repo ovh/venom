@@ -4,7 +4,7 @@ testcases:
   steps:
   - type: multilines
     script: |
-      echo "4"
+      # test multilines
       echo "5"
     assertions:
     - result.alljson ShouldEqual 5
