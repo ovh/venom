@@ -51,10 +51,10 @@ type Mail struct {
 
 // Result represents a step result
 type Result struct {
-	Err         string  `json:"error" yaml:"error"`
+	Err         string  `json:"err" yaml:"error"`
 	Subject     string  `json:"subject,omitempty" yaml:"subject,omitempty"`
 	Body        string  `json:"body,omitempty" yaml:"body,omitempty"`
-	TimeSeconds float64 `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	TimeSeconds float64 `json:"timeseconds,omitempty" yaml:"timeSeconds,omitempty"`
 }
 
 // ZeroValueResult return an empty implementation of this executor result

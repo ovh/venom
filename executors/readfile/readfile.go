@@ -35,8 +35,8 @@ type Executor struct {
 type Result struct {
 	Content     string            `json:"content,omitempty" yaml:"content,omitempty"`
 	ContentJSON interface{}       `json:"contentjson,omitempty" yaml:"contentjson,omitempty"`
-	Err         string            `json:"error" yaml:"error"`
-	TimeSeconds float64           `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	Err         string            `json:"err" yaml:"error"`
+	TimeSeconds float64           `json:"timeseconds,omitempty" yaml:"timeSeconds,omitempty"`
 	Md5sum      map[string]string `json:"md5sum,omitempty" yaml:"md5sum,omitempty"`
 	Size        map[string]int64  `json:"size,omitempty" yaml:"size,omitempty"`
 	ModTime     map[string]int64  `json:"modtime,omitempty" yaml:"modtime,omitempty"`

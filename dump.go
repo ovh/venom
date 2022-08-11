@@ -25,6 +25,8 @@ func DumpWithPrefix(va interface{}, prefix string) (map[string]interface{}, erro
 
 	// TODO venom >= v1.2 update the PreserveCase behaviour
 	if preserveCase == "OFF" || preserveCase == "AUTO" || preserveCase == "" {
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	} else {
 		e.ExtraFields.UseJSONTag = true
 		e.Formatters = []dump.KeyFormatterFunc{WithTitleFormatterFirstKey()}
 	}
@@ -43,6 +45,8 @@ func Dump(va interface{}) (map[string]interface{}, error) {
 
 	// TODO venom >= v1.2 update the PreserveCase behaviour
 	if preserveCase == "OFF" || preserveCase == "AUTO" || preserveCase == "" {
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	} else {
 		e.ExtraFields.UseJSONTag = true
 		e.Formatters = []dump.KeyFormatterFunc{WithTitleFormatterFirstKey()}
 	}
@@ -61,6 +65,8 @@ func DumpString(va interface{}) (map[string]string, error) {
 
 	// TODO venom >= v1.2 update the PreserveCase behaviour
 	if preserveCase == "OFF" || preserveCase == "AUTO" || preserveCase == "" {
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	} else {
 		e.ExtraFields.UseJSONTag = true
 		e.Formatters = []dump.KeyFormatterFunc{WithTitleFormatterFirstKey()}
 	}

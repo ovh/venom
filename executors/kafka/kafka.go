@@ -96,10 +96,10 @@ type (
 
 	// Result represents a step result.
 	Result struct {
-		TimeSeconds  float64       `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+		TimeSeconds  float64       `json:"timeseconds,omitempty" yaml:"timeSeconds,omitempty"`
 		Messages     []Message     `json:"messages,omitempty" yaml:"messages,omitempty"`
-		MessagesJSON []interface{} `json:"messagesJSON,omitempty" yaml:"messagesJSON,omitempty"`
-		Err          string        `json:"error" yaml:"error"`
+		MessagesJSON []interface{} `json:"messagesjson,omitempty" yaml:"messagesJSON,omitempty"`
+		Err          string        `json:"err" yaml:"error"`
 	}
 	consumeFunc = func(message *sarama.ConsumerMessage) (Message, interface{}, error)
 )
@@ -229,11 +229,11 @@ func (e Executor) getMessageValue(m *Message, workdir string) ([]byte, error) {
 	// This is test with Avro
 	var (
 		schemaID int
-		schema string
+		schema   string
 	)
 	// 1. Get schema with its ID
 	// 1.1 Try with the file, if provided
-	subject := fmt.Sprintf("%s-value", m.Topic)  // Using topic name strategy
+	subject := fmt.Sprintf("%s-value", m.Topic) // Using topic name strategy
 	schemaFile := strings.Trim(m.AvroSchemaFile, " ")
 	if len(schemaFile) != 0 {
 		schemaPath := path.Join(workdir, schemaFile)
@@ -254,7 +254,7 @@ func (e Executor) getMessageValue(m *Message, workdir string) ([]byte, error) {
 			return nil, fmt.Errorf("can't get latest schema for subject %s-value: %w", m.Topic, err)
 		}
 	}
-	
+
 	// 2. Encode Value with schema
 	avroMsg, err := Convert2Avro(value, string(schema))
 	if err != nil {
