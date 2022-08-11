@@ -520,6 +520,8 @@ Available helpers and some examples:
 - `b64dec` {{.result.bodyjson | b64enc}}
 - `escape`: replace ‘_‘, ‘/’, ‘.’ by ‘-’
 
+More examples are available [here](https://github.com/ovh/venom/tree/master/variable_helpers.md)
+
 ## Use outputs from a test step as input of another test step
 
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
