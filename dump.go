@@ -1,9 +1,21 @@
 package venom
 
-import "github.com/fsamin/go-dump"
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/fsamin/go-dump"
+)
+
+var preserveCase string
+
+func init() {
+	preserveCase = os.Getenv("VENOM_PRESERVE_CASE")
+}
 
 // Dump dumps v as a map[string]interface{}.
-func DumpWithPrefix(v interface{}, prefix string) (map[string]interface{}, error) {
+func DumpWithPrefix(va interface{}, prefix string) (map[string]interface{}, error) {
 	e := dump.NewDefaultEncoder()
 	e.ExtraFields.Len = true
 	e.ExtraFields.Type = true
@@ -11,43 +23,73 @@ func DumpWithPrefix(v interface{}, prefix string) (map[string]interface{}, error
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
 	e.Prefix = prefix
-	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 
-	return e.ToMap(v)
+	// TODO venom >= v1.2 update the PreserveCase behaviour
+	if preserveCase == "OFF" || preserveCase == "AUTO" || preserveCase == "" {
+		e.ExtraFields.UseJSONTag = true
+		e.Formatters = []dump.KeyFormatterFunc{WithTitleFormatterFirstKey()}
+	}
+
+	return e.ToMap(va)
 }
 
 // Dump dumps v as a map[string]interface{}.
-func Dump(v interface{}) (map[string]interface{}, error) {
+func Dump(va interface{}) (map[string]interface{}, error) {
 	e := dump.NewDefaultEncoder()
 	e.ExtraFields.Len = true
 	e.ExtraFields.Type = true
 	e.ExtraFields.DetailedStruct = true
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
-	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 
-	return e.ToMap(v)
+	// TODO venom >= v1.2 update the PreserveCase behaviour
+	if preserveCase == "OFF" || preserveCase == "AUTO" || preserveCase == "" {
+		e.ExtraFields.UseJSONTag = true
+		e.Formatters = []dump.KeyFormatterFunc{WithTitleFormatterFirstKey()}
+	}
+
+	r, _ := e.ToMap(va)
+	fmt.Printf("e.ToMap(va): %v\n", r)
+	return e.ToMap(va)
 }
 
 // DumpString dumps v as a map[string]string{}, key in lowercase
-func DumpString(v interface{}) (map[string]string, error) {
+func DumpString(va interface{}) (map[string]string, error) {
 	e := dump.NewDefaultEncoder()
 	e.ExtraFields.Len = true
 	e.ExtraFields.Type = true
 	e.ExtraFields.DetailedStruct = true
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
-	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-	return e.ToStringMap(v)
+
+	// TODO venom >= v1.2 update the PreserveCase behaviour
+	if preserveCase == "OFF" || preserveCase == "AUTO" || preserveCase == "" {
+		e.ExtraFields.UseJSONTag = true
+		e.Formatters = []dump.KeyFormatterFunc{WithTitleFormatterFirstKey()}
+	}
+	return e.ToStringMap(va)
 }
 
 // DumpStringPreserveCase dumps v as a map[string]string{}
-func DumpStringPreserveCase(v interface{}) (map[string]string, error) {
+func DumpStringPreserveCase(va interface{}) (map[string]string, error) {
 	e := dump.NewDefaultEncoder()
 	e.ExtraFields.Len = true
 	e.ExtraFields.Type = true
 	e.ExtraFields.DetailedStruct = true
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
-	return e.ToStringMap(v)
+	if preserveCase == "OFF" || preserveCase == "AUTO" || preserveCase == "" {
+		e.ExtraFields.UseJSONTag = true
+	}
+	return e.ToStringMap(va)
+}
+
+func WithTitleFormatterFirstKey() dump.KeyFormatterFunc {
+	f := dump.WithDefaultFormatter()
+	return func(s string, level int) string {
+		if level == 0 {
+			return strings.ToLower(f(s, level))
+		}
+		return f(s, level)
+	}
 }
