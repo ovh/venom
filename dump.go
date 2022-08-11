@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -48,8 +47,6 @@ func Dump(va interface{}) (map[string]interface{}, error) {
 		e.Formatters = []dump.KeyFormatterFunc{WithTitleFormatterFirstKey()}
 	}
 
-	r, _ := e.ToMap(va)
-	fmt.Printf("e.ToMap(va): %v\n", r)
 	return e.ToMap(va)
 }
 
