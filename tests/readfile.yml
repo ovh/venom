@@ -29,7 +29,7 @@ testcases:
     path: readfile/testa.json
     info: "md5sum_foo: {{.md5sum_foo}}"
     assertions:
-    - result.err ShouldBeNil
+    - result.err ShouldEqual ""
     - result.md5sum.readfile_testa.json ShouldEqual "{{.testcase-readfile2.md5sum_foo}}"
 
 - name: testcase-readfile-with-integer
