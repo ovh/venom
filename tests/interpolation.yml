@@ -13,7 +13,7 @@ testcases:
           - result.statuscode ShouldEqual 200
         vars:
           accept:
-            from: result.headers.content-type
+            from: result.headers.Content-Type
 
   - name: UseVar
     steps:
@@ -24,7 +24,7 @@ testcases:
           test: "{{ .GetVar.accept }}"
         assertions:
           - result.statuscode ShouldEqual 200
-          - result.headers.x-cache ShouldEqual "HIT"
+          - result.headers.X-Cache ShouldEqual "HIT"
       - type: http
         method: HEAD
         url: "http://example.com"
@@ -32,4 +32,4 @@ testcases:
           test: "{{ .GetVar.accept }}"
         assertions:
           - result.statuscode ShouldEqual 200
-          - result.headers.accept-ranges ShouldEqual "bytes"
+          - result.headers.Accept-Ranges ShouldEqual "bytes"
