@@ -140,8 +140,14 @@ github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoD
 github.com/fortytw2/leaktest v1.3.0 h1:u8491cBMTQ8ft8aeV+adlcytMZylmA5nnwwkRZjI8vw=
 github.com/fortytw2/leaktest v1.3.0/go.mod h1:jDsjWgpAGjm2CA7WthBh/CdZYEPF31XHquHwclZch5g=
 github.com/frankban/quicktest v1.14.3 h1:FJKSZTDHjyhriyC81FLQ0LY93eSai0ZyR/ZIkd3ZUKE=
+github.com/fsamin/go-dump v0.0.0-20220811134020-951ca28b6c23 h1:8EBsFJ40eEsF8M4/0E/Ilxq6GV2PolHzkt/0Or+chJo=
+github.com/fsamin/go-dump v0.0.0-20220811134020-951ca28b6c23/go.mod h1:/xw/mwt7LWFJlTwxTjwKMv1W3gmKJsKD8zHS9+/czFY=
+github.com/fsamin/go-dump v0.0.0-20220811151532-e083d29933b0 h1:D7FFK1RN9JfVhB+LZQ8/Ap1xyzE8LTFDwIWiqAzRAvI=
+github.com/fsamin/go-dump v0.0.0-20220811151532-e083d29933b0/go.mod h1:/xw/mwt7LWFJlTwxTjwKMv1W3gmKJsKD8zHS9+/czFY=
 github.com/fsamin/go-dump v1.7.0 h1:12qptOwAyJ6vuzERrcMhREy1fT3bVmlYhi2CibhdAJM=
 github.com/fsamin/go-dump v1.7.0/go.mod h1:/xw/mwt7LWFJlTwxTjwKMv1W3gmKJsKD8zHS9+/czFY=
+github.com/fsamin/go-dump v1.8.0 h1:jy1qExf8rXFoIc3y9hGuBgk0C+2GqETnusw/uouZlO8=
+github.com/fsamin/go-dump v1.8.0/go.mod h1:/xw/mwt7LWFJlTwxTjwKMv1W3gmKJsKD8zHS9+/czFY=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=

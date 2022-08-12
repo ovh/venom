@@ -71,7 +71,7 @@ type Result struct {
 type HTTPRequest struct {
 	Method   string      `json:"method,omitempty"`
 	URL      string      `json:"url,omitempty"`
-	Header   http.Header `json:"headers,omitempty"`
+	Header   http.Header `json:"header,omitempty"`
 	Body     string      `json:"body,omitempty"`
 	Form     url.Values  `json:"form,omitempty"`
 	PostForm url.Values  `json:"post_form,omitempty"`
