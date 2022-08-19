@@ -7,7 +7,6 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/fatih/color"
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
 	log "github.com/sirupsen/logrus"
@@ -65,17 +64,41 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 		totalSteps += len(tc.testSteps)
 	}
 
+	ts.Status = StatusRun
+
+	// ##### RUN Test Cases Here
 	v.runTestCases(ctx, ts)
+
+	var isFailed bool
+	var nSkip int
+	for _, tc := range ts.TestCases {
+		if tc.Status == StatusFail {
+			isFailed = true
+			ts.NbTestcasesFail++
+		} else if tc.Status == StatusSkip {
+			nSkip++
+			ts.NbTestcasesSkip++
+		} else if tc.Status == StatusPass {
+			ts.NbTestcasesPass++
+		}
+	}
+
+	if isFailed {
+		ts.Status = StatusFail
+		v.Tests.NbTestsuitesFail++
+	} else if nSkip > 0 && nSkip == len(ts.TestCases) {
+		ts.Status = StatusSkip
+		v.Tests.NbTestsuitesSkip++
+	} else {
+		ts.Status = StatusPass
+		v.Tests.NbTestsuitesPass++
+	}
 }
 
 func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
-	var red = color.New(color.FgRed).SprintFunc()
-	var green = color.New(color.FgGreen).SprintFunc()
-	var cyan = color.New(color.FgCyan).SprintFunc()
-	var gray = color.New(color.Attribute(90)).SprintFunc()
 	verboseReport := v.Verbose >= 2
 
-	v.Println(" • %s (%s)", ts.Name, ts.Package)
+	v.Println(" • %s (%s)", ts.Name, ts.Filepath)
 
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
@@ -84,26 +107,28 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		if verboseReport {
 			v.Print("\n")
 		}
-		tc.Classname = ts.Filename
 		var hasFailure bool
 		var hasSkipped = len(tc.Skipped) > 0
 		if !hasSkipped {
 			start := time.Now()
+			tc.Start = start
+			ts.Status = StatusRun
+			// ##### RUN Test Case Here
 			v.runTestCase(ctx, ts, tc)
-			tc.Time = time.Since(start).Seconds()
+			tc.End = time.Now()
+			tc.Duration = tc.End.Sub(tc.Start).Seconds()
 		}
 
-		if len(tc.Failures) > 0 {
-			ts.Failures += len(tc.Failures)
-			hasFailure = true
+		for _, testStepResult := range tc.TestStepResults {
+			if testStepResult.Status == StatusFail {
+				hasFailure = true
+			}
 		}
-		if len(tc.Errors) > 0 {
-			ts.Errors += len(tc.Errors)
-			hasFailure = true
-		}
-		if len(tc.Skipped) > 0 {
-			ts.Skipped += len(tc.Skipped)
-			hasSkipped = true
+
+		if hasFailure {
+			tc.Status = StatusFail
+		} else if tc.Status != StatusSkip {
+			tc.Status = StatusPass
 		}
 
 		// Verbose mode already reported tests status, so just print them when non-verbose
@@ -111,20 +136,18 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		if verboseReport {
 			indent = "\t  "
 		} else {
-			if hasSkipped {
-				v.Println(" %s", gray("SKIPPED"))
-				continue
-			}
-
 			if hasFailure {
-				v.Println(" %s", red("FAILURE"))
+				v.Println(" %s", Red(StatusFail))
+			} else if tc.Status == StatusSkip {
+				v.Println(" %s", Gray(StatusSkip))
+				continue
 			} else {
-				v.Println(" %s", green("SUCCESS"))
+				v.Println(" %s", Green(StatusPass))
 			}
 		}
 
 		for _, i := range tc.computedInfo {
-			v.Println("\t  %s%s %s", indent, cyan("[info]"), cyan(i))
+			v.Println("\t  %s%s %s", indent, Cyan("[info]"), Cyan(i))
 		}
 
 		for _, i := range tc.computedVerbose {
@@ -133,28 +156,31 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 
 		// Verbose mode already reported failures, so just print them when non-verbose
 		if !verboseReport && hasFailure {
-			for _, f := range tc.Failures {
-				v.Println("%s", red(f))
-			}
-			for _, f := range tc.Errors {
-				v.Println("%s", red(f.Value))
+			for _, testStepResult := range tc.TestStepResults {
+				for _, f := range testStepResult.Errors {
+					v.Println("%s", Yellow(f.Value))
+				}
 			}
 		}
 
-		if v.StopOnFailure && (len(tc.Failures) > 0 || len(tc.Errors) > 0) {
-			// break TestSuite
-			return
+		if v.StopOnFailure {
+			for _, testStepResult := range tc.TestStepResults {
+				if len(testStepResult.Errors) > 0 {
+					// break TestSuite
+					return
+				}
+			}
 		}
 		ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 	}
 }
 
-//Parse the suite to find unreplaced and extracted variables
+// Parse the suite to find unreplaced and extracted variables
 func (v *Venom) parseTestSuite(ts *TestSuite) ([]string, []string, error) {
 	return v.parseTestCases(ts)
 }
 
-//Parse the testscases to find unreplaced and extracted variables
+// Parse the testscases to find unreplaced and extracted variables
 func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
 	var vars []string
 	var extractsVars []string

@@ -7,3 +7,4 @@ venom.test
 *.coverprofile
 *.out
 *.test.out
+test_results.*

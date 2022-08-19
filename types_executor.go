@@ -220,14 +220,20 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	}
 	// reload the user executor with the interpolated vars
 	_, exe, err := v.GetExecutorRunner(ctx, step, vrs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to reload executor")
+	}
 	ux := exe.GetExecutor().(UserExecutor)
 
 	tc := &TestCase{
-		Name:          ux.Executor,
-		RawTestSteps:  ux.RawTestSteps,
-		Vars:          vrs,
-		TestSuiteVars: tcIn.TestSuiteVars,
-		IsExecutor:    true,
+		TestCaseInput: TestCaseInput{
+			Name:         ux.Executor,
+			RawTestSteps: ux.RawTestSteps,
+			Vars:         vrs,
+		},
+		TestSuiteVars:   tcIn.TestSuiteVars,
+		IsExecutor:      true,
+		TestStepResults: make([]TestStepResult, 0),
 	}
 
 	tc.originalName = tc.Name
@@ -279,9 +285,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, errors.Wrapf(err, "unable to unmarshal")
 	}
 
-	tcIn.Errors = tc.Errors
-	tcIn.Failures = tc.Failures
-	if len(tc.Errors) > 0 || len(tc.Failures) > 0 {
+	if len(tsIn.Errors) > 0 {
 		return outputResult, fmt.Errorf("failed")
 	}
 

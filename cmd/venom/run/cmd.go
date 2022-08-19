@@ -9,7 +9,6 @@ import (
 	"runtime/pprof"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/mitchellh/go-homedir"
@@ -32,7 +31,7 @@ var (
 	outputDir     string
 	libDir        string
 	stopOnFailure bool
-	verbose       int = 1 // Set the default value for verboseFlag
+	verbose       int = 0 // Set the default value for verboseFlag
 
 	variablesFlag     *[]string
 	formatFlag        *string
@@ -44,7 +43,7 @@ var (
 )
 
 func init() {
-	formatFlag = Cmd.Flags().String("format", "xml", "--format:yaml, json, xml, tap")
+	formatFlag = Cmd.Flags().String("format", "xml", "--format:html, json, tap, xml, yaml")
 	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
 	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
 	varFilesFlag = Cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
@@ -290,6 +289,7 @@ var Cmd = &cobra.Command{
 	Example: `  Run all testsuites containing in files ending with *.yml or *.yaml: venom run
   Run a single testsuite: venom run mytestfile.yml
   Run a single testsuite and export the result in JSON format in test/ folder: venom run mytestfile.yml --format=json --output-dir=test
+  Run a single testsuite and export the result in XML and HTML formats in test/ folder: venom run mytestfile.yml --format=xml,html --output-dir=test
   Run a single testsuite and specify a variable: venom run mytestfile.yml --var="foo=bar"
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
   Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
@@ -364,30 +364,30 @@ var Cmd = &cobra.Command{
 		}
 		v.AddVariables(mapvars)
 
-		start := time.Now()
-
 		if err := v.Parse(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
 		}
 
-		tests, err := v.Process(context.Background(), path)
-		if err != nil {
+		if err := v.Process(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
 		}
 
-		elapsed := time.Since(start)
-		if err := v.OutputResult(elapsed); err != nil {
+		if err := v.OutputResult(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(2)
 			return err
 		}
-		if tests.TotalKO > 0 {
-			os.Exit(2)
+
+		if v.Tests.Status == venom.StatusPass {
+			fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Green(v.Tests.Status))
+			os.Exit(0)
 		}
+		fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Red(v.Tests.Status))
+		os.Exit(2)
 
 		return nil
 	},

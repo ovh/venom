@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/fatih/color"
 	tap "github.com/mndrix/tap-go"
@@ -24,104 +24,177 @@ func init() {
 }
 
 // OutputResult output result to sdtout, files...
-func (v *Venom) OutputResult(elapsed time.Duration) error {
+func (v *Venom) OutputResult() error {
 	if v.OutputDir == "" {
 		return nil
 	}
-	for i := range v.testsuites {
+
+	for i := range v.Tests.TestSuites {
 		tcFiltered := []TestCase{}
-		for _, tc := range v.testsuites[i].TestCases {
+		for _, tc := range v.Tests.TestSuites[i].TestCases {
 			if tc.IsEvaluated {
 				tcFiltered = append(tcFiltered, tc)
 			}
 		}
-		v.testsuites[i].TestCases = tcFiltered
+		v.Tests.TestSuites[i].TestCases = tcFiltered
 
-		testsResult := &Tests{}
-		computeStats(testsResult, &v.testsuites[i])
+		testsResult := &Tests{
+			TestSuites:       []TestSuite{v.Tests.TestSuites[i]},
+			Status:           v.Tests.Status,
+			NbTestsuitesFail: v.Tests.NbTestsuitesFail,
+			NbTestsuitesPass: v.Tests.NbTestsuitesPass,
+			NbTestsuitesSkip: v.Tests.NbTestsuitesSkip,
+			Duration:         v.Tests.Duration,
+			Start:            v.Tests.Start,
+			End:              v.Tests.End,
+		}
 
 		var data []byte
 		var err error
-		switch v.OutputFormat {
-		case "json":
-			data, err = json.MarshalIndent(testsResult, "", "  ")
-			if err != nil {
-				log.Fatalf("Error: cannot format output json (%s)", err)
+		for _, f := range strings.Split(v.OutputFormat, ",") {
+			format := strings.TrimSpace(f)
+			switch format {
+			case "json":
+				data, err = json.MarshalIndent(testsResult, "", "  ")
+				if err != nil {
+					log.Fatalf("Error: cannot format output json (%s)", err)
+				}
+			case "tap":
+				data, err = outputTapFormat(*testsResult)
+				if err != nil {
+					log.Fatalf("Error: cannot format output tap (%s)", err)
+				}
+			case "yml", "yaml":
+				data, err = yaml.Marshal(testsResult)
+				if err != nil {
+					log.Fatalf("Error: cannot format output yaml (%s)", err)
+				}
+			case "xml":
+				data, err = outputXMLFormat(*testsResult)
+				if err != nil {
+					log.Fatalf("Error: cannot format output xml (%s)", err)
+				}
+			case "html":
+				continue
 			}
-		case "tap":
-			data, err = outputTapFormat(*testsResult)
-			if err != nil {
-				log.Fatalf("Error: cannot format output tap (%s)", err)
+
+			filename := path.Join(v.OutputDir, "test_results."+v.Tests.TestSuites[i].Filename+"."+format)
+			if err := os.WriteFile(filename, data, 0600); err != nil {
+				return fmt.Errorf("Error while creating file %s: %v", filename, err)
 			}
-		case "yml", "yaml":
-			data, err = yaml.Marshal(testsResult)
-			if err != nil {
-				log.Fatalf("Error: cannot format output yaml (%s)", err)
-			}
-		default:
-			dataxml, errm := xml.MarshalIndent(testsResult, "", "  ")
-			if errm != nil {
-				log.Fatalf("Error: cannot format xml output: %s", errm)
-			}
-			data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
+			v.PrintFunc("Writing file %s\n", filename)
+		}
+	}
+
+	if strings.Contains(v.OutputFormat, "html") {
+		testsResult := &Tests{
+			TestSuites:       v.Tests.TestSuites,
+			Status:           v.Tests.Status,
+			NbTestsuitesFail: v.Tests.NbTestsuitesFail,
+			NbTestsuitesPass: v.Tests.NbTestsuitesPass,
+			NbTestsuitesSkip: v.Tests.NbTestsuitesSkip,
+			Duration:         v.Tests.Duration,
+			Start:            v.Tests.Start,
+			End:              v.Tests.End,
 		}
 
-		filename := path.Join(v.OutputDir, "test_results."+v.testsuites[i].Filename+"."+v.OutputFormat)
+		data, err := outputHTML(testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output html (%s)", err)
+		}
+		var filename = filepath.Join(v.OutputDir, computeOutputFilename("test_results.html"))
+		v.PrintFunc("Writing html file %s\n", filename)
 		if err := os.WriteFile(filename, data, 0600); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
 		}
-		v.PrintFunc("Writing file %s\n", filename)
 	}
 
 	return nil
-}
-
-func computeStats(testsResult *Tests, ts *TestSuite) {
-	testsResult.TestSuites = append(testsResult.TestSuites, *ts)
-	if ts.Failures > 0 || ts.Errors > 0 {
-		testsResult.TotalKO++
-	} else {
-		testsResult.TotalOK++
-	}
-	if ts.Skipped > 0 {
-		testsResult.TotalSkipped++
-	}
-
-	testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
 }
 
 func outputTapFormat(tests Tests) ([]byte, error) {
 	tapValue := tap.New()
 	buf := new(bytes.Buffer)
 	tapValue.Writer = buf
-	tapValue.Header(tests.Total)
+	var total int
 	for _, ts := range tests.TestSuites {
 		for _, tc := range ts.TestCases {
+			total++
 			name := ts.Name + " / " + tc.Name
 			if len(tc.Skipped) > 0 {
 				tapValue.Skip(1, name)
 				continue
 			}
 
-			if len(tc.Errors) > 0 {
-				tapValue.Fail(name)
-				for _, e := range tc.Errors {
-					tapValue.Diagnosticf("Error: %s", e.Value)
+			for _, testStepResult := range tc.TestStepResults {
+				if len(testStepResult.Errors) > 0 {
+					tapValue.Fail(name)
+					for _, e := range testStepResult.Errors {
+						tapValue.Diagnosticf("Error: %s", e.Value)
+					}
+					continue
 				}
-				continue
-			}
-
-			if len(tc.Failures) > 0 {
-				tapValue.Fail(name)
-				for _, e := range tc.Failures {
-					tapValue.Diagnosticf("Failure: %s", e.Value)
-				}
-				continue
 			}
 
 			tapValue.Pass(name)
 		}
 	}
+	tapValue.Header(total)
 
 	return buf.Bytes(), nil
+}
+
+func outputXMLFormat(tests Tests) ([]byte, error) {
+
+	testsXML := TestsXML{}
+
+	for _, ts := range tests.TestSuites {
+		tsXML := TestSuiteXML{
+			Name:    ts.Name,
+			Package: ts.Filepath,
+		}
+
+		for _, tc := range ts.TestCases {
+			switch tc.Status {
+			case StatusFail:
+				tsXML.Errors++
+			case StatusSkip:
+				tsXML.Skipped++
+			}
+			tsXML.Total++
+
+			failuresXML := []FailureXML{}
+			systemout := InnerResult{}
+			systemerr := InnerResult{}
+			for _, result := range tc.TestStepResults {
+				for _, failure := range result.Errors {
+					failuresXML = append(failuresXML, FailureXML{
+						Value: failure.Value,
+					})
+				}
+				systemout.Value += result.Systemout
+				systemerr.Value += result.Systemerr
+			}
+
+			tcXML := TestCaseXML{
+				Classname: ts.Filename,
+				Errors:    failuresXML,
+				Name:      tc.Name,
+				Skipped:   tc.Skipped,
+				Systemout: systemout,
+				Systemerr: systemerr,
+				Time:      tc.Duration,
+			}
+			tsXML.TestCases = append(tsXML.TestCases, tcXML)
+		}
+		testsXML.TestSuites = append(testsXML.TestSuites, tsXML)
+	}
+
+	dataxml, errm := xml.MarshalIndent(testsXML, "", "  ")
+	if errm != nil {
+		log.Fatalf("Error: cannot format xml output: %s", errm)
+	}
+	data := append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
+
+	return data, nil
 }

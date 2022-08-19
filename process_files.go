@@ -117,10 +117,21 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			return err
 		}
 
-		var ts TestSuite
-		if err := yaml.Unmarshal([]byte(content), &ts); err != nil {
+		var testSuiteInput TestSuiteInput
+		if err := yaml.Unmarshal([]byte(content), &testSuiteInput); err != nil {
 			Error(context.Background(), "file content: %s", content)
 			return errors.Wrapf(err, "error while unmarshal file %q", f)
+		}
+
+		ts := TestSuite{
+			Name:      testSuiteInput.Name,
+			TestCases: make([]TestCase, len(testSuiteInput.TestCases)),
+			Vars:      testSuiteInput.Vars,
+		}
+		for i := range testSuiteInput.TestCases {
+			ts.TestCases[i] = TestCase{
+				TestCaseInput: testSuiteInput.TestCases[i],
+			}
 		}
 
 		// Default workdir is testsuite directory
@@ -129,7 +140,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			return errors.Wrapf(err, "Unable to get testsuite's working directory")
 		}
 
-		ts.Package = f
+		ts.Filepath = f
 		ts.Filename = strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
 		ts.Vars = varCloned
 
@@ -139,16 +150,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		ts.Vars.Add("venom.datetime", time.Now().Format(time.RFC3339))
 		ts.Vars.Add("venom.timestamp", fmt.Sprintf("%d", time.Now().Unix()))
 
-		nSteps := 0
-		for _, tc := range ts.TestCases {
-			nSteps += len(tc.testSteps)
-			if len(tc.Skipped) >= 1 {
-				ts.Skipped += len(tc.Skipped)
-			}
-		}
-		ts.Total = len(ts.TestCases)
-
-		v.testsuites = append(v.testsuites, ts)
+		v.Tests.TestSuites = append(v.Tests.TestSuites, ts)
 	}
 	return nil
 }

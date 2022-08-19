@@ -53,8 +53,8 @@ type Venom struct {
 	executorsUser     map[string]Executor
 	executorFileCache map[string][]byte
 
-	testsuites []TestSuite
-	variables  H
+	Tests     Tests
+	variables H
 
 	LibDir        string
 	OutputFormat  string
