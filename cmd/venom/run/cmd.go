@@ -32,7 +32,7 @@ var (
 	outputDir     string
 	libDir        string
 	stopOnFailure bool
-	verbose       int = 1 // Set the default value for verboseFlag
+	verbose       int = 0 // Set the default value for verboseFlag
 
 	variablesFlag     *[]string
 	formatFlag        *string
