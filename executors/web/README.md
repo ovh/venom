@@ -336,7 +336,12 @@ testcases:
         url: https://www.google.fr
     assertions:
     - result.title ShouldEqual Google
-    - result.url ShouldEqual https://www.google.fr
+    - result.url ShouldEqual https://www.google.fr/
+  - type: web
+    action:
+      click:
+        find: "#L2AGLb > .QS5gu.sy4vM"
+        wait: 1
   - type: web
     action:
       find: input[name="q"]
@@ -350,8 +355,7 @@ testcases:
   - type: web
     action:
       click:
-        find: input[value="Recherche Google"]
+        find: .FPdoLc.lJ9FBc input[value="Recherche Google"]
         wait: 1
     screenshot: googlesearch.png
-
 ```
