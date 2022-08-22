@@ -19,7 +19,7 @@ testcases:
   steps:
   # spawn a venom sub-process and expect it to fail 
   - type: exec
-    script: '{{.venom.executable}} run failing/retry_if.yml'
+    script: './venom run failing/retry_if.yml'
     assertions:
       - result.code ShouldEqual 2
       - result.systemerr ShouldBeEmpty

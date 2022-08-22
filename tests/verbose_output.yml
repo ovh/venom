@@ -5,8 +5,8 @@ testcases:
   # spawn a venom sub-process and expect it to fail and make assertions on its error messages
   # ensure no color to avoid annoying checks
   - type: exec
-    script: NO_COLOR=1 {{.venom.executable}} run failing/verbose_output.yml {{.value.opt}}
-    info: NO_COLOR=1 {{.venom.executable}} run failing/verbose_output.yml {{.value.opt}}
+    script: NO_COLOR=1 ./venom run failing/verbose_output.yml {{.value.opt}}
+    info: NO_COLOR=1 ./venom run failing/verbose_output.yml {{.value.opt}}
     range:
       verbose:
         opt: "-vv"
