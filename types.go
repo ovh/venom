@@ -113,6 +113,7 @@ type TestSuite struct {
 	Vars      H          `json:"vars" yaml:"vars"`
 
 	// computed
+	ShortName    string `json:"shortname" yaml:"-"`
 	Filename     string `json:"filename" yaml:"-"`
 	Filepath     string `json:"filepath" yaml:"-"`
 	ComputedVars H      `json:"computed_vars" yaml:"-"`

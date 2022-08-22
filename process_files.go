@@ -140,13 +140,19 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			return errors.Wrapf(err, "Unable to get testsuite's working directory")
 		}
 
+		// ../foo/a.yml
 		ts.Filepath = f
-		ts.Filename = strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
+		// a
+		ts.ShortName = strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
+		// a.yml
+		ts.Filename = filepath.Base(f)
 		ts.Vars = varCloned
 
 		ts.Vars.Add("venom.testsuite.workdir", ts.WorkDir)
-		ts.Vars.Add("venom.testsuite.shortName", ts.Name)
+		ts.Vars.Add("venom.testsuite.name", ts.Name)
+		ts.Vars.Add("venom.testsuite.shortName", ts.ShortName)
 		ts.Vars.Add("venom.testsuite.filename", ts.Filename)
+		ts.Vars.Add("venom.testsuite.filepath", ts.Filepath)
 		ts.Vars.Add("venom.datetime", time.Now().Format(time.RFC3339))
 		ts.Vars.Add("venom.timestamp", fmt.Sprintf("%d", time.Now().Unix()))
 

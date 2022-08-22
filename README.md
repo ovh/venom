@@ -573,7 +573,9 @@ Builtin variables:
 * {{.venom.outputdir}}
 * {{.venom.testcase}}
 * {{.venom.teststep.number}}
+* {{.venom.testsuite.name}}
 * {{.venom.testsuite.filename}}
+* {{.venom.testsuite.filepath}}
 * {{.venom.testsuite.shortName}}
 * {{.venom.testsuite.workdir}}
 * {{.venom.testsuite}}
