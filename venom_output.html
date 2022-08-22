@@ -129,10 +129,30 @@
       <div class="p-3 col-md-11">
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 id="testsuite" class="h2"></h1>
+        <div id="testsuite-badges"></div>
       </div>
       <div id="testsuite_infos"></div>
+
       <div id="testcases">        
       </div>
+
+      <!-- Modal -->
+      <div class="modal fade" id="varsModal" tabindex="-1" aria-labelledby="varsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="varsModalLabel">Test Suite Variables</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="testsuite-vars">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       </div>
     </main>
   </div>
@@ -142,7 +162,7 @@
     'use strict'
     $(document).ready( function () {
       var a = {{.JSONValue}};
-      
+
       var nb = 0;
       var testsuites = "";
       for (var i = 0; i < a.test_suites.length; i++) { 
@@ -152,20 +172,33 @@
         nb++;
       }
 
-      var testsuiteDisplay = '<p class="fs-5 fw-semibold" id="title-nav-testsuites">Tests Suites: '+nb+'</p>';
-      testsuiteDisplay += '<ul>';
+      
+
+      var infob = '';
       if (a.nbTestsuitesFail > 0) {
-        var badge = '<span class="badge text-bg-danger">'+a.nbTestsuitesFail+' FAIL</span>';
-        testsuiteDisplay += '<li>'+badge+'</li>';
+        var badge = '<span class="badge text-bg-danger">'+a.nbTestsuitesFail+' FAILED</span>';
+        infob += badge;
       }
       if (a.nbTestsuitesPass > 0) {
-        var badge = '<span class="badge text-bg-success">'+a.nbTestsuitesPass+' PASS</span>';
-        testsuiteDisplay += '<li>'+badge+'</li>';
+        var badge = '<span class="badge text-bg-success">'+a.nbTestsuitesPass+' PASSED</span>';
+        infob += badge;
       }
       if (a.nbTestsuitesSkip > 0) {
-        var badge = '<span class="badge text-bg-secondary">'+a.nbTestsuitesSkip+' SKIP</span>';
-        testsuiteDisplay += '<li>'+badge+'</li>';
+        var badge = '<span class="badge text-bg-secondary">'+a.nbTestsuitesSkip+' SKIPPED</span>';
+        infob += badge;
       }
+      var testsuiteDisplay = '';
+      
+      testsuiteDisplay = '<div class="">';
+      testsuiteDisplay = '<div class="fs-5 fw-semibold">';
+      testsuiteDisplay += 'Tests Suites';
+      testsuiteDisplay += '</div>';
+      testsuiteDisplay += '<small>'+infob+'</small>';
+      testsuiteDisplay += '</div>';
+      
+
+      testsuiteDisplay += '<ul>';
+
       testsuiteDisplay += '<li>Duration: <code class="nt">'+parseFloat(a.duration).toFixed(2)+'s</code></li>';
       testsuiteDisplay += '<li>Start: <code class="nt">'+ToLocaleString(a.start)+'</code></li>';
       testsuiteDisplay += '<li>End: <code class="nt">'+ToLocaleString(a.end)+'</code></li>';
@@ -173,24 +206,13 @@
 
       $('#title-nav-testsuites').html(testsuiteDisplay);
       $('#testsuites').html(testsuites)
-      
+
       $('#testsuites li').on('click', function () {
         var data = a.test_suites[this.id];
 
         var info = "";
         info += '<ul>'
-        if (data.nbTestcasesFail > 0) {
-          var badge = '<span class="badge text-bg-danger">'+data.nbTestcasesFail+' FAIL</span>';
-          info += '<li>'+badge+'</li>';
-        }
-        if (data.nbTestcasesPass > 0) {
-          var badge = '<span class="badge text-bg-success">'+data.nbTestcasesPass+' PASS</span>';
-          info += '<li>'+badge+'</li>';
-        }
-        if (data.nbTestcasesSkip > 0) {
-          var badge = '<span class="badge text-bg-secondary">'+data.nbTestcasesSkip+' SKIP</span>';
-          info += '<li>'+badge+'</li>';
-        }
+        
         info += '<li>Filepath: <code class="nt">'+data.filepath+'</code></li>';
         info += '<li>Workdir: <code class="nt">'+data.workdir+'</code></li>';
         info += '<li>Duration: <code class="nt">'+parseFloat(data.duration).toFixed(2)+'s</code></li>';
@@ -202,9 +224,33 @@
           info += '<li>Testcases: 0</li>';
         }
 
+        if (data.vars) {
+          info += '<li>Variables: ';
+          info += '<a href="#" data-bs-toggle="modal" data-bs-target="#varsModal">';
+          info += Object.keys(data.vars).length;
+          info += '</li>';
+          $('#testsuite-vars').html("<pre>"+YAML.stringify(data.vars)+"</pre>")
+        }
+
         info += '</ul>';
         $('#testsuite_infos').html(info);
-        $('#testsuite').html("testsuite " + data.name);
+
+        var infob = "";
+        if (data.nbTestcasesFail > 0) {
+          var badge = '<span class="badge text-bg-danger">'+data.nbTestcasesFail+' FAILED</span>';
+          infob += badge;
+        }
+        if (data.nbTestcasesPass > 0) {
+          var badge = '<span class="badge text-bg-success">'+data.nbTestcasesPass+' PASSED</span>';
+          infob += badge;
+        }
+        if (data.nbTestcasesSkip > 0) {
+          var badge = '<span class="badge text-bg-secondary">'+data.nbTestcasesSkip+' SKIPPED</span>';
+          infob += badge;
+        }
+
+        $('#testsuite').html(data.name);
+        $('#testsuite-badges').html(infob);
         middletestsuite(i, data);
       });
     });
@@ -291,70 +337,112 @@
         if (testcase.results) {
           for (var j = 0; j < testcase.results.length; j++) {
             var result = testcase.results[j];
-            var badgeR = '<span class="badge rounded-pill float-right text-bg-'+colorStatus(result.status)+'" title="'+colorStatus(result.status)+'">'+result.status+'</span>';
+            var badgeR = '<span class="badge rounded-pill text-bg-'+colorStatus(result.status)+'" title="'+colorStatus(result.status)+'">'+result.status+'</span>';
 
-            r += '<li class="list-group-item"><p>';
-            r += '<p>step '+(result.number+1)+': '+result.name ;
+            r += '<ul class="nav nav-tabs">';
+            r += '<li class="nav-item">';
+            r += '<a class="nav-link disabled">step '+(result.number+1)+': '+result.name + ' <code>'+parseFloat(result.duration).toFixed(2)+'s</code> ';
             r +=  badgeR;
-            r += '</p>';
+            r +=  '</a>';
+            r += '</li>';
 
+            if (result.errors && result.errors !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#errors-'+i+''+j+'")>Errors</a>';
+              r += '</li>';
+            }
             if (result.raw && result.raw !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#raw-'+i+''+j+'">Raw</button>';
-              r += '<div id="raw-'+i+''+j+'" class="collapse">';
-              r += '  <pre>'+decodeURIComponent(escape(atob(result.raw)))+'</pre>';
-              r += '</div>';
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#raw-'+i+''+j+'")>Raw</a>';
+              r += '</li>';
             }
             if (result.interpolated && result.interpolated !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#interpolated-'+i+''+j+'">Raw Interpolated</button>';
-              r += '<div id="interpolated-'+i+''+j+'" class="collapse">';
-              r += '  <pre>'+decodeURIComponent(escape(atob(result.interpolated)))+'</pre>';
-              r += '</div>';
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#interpolated-'+i+''+j+'")>Raw Interpolated</a>';
+              r += '</li>';
             }
             if (result.computedInfos && result.computedInfos !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#computedInfos-'+i+''+j+'">Computed Infos</button>';
-              r += '<div id="computedInfos-'+i+''+j+'" class="collapse show"><ul>';
-              for (var k = 0; k < result.computedInfos.length; k++) {
-                r += '<li><span class="badge rounded-pill text-bg-info" title="info">Info</span>';
-                r += ' <code class="nt">'+result.computedInfos[k]+'</code></li>';
-              }
-              r += '</ul></div>';
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#computedInfos-'+i+''+j+'")>Computed Infos</a>';
+              r += '</li>';
             }
-            if (result.errors && result.errors !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#errors-'+i+''+j+'">Errors</button>';
-              r += '<div id="errors-'+i+''+j+'" class="collapse show"><ul>';
+            if (result.systemout && result.systemout !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#systemout-'+i+''+j+'")>System Out</a>';
+              r += '</li>';
+            }
+            if (result.systemerr && result.systemerr !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#systemerr-'+i+''+j+'")>System Err</a>';
+              r += '</li>';
+            }
+            if (result.inputVars && result.inputVars !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#inputVars-'+i+''+j+'")>Input Vars</a>';
+              r += '</li>';
+            }
+            if (result.computedVars && result.computedVars !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#computedVars-'+i+''+j+'")>Computed Vars</a>';
+              r += '</li>';
+            }
+            if (result.assertionsApplied && result.assertionsApplied.assertions && result.assertionsApplied.assertions.length > 0) {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#assertionsApplied-'+i+''+j+'")>Assertions applied Infos</a>';
+              r += '</li>';
+            }
+
+            r += '</ul>';
+
+            if (result.errors) {
+              r += '<div id="errors-'+i+''+j+'" class="collapse multi-collapse p-3"><ul>';
               for (var k = 0; k < result.errors.length; k++) {
                 r += '<li><span class="badge rounded-pill text-bg-danger" title="info">FAIL</span>';
                 r += ' <code class="nt">'+result.errors[k].value+'</code></li>';
               }
               r += '</ul></div>';
             }
+
+            if (result.raw && result.raw !== '') {
+              r += '<div id="raw-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+decodeURIComponent(escape(atob(result.raw)))+'</pre>';
+              r += '</div>';
+            }
+            if (result.interpolated && result.interpolated !== '') {
+              r += '<div id="interpolated-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+decodeURIComponent(escape(atob(result.interpolated)))+'</pre>';
+              r += '</div>';
+            }
+            if (result.computedInfos && result.computedInfos !== '') {
+              r += '<div id="computedInfos-'+i+''+j+'" class="collapse multi-collapse p-3"><ul>';
+              for (var k = 0; k < result.computedInfos.length; k++) {
+                r += '<li><span class="badge rounded-pill text-bg-info" title="info">Info</span>';
+                r += ' <code class="nt">'+result.computedInfos[k]+'</code></li>';
+              }
+              r += '</ul></div>';
+            }
             if (result.systemout && result.systemout !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#systemout-'+i+''+j+'">System Out</button>';
-              r += '<div id="systemout-'+i+''+j+'" class="collapse">';
+              r += '<div id="systemout-'+i+''+j+'" class="collapse multi-collapse p-3">';
               r += '  <pre>'+YAML.stringify(result.systemout)+'</pre>';
               r += '</div>';
             }
             if (result.systemerr && result.systemerr !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#systemerr-'+i+''+j+'">System Err</button>';
-              r += '<div id="systemerr-'+i+''+j+'" class="collapse">';
+              r += '<div id="systemerr-'+i+''+j+'" class="collapse multi-collapse p-3">';
               r += '  <pre>'+YAML.stringify(result.systemerr)+'</pre>';
               r += '</div>';
             }
             if (result.inputVars && result.inputVars !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#inputVars-'+i+''+j+'">Input Vars</button>';
-              r += '<div id="inputVars-'+i+''+j+'" class="collapse">';
+              r += '<div id="inputVars-'+i+''+j+'" class="collapse multi-collapse p-3">';
               r += '  <pre>'+YAML.stringify(result.inputVars)+'</pre>';
               r += '</div>';
             }
             if (result.computedVars && result.computedVars !== '') {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#computedVars-'+i+''+j+'">Computed Vars</button>';
-              r += '<div id="computedVars-'+i+''+j+'" class="collapse">';
+              r += '<div id="computedVars-'+i+''+j+'" class="collapse multi-collapse p-3">';
               r += '  <pre>'+YAML.stringify(result.computedVars)+'</pre>';
               r += '</div>';
             }
             if (result.assertionsApplied && result.assertionsApplied.assertions && result.assertionsApplied.assertions.length > 0) {
-              r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#assertionsApplied-'+i+''+j+'">Assertions applied Infos</button>';
-              r += '<div id="assertionsApplied-'+i+''+j+'" class="collapse"><ul>';
+              r += '<div id="assertionsApplied-'+i+''+j+'" class="collapse multi-collapse p-3"><ul>';
               for (var k = 0; k < result.assertionsApplied.assertions.length; k++) {
                 var assertionStatus = "PASS";
                 if (result.assertionsApplied.assertions[k].isOK !== true) {
@@ -366,11 +454,6 @@
               }
               r += '</ul></div>';
             }
-
-            r += '</p><small class="text-muted">'+parseFloat(result.duration).toFixed(2)+'s';
-            r += ' - start:'+ToLocaleString(result.start);
-            r += ' - end:'+ToLocaleString(result.end);
-            r += '</small>';
 
             r += '</li>';
           }
@@ -390,6 +473,11 @@
       var cards = '<div class="">'+testcases+'</div>';
       $('#testcases').html(cards);
     }
+  }
+
+  function toggle(id) {
+    $(".multi-collapse").hide();
+    $(id).show();
   }
 
   function dis(id, value, sing, plu) {
