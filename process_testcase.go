@@ -179,10 +179,6 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		stepVars.Add("venom.teststep.number", stepNumber)
 
-		//testStepResult := TestStepResult{}
-		//tc.TestStepResults = append(tc.TestStepResults, testStepResult)
-		//tsIn := &tc.TestStepResults[len(tc.TestStepResults)-1]
-
 		ranged, err := parseRanged(ctx, rawStep, stepVars)
 		if err != nil {
 			Error(ctx, "unable to parse \"range\" attribute: %v", err)
