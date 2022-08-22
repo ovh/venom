@@ -322,7 +322,6 @@ var Cmd = &cobra.Command{
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
-			return err
 		}
 
 		if v.Verbose == 3 {
@@ -360,7 +359,8 @@ var Cmd = &cobra.Command{
 
 		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			venom.OSExit(2)
 		}
 		v.AddVariables(mapvars)
 
