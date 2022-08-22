@@ -70,7 +70,7 @@ stop-test-stack:
 build-test-binary:
 	cd ../cmd/venom; \
 	TEMP=`$(PKGS_COMMA_SEP)`; \
-	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -ldflags "-X github.com/ovh/venom.IsTest=true" -tags testbincover;
+	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -tags testbincover;
 
 build-test-binary-docker:
 	docker run -v `pwd`/..:/workspace golang:1.17 sh -c "cd /workspace/tests && make build-test-binary"	
