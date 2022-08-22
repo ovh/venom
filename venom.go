@@ -13,7 +13,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -29,11 +28,11 @@ var (
 )
 
 func OSExit(exitCode int) {
-	if IsTest != "" {
-		bincover.ExitCode = exitCode
-	} else {
-		os.Exit(exitCode)
-	}
+	// if IsTest != "" {
+	// 	bincover.ExitCode = exitCode
+	// } else {
+	os.Exit(exitCode)
+	//}
 }
 
 // ContextKey can be added in context to store contextual infos. Also used by logger.
