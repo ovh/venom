@@ -25,11 +25,11 @@ import (
 var (
 	//Version is set with -ldflags "-X github.com/ovh/venom/venom.Version=$(VERSION)"
 	Version = "snapshot"
-	IsTest  = false
+	IsTest  = ""
 )
 
 func OSExit(exitCode int) {
-	if IsTest {
+	if IsTest != "" {
 		bincover.ExitCode = exitCode
 	} else {
 		os.Exit(exitCode)
