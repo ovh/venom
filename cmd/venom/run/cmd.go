@@ -57,12 +57,12 @@ func initArgs(cmd *cobra.Command) {
 	// Configuration file overrides the environment variables.
 	if _, err := initFromEnv(os.Environ()); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(2)
+		venom.OSExit(2)
 	}
 
 	if err := initFromConfigFile(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(2)
+		venom.OSExit(2)
 	}
 	cmd.LocalFlags().VisitAll(initFromCommandArguments)
 }
@@ -321,7 +321,7 @@ var Cmd = &cobra.Command{
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
+			venom.OSExit(2)
 			return err
 		}
 
@@ -366,28 +366,25 @@ var Cmd = &cobra.Command{
 
 		if err := v.Parse(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
-			return err
+			venom.OSExit(2)
 		}
 
 		if err := v.Process(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
-			return err
+			venom.OSExit(2)
 		}
 
 		if err := v.OutputResult(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(2)
-			return err
+			venom.OSExit(2)
 		}
 
 		if v.Tests.Status == venom.StatusPass {
 			fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Green(v.Tests.Status))
-			os.Exit(0)
+			venom.OSExit(0)
 		}
 		fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Red(v.Tests.Status))
-		os.Exit(2)
+		venom.OSExit(2)
 
 		return nil
 	},
