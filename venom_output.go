@@ -172,8 +172,8 @@ func outputXMLFormat(tests Tests) ([]byte, error) {
 						Value: failure.Value,
 					})
 				}
-				systemout.Value += result.Systemout
-				systemerr.Value += result.Systemerr
+				systemout.Value += result.Systemout + "\n"
+				systemerr.Value += result.Systemerr + "\n"
 			}
 
 			tcXML := TestCaseXML{
