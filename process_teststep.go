@@ -131,8 +131,8 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		tsResult.appendFailure(assertRes.errors...)
 	}
 
-	tsResult.Systemerr += assertRes.systemerr
-	tsResult.Systemout += assertRes.systemout
+	tsResult.Systemerr += assertRes.systemerr + "\n"
+	tsResult.Systemout += assertRes.systemout + "\n"
 
 	return result
 }
