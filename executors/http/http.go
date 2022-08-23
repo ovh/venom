@@ -238,7 +238,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	requestContentType := r.Request.Header.Get("Content-Type")
-	if !isContentTypeSupported(requestContentType) {
+	// if PreserveBodyFile == true, the body is not interpolated.
+	// So, no need to keep it in request here (to re-inject it in vars)
+	// this will avoid to be interpolated after in vars too.
+	if e.PreserveBodyFile || !isContentTypeSupported(requestContentType) {
 		r.Request.Body = ""
 	}
 
