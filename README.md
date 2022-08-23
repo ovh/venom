@@ -145,6 +145,7 @@ Examples:
   Run all testsuites containing in files ending with *.yml or *.yaml: venom run
   Run a single testsuite: venom run mytestfile.yml
   Run a single testsuite and export the result in JSON format in test/ folder: venom run mytestfile.yml --format=json --output-dir=test
+  Run a single testsuite and export the result in XML and HTML formats in test/ folder: venom run mytestfile.yml --format=xml,html --output-dir=test
   Run a single testsuite and specify a variable: venom run mytestfile.yml --var="foo=bar"
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
   Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
@@ -154,7 +155,7 @@ Examples:
   More info: https://github.com/ovh/venom
 
 Flags:
-      --format string           --format:yaml, json, xml, tap (default "xml")
+      --format string           --format:html, json, tap, xml, yaml (default "xml")
   -h, --help                    help for run
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
@@ -228,7 +229,7 @@ List of available flags for `venom run` command:
 
 ```
 Flags:
-      --format string           --format:yaml, json, xml, tap (default "xml")
+      --format string           --format:html, json, tap, xml, yaml (default "xml")
   -h, --help                    help for run
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
@@ -572,7 +573,9 @@ Builtin variables:
 * {{.venom.outputdir}}
 * {{.venom.testcase}}
 * {{.venom.teststep.number}}
+* {{.venom.testsuite.name}}
 * {{.venom.testsuite.filename}}
+* {{.venom.testsuite.filepath}}
 * {{.venom.testsuite.shortName}}
 * {{.venom.testsuite.workdir}}
 * {{.venom.testsuite}}
@@ -716,6 +719,9 @@ You can specify the output directory with the `--output-dir` flag and the format
 
 ```bash
 $ venom run --format=xml --output-dir="."
+
+# xml and html export
+$ venom run --format=xml,html --output-dir="."
 ```
 
 Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see results run after run.
@@ -724,10 +730,13 @@ Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in
 
 ## Debug your testsuites
 
+A *venom.log* file is generated for each `venom run` command.
+
 There are two ways to debug a testsuite:
  - use `-v` flag on venom binary.
-   - `$ venom run -v test.yml` will output a *venom.log* file
-   - `$ venom run -vv test.yml` will output a *venom.log* and *dump.json* files for each teststep.
+   - `$ venom run -v test.yml` will output details for each step
+   - `$ venom run -vv test.yml` will generate *dump.json* files for each teststep.
+   - `$ venom run -vvv test.yml` will generate *pprof* files for CPU profiling.
  - use `info` keyword in your teststep:
 `test.yml` file:
 ```yml

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Venom Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/yamljs/0.3.0/yaml.min.js"></script>
+    <style>
+      
+    @media (min-width: 768px) {
+      .bd-placeholder-img-lg {
+        font-size: 3.5rem;
+      }
+    }
+    
+    .bi {
+      vertical-align: -.125em;
+      fill: currentColor;
+    }
+    .nav-scroller {
+      position: relative;
+      z-index: 2;
+      height: 2.75rem;
+      overflow-y: hidden;
+    }
+    .nav-scroller .nav {
+      display: flex;
+      flex-wrap: nowrap;
+      padding-bottom: 1rem;
+      margin-top: -1px;
+      overflow-x: auto;
+      text-align: center;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    body {
+      font-size: .875rem;
+    }
+    
+    .feather {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .sidebar {
+      position: fixed;
+      top: 0;
+      /* rtl:raw:
+      right: 0;
+      */
+      bottom: 0;
+      /* rtl:remove */
+      left: 0;
+      z-index: 100; /* Behind the navbar */
+      padding: 48px 0 0; /* Height of navbar */
+    }
+    
+    @media (max-width: 767.98px) {
+      .sidebar {
+        top: 5rem;
+      }
+    }
+    
+    .b-divider {
+      height: 3rem;
+      background-color: rgba(0, 0, 0, .1);
+      border: solid rgba(0, 0, 0, .15);
+      border-width: 1px 0;
+      box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+    }
+
+    .b-vr {
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 100vh;
+    }
+
+    .sidebar-sticky {
+      height: calc(100vh - 48px);
+      overflow-x: hidden;
+      overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    }
+    
+    .start-97 {
+      left: 5%!important;
+    }
+
+    .nt {
+      color: rgb(33,37,41);
+    }
+    
+    .navbar-brand {
+      padding-top: .75rem;
+      padding-bottom: .75rem;
+    }
+    
+    .float-right {
+      float: right!important;
+    }
+
+    .testsuites li {
+      cursor:pointer;
+    }
+  </style>
+  </head>
+<body>
+    
+<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="#">🐍 Venom</a>
+  <div class="navbar-nav">
+  </div>
+</header>
+<div class="container-fluid">
+  <div class="row">
+    <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-withe sidebar">
+      <div class="position-sticky pt-3 sidebar-sticky">
+        <div class="align-items-center flex-shrink-0 p-3 link-dark text-decoration-none border-bottom" id="title-nav-testsuites">
+        </div>
+        <ul class="list-group list-group-flush border-bottom scrollarea testsuites" id="testsuites">
+        </ul>
+      </div>
+    </nav>
+
+    <main class="d-flex flex-nowrap col-md-9 ms-sm-auto col-lg-10 px-md-0">
+      <div class="b-divider b-vr"></div>
+      <div class="p-3 col-md-11">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1 id="testsuite" class="h2"></h1>
+          <div id="testsuite-badges"></div>
+        </div>
+        <div id="testsuite_infos"></div>
+
+        <div id="testcases">        
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="varsModal" tabindex="-1" aria-labelledby="varsModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="varsModalLabel">Test Suite Variables</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body" id="testsuite-vars">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+  (() => {
+    'use strict'
+    $(document).ready( function () {
+      var a = {{.JSONValue}};
+
+      var nb = 0;
+      var testsuites = "";
+      for (var i = 0; i < a.test_suites.length; i++) { 
+        if (a.test_suites[i]) {
+          testsuites += navbartestsuite(i, a.test_suites[i]); 
+        }
+        nb++;
+      }
+
+      var infob = '';
+      if (a.nbTestsuitesFail > 0) {
+        var badge = '<span class="badge text-bg-danger">'+a.nbTestsuitesFail+' FAILED</span>';
+        infob += badge;
+      }
+      if (a.nbTestsuitesPass > 0) {
+        var badge = '<span class="badge text-bg-success">'+a.nbTestsuitesPass+' PASSED</span>';
+        infob += badge;
+      }
+      if (a.nbTestsuitesSkip > 0) {
+        var badge = '<span class="badge text-bg-secondary">'+a.nbTestsuitesSkip+' SKIPPED</span>';
+        infob += badge;
+      }
+      var testsuiteDisplay = '';
+      
+      testsuiteDisplay = '<div class="">';
+      testsuiteDisplay = '<div class="fs-5 fw-semibold">';
+      testsuiteDisplay += 'Tests Suites';
+      testsuiteDisplay += '</div>';
+      testsuiteDisplay += '<small>'+infob+'</small>';
+      testsuiteDisplay += '</div>';
+      
+
+      testsuiteDisplay += '<ul>';
+
+      testsuiteDisplay += '<li>Duration: <code class="nt">'+parseFloat(a.duration).toFixed(2)+'s</code></li>';
+      testsuiteDisplay += '<li>Start: <code class="nt">'+ToLocaleString(a.start)+'</code></li>';
+      testsuiteDisplay += '<li>End: <code class="nt">'+ToLocaleString(a.end)+'</code></li>';
+      testsuiteDisplay += '</ul>';
+
+      $('#title-nav-testsuites').html(testsuiteDisplay);
+      $('#testsuites').html(testsuites)
+
+      $('#testsuites li').on('click', function () {
+        var data = a.test_suites[this.id];
+
+        var info = "";
+        info += '<ul>'
+        
+        info += '<li>Filepath: <code class="nt">'+data.filepath+'</code></li>';
+        info += '<li>Workdir: <code class="nt">'+data.workdir+'</code></li>';
+        info += '<li>Duration: <code class="nt">'+parseFloat(data.duration).toFixed(2)+'s</code></li>';
+        info += '<li>Start: <code class="nt">'+ToLocaleString(data.start)+'</code></li>';
+        info += '<li>End: <code class="nt">'+ToLocaleString(data.end)+'</code></li>';
+        if (data.testcases) {
+          info += '<li>Testcases: <code class="nt">'+data.testcases.length+'</code></li>';
+        } else {
+          info += '<li>Testcases: 0</li>';
+        }
+
+        if (data.vars) {
+          info += '<li>Variables: ';
+          info += '<a href="#" data-bs-toggle="modal" data-bs-target="#varsModal">';
+          info += Object.keys(data.vars).length;
+          info += '</li>';
+          $('#testsuite-vars').html("<pre>"+YAML.stringify(data.vars)+"</pre>")
+        }
+
+        info += '</ul>';
+        $('#testsuite_infos').html(info);
+
+        var infob = "";
+        if (data.nbTestcasesFail > 0) {
+          var badge = '<span class="badge text-bg-danger">'+data.nbTestcasesFail+' FAILED</span>';
+          infob += badge;
+        }
+        if (data.nbTestcasesPass > 0) {
+          var badge = '<span class="badge text-bg-success">'+data.nbTestcasesPass+' PASSED</span>';
+          infob += badge;
+        }
+        if (data.nbTestcasesSkip > 0) {
+          var badge = '<span class="badge text-bg-secondary">'+data.nbTestcasesSkip+' SKIPPED</span>';
+          infob += badge;
+        }
+
+        $('#testsuite').html(data.name);
+        $('#testsuite-badges').html(infob);
+        middletestsuite(i, data);
+      });
+    });
+  })()
+
+  function ToLocaleString(dateTime) {
+    var date = Date.parse(dateTime);
+    var d = new Date(date)
+    return d.toLocaleString();
+  }
+
+  function navbartestsuite(idx, testsuite) {
+    var badges = '<span class="badge rounded-pill float-right text-bg-'+colorStatus(testsuite.status)+'" title="'+colorStatus(testsuite.status)+'">'+testsuite.status+'</span>';
+    var name = testsuite.name;
+    if (name === '') {
+      name = "N/A";
+    }
+    
+    var r = '<li class="list-group-item list-group-item-action py-3 lh-sm" id="'+idx+'">';
+
+    r += '<div class="d-flex w-100 align-items-center justify-content-between">';
+    r += '<strong class="mb-1">'+name+'</strong>';
+    
+    r += '<small>'+badges+'</small>';
+
+    r += '<span class="position-absolute top-0 translate-middle rounded-pill text-bg-light start-97">';
+    r += '<small>'+(idx+1)+'</small>';
+    r += '</span>';
+
+    r += '</div>';
+
+    r += '<div class="col-10 mb-1 small">'+parseFloat(testsuite.duration).toFixed(2)+'s</div>';
+
+    r += '</li>';
+    return r;
+  }
+
+  function colorStatus(status) {
+    switch (status) {
+    case "PASS":
+        return "success";
+        break;
+    case "RUN":
+        return "primary";
+        break;
+    case "FAIL":
+        return "danger";
+        break;
+    case "SKIP":
+        return "secondary";
+        break;
+    }
+  }
+
+  function middletestsuite(idx, testsuite) {
+    $('#testcases').html('');
+    if (testsuite.testcases) {
+      var testcases = "";
+      for (var i = 0; i < testsuite.testcases.length; i++) {
+        var testcase = testsuite.testcases[i];
+       
+        var r = "";
+        var status = colorStatus(testcase.status);
+        var badgeTC = '<span class="badge rounded-pill float-right text-bg-'+colorStatus(testsuite.status)+'" title="'+colorStatus(testsuite.status)+'">'+testsuite.status+'</span>';
+
+        var border = "border-"+status;
+
+        r += '<div class="card bg-light mb-3 w-100 '+border+'" style="width: 18rem;">';
+        r += '  <div class="card-header bg-transparent '+border+' text-'+status+'">';
+        r += '   testcase: '+testcase.name+' '+badgeTC;
+        r += '  </div>';
+        r += '  <ul class="list-group list-group-flush">';
+
+        if (testcase.skipped && testcase.skipped.length > 0) {
+          r += '<button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#skipped-'+i+''+j+'">Skipped Info</button>';
+          r += '<div id="skipped-'+i+''+j+'" class="collapse show"><ul>';
+          for (var k = 0; k < testcase.skipped.length; k++) {
+            r += '<li><span class="badge rounded-pill text-bg-info" title="info">Info</span>';
+            r += ' <code class="nt">'+testcase.skipped[k].value+'</code></li>';
+          }
+          r += '</ul></div>';
+        }
+
+        if (testcase.results) {
+          for (var j = 0; j < testcase.results.length; j++) {
+            var result = testcase.results[j];
+            var badgeR = '<span class="badge rounded-pill text-bg-'+colorStatus(result.status)+'" title="'+colorStatus(result.status)+'">'+result.status+'</span>';
+
+            r += '<ul class="nav nav-tabs">';
+            r += '<li class="nav-item">';
+            r += '<a class="nav-link disabled">step '+(result.number+1)+': '+result.name + ' <code>'+parseFloat(result.duration).toFixed(2)+'s</code> ';
+            r +=  badgeR;
+            r +=  '</a>';
+            r += '</li>';
+
+            if (result.errors && result.errors !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#errors-'+i+''+j+'")>Errors</a>';
+              r += '</li>';
+            }
+            if (result.raw && result.raw !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#raw-'+i+''+j+'")>Raw</a>';
+              r += '</li>';
+            }
+            if (result.interpolated && result.interpolated !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#interpolated-'+i+''+j+'")>Raw Interpolated</a>';
+              r += '</li>';
+            }
+            if (result.computedInfos && result.computedInfos !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#computedInfos-'+i+''+j+'")>Computed Infos</a>';
+              r += '</li>';
+            }
+            if (result.systemout && result.systemout !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#systemout-'+i+''+j+'")>System Out</a>';
+              r += '</li>';
+            }
+            if (result.systemerr && result.systemerr !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#systemerr-'+i+''+j+'")>System Err</a>';
+              r += '</li>';
+            }
+            if (result.inputVars && result.inputVars !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#inputVars-'+i+''+j+'")>Input Vars</a>';
+              r += '</li>';
+            }
+            if (result.computedVars && result.computedVars !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#computedVars-'+i+''+j+'")>Computed Vars</a>';
+              r += '</li>';
+            }
+            if (result.assertionsApplied && result.assertionsApplied.assertions && result.assertionsApplied.assertions.length > 0) {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#assertionsApplied-'+i+''+j+'")>Assertions applied Infos</a>';
+              r += '</li>';
+            }
+
+            r += '</ul>';
+
+            if (result.errors) {
+              r += '<div id="errors-'+i+''+j+'" class="collapse multi-collapse p-3"><ul>';
+              for (var k = 0; k < result.errors.length; k++) {
+                r += '<li><span class="badge rounded-pill text-bg-danger" title="info">FAIL</span>';
+                r += ' <code class="nt">'+result.errors[k].value+'</code></li>';
+              }
+              r += '</ul></div>';
+            }
+
+            if (result.raw && result.raw !== '') {
+              r += '<div id="raw-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+decodeURIComponent(escape(atob(result.raw)))+'</pre>';
+              r += '</div>';
+            }
+            if (result.interpolated && result.interpolated !== '') {
+              r += '<div id="interpolated-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+decodeURIComponent(escape(atob(result.interpolated)))+'</pre>';
+              r += '</div>';
+            }
+            if (result.computedInfos && result.computedInfos !== '') {
+              r += '<div id="computedInfos-'+i+''+j+'" class="collapse multi-collapse p-3"><ul>';
+              for (var k = 0; k < result.computedInfos.length; k++) {
+                r += '<li><span class="badge rounded-pill text-bg-info" title="info">Info</span>';
+                r += ' <code class="nt">'+result.computedInfos[k]+'</code></li>';
+              }
+              r += '</ul></div>';
+            }
+            if (result.systemout && result.systemout !== '') {
+              r += '<div id="systemout-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+YAML.stringify(result.systemout)+'</pre>';
+              r += '</div>';
+            }
+            if (result.systemerr && result.systemerr !== '') {
+              r += '<div id="systemerr-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+YAML.stringify(result.systemerr)+'</pre>';
+              r += '</div>';
+            }
+            if (result.inputVars && result.inputVars !== '') {
+              r += '<div id="inputVars-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+YAML.stringify(result.inputVars)+'</pre>';
+              r += '</div>';
+            }
+            if (result.computedVars && result.computedVars !== '') {
+              r += '<div id="computedVars-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <pre>'+YAML.stringify(result.computedVars)+'</pre>';
+              r += '</div>';
+            }
+            if (result.assertionsApplied && result.assertionsApplied.assertions && result.assertionsApplied.assertions.length > 0) {
+              r += '<div id="assertionsApplied-'+i+''+j+'" class="collapse multi-collapse p-3"><ul>';
+              for (var k = 0; k < result.assertionsApplied.assertions.length; k++) {
+                var assertionStatus = "PASS";
+                if (result.assertionsApplied.assertions[k].isOK !== true) {
+                  assertionStatus = "FAIL";
+                }
+                r += '<li><span class="badge rounded-pill text-bg-'+colorStatus(assertionStatus)+'" title="'+colorStatus(assertionStatus)+'">'+assertionStatus+'</span>';
+
+                r += ' <code class="nt">'+result.assertionsApplied.assertions[k].assertion+'</code></li>'; 
+              }
+              r += '</ul></div>';
+            }
+
+            r += '</li>';
+          }
+        }
+        r += '  </ul>';
+
+        r += '  <div class="card-footer '+border+'">';
+        r += '    <small class="text-muted">'+parseFloat(testcase.duration).toFixed(2)+'s';
+        r += ' - start:'+ToLocaleString(testcase.start);
+        r += ' - end:'+ToLocaleString(testcase.end);
+        r += '</small>';
+        r += '  </div>';
+
+        r += '</div>';
+        testcases += r;
+      }
+      var cards = '<div class="">'+testcases+'</div>';
+      $('#testcases').html(cards);
+    }
+  }
+
+  function toggle(id) {
+    $(".multi-collapse").hide();
+    $(id).show();
+  }
+
+  function dis(id, value, sing, plu) {
+    $(id).hide()
+    if (value == 1) {
+      $(id).html(value + " " + sing);
+      $(id).show()
+    } else if (value > 1) {
+        $(id).html(value + " " + plu);
+        $(id).show()
+    }
+  }
+  </script>  
+  </body>
+</html>

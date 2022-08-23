@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -24,7 +25,16 @@ import (
 var (
 	//Version is set with -ldflags "-X github.com/ovh/venom/venom.Version=$(VERSION)"
 	Version = "snapshot"
+	IsTest  = ""
 )
+
+func OSExit(exitCode int) {
+	if IsTest != "" {
+		bincover.ExitCode = exitCode
+	} else {
+		os.Exit(exitCode)
+	}
+}
 
 // ContextKey can be added in context to store contextual infos. Also used by logger.
 type ContextKey string
@@ -53,8 +63,8 @@ type Venom struct {
 	executorsUser     map[string]Executor
 	executorFileCache map[string][]byte
 
-	testsuites []TestSuite
-	variables  H
+	Tests     Tests
+	variables H
 
 	LibDir        string
 	OutputFormat  string

@@ -5,7 +5,8 @@ testcases:
   # spawn a venom sub-process and expect it to fail and make assertions on its error messages
   # ensure no color to avoid annoying checks
   - type: exec
-    script: NO_COLOR=1 {{.venom.executable}} run failing/verbose_output.yml {{.value.opt}}
+    script: NO_COLOR=1 ./venom run failing/verbose_output.yml {{.value.opt}}
+    info: NO_COLOR=1 ./venom run failing/verbose_output.yml {{.value.opt}}
     range:
       verbose:
         opt: "-vv"
@@ -17,18 +18,18 @@ testcases:
     - result.code ShouldEqual 2
     - result.systemerr ShouldBeEmpty
     # single step
-    - result.systemout {{.value.op}}ContainSubstring 'exec SUCCESS'
+    - result.systemout {{.value.op}}ContainSubstring 'exec PASS'
     # named step
-    - result.systemout {{.value.op}}ContainSubstring 'hello-world SUCCESS'
+    - result.systemout {{.value.op}}ContainSubstring 'hello-world PASS'
     # multi steps
-    - result.systemout {{.value.op}}ContainSubstring 'step1 SUCCESS'
-    - result.systemout {{.value.op}}ContainSubstring 'step2 FAILURE'
+    - result.systemout {{.value.op}}ContainSubstring 'step1 PASS'
+    - result.systemout {{.value.op}}ContainSubstring 'step2 FAIL'
     # ranged steps
-    - result.systemout {{.value.op}}ContainSubstring 'exec (range=0) SUCCESS'
-    - result.systemout {{.value.op}}ContainSubstring 'exec (range=1) FAILURE'
-    - result.systemout {{.value.op}}ContainSubstring 'exec (range=2) SUCCESS'
+    - result.systemout {{.value.op}}ContainSubstring 'exec (range=0) PASS'
+    - result.systemout {{.value.op}}ContainSubstring 'exec (range=1) FAIL'
+    - result.systemout {{.value.op}}ContainSubstring 'exec (range=2) PASS'
     # must assertions
-    - result.systemout {{.value.op}}ContainSubstring 'must1 FAILURE'
+    - result.systemout {{.value.op}}ContainSubstring 'must1 FAIL'
     - result.systemout ShouldContainSubstring 'At least one required assertion failed, skipping remaining steps'
     - result.systemout {{.value.op}}ContainSubstring '2 other steps were skipped'
     - result.systemout ShouldNotContainSubstring 'must2'

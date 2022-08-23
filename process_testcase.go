@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
@@ -16,7 +16,7 @@ import (
 
 var varRegEx = regexp.MustCompile("{{.*}}")
 
-//Parse the testcase to find unreplaced and extracted variables
+// Parse the testcase to find unreplaced and extracted variables
 func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
 	dvars, err := DumpStringPreserveCase(tc.Vars)
 	if err != nil {
@@ -147,18 +147,21 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	}
 
 	defer Info(ctx, "Ending testcase")
+	// ##### RUN Test Steps Here
 	v.runTestSteps(ctx, tc, nil)
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepResult) {
-
 	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
 	if err != nil {
 		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
-		tc.AppendError(err)
+		testStepResult := TestStepResult{}
+		testStepResult.appendError(err)
+		tc.TestStepResults = append(tc.TestStepResults, testStepResult)
 		return
 	}
 	if len(results) > 0 {
+		tc.Status = StatusSkip
 		for _, s := range results {
 			tc.Skipped = append(tc.Skipped, Skipped{Value: s})
 			Warn(ctx, s)
@@ -179,13 +182,14 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 		ranged, err := parseRanged(ctx, rawStep, stepVars)
 		if err != nil {
 			Error(ctx, "unable to parse \"range\" attribute: %v", err)
-			tc.AppendError(err)
+			tsIn.appendError(err)
 			return
 		}
 
 		for rangedIndex, rangedData := range ranged.Items {
 			tc.TestStepResults = append(tc.TestStepResults, TestStepResult{})
-			ts := &tc.TestStepResults[len(tc.TestStepResults)-1]
+			tsResult := &tc.TestStepResults[len(tc.TestStepResults)-1]
+
 			if ranged.Enabled {
 				Debug(ctx, "processing range index: %d", rangedIndex)
 				stepVars.Add("index", rangedIndex)
@@ -196,14 +200,14 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			vars, err := DumpStringPreserveCase(stepVars)
 			if err != nil {
 				Error(ctx, "unable to dump testcase vars: %v", err)
-				tc.AppendError(err)
+				tsResult.appendError(err)
 				return
 			}
 
 			for k, v := range vars {
 				content, err := interpolate.Do(v, vars)
 				if err != nil {
-					tc.AppendError(err)
+					tsResult.appendError(err)
 					Error(ctx, "unable to interpolate variable %q: %v", k, err)
 					return
 				}
@@ -221,7 +225,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			for i := 0; i < 10; i++ {
 				content, err = interpolate.Do(string(rawStep), vars)
 				if err != nil {
-					tc.AppendError(err)
+					tsResult.appendError(err)
 					Error(ctx, "unable to interpolate step: %v", err)
 					return
 				}
@@ -231,9 +235,27 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			}
 
 			Info(ctx, "Step #%d-%d content is: %q", stepNumber, rangedIndex, content)
+
+			data, err := yaml.Marshal(rawStep)
+			if err != nil {
+				tsResult.appendError(err)
+				Error(ctx, "unable to marshal raw: %v", err)
+			}
+			tsResult.Raw = data
+
+			data2, err := yaml.JSONToYAML([]byte(content))
+			if err != nil {
+				tsResult.appendError(err)
+				Error(ctx, "unable to marshal interpolated: %v", err)
+			}
+			tsResult.Interpolated = data2
+
+			tsResult.Number = stepNumber
+			tsResult.RangedIndex = rangedIndex
+			tsResult.InputVars = vars
 			var step TestStep
 			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
-				tc.AppendError(err)
+				tsResult.appendError(err)
 				Error(ctx, "unable to unmarshal step: %v", err)
 				return
 			}
@@ -242,7 +264,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			var e ExecutorRunner
 			ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
 			if err != nil {
-				tc.AppendError(err)
+				tsResult.appendError(err)
 				Error(ctx, "unable to get executor: %v", err)
 				break
 			}
@@ -252,65 +274,69 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 				if !known {
 					ctx, err = e.Setup(ctx, tc.Vars)
 					if err != nil {
-						tc.AppendError(err)
+						tsResult.appendError(err)
 						Error(ctx, "unable to setup executor: %v", err)
 						break
 					}
 					knowExecutors[e.Name()] = struct{}{}
 					defer func(ctx context.Context) {
 						if err := e.TearDown(ctx); err != nil {
-							tc.AppendError(err)
+							tsResult.appendError(err)
 							Error(ctx, "unable to teardown executor: %v", err)
 						}
 					}(ctx)
 				}
 			}
 
-			printStepName := v.Verbose >= 2 && !fromUserExecutor
-			v.setTestStepName(ts, e, step, &ranged, &rangedData, printStepName)
+			printStepName := v.Verbose >= 1 && !fromUserExecutor
+			v.setTestStepName(tsResult, e, step, &ranged, &rangedData, printStepName)
 
-			result := v.RunTestStep(ctx, e, tc, ts, stepNumber, rangedIndex, step)
+			tsResult.Start = time.Now()
+
+			// ##### RUN Test Step Here
+			tsResult.Status = StatusRun
+			result := v.RunTestStep(ctx, e, tc, tsResult, stepNumber, rangedIndex, step)
+			if len(tsResult.Errors) > 0 || !tsResult.AssertionsApplied.OK {
+				tsResult.Status = StatusFail
+			} else {
+				tsResult.Status = StatusPass
+			}
+
+			tsResult.End = time.Now()
+			tsResult.Duration = tsResult.End.Sub(tsResult.Start).Seconds()
+
 			mapResult := GetExecutorResult(result)
 			previousStepVars.AddAll(H(mapResult))
 
 			tc.testSteps = append(tc.testSteps, step)
 
-			var hasFailed bool
 			var isRequired bool
-			if len(ts.Failures) > 0 {
-				for _, f := range ts.Failures {
-					Warning(ctx, "%v", f)
-					isRequired = isRequired || f.AssertionRequired
-				}
-				hasFailed = true
-			}
 
-			if len(ts.Errors) > 0 {
+			if tsResult.Status == StatusFail {
 				Error(ctx, "Errors: ")
-				for _, e := range ts.Errors {
+				for _, e := range tsResult.Errors {
 					Error(ctx, "%v", e)
+					isRequired = isRequired || e.AssertionRequired
 				}
-				hasFailed = true
-			}
 
-			if hasFailed {
 				if isRequired {
-					failure := newFailure(*tc, stepNumber, rangedIndex, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
-					ts.appendFailure(tc, *failure)
-					v.printTestStepResult(tc, ts, tsIn, stepNumber, true)
+					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
+					tsResult.appendFailure(*failure)
+					v.printTestStepResult(tc, tsResult, tsIn, stepNumber, true)
 					return
 				}
-				v.printTestStepResult(tc, ts, tsIn, stepNumber, false)
+				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 				continue
 			}
-			v.printTestStepResult(tc, ts, tsIn, stepNumber, false)
+			v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 
 			allVars := tc.Vars.Clone()
 			allVars.AddAll(tc.computedVars.Clone())
+			tsResult.ComputedVars = tc.computedVars.Clone()
 
 			assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
 			if err != nil {
-				tc.AppendError(err)
+				tsResult.appendError(err)
 				Error(ctx, "unable to process variable assignments: %v", err)
 				break
 			}
@@ -321,7 +347,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 	}
 }
 
-//Set test step name (defaults to executor name, excepted if it got a "name" attribute. in range, also print key)
+// Set test step name (defaults to executor name, excepted if it got a "name" attribute. in range, also print key)
 func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestStep, ranged *Range, rangedData *RangeData, print bool) {
 	name := e.Name()
 	if value, ok := step["name"]; ok {
@@ -340,45 +366,35 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 	}
 }
 
-//Print a single step result (if verbosity is enabled)
+// Print a single step result (if verbosity is enabled)
 func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
-	if v.Verbose >= 2 {
-		fromUserExecutor := tsIn != nil
-		var red = color.New(color.FgRed).SprintFunc()
-		var green = color.New(color.FgGreen).SprintFunc()
-		var gray = color.New(color.Attribute(90)).SprintFunc()
-
-		//Within an user executor, we instead transfer errors to original test step which will print it for use
-		if fromUserExecutor {
-			tsIn.appendError(tc, ts.Errors...)
-			tsIn.appendFailure(tc, ts.Failures...)
-		} else { //Else print step status
-			if len(ts.Skipped) > 0 {
-				v.Println(" %s", gray("SKIPPED"))
-			} else if len(ts.Failures) > 0 || len(ts.Errors) > 0 {
-				v.Println(" %s", red("FAILURE"))
-				for _, f := range ts.Failures {
-					v.Println(" \t\t  %s", red(f))
-				}
+	fromUserExecutor := tsIn != nil
+	if fromUserExecutor {
+		tsIn.appendFailure(ts.Errors...)
+	}
+	if v.Verbose >= 1 {
+		if !fromUserExecutor { //Else print step status
+			if len(ts.Errors) > 0 {
+				v.Println(" %s", Red(StatusFail))
 				for _, f := range ts.Errors {
-					v.Println(" \t\t  %s", red(f.Value))
+					v.Println(" \t\t  %s", Yellow(f.Value))
 				}
 				if mustAssertionFailed {
 					skipped := len(tc.RawTestSteps) - stepNumber - 1
 					if skipped == 1 {
-						v.Println(" \t\t  %s", gray(fmt.Sprintf("%d other step was skipped", skipped)))
+						v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other step was skipped", skipped)))
 					} else {
-						v.Println(" \t\t  %s", gray(fmt.Sprintf("%d other steps were skipped", skipped)))
+						v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other steps were skipped", skipped)))
 					}
 				}
 			} else {
-				v.Println(" %s", green("SUCCESS"))
+				v.Println(" %s", Green(StatusPass))
 			}
 		}
 	}
 }
 
-//Parse and format range data to allow iterations over user data
+// Parse and format range data to allow iterations over user data
 func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error) {
 
 	//Load "range" attribute and perform actions depending on its typing

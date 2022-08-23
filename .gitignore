@@ -23,3 +23,7 @@ test_results.xml
 git-template
 tests/grpc/pki
 tests/pki_variables.yml
+*.log
+*.xml
+test_results*.html
+!venom_output.html

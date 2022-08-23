@@ -18,27 +18,27 @@ type dumpFile struct {
 	Result    interface{} `json:"result"`
 }
 
-//RunTestStep executes a venom testcase is a venom context
-func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, ts *TestStepResult, stepNumber int, rangedIndex int, step TestStep) interface{} {
+// RunTestStep executes a venom testcase is a venom context
+func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, tsResult *TestStepResult, stepNumber int, rangedIndex int, step TestStep) interface{} {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
-	var assertRes assertionsApplied
+	var assertRes AssertionsApplied
 	var retry int
 	var result interface{}
 
-	for retry = 0; retry <= e.Retry() && !assertRes.ok; retry++ {
-		if retry > 1 && !assertRes.ok {
+	for retry = 0; retry <= e.Retry() && !assertRes.OK; retry++ {
+		if retry > 1 && !assertRes.OK {
 			Debug(ctx, "Sleep %d, it's %d attempt", e.Delay(), retry)
 			time.Sleep(time.Duration(e.Delay()) * time.Second)
 		}
 
 		var err error
-		result, err = v.runTestStepExecutor(ctx, e, tc, ts, step)
+		result, err = v.runTestStepExecutor(ctx, e, tc, tsResult, step)
 		if err != nil {
 			// we save the failure only if it's the last attempt
 			if retry == e.Retry() {
-				failure := newFailure(*tc, stepNumber, rangedIndex, "", err)
-				ts.appendFailure(tc, *failure)
+				failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", err)
+				tsResult.appendFailure(*failure)
 			}
 			continue
 		}
@@ -93,42 +93,46 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			}
 			Info(ctx, info)
 			tc.computedInfo = append(tc.computedInfo, info)
+			tsResult.ComputedInfo = append(tsResult.ComputedInfo, info)
 		}
 
 		if result == nil {
 			Debug(ctx, "empty testcase, applying assertions on variables: %v", AllVarsFromCtx(ctx))
-			assertRes = applyAssertions(AllVarsFromCtx(ctx), *tc, stepNumber, rangedIndex, step, nil)
+			assertRes = applyAssertions(ctx, AllVarsFromCtx(ctx), *tc, stepNumber, rangedIndex, step, nil)
 		} else {
 			if h, ok := e.(executorWithDefaultAssertions); ok {
-				assertRes = applyAssertions(result, *tc, stepNumber, rangedIndex, step, h.GetDefaultAssertions())
+				assertRes = applyAssertions(ctx, result, *tc, stepNumber, rangedIndex, step, h.GetDefaultAssertions())
 			} else {
-				assertRes = applyAssertions(result, *tc, stepNumber, rangedIndex, step, nil)
+				assertRes = applyAssertions(ctx, result, *tc, stepNumber, rangedIndex, step, nil)
 			}
 		}
 
+		tsResult.AssertionsApplied = assertRes
 		tc.computedVars.AddAll(H(mapResult))
 
-		if assertRes.ok {
+		if assertRes.OK {
 			break
 		}
 		failures, err := testConditionalStatement(ctx, tc, e.RetryIf(), tc.computedVars, "")
 		if err != nil {
-			return fmt.Errorf("Error while evaluating retry condition: %v", err)
+			tsResult.appendError(fmt.Errorf("Error while evaluating retry condition: %v", err))
+			break
 		}
 		if len(failures) > 0 {
-			failure := newFailure(*tc, stepNumber, rangedIndex, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-retry))
-			tc.Failures = append(tc.Failures, *failure)
+			failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-retry))
+			tsResult.Errors = append(tsResult.Errors, *failure)
 			break
 		}
 	}
 
-	ts.appendError(tc, assertRes.errors...)
-	ts.appendFailure(tc, assertRes.failures...)
-	if retry > 1 && (len(assertRes.failures) > 0 || len(assertRes.errors) > 0) {
-		ts.appendFailure(tc, Failure{Value: fmt.Sprintf("It's a failure after %d attempts", retry)})
+	if retry > 1 && len(assertRes.errors) > 0 {
+		tsResult.appendFailure(Failure{Value: fmt.Sprintf("It's a failure after %d attempts", retry)})
+	} else if len(assertRes.errors) > 0 {
+		tsResult.appendFailure(assertRes.errors...)
 	}
-	tc.Systemout.Value += assertRes.systemout
-	tc.Systemerr.Value += assertRes.systemerr
+
+	tsResult.Systemerr += assertRes.systemerr
+	tsResult.Systemout += assertRes.systemout
 
 	return result
 }
@@ -171,16 +175,4 @@ func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, tc *T
 	case <-ctxTimeout.Done():
 		return nil, fmt.Errorf("Timeout after %d second(s)", e.Timeout())
 	}
-}
-
-//Append an error to a test step and its associated test case
-func (ts *TestStepResult) appendError(tc *TestCase, failure ...Failure) {
-	ts.Errors = append(ts.Errors, failure...)
-	tc.Errors = append(tc.Errors, failure...)
-}
-
-//Append an assertion failure to a test step and its associated test case
-func (ts *TestStepResult) appendFailure(tc *TestCase, failure ...Failure) {
-	ts.Failures = append(ts.Failures, failure...)
-	tc.Failures = append(tc.Failures, failure...)
 }
