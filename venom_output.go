@@ -51,42 +51,42 @@ func (v *Venom) OutputResult() error {
 
 		var data []byte
 		var err error
-		for _, f := range strings.Split(v.OutputFormat, ",") {
-			format := strings.TrimSpace(f)
-			switch format {
-			case "json":
-				data, err = json.MarshalIndent(testsResult, "", "  ")
-				if err != nil {
-					log.Fatalf("Error: cannot format output json (%s)", err)
-				}
-			case "tap":
-				data, err = outputTapFormat(*testsResult)
-				if err != nil {
-					log.Fatalf("Error: cannot format output tap (%s)", err)
-				}
-			case "yml", "yaml":
-				data, err = yaml.Marshal(testsResult)
-				if err != nil {
-					log.Fatalf("Error: cannot format output yaml (%s)", err)
-				}
-			case "xml":
-				data, err = outputXMLFormat(*testsResult)
-				if err != nil {
-					log.Fatalf("Error: cannot format output xml (%s)", err)
-				}
-			case "html":
-				continue
-			}
 
-			filename := path.Join(v.OutputDir, "test_results."+v.Tests.TestSuites[i].Filename+"."+format)
-			if err := os.WriteFile(filename, data, 0600); err != nil {
-				return fmt.Errorf("Error while creating file %s: %v", filename, err)
+		switch v.OutputFormat {
+		case "json":
+			data, err = json.MarshalIndent(testsResult, "", "  ")
+			if err != nil {
+				log.Fatalf("Error: cannot format output json (%s)", err)
 			}
-			v.PrintFunc("Writing file %s\n", filename)
+		case "tap":
+			data, err = outputTapFormat(*testsResult)
+			if err != nil {
+				log.Fatalf("Error: cannot format output tap (%s)", err)
+			}
+		case "yml", "yaml":
+			data, err = yaml.Marshal(testsResult)
+			if err != nil {
+				log.Fatalf("Error: cannot format output yaml (%s)", err)
+			}
+		case "xml":
+			data, err = outputXMLFormat(*testsResult)
+			if err != nil {
+				log.Fatalf("Error: cannot format output xml (%s)", err)
+			}
+		case "html":
+			log.Fatalf("Error: you have to use the --html-report flag")
 		}
+
+		fname := strings.TrimSuffix(v.Tests.TestSuites[i].Filepath, filepath.Ext(v.Tests.TestSuites[i].Filepath))
+		fname = strings.ReplaceAll(fname, "/", "_")
+		filename := path.Join(v.OutputDir, "test_results_"+fname)
+		if err := os.WriteFile(filename, data, 0600); err != nil {
+			return fmt.Errorf("Error while creating file %s: %v", filename, err)
+		}
+		v.PrintFunc("Writing file %s\n", filename)
 	}
 
-	if strings.Contains(v.OutputFormat, "html") {
+	if v.HtmlReport {
 		testsResult := &Tests{
 			TestSuites:       v.Tests.TestSuites,
 			Status:           v.Tests.Status,

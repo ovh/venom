@@ -275,7 +275,7 @@ type FailureXML struct {
 }
 
 func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion string, err error) *Failure {
-	filename := StringVarFromCtx(ctx, "venom.executor.filename")
+	filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
 	var lineNumber = findLineNumber(filename, tc.originalName, stepNumber, assertion, -1)
 	var value string
 	if assertion != "" {
