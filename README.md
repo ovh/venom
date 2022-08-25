@@ -145,18 +145,19 @@ Examples:
   Run all testsuites containing in files ending with *.yml or *.yaml: venom run
   Run a single testsuite: venom run mytestfile.yml
   Run a single testsuite and export the result in JSON format in test/ folder: venom run mytestfile.yml --format=json --output-dir=test
-  Run a single testsuite and export the result in XML and HTML formats in test/ folder: venom run mytestfile.yml --format=xml,html --output-dir=test
+  Run a single testsuite and export the result in XML and HTML formats in test/ folder: venom run mytestfile.yml --format=xml --output-dir=test --html-report
   Run a single testsuite and specify a variable: venom run mytestfile.yml --var="foo=bar"
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
   Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
-
+  
   Notice that variables initialized with -var-from-file argument can be overrided with -var argument
-
+  
   More info: https://github.com/ovh/venom
 
 Flags:
-      --format string           --format:html, json, tap, xml, yaml (default "xml")
+      --format string           --format:json, tap, xml, yaml (default "xml")
   -h, --help                    help for run
+      --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
@@ -229,8 +230,9 @@ List of available flags for `venom run` command:
 
 ```
 Flags:
-      --format string           --format:html, json, tap, xml, yaml (default "xml")
+      --format string           --format:json, tap, xml, yaml (default "xml")
   -h, --help                    help for run
+      --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
@@ -720,8 +722,8 @@ You can specify the output directory with the `--output-dir` flag and the format
 ```bash
 $ venom run --format=xml --output-dir="."
 
-# xml and html export
-$ venom run --format=xml,html --output-dir="."
+# html export
+$ venom run --output-dir="." --html-report
 ```
 
 Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see results run after run.

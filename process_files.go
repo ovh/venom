@@ -67,18 +67,18 @@ type partialTestSuite struct {
 }
 
 func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
-	for _, f := range filesPath {
-		log.Info("Reading ", f)
-		btes, err := os.ReadFile(f)
+	for _, filePath := range filesPath {
+		log.Info("Reading ", filePath)
+		btes, err := os.ReadFile(filePath)
 		if err != nil {
-			return errors.Wrapf(err, "unable to read file %q", f)
+			return errors.Wrapf(err, "unable to read file %q", filePath)
 		}
 
 		varCloned := v.variables.Clone()
 
 		fromPartial, err := getVarFromPartialYML(ctx, btes)
 		if err != nil {
-			return errors.Wrapf(err, "unable to get vars from file %q", f)
+			return errors.Wrapf(err, "unable to get vars from file %q", filePath)
 		}
 
 		var varsFromPartial map[string]string
@@ -120,7 +120,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		var testSuiteInput TestSuiteInput
 		if err := yaml.Unmarshal([]byte(content), &testSuiteInput); err != nil {
 			Error(context.Background(), "file content: %s", content)
-			return errors.Wrapf(err, "error while unmarshal file %q", f)
+			return errors.Wrapf(err, "error while unmarshal file %q", filePath)
 		}
 
 		ts := TestSuite{
@@ -135,17 +135,17 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		}
 
 		// Default workdir is testsuite directory
-		ts.WorkDir, err = filepath.Abs(filepath.Dir(f))
+		ts.WorkDir, err = filepath.Abs(filepath.Dir(filePath))
 		if err != nil {
 			return errors.Wrapf(err, "Unable to get testsuite's working directory")
 		}
 
 		// ../foo/a.yml
-		ts.Filepath = f
+		ts.Filepath = filePath
 		// a
-		ts.ShortName = strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
+		ts.ShortName = strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
 		// a.yml
-		ts.Filename = filepath.Base(f)
+		ts.Filename = filepath.Base(filePath)
 		ts.Vars = varCloned
 
 		ts.Vars.Add("venom.testsuite.workdir", ts.WorkDir)

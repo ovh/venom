@@ -70,6 +70,7 @@ type Venom struct {
 	OutputFormat  string
 	OutputDir     string
 	StopOnFailure bool
+	HtmlReport    bool
 	Verbose       int
 }
 

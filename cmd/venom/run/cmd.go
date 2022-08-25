@@ -30,6 +30,7 @@ var (
 	varFiles      []string
 	outputDir     string
 	libDir        string
+	htmlReport    bool
 	stopOnFailure bool
 	verbose       int = 0 // Set the default value for verboseFlag
 
@@ -39,12 +40,14 @@ var (
 	outputDirFlag     *string
 	libDirFlag        *string
 	stopOnFailureFlag *bool
+	htmlReportFlag    *bool
 	verboseFlag       *int
 )
 
 func init() {
-	formatFlag = Cmd.Flags().String("format", "xml", "--format:html, json, tap, xml, yaml")
+	formatFlag = Cmd.Flags().String("format", "xml", "--format:json, tap, xml, yaml")
 	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
+	htmlReportFlag = Cmd.Flags().Bool("html-report", false, "Generate HTML Report")
 	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
 	varFilesFlag = Cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary")
 	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
@@ -80,6 +83,10 @@ func initFromCommandArguments(f *pflag.Flag) {
 	case "stop-on-failure":
 		if stopOnFailureFlag != nil {
 			stopOnFailure = *stopOnFailureFlag
+		}
+	case "html-report":
+		if htmlReportFlag != nil {
+			htmlReport = *htmlReportFlag
 		}
 	case "output-dir":
 		if outputDirFlag != nil {
@@ -148,6 +155,7 @@ type ConfigFileData struct {
 	LibDir         *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
 	OutputDir      *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
 	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
+	HtmlReport     *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
 	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
 	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
 	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
@@ -176,6 +184,9 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.StopOnFailure != nil {
 		stopOnFailure = *configFileData.StopOnFailure
+	}
+	if configFileData.HtmlReport != nil {
+		htmlReport = *configFileData.HtmlReport
 	}
 	if configFileData.Variables != nil {
 		for _, varFromFile := range *configFileData.Variables {
@@ -240,6 +251,13 @@ func initFromEnv(environ []string) ([]string, error) {
 			return nil, fmt.Errorf("invalid value for VENOM_STOP_ON_FAILURE")
 		}
 	}
+	if os.Getenv("VENOM_HTML_REPORT") != "" {
+		var err error
+		htmlReport, err = strconv.ParseBool(os.Getenv("VENOM_HTML_REPORT"))
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for VENOM_HTML_REPORT")
+		}
+	}
 	if os.Getenv("VENOM_LIB_DIR") != "" {
 		libDir = os.Getenv("VENOM_LIB_DIR")
 	}
@@ -277,6 +295,7 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option libDir=%v", libDir)
 	venom.Debug(ctx, "option outputDir=%v", outputDir)
 	venom.Debug(ctx, "option stopOnFailure=%v", stopOnFailure)
+	venom.Debug(ctx, "option htmlReport=%v", htmlReport)
 	venom.Debug(ctx, "option variables=%v", strings.Join(variables, " "))
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "option verbose=%v", verbose)
@@ -289,7 +308,7 @@ var Cmd = &cobra.Command{
 	Example: `  Run all testsuites containing in files ending with *.yml or *.yaml: venom run
   Run a single testsuite: venom run mytestfile.yml
   Run a single testsuite and export the result in JSON format in test/ folder: venom run mytestfile.yml --format=json --output-dir=test
-  Run a single testsuite and export the result in XML and HTML formats in test/ folder: venom run mytestfile.yml --format=xml,html --output-dir=test
+  Run a single testsuite and export the result in XML and HTML formats in test/ folder: venom run mytestfile.yml --format=xml --output-dir=test --html-report
   Run a single testsuite and specify a variable: venom run mytestfile.yml --var="foo=bar"
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
   Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
@@ -317,6 +336,7 @@ var Cmd = &cobra.Command{
 		v.LibDir = libDir
 		v.OutputFormat = format
 		v.StopOnFailure = stopOnFailure
+		v.HtmlReport = htmlReport
 		v.Verbose = verbose
 
 		if err := v.InitLogger(); err != nil {
