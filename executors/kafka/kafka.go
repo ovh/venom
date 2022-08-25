@@ -406,6 +406,7 @@ func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
 func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	ctx := session.Context()
+
 	for message := range claim.Messages() {
 		// Stop consuming if one of the other handler goroutines already hit the message limit
 		select {
@@ -428,28 +429,41 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 		}
 
 		h.mutex.Lock()
-		// Check if the message limit is hit *before* adding another msg
+		// Check if message limit is hit *before* adding new message
 		messagesLen := len(h.messages)
 		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
-			venom.Info(ctx, "message limit reached")
-			// Signal to other handler goroutines that they should stop consuming messages.
-			// Only checking the message length isn't enough in case of filtering by key and never reaching the check.
-			// Using sync.Once to prevent panics from multiple channel closings.
-			h.once.Do(func() { close(h.done) })
 			h.mutex.Unlock()
+			h.messageLimitReached(ctx)
 			return nil
 		}
+
 		h.messages = append(h.messages, msg)
 		h.messagesJSON = append(h.messagesJSON, msgJSON)
 		h.mutex.Unlock()
+		messagesLen++
 
 		if h.markOffset {
 			session.MarkMessage(message, "")
 		}
+
 		session.MarkMessage(message, "delivered")
+
+		// Check if the message limit is hit
+		if h.messageLimit > 0 && messagesLen >= h.messageLimit {
+			h.messageLimitReached(ctx)
+			return nil
+		}
 	}
 
 	return nil
+}
+
+func (h *handler) messageLimitReached(ctx context.Context) {
+	venom.Info(ctx, "message limit reached")
+	// Signal to other handler goroutines that they should stop consuming messages.
+	// Only checking the message length isn't enough in case of filtering by key and never reaching the check.
+	// Using sync.Once to prevent panics from multiple channel closings.
+	h.once.Do(func() { close(h.done) })
 }
 
 func (h *handler) consumeJSON(message *sarama.ConsumerMessage) (Message, interface{}, error) {
