@@ -79,7 +79,7 @@ func (v *Venom) OutputResult() error {
 
 		fname := strings.TrimSuffix(v.Tests.TestSuites[i].Filepath, filepath.Ext(v.Tests.TestSuites[i].Filepath))
 		fname = strings.ReplaceAll(fname, "/", "_")
-		filename := path.Join(v.OutputDir, "test_results_"+fname)
+		filename := path.Join(v.OutputDir, "test_results_"+fname+"."+v.OutputFormat)
 		if err := os.WriteFile(filename, data, 0600); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
 		}
