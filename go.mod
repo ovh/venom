@@ -1,6 +1,6 @@
 module github.com/ovh/venom
 
-go 1.18
+go 1.19
 
 require (
 	github.com/Azure/go-amqp v0.13.7
