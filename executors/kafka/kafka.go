@@ -229,11 +229,11 @@ func (e Executor) getMessageValue(m *Message, workdir string) ([]byte, error) {
 	// This is test with Avro
 	var (
 		schemaID int
-		schema string
+		schema   string
 	)
 	// 1. Get schema with its ID
 	// 1.1 Try with the file, if provided
-	subject := fmt.Sprintf("%s-value", m.Topic)  // Using topic name strategy
+	subject := fmt.Sprintf("%s-value", m.Topic) // Using topic name strategy
 	schemaFile := strings.Trim(m.AvroSchemaFile, " ")
 	if len(schemaFile) != 0 {
 		schemaPath := path.Join(workdir, schemaFile)
@@ -254,7 +254,7 @@ func (e Executor) getMessageValue(m *Message, workdir string) ([]byte, error) {
 			return nil, fmt.Errorf("can't get latest schema for subject %s-value: %w", m.Topic, err)
 		}
 	}
-	
+
 	// 2. Encode Value with schema
 	avroMsg, err := Convert2Avro(value, string(schema))
 	if err != nil {
@@ -330,11 +330,28 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 		keyFilter:    e.KeyFilter,
 		done:         make(chan struct{}),
 	}
-	if err := consumerGroup.Consume(ctx, e.Topics, h); err != nil {
-		if e.WaitFor > 0 && errors.Is(err, context.DeadlineExceeded) {
-			venom.Info(ctx, "wait ended")
-		} else {
-			venom.Error(ctx, "error on consume:%s", err)
+
+	cherr := make(chan error)
+	go func() {
+		cherr <- consumerGroup.Consume(ctx, e.Topics, h)
+	}()
+
+	select {
+	case err := <-cherr:
+		if err != nil {
+			if e.WaitFor > 0 && errors.Is(err, context.DeadlineExceeded) {
+				venom.Info(ctx, "wait ended")
+			} else {
+				return nil, nil, fmt.Errorf("error on consume: %w", err)
+			}
+		}
+	case <-ctx.Done():
+		if ctx.Err() != nil {
+			if e.WaitFor > 0 && errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				venom.Info(ctx, "wait ended")
+			} else {
+				return nil, nil, fmt.Errorf("kafka consumed failed: %w", ctx.Err())
+			}
 		}
 	}
 
