@@ -7,8 +7,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/rockbears/yaml"
 )
 
 func getUserExecutorInputYML(ctx context.Context, btesIn []byte) (H, error) {
@@ -17,8 +17,10 @@ func getUserExecutorInputYML(ctx context.Context, btesIn []byte) (H, error) {
 	var result = map[string]interface{}{}
 	var tmpResult = map[string]interface{}{}
 
-	if err := yaml.Unmarshal([]byte(btes), &tmpResult); err != nil {
-		return nil, err
+	if len(btes) > 0 {
+		if err := yaml.Unmarshal([]byte(btes), &tmpResult); err != nil {
+			return nil, err
+		}
 	}
 	for k, v := range tmpResult {
 		result[k] = v
@@ -33,11 +35,12 @@ func getVarFromPartialYML(ctx context.Context, btesIn []byte) (H, error) {
 		Vars H `yaml:"vars" json:"vars"`
 	}
 	var partial partialVars
-	if err := yaml.Unmarshal([]byte(btes), &partial); err != nil {
-		Error(context.Background(), "file content: %s", string(btes))
-		return nil, errors.Wrapf(err, "error while unmarshal - see venom.log")
+	if len(btes) > 0 {
+		if err := yaml.Unmarshal([]byte(btes), &partial); err != nil {
+			Error(context.Background(), "file content: %s", string(btes))
+			return nil, errors.Wrapf(err, "error while unmarshal - see venom.log")
+		}
 	}
-
 	return partial.Vars, nil
 }
 

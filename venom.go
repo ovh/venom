@@ -15,9 +15,9 @@ import (
 
 	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
-	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
+	"github.com/rockbears/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 )

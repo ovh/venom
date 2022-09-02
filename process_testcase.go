@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
+	"github.com/rockbears/yaml"
 )
 
 var varRegEx = regexp.MustCompile("{{.*}}")
@@ -218,7 +218,12 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
 			// This also avoids injections into the json structure of a step
 			for i := range vars {
-				vars[i] = strings.ReplaceAll(vars[i], "\"", "\\\"")
+				if strings.Contains(vars[i], `"`) {
+					x := strconv.Quote(vars[i])
+					x = strings.TrimPrefix(x, `"`)
+					x = strings.TrimSuffix(x, `"`)
+					vars[i] = x
+				}
 			}
 
 			var content string
@@ -234,7 +239,11 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 				}
 			}
 
-			Info(ctx, "Step #%d-%d content is: %q", stepNumber, rangedIndex, content)
+			if ranged.Enabled {
+				Info(ctx, "Step #%d-%d content is: %s", stepNumber, rangedIndex, content)
+			} else {
+				Info(ctx, "Step #%d content is: %s", stepNumber, content)
+			}
 
 			data, err := yaml.Marshal(rawStep)
 			if err != nil {
@@ -243,22 +252,23 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			}
 			tsResult.Raw = data
 
+			var step TestStep
+			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
+				tsResult.appendError(err)
+				Error(ctx, "unable to parse step #%d: %v", stepNumber, err)
+				return
+			}
+
 			data2, err := yaml.JSONToYAML([]byte(content))
 			if err != nil {
 				tsResult.appendError(err)
-				Error(ctx, "unable to marshal interpolated: %v", err)
+				Error(ctx, "unable to marshal step #%d to json: %v", stepNumber, err)
 			}
 			tsResult.Interpolated = data2
 
 			tsResult.Number = stepNumber
 			tsResult.RangedIndex = rangedIndex
 			tsResult.InputVars = vars
-			var step TestStep
-			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
-				tsResult.appendError(err)
-				Error(ctx, "unable to unmarshal step: %v", err)
-				return
-			}
 
 			tc.testSteps = append(tc.testSteps, step)
 			var e ExecutorRunner

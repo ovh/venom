@@ -13,7 +13,6 @@ require (
 	github.com/fsamin/go-dump v1.8.0
 	github.com/fullstorydev/grpcurl v1.8.6
 	github.com/garyburd/redigo v1.6.3
-	github.com/ghodss/yaml v1.0.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-testfixtures/testfixtures/v3 v3.8.1
 	github.com/golang/protobuf v1.5.2
@@ -33,6 +32,7 @@ require (
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20220801141832-203422993fef
 	github.com/ovh/go-ovh v1.1.0
 	github.com/pkg/errors v0.9.1
+	github.com/rockbears/yaml v0.1.0
 	github.com/rubenv/sql-migrate v1.1.2
 	github.com/sclevine/agouti v3.0.1-0.20180306165625-6ada53bb069e+incompatible
 	github.com/sijms/go-ora v1.2.1
