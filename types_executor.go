@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
+	"github.com/rockbears/yaml"
 )
 
 // Executor execute a testStep.

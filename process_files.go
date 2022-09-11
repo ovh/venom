@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ghodss/yaml"
+	"github.com/rockbears/yaml"
 
 	"github.com/mattn/go-zglob"
 
