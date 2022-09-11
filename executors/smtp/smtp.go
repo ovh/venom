@@ -38,8 +38,8 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Err         string  `json:"error,omitempty" yaml:"error"`
-	TimeSeconds float64 `json:"timeSeconds,omitempty" yaml:"timeSeconds,omitempty"`
+	Err         string  `json:"err,omitempty" yaml:"error"`
+	TimeSeconds float64 `json:"timeseconds,omitempty" yaml:"timeSeconds,omitempty"`
 }
 
 // ZeroValueResult return an empty implementation of this executor result

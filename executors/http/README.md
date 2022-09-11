@@ -12,7 +12,7 @@ In your yaml file, you can use:
   - path (optional)
   - body (optional)
   - bodyFile (optional)
-  - preserve_bodyfile (optionnal) skip file content interpolation
+  - preserve_bodyfile (optional) skip file content interpolation
   - headers (optional)
   - proxy (optional): set to use a proxy server for connection to url
   - resolve (optional): array of custom resolver of host and port pair. example: foo.com:443:127.0.0.1

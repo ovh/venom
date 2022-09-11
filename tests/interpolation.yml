@@ -26,7 +26,7 @@ testcases:
           - result.statuscode ShouldEqual 200
           - result.headers.x-cache ShouldEqual "HIT"
       - type: http
-        method: GET
+        method: HEAD
         url: "http://example.com"
         headers:
           test: "{{ .GetVar.accept }}"

@@ -1,0 +1,10 @@
+executor: get_http
+input:
+  url: {}
+steps:
+- type: http
+  method: GET
+  url: "{{.input.url}}"
+output:
+  statuscode: "{{.result.statuscode}}"
+  body: "{{.result.body}}"

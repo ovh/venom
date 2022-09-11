@@ -71,7 +71,7 @@ type Result struct {
 type HTTPRequest struct {
 	Method   string      `json:"method,omitempty"`
 	URL      string      `json:"url,omitempty"`
-	Header   http.Header `json:"headers,omitempty"`
+	Header   http.Header `json:"header,omitempty"`
 	Body     string      `json:"body,omitempty"`
 	Form     url.Values  `json:"form,omitempty"`
 	PostForm url.Values  `json:"post_form,omitempty"`
@@ -238,7 +238,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	requestContentType := r.Request.Header.Get("Content-Type")
-	if !isContentTypeSupported(requestContentType) {
+	// if PreserveBodyFile == true, the body is not interpolated.
+	// So, no need to keep it in request here (to re-inject it in vars)
+	// this will avoid to be interpolated after in vars too.
+	if e.PreserveBodyFile || !isContentTypeSupported(requestContentType) {
 		r.Request.Body = ""
 	}
 

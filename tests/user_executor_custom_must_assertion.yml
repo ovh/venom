@@ -4,7 +4,7 @@ testcases:
   steps:
   # spawn a venom sub-process and expect it to fail and make assertions on its error messages
   - type: exec
-    script: '{{.venom.executable}} run failing/must_assertion.yml --lib-dir {{.venom.libdir}}'
+    script: './venom run failing/must_assertion.yml --lib-dir {{.venom.libdir}}'
     assertions:
       - result.code ShouldEqual 2
       - result.systemout ShouldContainSubstring 'At least one required assertion failed, skipping remaining steps'

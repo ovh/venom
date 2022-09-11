@@ -41,7 +41,7 @@ type Executor struct {
 // Result represents a step result
 type Result struct {
 	Messages     []string      `json:"messages" yaml:"messages"`
-	MessagesJSON []interface{} `json:"messagesJSON" yaml:"messagesJSON"`
+	MessagesJSON []interface{} `json:"messagesjson" yaml:"messagesJSON"`
 }
 
 // ZeroValueResult returns an empty implementation of this executor result

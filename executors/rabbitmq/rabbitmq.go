@@ -61,12 +61,12 @@ type Executor struct {
 
 // Result represents a step result.
 type Result struct {
-	TimeSeconds float64       `json:"timeSeconds" yaml:"timeSeconds"`
+	TimeSeconds float64       `json:"timeseconds" yaml:"timeSeconds"`
 	Body        []string      `json:"body" yaml:"body"`
 	Messages    []interface{} `json:"messages" yaml:"messages"`
-	BodyJSON    []interface{} `json:"bodyJSON" yaml:"bodyJSON"`
+	BodyJSON    []interface{} `json:"bodyjson" yaml:"bodyJSON"`
 	Headers     []amqp.Table  `json:"headers" yaml:"headers"`
-	Err         string        `json:"error" yaml:"error"`
+	Err         string        `json:"err" yaml:"error"`
 }
 
 // ZeroValueResult return an empty implementation of this executor result

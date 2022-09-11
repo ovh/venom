@@ -31,7 +31,7 @@ IS_TEST                    = $(filter test,$(MAKECMDGOALS))
 TARGET_OS                  = $(filter-out $(TARGET_OS_EXCLUDED), $(if ${ENABLE_CROSS_COMPILATION},$(if ${OS},${OS}, $(if $(IS_TEST), $(shell go env GOOS), windows darwin linux openbsd freebsd)),$(shell go env GOOS)))
 TARGET_ARCH                = $(if ${ARCH},${ARCH}, $(if $(IS_TEST), $(shell go env GOARCH),amd64 arm 386 arm64 ppc64le))
 BINARIES                   = $(addprefix $(TARGET_DIST)/, $(addsuffix .$(OS)-$(ARCH)$(if $(IS_WINDOWS),.exe), $(notdir $(TARGET_NAME))))
-OSARCHVALID                := $(shell go tool dist list | grep -v '^darwin/arm'|grep -v '^darwin/386'|grep -v '^windows/386'|grep -v '^windows/arm'|grep -v '^openbsd/arm*'|grep -v '^openbsd/386'|grep -v '^freebsd/arm*'|grep -v '^freebsd/386')
+OSARCHVALID                := $(shell go tool dist list | grep -v '^darwin/386'|grep -v '^windows/386'|grep -v '^windows/arm'|grep -v '^openbsd/arm*'|grep -v '^openbsd/386'|grep -v '^freebsd/arm*'|grep -v '^freebsd/386')
 IS_OS_ARCH_VALID           = $(filter $(OS)/$(ARCH),$(OSARCHVALID))
 CROSS_COMPILED_BINARIES    = $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(if $(IS_OS_ARCH_VALID), $(BINARIES))))
 GOFILES                    := $(call get_recursive_files, '.')
@@ -78,7 +78,7 @@ $(HOME)/.richstyle.yml:
 
 GO_RICHGO = ${GOPATH}/bin/richgo
 $(GO_RICHGO): $(HOME)/.richstyle.yml
-	go get -u github.com/kyoh86/richgo
+	go install github.com/kyoh86/richgo@latest
 
 EXIT_TESTS := 0
 $(TESTPKGS_RESULTS): $(GOFILES) $(TESTPKGS_C) $(GO_RICHGO)
@@ -87,19 +87,19 @@ $(TESTPKGS_RESULTS): $(GOFILES) $(TESTPKGS_C) $(GO_RICHGO)
 
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 $(GO_COV_MERGE):
-	go get -u github.com/wadey/gocovmerge
+	go install github.com/wadey/gocovmerge@latest
 
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 $(GO_GOJUNIT):
-	go get -u github.com/jstemmer/go-junit-report
+	go install github.com/jstemmer/go-junit-report@latest
 
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 $(GO_COBERTURA):
-	go get -u github.com/t-yuki/gocover-cobertura
+	go install github.com/t-yuki/gocover-cobertura@latest
 
 GO_XUTOOLS = ${GOPATH}/bin/xutools
 $(GO_XUTOOLS):
-	go get -u github.com/richardlt/xutools
+	go install github.com/richardlt/xutools@latest
 
 mk_go_test: $(GO_COV_MERGE) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS)# Run tests
 	@echo "Generating unit tests coverage..."

@@ -1,0 +1,10 @@
+executor: multilines
+input:
+  script: "bar"
+steps:
+- type: exec
+  script: {{ .input.script | nindent 4 }}
+  assertions:
+  - result.code ShouldEqual 0
+output:
+  all: '{{.result.systemoutjson}}'

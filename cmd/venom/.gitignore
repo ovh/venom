@@ -1,4 +1,8 @@
 venom
 bin
 *.yml
+*.json
+*.xml
+*.log
+*.html
 .venomrc

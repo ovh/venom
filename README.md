@@ -6,6 +6,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 [![GoDoc](https://godoc.org/github.com/ovh/venom?status.svg)](https://godoc.org/github.com/ovh/venom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
 [![Dicussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
+<a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
  
 # Table of content
 
@@ -96,13 +97,16 @@ Version venom: v1.0.1
 
 # Docker image
 
-Instead of installing (and updating) Venom locally, Venom can be started as a Docker image with following commands:
+Instead of installing (and updating) Venom locally, Venom can be started as a Docker image with following commands. 
+
+Considering your testsuites are in `./tests` directory in your current directory and your test library is under `./tests/lib`, the results will be available under the `results` directory.
 
 ```bash
-$ git clone git@github.com:ovh/venom.git
-$ cd venom
-$ docker run -it $(docker build -q .) --rm -v $(pwd)/outputs:/outputs -v $(pwd):/tests run /tests/testsuite.yaml
+$ mkdir -p results
+$ docker run --mount type=bind,source=$(pwd)/tests,target=/workdir/tests --mount type=bind,source=$(pwd)/results,target=/workdir/results ovhcom/venom:latest 
 ```
+
+Please refer to https://hub.docker.com/r/ovhcom/venom/tags to get the available image tags.
 
 # CLI Usage
 
@@ -141,17 +145,19 @@ Examples:
   Run all testsuites containing in files ending with *.yml or *.yaml: venom run
   Run a single testsuite: venom run mytestfile.yml
   Run a single testsuite and export the result in JSON format in test/ folder: venom run mytestfile.yml --format=json --output-dir=test
+  Run a single testsuite and export the result in XML and HTML formats in test/ folder: venom run mytestfile.yml --format=xml --output-dir=test --html-report
   Run a single testsuite and specify a variable: venom run mytestfile.yml --var="foo=bar"
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
   Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
-
+  
   Notice that variables initialized with -var-from-file argument can be overrided with -var argument
-
+  
   More info: https://github.com/ovh/venom
 
 Flags:
-      --format string           --format:yaml, json, xml, tap (default "xml")
+      --format string           --format:json, tap, xml, yaml (default "xml")
   -h, --help                    help for run
+      --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
@@ -224,8 +230,9 @@ List of available flags for `venom run` command:
 
 ```
 Flags:
-      --format string           --format:yaml, json, xml, tap (default "xml")
+      --format string           --format:json, tap, xml, yaml (default "xml")
   -h, --help                    help for run
+      --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
@@ -256,6 +263,8 @@ Flags and their equivalent with environment variables usage:
 - `--var-from-file fileA.yml fileB.yml` flag is equivalent to `VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"` environment variable
 - `-v` flag is equivalent to `VENOM_VERBOSE=1` environment variable
 - `-vv` flag is equivalent to `VENOM_VERBOSE=2` environment variable
+
+It is possible to set `NO_COLOR=1` environment variable to disable colors from output.
 
 ## Use a configuration file
 
@@ -393,6 +402,39 @@ Notice the variable `alljson`. All variables declared in output are automaticall
 Venom will load user's executors from the directory `lib/` relative to the testsuite path. You add executors source path using the flag `--lib-dir`. 
 Note that all folders listed with `--lib-dir` will be scanned recursively to find `.yml` files as user executors.
 
+The user defined executors work with templating, you can check the templating result in `venom.log`. In this file, if you see an error as `error converting YAML to JSON: yaml: line 14: found unexpected end of stream`, you probably need to adjust indentation with the templating function `indent`. 
+
+Example:
+
+```yml
+name: testsuite with a user executor multilines
+testcases:
+- name: test
+  steps:
+  - type: multilines
+    script: |
+      # test multilines
+      echo "5"
+    assertions:
+    - result.alljson ShouldEqual 5
+```
+
+using this executor:
+
+```yml
+executor: multilines
+input:
+  script: "echo 'foo'"
+steps:
+- type: exec
+  script: {{ .input.script | nindent 4 }}
+  assertions:
+  - result.code ShouldEqual 0
+output:
+  all: '{{.result.systemoutjson}}'
+```
+
+
 ```bash
 # lib/*.yml files will be loaded as executors.
 $ venom run testsuite.yml 
@@ -481,12 +523,14 @@ Available helpers and some examples:
 - `b64dec` {{.result.bodyjson | b64enc}}
 - `escape`: replace ‘_‘, ‘/’, ‘.’ by ‘-’
 
+More examples are available [here](https://github.com/ovh/venom/tree/master/variable_helpers.md)
+
 ## Use outputs from a test step as input of another test step
 
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
 After the first step execution, `venom` extracts a value using a regular expression `foo with a ([a-z]+) here` from the content of the `result.systemout` property returned by the `executor`.
-Then this variable can be reused in another test, with the name `testA.myvariable` with `testA` corresponding to the name of the testcase.
+Then this variable can be reused in another test, with the name `testA.myvariable` with `testA` corresponding to the name of the testcase. A default value could also be supplied if the variable can't be extracted from the output, which can commonly happen when parsing json output.
 
 ```yaml
 name: MyTestSuite
@@ -499,6 +543,7 @@ testcases:
       myvariable:
         from: result.systemout
         regex: foo with a ([a-z]+) here
+        default: "somevalue"
 
 - name: testB
   steps:
@@ -524,16 +569,20 @@ testcases:
 
 Builtin variables:
 
-* {{.venom.testsuite}}
-* {{.venom.testsuite.filename}}
-* {{.venom.testsuite.shortName}}
-* {{.venom.testsuite.workdir}}
-* {{.venom.testcase}}
-* {{.venom.teststep.number}}
 * {{.venom.datetime}}
-* {{.venom.timestamp}}
 * {{.venom.executable}}
 * {{.venom.libdir}}
+* {{.venom.outputdir}}
+* {{.venom.testcase}}
+* {{.venom.teststep.number}}
+* {{.venom.testsuite.name}}
+* {{.venom.testsuite.filename}}
+* {{.venom.testsuite.filepath}}
+* {{.venom.testsuite.shortName}}
+* {{.venom.testsuite.workdir}}
+* {{.venom.testsuite}}
+* {{.venom.timestamp}}
+
 
 ## Assertions
 
@@ -672,6 +721,9 @@ You can specify the output directory with the `--output-dir` flag and the format
 
 ```bash
 $ venom run --format=xml --output-dir="."
+
+# html export
+$ venom run --output-dir="." --html-report
 ```
 
 Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see results run after run.
@@ -680,10 +732,13 @@ Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in
 
 ## Debug your testsuites
 
+A *venom.log* file is generated for each `venom run` command.
+
 There are two ways to debug a testsuite:
  - use `-v` flag on venom binary.
-   - `$ venom run -v test.yml` will output a *venom.log* file
-   - `$ venom run -vv test.yml` will output a *venom.log* and *dump.json* files for each teststep.
+   - `$ venom run -v test.yml` will output details for each step
+   - `$ venom run -vv test.yml` will generate *dump.json* files for each teststep.
+   - `$ venom run -vvv test.yml` will generate *pprof* files for CPU profiling.
  - use `info` keyword in your teststep:
 `test.yml` file:
 ```yml
@@ -853,6 +908,8 @@ $ make build
 ```
 
 # Contributing
+
+<a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
 
 Please read the [contributing guide](./CONTRIBUTING.md) to learn about how you can contribute to Venom ;-).
 There is no small contribution, don't hesitate!

@@ -16,27 +16,29 @@ import (
 	"github.com/ovh/venom/assertions"
 )
 
-type assertionsApplied struct {
-	ok        bool
-	errors    []Failure
-	failures  []Failure
-	systemout string
-	systemerr string
+type AssertionsApplied struct {
+	OK         bool `json:"ok" yml:"-"`
+	errors     []Failure
+	systemout  string
+	systemerr  string
+	Assertions []AssertionApplied `json:"assertions" yml:"-"`
+}
+type AssertionApplied struct {
+	Assertion Assertion `json:"assertion" yml:"-"`
+	IsOK      bool      `json:"isOK" yml:"-"`
 }
 
-func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+func applyAssertions(ctx context.Context, r interface{}, tc TestCase, stepNumber int, rangedIndex int, step TestStep, defaultAssertions *StepAssertions) AssertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
-	var failures []Failure
 	var systemerr, systemout string
 
 	if err := mapstructure.Decode(step, &sa); err != nil {
-		return assertionsApplied{
-			false,
-			[]Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("error decoding assertions: %s", err))}},
-			failures,
-			systemout,
-			systemerr,
+		return AssertionsApplied{
+			OK:        false,
+			errors:    []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("error decoding assertions: %s", err))}},
+			systemout: systemout,
+			systemerr: systemerr,
 		}
 	}
 
@@ -47,16 +49,19 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 	executorResult := GetExecutorResult(r)
 
 	isOK := true
+	assertions := []AssertionApplied{}
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(tc, stepNumber, assertion, executorResult)
+		errs := check(ctx, tc, stepNumber, rangedIndex, assertion, executorResult)
+		isAssertionOK := true
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
+			isAssertionOK = false
 		}
-		if fails != nil {
-			failures = append(failures, *fails)
-			isOK = false
-		}
+		assertions = append(assertions, AssertionApplied{
+			Assertion: assertion,
+			IsOK:      isAssertionOK,
+		})
 	}
 
 	if _, ok := executorResult["result.systemerr"]; ok {
@@ -67,7 +72,13 @@ func applyAssertions(r interface{}, tc TestCase, stepNumber int, step TestStep, 
 		systemout = fmt.Sprintf("%v", executorResult["result.systemout"])
 	}
 
-	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
+	return AssertionsApplied{
+		OK:         isOK,
+		errors:     errors,
+		systemerr:  systemerr,
+		systemout:  systemout,
+		Assertions: assertions,
+	}
 }
 
 type assertion struct {
@@ -116,26 +127,25 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 }
 
 // check selects the correct assertion function to call depending on typing provided by user
-func check(tc TestCase, stepNumber int, assertion Assertion, r interface{}) (*Failure, *Failure) {
+func check(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion Assertion, r interface{}) *Failure {
 	var errs *Failure
-	var fails *Failure
 	switch t := assertion.(type) {
 	case string:
-		errs, fails = checkString(tc, stepNumber, assertion.(string), r)
+		errs = checkString(ctx, tc, stepNumber, rangedIndex, assertion.(string), r)
 	case map[string]interface{}:
-		errs, fails = checkBranch(tc, stepNumber, assertion.(map[string]interface{}), r)
+		errs = checkBranch(ctx, tc, stepNumber, rangedIndex, assertion.(map[string]interface{}), r)
 	default:
-		errs = newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion format: %v", t))
+		errs = newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("unsupported assertion format: %v", t))
 	}
-	return errs, fails
+	return errs
 }
 
 // checkString evaluate a complex assertion containing logical operators
 // it recursively calls checkAssertion for each operand
-func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r interface{}) (*Failure, *Failure) {
+func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, branch map[string]interface{}, r interface{}) *Failure {
 	// Extract logical operator
 	if len(branch) != 1 {
-		return newFailure(tc, stepNumber, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch))), nil
+		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch)))
 	}
 	var operator string
 	for k := range branch {
@@ -148,28 +158,22 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 	case []interface{}:
 		operands = branch[operator].([]interface{})
 	default:
-		return newFailure(tc, stepNumber, "", fmt.Errorf("expected %s operands to be an []interface{}, got %v", operator, t)), nil
+		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("expected %s operands to be an []interface{}, got %v", operator, t))
 	}
 	if len(operands) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	// Evaluate assertions (operands)
-	var errsBuf []Failure
-	var failsBuf []Failure
 	var results []string
 	assertionsCount := len(operands)
 	assertionsSuccess := 0
 	for _, assertion := range operands {
-		errs, fails := check(tc, stepNumber, assertion, r)
+		errs := check(ctx, tc, stepNumber, rangedIndex, assertion, r)
 		if errs != nil {
-			errsBuf = append(errsBuf, *errs)
-		}
-		if fails != nil {
-			failsBuf = append(failsBuf, *fails)
 			results = append(results, fmt.Sprintf("  - fail: %s", assertion))
 		}
-		if (errs == nil) && (fails == nil) {
+		if errs == nil {
 			assertionsSuccess++
 			results = append(results, fmt.Sprintf("  - pass: %s", assertion))
 		}
@@ -198,27 +202,27 @@ func checkBranch(tc TestCase, stepNumber int, branch map[string]interface{}, r i
 			err = fmt.Errorf("some assertions succeeded but expected none to suceed:\n%s\n", strings.Join(results, "\n"))
 		}
 	default:
-		return newFailure(tc, stepNumber, "", fmt.Errorf("unsupported assertion operator %s", operator)), nil
+		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("unsupported assertion operator %s", operator))
 	}
 	if err != nil {
-		return nil, newFailure(tc, stepNumber, "", err)
+		return newFailure(ctx, tc, stepNumber, rangedIndex, "", err)
 	}
-	return nil, nil
+	return nil
 }
 
 // checkString evaluate a single string assertion
-func checkString(tc TestCase, stepNumber int, assertion string, r interface{}) (*Failure, *Failure) {
+func checkString(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion string, r interface{}) *Failure {
 	assert, err := parseAssertions(context.Background(), assertion, r)
 	if err != nil {
-		return nil, newFailure(tc, stepNumber, assertion, err)
+		return newFailure(ctx, tc, stepNumber, rangedIndex, assertion, err)
 	}
 
 	if err := assert.Func(assert.Actual, assert.Args...); err != nil {
-		failure := newFailure(tc, stepNumber, assertion, err)
+		failure := newFailure(ctx, tc, stepNumber, rangedIndex, assertion, err)
 		failure.AssertionRequired = assert.Required
-		return nil, failure
+		return failure
 	}
-	return nil, nil
+	return nil
 }
 
 // splitAssertion splits the assertion string a, with support
@@ -354,7 +358,7 @@ func findLineNumber(filename, testcase string, stepNumber int, assertion string,
 	return countLine
 }
 
-//This evaluates a string of assertions with a given vars scope, and returns a slice of failures (i.e. empty slice = all pass)
+// This evaluates a string of assertions with a given vars scope, and returns a slice of failures (i.e. empty slice = all pass)
 func testConditionalStatement(ctx context.Context, tc *TestCase, assertions []string, vars H, text string) ([]string, error) {
 	var failures []string
 	for _, assertion := range assertions {
@@ -362,7 +366,6 @@ func testConditionalStatement(ctx context.Context, tc *TestCase, assertions []st
 		assert, err := parseAssertions(ctx, assertion, vars)
 		if err != nil {
 			Error(ctx, "unable to parse assertion: %v", err)
-			tc.AppendError(err)
 			return failures, err
 		}
 		if err := assert.Func(assert.Actual, assert.Args...); err != nil {
