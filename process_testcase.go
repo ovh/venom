@@ -268,6 +268,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 			tsResult.Number = stepNumber
 			tsResult.RangedIndex = rangedIndex
+			tsResult.RangedEnable = ranged.Enabled
 			tsResult.InputVars = vars
 
 			tc.testSteps = append(tc.testSteps, step)
@@ -299,7 +300,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			}
 
 			printStepName := v.Verbose >= 1 && !fromUserExecutor
-			v.setTestStepName(tsResult, e, step, &ranged, &rangedData, printStepName)
+			v.setTestStepName(tsResult, e, step, &ranged, &rangedData, rangedIndex, printStepName)
 
 			tsResult.Start = time.Now()
 
@@ -332,13 +333,13 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 				if isRequired {
 					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
 					tsResult.appendFailure(*failure)
-					v.printTestStepResult(tc, tsResult, tsIn, stepNumber, true)
+					v.printTestStepResult(tc, tsResult, tsIn, ranged, stepNumber, true)
 					return
 				}
-				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+				v.printTestStepResult(tc, tsResult, tsIn, ranged, stepNumber, false)
 				continue
 			}
-			v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+			v.printTestStepResult(tc, tsResult, tsIn, ranged, stepNumber, false)
 
 			allVars := tc.Vars.Clone()
 			allVars.AddAll(tc.computedVars.Clone())
@@ -358,7 +359,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 }
 
 // Set test step name (defaults to executor name, excepted if it got a "name" attribute. in range, also print key)
-func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestStep, ranged *Range, rangedData *RangeData, print bool) {
+func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestStep, ranged *Range, rangedData *RangeData, rangedIndex int, print bool) {
 	name := e.Name()
 	if value, ok := step["name"]; ok {
 		switch value := value.(type) {
@@ -367,22 +368,25 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 		}
 	}
 	if ranged.Enabled {
+		if rangedIndex == 0 {
+			v.Print("\n")
+		}
 		name = fmt.Sprintf("%s (range=%s)", name, rangedData.Key)
 	}
 	ts.Name = name
 
-	if print {
+	if print || ranged.Enabled {
 		v.Print(" \t\t• %s", ts.Name)
 	}
 }
 
 // Print a single step result (if verbosity is enabled)
-func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
+func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, ranged Range, stepNumber int, mustAssertionFailed bool) {
 	fromUserExecutor := tsIn != nil
 	if fromUserExecutor {
 		tsIn.appendFailure(ts.Errors...)
 	}
-	if v.Verbose >= 1 {
+	if ranged.Enabled || v.Verbose >= 1 {
 		if !fromUserExecutor { //Else print step status
 			if len(ts.Errors) > 0 {
 				v.Println(" %s", Red(StatusFail))

@@ -104,10 +104,8 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		tc := &ts.TestCases[i]
 		tc.IsEvaluated = true
 		v.Print(" \t• %s", tc.Name)
-		if verboseReport {
-			v.Print("\n")
-		}
 		var hasFailure bool
+		var hasRanged bool
 		var hasSkipped = len(tc.Skipped) > 0
 		if !hasSkipped {
 			start := time.Now()
@@ -120,9 +118,16 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		}
 
 		for _, testStepResult := range tc.TestStepResults {
+			if testStepResult.RangedEnable {
+				hasRanged = true
+			}
 			if testStepResult.Status == StatusFail {
 				hasFailure = true
 			}
+		}
+
+		if verboseReport || hasRanged {
+			v.Print("\n")
 		}
 
 		if hasFailure {
@@ -133,7 +138,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 
 		// Verbose mode already reported tests status, so just print them when non-verbose
 		indent := ""
-		if verboseReport {
+		if hasRanged || verboseReport {
 			indent = "\t  "
 		} else {
 			if hasFailure {
@@ -155,7 +160,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		}
 
 		// Verbose mode already reported failures, so just print them when non-verbose
-		if !verboseReport && hasFailure {
+		if !hasRanged && !verboseReport && hasFailure {
 			for _, testStepResult := range tc.TestStepResults {
 				for _, f := range testStepResult.Errors {
 					v.Println("%s", Yellow(f.Value))
