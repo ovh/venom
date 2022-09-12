@@ -180,6 +180,7 @@ type TestStepResult struct {
 	Interpolated      interface{}       `json:"interpolated" yaml:"interpolated"`
 	Number            int               `json:"number" yaml:"number"`
 	RangedIndex       int               `json:"rangedIndex" yaml:"rangedIndex"`
+	RangedEnable      bool              `json:"rangedEnable" yaml:"rangedEnable"`
 	InputVars         map[string]string `json:"inputVars" yaml:"-"`
 	ComputedVars      H                 `json:"computedVars" yaml:"-"`
 	ComputedInfo      []string          `json:"computedInfos" yaml:"-"`
