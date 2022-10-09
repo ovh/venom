@@ -24,9 +24,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
+	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -76,7 +76,7 @@ func main() {
 }
 
 func loadTLSCredentials() (credentials.TransportCredentials, error) {
-	serverCA, err := ioutil.ReadFile(caCertLocation)
+	serverCA, err := os.ReadFile(caCertLocation)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read server CA's PEM: %v", err)
 	}
