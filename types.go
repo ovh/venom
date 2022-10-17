@@ -175,6 +175,7 @@ type TestCase struct {
 type TestStepResult struct {
 	Name              string            `json:"name"`
 	Errors            []Failure         `json:"errors"`
+	Skipped           []Skipped         `json:"skipped" yaml:"skipped"`
 	Status            string            `json:"status" yaml:"status"`
 	Raw               interface{}       `json:"raw" yaml:"raw"`
 	Interpolated      interface{}       `json:"interpolated" yaml:"interpolated"`

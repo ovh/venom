@@ -302,24 +302,31 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			printStepName := v.Verbose >= 1 && !fromUserExecutor
 			v.setTestStepName(tsResult, e, step, &ranged, &rangedData, rangedIndex, printStepName)
 
-			tsResult.Start = time.Now()
-
 			// ##### RUN Test Step Here
-			tsResult.Status = StatusRun
-			result := v.RunTestStep(ctx, e, tc, tsResult, stepNumber, rangedIndex, step)
-			if len(tsResult.Errors) > 0 || !tsResult.AssertionsApplied.OK {
+			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber)
+			if err != nil {
+				tsResult.appendError(err)
 				tsResult.Status = StatusFail
+			} else if skip {
+				tsResult.Status = StatusSkip
 			} else {
-				tsResult.Status = StatusPass
+				tsResult.Start = time.Now()
+				tsResult.Status = StatusRun
+				result := v.RunTestStep(ctx, e, tc, tsResult, stepNumber, rangedIndex, step)
+				if len(tsResult.Errors) > 0 || !tsResult.AssertionsApplied.OK {
+					tsResult.Status = StatusFail
+				} else {
+					tsResult.Status = StatusPass
+				}
+
+				tsResult.End = time.Now()
+				tsResult.Duration = tsResult.End.Sub(tsResult.Start).Seconds()
+
+				mapResult := GetExecutorResult(result)
+				previousStepVars.AddAll(H(mapResult))
+
+				tc.testSteps = append(tc.testSteps, step)
 			}
-
-			tsResult.End = time.Now()
-			tsResult.Duration = tsResult.End.Sub(tsResult.Start).Seconds()
-
-			mapResult := GetExecutorResult(result)
-			previousStepVars.AddAll(H(mapResult))
-
-			tc.testSteps = append(tc.testSteps, step)
 
 			var isRequired bool
 
@@ -401,11 +408,41 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 						v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other steps were skipped", skipped)))
 					}
 				}
+			} else if ts.Status == StatusSkip {
+				v.Println(" %s", Gray(StatusSkip))
 			} else {
 				v.Println(" %s", Green(StatusPass))
 			}
 		}
 	}
+}
+
+// Parse and format skip conditional
+func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []byte, stepNumber int) (bool, error) {
+	// Load "skip" attribute from step
+	var assertions struct {
+		Skip []string `yaml:"skip"`
+	}
+	if err := yaml.Unmarshal(rawStep, &assertions); err != nil {
+		return false, fmt.Errorf("unable to parse \"skip\" assertions: %v", err)
+	}
+
+	// Evaluate skip assertions
+	if len(assertions.Skip) > 0 {
+		results, err := testConditionalStatement(ctx, tc, assertions.Skip, tc.Vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
+		if err != nil {
+			Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
+			return false, err
+		}
+		if len(results) > 0 {
+			for _, s := range results {
+				ts.Skipped = append(ts.Skipped, Skipped{Value: s})
+				Warn(ctx, s)
+			}
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // Parse and format range data to allow iterations over user data
