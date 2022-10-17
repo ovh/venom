@@ -39,7 +39,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 * [Export tests report](#export-tests-report)
 * [Advanced usage](#advanced-usage)
   * [Debug your testsuites](#debug-your-testsuites)
-  * [Skip testcase and teststeps](#skip-testcase--and-teststeps)
+  * [Skip testcase and teststeps](#skip-testcase-and-teststeps)
   * [Iterating over data](#iterating-over-data)
 * [FAQ](#faq)
   * [Common errors with quotes](#common-errors-with-quotes)
