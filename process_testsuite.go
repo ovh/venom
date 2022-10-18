@@ -111,6 +111,9 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 			start := time.Now()
 			tc.Start = start
 			ts.Status = StatusRun
+			if verboseReport || hasRanged {
+				v.Print("\n")
+			}
 			// ##### RUN Test Case Here
 			v.runTestCase(ctx, ts, tc)
 			tc.End = time.Now()
@@ -128,10 +131,6 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 			if testStepResult.Status == StatusSkip {
 				skippedSteps++
 			}
-		}
-
-		if verboseReport || hasRanged {
-			v.Print("\n")
 		}
 
 		if hasFailure {
