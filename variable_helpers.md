@@ -104,7 +104,7 @@ key with - and a empty key:
     - `myvar.foo-key=""`
 - will return `a value-key..and another key value value-key`
 
-espace func:
+escape func:
 - `a {{.m.foo}} here, {{.m.title | title}}, {{.m.upper | upper}}, {{.m.lower | lower}}, {{.m.escape | escape}}`
 - with variables 
   - `m.foo=valbar`

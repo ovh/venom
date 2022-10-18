@@ -312,8 +312,8 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 				// Now we have to dump this object, but the key will change if this is a array or not
 				if reflect.ValueOf(outJSON).Kind() == reflect.Slice {
 					prefix := k + "json"
-					splittedPrefix := strings.Split(prefix, ".")
-					prefix += "." + splittedPrefix[len(splittedPrefix)-1]
+					splitPrefix := strings.Split(prefix, ".")
+					prefix += "." + splitPrefix[len(splitPrefix)-1]
 					outJSONDump, err := Dump(outJSON)
 					if err != nil {
 						return nil, errors.Wrapf(err, "unable to compute result")

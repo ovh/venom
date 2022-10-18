@@ -5,7 +5,7 @@ const mockServer = createMockServer({
   serviceName: "Greeter",
   rules: [
     { method: "hello", input: { message: "Hello" }, output: { message: "Hello" } },
-    { method: "hello", input: { message: "Hi" }, output: { message: "A little familar, are't you" } },
+    { method: "hello", input: { message: "Hi" }, output: { message: "A little familiar, are't you" } },
     { method: "goodbye", input: ".*", output: { message: "Goodbye" } },
     
     {

@@ -339,7 +339,7 @@ type Assignment struct {
 	Default interface{} `json:"default" yaml:"default"`
 }
 
-// RemoveNotPrintableChar removes not printable chararacter from a string
+// RemoveNotPrintableChar removes not printable character from a string
 func RemoveNotPrintableChar(in string) string {
 	m := func(r rune) rune {
 		if unicode.IsPrint(r) || unicode.IsSpace(r) || unicode.IsPunct(r) {

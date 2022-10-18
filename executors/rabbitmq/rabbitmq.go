@@ -48,7 +48,7 @@ type Executor struct {
 	Exchange string `json:"exchange" yaml:"exchange"`
 	// RoutingKey represents the RabbitMQ routing key
 	ExchangeType string `json:"exchange_type" yaml:"exchangeType"`
-	// ExchangeType respresents the type of exchange (fanout, etc..)
+	// ExchangeType represents the type of exchange (fanout, etc..)
 	RoutingKey string `json:"routing_key" yaml:"routingKey"`
 
 	// Represents the limit of message will be read. After limit, consumer stop read message
@@ -241,7 +241,7 @@ func (e Executor) consumeMessages(ctx context.Context) ([]string, []interface{},
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	venom.Debug(ctx, "Q declated '%s'", q.Name)
+	venom.Debug(ctx, "Q declared '%s'", q.Name)
 
 	// If an exchange if defined
 	if e.Exchange != "" {
