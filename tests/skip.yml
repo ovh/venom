@@ -26,3 +26,30 @@ testcases:
     script: command_not_found
     assertions:
     - result.code ShouldEqual 0
+
+- name: skip-one-of-these
+  steps:
+  - name: do-not-skip-this
+    type: exec
+    script: exit 0
+    assertions:
+    - result.code ShouldEqual 0
+    skip:
+    - foo ShouldNotBeEmpty
+  - name: skip-this
+    type: exec
+    script: exit 1
+    assertions:
+    - result.code ShouldEqual 0
+    skip:
+    - foo ShouldBeEmpty
+
+- name: skip-all-of-steps
+  steps:
+  - name: skip-this
+    type: exec
+    script: exit 1
+    assertions:
+    - result.code ShouldEqual 0
+    skip:
+    - foo ShouldBeEmpty

@@ -39,7 +39,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 * [Export tests report](#export-tests-report)
 * [Advanced usage](#advanced-usage)
   * [Debug your testsuites](#debug-your-testsuites)
-  * [Skip testcase](#skip-testcase)
+  * [Skip testcase and teststeps](#skip-testcase-and-teststeps)
   * [Iterating over data](#iterating-over-data)
 * [FAQ](#faq)
   * [Common errors with quotes](#common-errors-with-quotes)
@@ -774,7 +774,7 @@ $ venom run test.yml
     [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
 ```
 
-## Skip testcase
+## Skip testcase and teststeps
 
 It is possible to skip `testcase` according to some `assertions`. For instance, the following example will skip the last testcase.
 
@@ -807,6 +807,34 @@ testcases:
     script: command_not_found
     assertions:
     - result.code ShouldEqual 0
+
+```
+
+A `skip` statement may also be placed at steps level to partially execute a testcase.
+If all steps from a testcase are skipped, the testcase itself will also be treated as "skipped" rather than "passed"/"failed".
+
+```yaml
+name: "Skip testsuite"
+vars:
+  foo: bar
+
+testcases:
+- name: skip-one-of-these
+  steps:
+  - name: do-not-skip-this
+    type: exec
+    script: exit 0
+    assertions:
+    - result.code ShouldEqual 0
+    skip:
+    - foo ShouldNotBeEmpty
+  - name: skip-this
+    type: exec
+    script: exit 1
+    assertions:
+    - result.code ShouldEqual 0
+    skip:
+    - foo ShouldBeEmpty
 
 ```
 

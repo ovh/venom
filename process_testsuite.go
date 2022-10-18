@@ -111,12 +111,16 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 			start := time.Now()
 			tc.Start = start
 			ts.Status = StatusRun
+			if verboseReport || hasRanged {
+				v.Print("\n")
+			}
 			// ##### RUN Test Case Here
 			v.runTestCase(ctx, ts, tc)
 			tc.End = time.Now()
 			tc.Duration = tc.End.Sub(tc.Start).Seconds()
 		}
 
+		skippedSteps := 0
 		for _, testStepResult := range tc.TestStepResults {
 			if testStepResult.RangedEnable {
 				hasRanged = true
@@ -124,14 +128,16 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 			if testStepResult.Status == StatusFail {
 				hasFailure = true
 			}
-		}
-
-		if verboseReport || hasRanged {
-			v.Print("\n")
+			if testStepResult.Status == StatusSkip {
+				skippedSteps++
+			}
 		}
 
 		if hasFailure {
 			tc.Status = StatusFail
+		} else if skippedSteps == len(tc.TestStepResults) {
+			//If all test steps were skipped, consider the test case as skipped
+			tc.Status = StatusSkip
 		} else if tc.Status != StatusSkip {
 			tc.Status = StatusPass
 		}
@@ -140,6 +146,12 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		indent := ""
 		if hasRanged || verboseReport {
 			indent = "\t  "
+			// If the testcase was entirely skipped, then the verbose mode will not have any output
+			// Print something to inform that the testcase was indeed processed although skipped
+			if len(tc.TestStepResults) == 0 {
+				v.Println("\t\t%s", Gray("• (all steps were skipped)"))
+				continue
+			}
 		} else {
 			if hasFailure {
 				v.Println(" %s", Red(StatusFail))
