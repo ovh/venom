@@ -6,7 +6,7 @@ Use case: your software need to make call to a Redis.
 
 ## Input
 
-The follwing inputs are available:
+The following inputs are available:
 - `commands`: an array of Redis command
 - `path`: a file which contains a series of Redis command. If path property is filled, commands property will be ignored.
 - `dialURL`: Redis server URL
@@ -54,7 +54,7 @@ testcases:
   steps:
   - type: redis
     path: testredis/commands.txt
-    dialURL: "redis://localhost:6379/0" # The global dialURL is overriden by this setting
+    dialURL: "redis://localhost:6379/0" # The global dialURL is overridden by this setting
     assertions:
         - result.commands.commands0.response ShouldEqual OK
         - result.commands.commands1.response ShouldEqual bar

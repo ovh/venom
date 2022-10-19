@@ -5,7 +5,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 <a href="https://github.com/ovh/venom/releases/latest"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ovh/venom.svg?logo=github&style=flat-square"></a>
 [![GoDoc](https://godoc.org/github.com/ovh/venom?status.svg)](https://godoc.org/github.com/ovh/venom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
-[![Dicussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
+[![Discussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
 <a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
  
 # Table of content
@@ -162,7 +162,7 @@ Flags:
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
+      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
@@ -237,7 +237,7 @@ Flags:
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
+      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
@@ -647,7 +647,7 @@ Example:
 
 ### Using logical operators
 
-While assertions use `and` operator implicitely, it is possible to use other logical operators to perform complex assertions.
+While assertions use `and` operator implicitly, it is possible to use other logical operators to perform complex assertions.
 
 Supported operators are `and`, `or` and `xor`.
 
@@ -858,7 +858,7 @@ The following data types are supported, each exposing contexted variables `.inde
 
 For instance, the following example will iterate over an array of two items containing maps:
 ```yaml
-- name: range with harcoded array
+- name: range with hardcoded array
   steps:
   - type: exec
     range:

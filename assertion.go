@@ -195,11 +195,11 @@ func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex i
 			err = fmt.Errorf("no assertions succeeded:\n%s\n", strings.Join(results, "\n"))
 		}
 		if assertionsSuccess > 1 {
-			err = fmt.Errorf("multiple assertions succeeded but expected only one to suceed:\n%s\n", strings.Join(results, "\n"))
+			err = fmt.Errorf("multiple assertions succeeded but expected only one to succeed:\n%s\n", strings.Join(results, "\n"))
 		}
 	case "not":
 		if assertionsSuccess > 0 {
-			err = fmt.Errorf("some assertions succeeded but expected none to suceed:\n%s\n", strings.Join(results, "\n"))
+			err = fmt.Errorf("some assertions succeeded but expected none to succeed:\n%s\n", strings.Join(results, "\n"))
 		}
 	default:
 		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("unsupported assertion operator %s", operator))

@@ -5,7 +5,7 @@ Step to execute SQL queries into databases:
 * **PostgreSQL**
 * **Oracle**
 
-It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retreive rows as a list of map[string]interface{}
+It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retrieve rows as a list of map[string]interface{}
 
 ## Input
 

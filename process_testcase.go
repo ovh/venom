@@ -352,7 +352,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			allVars.AddAll(tc.computedVars.Clone())
 			tsResult.ComputedVars = tc.computedVars.Clone()
 
-			assign, _, err := processVariableAssigments(ctx, tc.Name, allVars, rawStep)
+			assign, _, err := processVariableAssignments(ctx, tc.Name, allVars, rawStep)
 			if err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to process variable assignments: %v", err)
@@ -544,11 +544,11 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 	return ranged, nil
 }
 
-func processVariableAssigments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
+func processVariableAssignments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
 	var stepAssignment AssignStep
 	var result = make(H)
 	if err := yaml.Unmarshal(rawStep, &stepAssignment); err != nil {
-		Error(ctx, "unable to parse assignements (%s): %v", string(rawStep), err)
+		Error(ctx, "unable to parse assignments (%s): %v", string(rawStep), err)
 		return nil, false, err
 	}
 
@@ -561,27 +561,27 @@ func processVariableAssigments(ctx context.Context, tcName string, tcVars H, raw
 		tcVarsKeys = append(tcVarsKeys, k)
 	}
 
-	for varname, assigment := range stepAssignment.Assignments {
+	for varname, assignment := range stepAssignment.Assignments {
 		Debug(ctx, "Processing %s assignment", varname)
-		varValue, has := tcVars[assigment.From]
+		varValue, has := tcVars[assignment.From]
 		if !has {
-			varValue, has = tcVars[tcName+"."+assigment.From]
+			varValue, has = tcVars[tcName+"."+assignment.From]
 			if !has {
-				if assigment.Default == nil {
-					err := fmt.Errorf("%s reference not found in %s", assigment.From, strings.Join(tcVarsKeys, "\n"))
+				if assignment.Default == nil {
+					err := fmt.Errorf("%s reference not found in %s", assignment.From, strings.Join(tcVarsKeys, "\n"))
 					Info(ctx, "%v", err)
 					return nil, true, err
 				}
-				varValue = assigment.Default
+				varValue = assignment.Default
 			}
 		}
-		if assigment.Regex == "" {
+		if assignment.Regex == "" {
 			Info(ctx, "Assign '%s' value '%s'", varname, varValue)
 			result.Add(varname, varValue)
 		} else {
-			regex, err := regexp.Compile(assigment.Regex)
+			regex, err := regexp.Compile(assignment.Regex)
 			if err != nil {
-				Warn(ctx, "unable to compile regexp %q", assigment.Regex)
+				Warn(ctx, "unable to compile regexp %q", assignment.Regex)
 				return nil, true, err
 			}
 			varValueS, ok := varValue.(string)

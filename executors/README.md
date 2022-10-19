@@ -57,11 +57,11 @@ func (Executor)	Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	//...
 
 	systemout := "foo"
-	ouputCode := 0
+	outputCode := 0
 
 	// prepare result
 	r := Result{
-		Code:    ouputCode, // return Output Code
+		Code:    outputCode, // return Output Code
 		Command: e.Command, // return Command executed
 		Systemout: systemout, // return Output string
 	}

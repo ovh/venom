@@ -39,7 +39,7 @@ func OSExit(exitCode int) {
 // ContextKey can be added in context to store contextual infos. Also used by logger.
 type ContextKey string
 
-// New instanciates a new venom on venom run cmd
+// New instantiates a new venom on venom run cmd
 func New() *Venom {
 	v := &Venom{
 		LogOutput:         os.Stdout,
