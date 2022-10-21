@@ -12,7 +12,7 @@ testcases:
   steps:
   - type: imap
     imaphost: yourimaphost
-    imapport: 993
+    imapport: "993"
     imapuser: yourimapuser
     imappassword: "yourimappassword"
     mbox: INBOX
