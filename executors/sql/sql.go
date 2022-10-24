@@ -18,6 +18,9 @@ import (
 	// Oracle
 	_ "github.com/sijms/go-ora"
 
+	// Sqlite
+	_ "modernc.org/sqlite"
+
 	"github.com/ovh/venom"
 )
 
