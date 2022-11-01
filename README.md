@@ -43,7 +43,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
   * [Iterating over data](#iterating-over-data)
 * [FAQ](#faq)
   * [Common errors with quotes](#common-errors-with-quotes)
-* [Use venom in CI/CD pipelines](#use-venom-in-ci-cd-pipelines)
+* [Use venom in CI/CD pipelines](#use-venom-in-cicd-pipelines)
 * [Hacking](#hacking)
 * [Contributing](#contributing)
 * [License](#license)
