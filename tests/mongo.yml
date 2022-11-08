@@ -1,0 +1,183 @@
+name: MongoDB Test Suite
+vars:
+  mongo_uri: mongodb://localhost:27017
+  mongo_database: venom
+  mongo_collection: cards
+
+testcases:
+  - name: Reset collection
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: "{{.mongo_collection}}"
+        actions:
+          - type: dropCollection
+          - type: createCollection
+
+  - name: Insert some data
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: "{{.mongo_collection}}"
+        actions:
+          - type: insert
+            documents:
+              - |
+                {
+                  "_id": {
+                    "$oid": "636a7c57d044a5a54b0f8cf7"
+                  },
+                  "color": "black",
+                  "value": "joker"
+                }
+              - |
+                {
+                  "color": "red",
+                  "value": "joker"
+                }
+
+          - type: insert
+            file: mongo/cards.json
+        info: "{{.result.actions}}"
+        assertions:
+          - result.actions.actions0.insertedids.__len__ ShouldEqual 2
+          - result.actions.actions1.insertedids.__len__ ShouldEqual 12
+
+  - name: Count the inserted data
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: "{{.mongo_collection}}"
+        actions:
+          - type: count
+
+          - type: count
+            filter: |
+              {
+                "suit": "spades"
+              }
+        info: "{{.result.actions}}"
+        assertions:
+          - result.actions.actions0.count ShouldEqual 14
+          - result.actions.actions1.count ShouldEqual 3
+
+  - name: Search the inserted data
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: "{{.mongo_collection}}"
+        actions:
+          - type: find
+
+          - type: find
+            filter: |
+              {
+                "color": "black"
+              }
+
+          - type: find
+            filter: |
+              {
+                "_id": {
+                  "$oid": "636a7c57d044a5a54b0f8cf7"
+                }
+              }
+        info: "{{.result.actions}}"
+        assertions:
+          - result.actions.actions0.results.__len__ ShouldEqual 14
+
+          - result.actions.actions1.results.__len__ ShouldEqual 1
+          - result.actions.actions1.results.results0._id ShouldEqual ObjectID("636a7c57d044a5a54b0f8cf7")
+          - result.actions.actions1.results.results0.color ShouldEqual black
+          - result.actions.actions1.results.results0.value ShouldEqual joker
+
+          - result.actions.actions2.results.__len__ ShouldEqual 1
+          - result.actions.actions2.results.results0._id ShouldEqual ObjectID("636a7c57d044a5a54b0f8cf7")
+          - result.actions.actions2.results.results0.color ShouldEqual black
+          - result.actions.actions2.results.results0.value ShouldEqual joker
+
+  - name: Update the data
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: "{{.mongo_collection}}"
+        actions:
+          - type: update
+            filter: |
+              {
+                "suit": "clubs"
+              }
+            update: |
+              {
+                "$set": {
+                  "color": "black"
+                }
+              }
+
+          - type: count
+            filter: |
+              {
+                "color": "black"
+              }
+        info: "{{.result.actions}}"
+        assertions:
+          - result.actions.actions0.matchedcount ShouldEqual 3
+          - result.actions.actions0.modifiedcount ShouldEqual 3
+          - result.actions.actions0.upsertedcount ShouldEqual 0
+
+          - result.actions.actions1.count ShouldEqual 4
+
+  - name: Delete some data
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: "{{.mongo_collection}}"
+        actions:
+          - type: delete
+            filter: |
+              {
+                "suit": "hearts"
+              }
+
+          - type: count
+            filter: |
+              {
+                "suit": "hearts"
+              }
+
+          - type: count # Make sure we didn't delete the whole collection
+
+        info: "{{.result.actions}}"
+        assertions:
+          - result.actions.actions0.deletedcount ShouldEqual 3
+          - result.actions.actions1.count ShouldEqual 0
+          - result.actions.actions2.count ShouldEqual 11
+
+  - name: Aggregate pipeline
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: "{{.mongo_collection}}"
+        actions:
+          - type: aggregate
+            pipeline:
+              - |
+                { "$group": {
+                  "_id": "$value",
+                  "count": {"$sum": 1}
+                }}
+              - |
+                { "$match": {
+                  "count": {"$gt": 2}
+                }}
+
+        info: "{{.result.actions}}"
+        assertions:
+          - result.actions.actions0.results.__len__ ShouldEqual 3
