@@ -42,8 +42,8 @@ testcases:
             file: mongo/cards.json
         info: "{{.result.actions}}"
         assertions:
-          - result.actions.actions0.insertedids.__len__ ShouldEqual 2
-          - result.actions.actions1.insertedids.__len__ ShouldEqual 12
+          - result.actions.actions0.insertedids ShouldHaveLength 2
+          - result.actions.actions1.insertedids ShouldHaveLength 12
 
   - name: Count the inserted data
     steps:
@@ -88,14 +88,14 @@ testcases:
               }
         info: "{{.result.actions}}"
         assertions:
-          - result.actions.actions0.results.__len__ ShouldEqual 14
+          - result.actions.actions0.results ShouldHaveLength 14
 
-          - result.actions.actions1.results.__len__ ShouldEqual 1
+          - result.actions.actions1.results ShouldHaveLength 1
           - result.actions.actions1.results.results0._id ShouldEqual ObjectID("636a7c57d044a5a54b0f8cf7")
           - result.actions.actions1.results.results0.color ShouldEqual black
           - result.actions.actions1.results.results0.value ShouldEqual joker
 
-          - result.actions.actions2.results.__len__ ShouldEqual 1
+          - result.actions.actions2.results ShouldHaveLength 1
           - result.actions.actions2.results.results0._id ShouldEqual ObjectID("636a7c57d044a5a54b0f8cf7")
           - result.actions.actions2.results.results0.color ShouldEqual black
           - result.actions.actions2.results.results0.value ShouldEqual joker
@@ -180,4 +180,4 @@ testcases:
 
         info: "{{.result.actions}}"
         assertions:
-          - result.actions.actions0.results.__len__ ShouldEqual 3
+          - result.actions.actions0.results ShouldHaveLength 3
