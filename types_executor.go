@@ -273,7 +273,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 
 	outputS, err := interpolate.Do(string(outputString), computedVars)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "unable to interpolate user executor")
 	}
 
 	// re-inject info into executorRunner

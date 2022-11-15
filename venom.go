@@ -252,7 +252,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 
 		content, err := interpolate.Do(string(btes), varsComputed)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "unable to interpolate in register user executors")
 		}
 
 		ux := UserExecutor{Filename: f}

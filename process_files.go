@@ -61,11 +61,6 @@ func uniq(stringSlice []string) []string {
 	return list
 }
 
-type partialTestSuite struct {
-	Name string `json:"name" yaml:"name"`
-	Vars H      `yaml:"vars" json:"vars"`
-}
-
 func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 	for _, filePath := range filesPath {
 		log.Info("Reading ", filePath)
@@ -114,7 +109,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 
 		content, err := interpolate.Do(string(btes), vars)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "unable to interpolate file %s content: %s", filePath, string(btes))
 		}
 
 		var testSuiteInput TestSuiteInput

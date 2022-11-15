@@ -65,7 +65,7 @@ func initArgs(cmd *cobra.Command) {
 
 	if err := initFromConfigFile(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		venom.OSExit(2)
+		venom.OSExit(3)
 	}
 	cmd.LocalFlags().VisitAll(initFromCommandArguments)
 }
@@ -341,7 +341,7 @@ var Cmd = &cobra.Command{
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			venom.OSExit(4)
 		}
 
 		if v.Verbose == 3 {
@@ -380,23 +380,23 @@ var Cmd = &cobra.Command{
 		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			venom.OSExit(5)
 		}
 		v.AddVariables(mapvars)
 
 		if err := v.Parse(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			venom.OSExit(6)
 		}
 
 		if err := v.Process(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			venom.OSExit(7)
 		}
 
 		if err := v.OutputResult(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			venom.OSExit(8)
 		}
 
 		if v.Tests.Status == venom.StatusPass {
@@ -404,7 +404,7 @@ var Cmd = &cobra.Command{
 			venom.OSExit(0)
 		}
 		fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Red(v.Tests.Status))
-		venom.OSExit(2)
+		venom.OSExit(9)
 
 		return nil
 	},

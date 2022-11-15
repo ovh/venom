@@ -1,0 +1,19 @@
+name: MyTestSuiteInterpolate
+testcases:
+- name: testA
+  steps:
+  - type: exec
+    script: echo 'foo with a bar here'
+    vars:
+      myvariable:
+        from: result.systemout
+        regex: foo with a ([a-z]+) here
+        default: "somevalue"
+
+- name: test
+  steps:
+  - type: exec
+    script: echo "foo{{.testA.myvariable | replace "b" "c" }}"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring car

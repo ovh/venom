@@ -95,7 +95,7 @@ $(GO_GOJUNIT):
 
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 $(GO_COBERTURA):
-	go install github.com/t-yuki/gocover-cobertura@latest
+	go install github.com/richardlt/gocover-cobertura@latest
 
 GO_XUTOOLS = ${GOPATH}/bin/xutools
 $(GO_XUTOOLS):

@@ -33,9 +33,14 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 		dvars[i] = strings.ReplaceAll(dvars[i], "\"", "\\\"")
 	}
 	for _, rawStep := range tc.RawTestSteps {
-		content, err := interpolate.Do(string(rawStep), dvars)
+		theYml, err := yaml.Marshal(rawStep)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Wrapf(err, "unable to unmarshal rawStep 1")
+		}
+
+		content, err := interpolate.Do(string(theYml), dvars)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "unable to unmarshal rawStep")
 		}
 
 		var step TestStep
@@ -228,12 +233,20 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 			var content string
 			for i := 0; i < 10; i++ {
-				content, err = interpolate.Do(string(rawStep), vars)
+				theYml, err := yaml.Marshal(rawStep)
+				if err != nil {
+					tsResult.appendError(err)
+					Error(ctx, "unable to interpolate rawStep (%d): %v", err, i)
+					return
+				}
+
+				content, err = interpolate.Do(string(theYml), vars)
 				if err != nil {
 					tsResult.appendError(err)
 					Error(ctx, "unable to interpolate step: %v", err)
 					return
 				}
+
 				if !strings.Contains(content, "{{") {
 					break
 				}
