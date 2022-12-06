@@ -1,6 +1,6 @@
 name: MongoDB Test Suite
 vars:
-  mongo_uri: mongodb://localhost:27017
+  mongo_uri: mongodb://venom:venom@localhost:27017
   mongo_database: venom
   mongo_collection: cards
 
