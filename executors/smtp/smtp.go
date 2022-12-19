@@ -94,6 +94,7 @@ func (e *Executor) sendEmail(ctx context.Context) error {
 	headers["From"] = e.From
 	headers["To"] = e.To
 	headers["Subject"] = e.Subject
+	headers["Content-Type"] = "text/plain; charset=utf-8"
 
 	// Setup message
 	message := ""

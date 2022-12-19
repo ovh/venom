@@ -43,6 +43,9 @@ search:
   body: .*a body content.* # The "Body" field to search for
 ```
 It allows us to specify which mail the command will act upon.
+> ⚠️ Be careful as search criteria are regular expressions. If you wish to search for special characters, don't forget to escape them: \
+> ❌ `subject: [IMPORTANT] READ THIS` \
+> ✅ `subject: \[IMPORTANT\] READ THIS`
 
 Often combined to the search field, the `args` field allows us to specify the arguments to the command.
 Its syntax depends on the command.
@@ -92,13 +95,13 @@ commands:
         - Mailbox2
         ...
 ```
-- Second, by specifying the '*' argument to clean all the existing mailboxes:
+- Second, by using the wildcard argument to clean all the existing mailboxes:
 ```yaml
 commands:
   - name: clear
     args:
       mailboxes:
-        - *
+        - "*"
 ```
 
 #### Delete command
@@ -270,11 +273,11 @@ As another example, here is the typical result of a `create` or `clear` command:
 ```yml
 name: IMAP testsuite
 vars:
+  withTLS: false
   host: localhost
-  port: 1993
+  port: 1143
   user: address@example.org
   password: pass
-  loglevel: info
 testcases:
   - name: Clear a mailbox
     steps:

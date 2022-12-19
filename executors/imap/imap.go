@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -441,7 +442,7 @@ func (c *Client) appendMail(ctx context.Context, args commandAppendArgs) Command
 		fmt.Sprintf("From: %s", args.from),
 		fmt.Sprintf("Subject: %s", args.subject),
 		fmt.Sprintf("To: %s", args.to),
-		"Content-Type: TEXT/PLAIN; CHARSET=UTF-8",
+		"Content-Type: text/plain; charset=utf-8",
 		"",
 		args.body,
 		"",
@@ -760,31 +761,30 @@ func (m *Mail) isSearched(mailToFind SearchCriteria) (bool, error) {
 		}
 	}
 	if mailToFind.From != "" {
-		matched = strings.Contains(m.From, mailToFind.From)
-		if !matched {
+		matched, err = regexp.MatchString(mailToFind.From, m.From)
+		if err != nil || !matched {
 			return false, err
 		}
 	}
 	if mailToFind.To != "" {
-		matched = strings.Contains(m.To, mailToFind.To)
-		if !matched {
+		matched, err = regexp.MatchString(mailToFind.To, m.To)
+		if err != nil || !matched {
 			return false, err
 		}
 	}
 	if mailToFind.Subject != "" {
-		matched = strings.Contains(m.Subject, mailToFind.Subject)
-		if !matched {
+		matched, err = regexp.MatchString(mailToFind.Subject, m.Subject)
+		if err != nil || !matched {
 			return false, err
 		}
 	}
 	if mailToFind.Body != "" {
-		// As a body can have complex characters, we need to remove all special characters that can make the match fail
+		// Remove all new line, return and tab characters that can make the match fail
 		replacer := strings.NewReplacer("\n", "", "\r", "", "\t", "")
 		m.Body = replacer.Replace(m.Body)
 		mailToFind.Body = replacer.Replace(mailToFind.Body)
-
-		matched = strings.Contains(m.Body, mailToFind.Body)
-		if !matched {
+		matched, err = regexp.MatchString(mailToFind.Body, m.Body)
+		if err != nil || !matched {
 			return false, err
 		}
 	}

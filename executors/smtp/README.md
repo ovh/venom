@@ -13,9 +13,9 @@ testcases:
 - name: TestCase SMTP
   steps:
   - type: smtp
-    withtls: true
+    withtls: false
     host: localhost
-    port: 25 # Most probably 465 if using TLS
+    port: 25 # 465 if using TLS
     user: yourSMTPUsername # Optional, only works with TLS
     password: yourSMTPPassword # Optional, only works with TLS
     from: venom@smtp.net

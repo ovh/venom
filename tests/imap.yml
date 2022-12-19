@@ -2,7 +2,7 @@ name: IMAP testsuite
 vars:
   withTLS: false
   imapHost: localhost
-  imapPort: 1993
+  imapPort: 1143
   imapUser: address@example.org
   imapPassword: pass
 testcases:
@@ -65,6 +65,7 @@ testcases:
                 - Flag1
                 - Flag2
         assertions:
+          - result.commands.commands0.err ShouldBeEmpty
           - result.commands.commands1.err ShouldBeEmpty
           - result.commands.commands1.mail.from ShouldEqual address@example.org
           - result.commands.commands1.mail.to ShouldEqual address@example.org
