@@ -15,23 +15,23 @@ testcases:
   - type: smtp
     withtls: true
     host: localhost
-    port: "465"
-    user: yourSMTPUsername
-    password: yourSMTPPassword
+    port: 25 # Most probably 465 if using TLS
+    user: yourSMTPUsername # Optional, only works with TLS
+    password: yourSMTPPassword # Optional, only works with TLS
+    from: venom@smtp.net
     to: destinationa@yourdomain.com,destinationb@yourdomain.com
-    from: venom@localhost
-    subject: title of mail
-    body: body of mail
+    subject: Title of mail
+    body: Body of mail
     assertions:
-    - result.err ShouldNotExist
+    - result.err ShouldBeEmpty
 ```
 
 ## Output
 
-Nothing, except result.err is there is an error.
+Nothing, except result.err if there is an error.
 
 ## Default assertion
 
 ```yaml
-result.err ShouldNotExist
+result.err ShouldBeEmpty
 ```

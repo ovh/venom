@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
-
 	"github.com/ovh/venom"
 )
 
@@ -104,21 +102,19 @@ func (e *Executor) sendEmail(ctx context.Context) error {
 	}
 	message += "\r\n" + e.Body
 
-	// TLS config
 	tlsconfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         e.Host,
 	}
 
-	// Connect to the SMTP Server
 	servername := fmt.Sprintf("%s:%s", e.Host, e.Port)
-	venom.Info(ctx, "connecting to %s", servername)
+	venom.Info(ctx, "Connecting to %s", servername)
 
 	var c *smtp.Client
 	if e.WithTLS {
 		conn, err := tls.Dial("tcp", servername, tlsconfig)
 		if err != nil {
-			return errors.Wrapf(err, "tls dial error")
+			return fmt.Errorf("tls dial error: %w", err)
 		}
 
 		c, err = smtp.NewClient(conn, e.Host)
@@ -129,16 +125,15 @@ func (e *Executor) sendEmail(ctx context.Context) error {
 		var err error
 		c, err = smtp.Dial(servername)
 		if err != nil {
-			return errors.Wrapf(err, "tls dial error")
+			return fmt.Errorf("smtp dial error: %w", err)
 		}
 		defer c.Close()
 	}
 
-	// Auth
 	if e.User != "" && e.Password != "" {
 		auth := smtp.PlainAuth("", e.User, e.Password, e.Host)
 		if err := c.Auth(auth); err != nil {
-			return err
+			return fmt.Errorf("failed to authenticate: %w", err)
 		}
 	}
 

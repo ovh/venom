@@ -893,7 +893,7 @@ func (e Executor) connect(host, port, imapUsername, imapPassword string) (*imap.
 			}
 		}
 	} else {
-		c, err = imap.Dial(host + ":" + port) // Bloquant si le serveur n'accepte que le TLS (tourne en boucle ? Essayer avec image imap-integration)
+		c, err = imap.Dial(host + ":" + port)
 		if err != nil {
 			return nil, fmt.Errorf("unable to dial: %s", err)
 		}

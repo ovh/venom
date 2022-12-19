@@ -1,15 +1,16 @@
 name: IMAP testsuite
 vars:
-  imapHost: gw2sdev-docker.ovh.net
-  imapPort: 12422
-  imapUser: imap@venom.com
-  imapPassword: imapvenompassword
+  withTLS: false
+  imapHost: localhost
+  imapPort: 1993
+  imapUser: address@example.org
+  imapPassword: pass
 testcases:
   - name: Clear a mailbox
     steps:
       - type: imap
         auth:
-          withtls: false
+          withtls: {{.withTLS}}
           host: "{{.imapHost}}"
           port: "{{.imapPort}}"
           user: "{{.imapUser}}"
@@ -27,7 +28,7 @@ testcases:
     steps:
       - type: imap
         auth:
-          withtls: false
+          withtls: {{.withTLS}}
           host: "{{.imapHost}}"
           port: "{{.imapPort}}"
           user: "{{.imapUser}}"
@@ -44,7 +45,7 @@ testcases:
     steps:
       - type: imap
         auth:
-          withtls: false
+          withtls: {{.withTLS}}
           host: "{{.imapHost}}"
           port: "{{.imapPort}}"
           user: "{{.imapUser}}"
@@ -56,8 +57,8 @@ testcases:
           - name: append
             args:
               mailbox: testBox
-              from: test@venom.ovh
-              to: test@venom.ovh
+              from: address@example.org
+              to: address@example.org
               subject: Test
               body: This is a test
               flags:
@@ -65,8 +66,8 @@ testcases:
                 - Flag2
         assertions:
           - result.commands.commands1.err ShouldBeEmpty
-          - result.commands.commands1.mail.from ShouldEqual test@venom.ovh
-          - result.commands.commands1.mail.to ShouldEqual test@venom.ovh
+          - result.commands.commands1.mail.from ShouldEqual address@example.org
+          - result.commands.commands1.mail.to ShouldEqual address@example.org
           - result.commands.commands1.mail.subject ShouldEqual Test
           - result.commands.commands1.mail.body ShouldEqual This is a test
           - result.commands.commands1.mail.flags.flags0 ShouldEqual Flag1
@@ -76,7 +77,7 @@ testcases:
     steps:
       - type: imap
         auth:
-          withtls: false
+          withtls: {{.withTLS}}
           host: "{{.imapHost}}"
           port: "{{.imapPort}}"
           user: "{{.imapUser}}"
@@ -85,14 +86,14 @@ testcases:
           - name: fetch
             search:
               mailbox: testBox
-              from: test@venom.ovh
+              from: address@example.org
               to: .*
               subject: .*
               body: .*
         assertions:
           - result.commands.commands0.err ShouldBeEmpty
-          - result.commands.commands0.search.from ShouldEqual test@venom.ovh
-          - result.commands.commands0.search.to ShouldEqual test@venom.ovh
+          - result.commands.commands0.search.from ShouldEqual address@example.org
+          - result.commands.commands0.search.to ShouldEqual address@example.org
           - result.commands.commands0.search.subject ShouldEqual Test
           - result.commands.commands0.search.body ShouldEqual This is a test
           - result.commands.commands0.search.flags.flags0 ShouldEqual Flag1
@@ -101,7 +102,7 @@ testcases:
     steps:
       - type: imap
         auth:
-          withtls: false
+          withtls: {{.withTLS}}
           host: "{{.imapHost}}"
           port: "{{.imapPort}}"
           user: "{{.imapUser}}"
@@ -110,8 +111,8 @@ testcases:
           - name: move
             search:
               mailbox: testBox
-              from: test@venom.ovh
-              to: test@venom.ovh
+              from: address@example.org
+              to: address@example.org
               subject: Test
               body: This is a test
             args:
@@ -119,8 +120,8 @@ testcases:
           - name: flag
             search:
               mailbox: INBOX
-              from: test@venom.ovh
-              to: test@venom.ovh
+              from: address@example.org
+              to: address@example.org
               subject: Test
               body: This is a test
             args:
@@ -133,13 +134,13 @@ testcases:
           # MOVE command
           - result.commands.commands0.err ShouldBeEmpty
           # State of the mail before command execution (search)
-          - result.commands.commands0.search.from ShouldEqual "test@venom.ovh"
+          - result.commands.commands0.search.from ShouldEqual "address@example.org"
           # Mail as a result of command execution
-          - result.commands.commands0.mail.from ShouldEqual "test@venom.ovh"
+          - result.commands.commands0.mail.from ShouldEqual "address@example.org"
           # FLAG command
           - result.commands.commands1.err ShouldBeEmpty
-          - result.commands.commands1.search.from ShouldEqual "test@venom.ovh"
-          - result.commands.commands1.mail.from ShouldEqual "test@venom.ovh"
+          - result.commands.commands1.search.from ShouldEqual "address@example.org"
+          - result.commands.commands1.mail.from ShouldEqual "address@example.org"
           - result.commands.commands1.mail.flags.flags0 ShouldEqual Flag1
           - result.commands.commands1.mail.flags.flags1 ShouldEqual Flag2
           # Commands that modify mails do a FETCH right after to make sure the command succeeded.
@@ -150,7 +151,7 @@ testcases:
     steps:
       - type: imap
         auth:
-          withtls: false
+          withtls: {{.withTLS}}
           host: "{{.imapHost}}"
           port: "{{.imapPort}}"
           user: "{{.imapUser}}"
@@ -159,8 +160,8 @@ testcases:
           - name: flag
             search:
               mailbox: INBOX
-              from: test@venom.ovh
-              to: test@venom.ovh
+              from: address@example.org
+              to: address@example.org
               subject: Test
               body: This is a test
             args:
@@ -170,15 +171,15 @@ testcases:
           - name: delete
             search:
               mailbox: INBOX
-              from: test@venom.ovh
-              to: test@venom.ovh
+              from: address@example.org
+              to: address@example.org
               subject: Test
               body: This is a test
         assertions:
           # FLAG command
           - result.commands.commands0.err ShouldBeEmpty
-          - result.commands.commands0.search.from ShouldEqual "test@venom.ovh"
-          - result.commands.commands0.mail.from ShouldEqual "test@venom.ovh"
+          - result.commands.commands0.search.from ShouldEqual "address@example.org"
+          - result.commands.commands0.mail.from ShouldEqual "address@example.org"
           - result.commands.commands0.mail.flags.flags0 ShouldEqual Flag1
           - result.commands.commands0.mail.flags.flags1 ShouldEqual Flag2
           - result.commands.commands0.mail.flags.flags2 ShouldEqual \Seen
@@ -186,4 +187,4 @@ testcases:
           - result.commands.commands1.err ShouldBeEmpty
           # DELETE command has no relevant assertion. The command itself already checks if searched mail has been deleted.
           # The only assertion we can make is to make sure we searched the right mail initially
-          - result.commands.commands1.search.from ShouldEqual "test@venom.ovh"
+          - result.commands.commands1.search.from ShouldEqual "address@example.org"

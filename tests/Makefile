@@ -19,7 +19,7 @@ venom-mysql.cid:
 venom-redis.cid:
 	$(call docker_run,redis,redis,-p 16379:6379)
 venom-imap.cid:
-	$(call docker_run,antespi/docker-imap-devel,imap,-p 1025:25 -p 1143:143 -p 1993:993 -e MAILNAME=example.org -e MAIL_ADDRESS=address@example.org -e MAIL_PASS=pass)
+	$(call docker_run,tomadele/mail-server,imap,-p 1025:25 -p 1143:143 -p 1993:993 -e MAILNAME=example.org -e MAIL_ADDRESS=address@example.org -e MAIL_PASS=pass)
 venom-kafka.cid:
 	docker network create --driver bridge $(docker-network)
 	$(call docker_run,confluentinc/cp-zookeeper:6.0.0,kafka-zookeeper,\
