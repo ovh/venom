@@ -52,6 +52,9 @@ testcases:
               to: address@example.org
               subject: Venom SMTP tests
               body: Hi, I am Venom SMTP Executor!
+        retry: 2 # Sometimes, the SMTP agent does not store the mail fast enough, which causes INBOX to be empty when we run this test
+        retry_if:
+          - result.commands.commands0.err ShouldContainSubstring "empty mailbox"
         assertions:
           - result.commands.commands0.err ShouldBeEmpty
           - result.commands.commands0.search.from ShouldEqual venom@smtp.net
