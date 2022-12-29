@@ -9,7 +9,7 @@ Please read its documentation for further details about the parameters of this e
 In your yaml file, you declare tour step like this
 
 ```yaml
-  - database mandatory [mysql/postgres/sqlit3]
+  - database mandatory [mysql/postgres/sqlite3]
   - dsn mandatory
   - schemas optional
   - migrations optional
