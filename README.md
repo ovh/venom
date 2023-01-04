@@ -930,9 +930,42 @@ To display properly the venom output, you probably will have to export the envir
 
 [How to write your own executor?](https://github.com/ovh/venom/tree/master/executors#venom-executor)
 
-How to compile?
+## How to compile?
 ```bash
 $ make build
+```
+
+## How to test?
+
+### Unit tests:
+
+```bash
+make test
+```
+
+### Integration tests:
+
+Prepare the stack:
+
+```bash
+make build OS=linux ARCH=amd64
+cp dist/venom.linux-amd64 tests/venom
+cd tests
+make start-test-stack  # (wait a few seconds)
+make build-test-binary-docker
+```
+
+Run integration tests:
+
+```bash
+make run-test
+```
+
+Cleanup:
+
+```bash
+make clean
+make stop-test-stack
 ```
 
 # Contributing
