@@ -313,7 +313,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			} else {
 				tsResult.Start = time.Now()
 				tsResult.Status = StatusRun
-				result := v.RunTestStep(ctx, e, tc, tsResult, stepNumber, rangedIndex, step)
+				v.RunTestStep(ctx, e, tc, tsResult, stepNumber, rangedIndex, step)
 				if len(tsResult.Errors) > 0 || !tsResult.AssertionsApplied.OK {
 					tsResult.Status = StatusFail
 				} else {
@@ -322,9 +322,6 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 				tsResult.End = time.Now()
 				tsResult.Duration = tsResult.End.Sub(tsResult.Start).Seconds()
-
-				mapResult := GetExecutorResult(result)
-				previousStepVars.AddAll(H(mapResult))
 
 				tc.testSteps = append(tc.testSteps, step)
 			}
@@ -350,8 +347,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			v.printTestStepResult(tc, tsResult, tsIn, ranged, stepNumber, false)
 
 			allVars := tc.Vars.Clone()
-			allVars.AddAll(tc.computedVars.Clone())
-			tsResult.ComputedVars = tc.computedVars.Clone()
+			allVars.AddAll(tsResult.ComputedVars.Clone())
 
 			assign, _, err := processVariableAssignments(ctx, tc.Name, allVars, rawStep)
 			if err != nil {
@@ -398,6 +394,9 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 		if !fromUserExecutor { //Else print step status
 			if len(ts.Errors) > 0 {
 				v.Println(" %s", Red(StatusFail))
+				for _, i := range ts.ComputedInfo {
+					v.Println(" \t\t  %s %s", Cyan("[info]"), Cyan(i))
+				}
 				for _, f := range ts.Errors {
 					v.Println(" \t\t  %s", Yellow(f.Value))
 				}
@@ -416,6 +415,9 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 					v.Println(" %s", Green(StatusPass))
 				} else {
 					v.Println(" %s (after %d attempts)", Green(StatusPass), ts.Retries)
+				}
+				for _, i := range ts.ComputedInfo {
+					v.Println(" \t\t  %s %s", Cyan("[info]"), Cyan(i))
 				}
 			}
 		}
