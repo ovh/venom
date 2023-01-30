@@ -144,7 +144,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 
 		// Verbose mode already reported tests status, so just print them when non-verbose
 		indent := ""
-		if hasRanged || verboseReport {
+		if verboseReport {
 			indent = "\t  "
 			// If the testcase was entirely skipped, then the verbose mode will not have any output
 			// Print something to inform that the testcase was indeed processed although skipped
@@ -172,7 +172,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		}
 
 		// Verbose mode already reported failures, so just print them when non-verbose
-		if !hasRanged && !verboseReport && hasFailure {
+		if !verboseReport && hasFailure {
 			for _, testStepResult := range tc.TestStepResults {
 				for _, f := range testStepResult.Errors {
 					v.Println("%s", Yellow(f.Value))
