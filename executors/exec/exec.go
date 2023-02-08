@@ -181,7 +181,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		result.Err = err.Error()
 		result.Code = "127"
 		venom.Debug(ctx, err.Error())
-		return dump.ToMap(e, nil, dump.WithDefaultLowerCaseFormatter())
+		return dump.ToMap(e, dump.WithDefaultLowerCaseFormatter())
 	}
 
 	<-outchan
