@@ -35,26 +35,27 @@ type Headers map[string]string
 
 // Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
-	Method            string      `json:"method" yaml:"method"`
-	URL               string      `json:"url" yaml:"url"`
-	Path              string      `json:"path" yaml:"path"`
-	Body              string      `json:"body" yaml:"body"`
-	BodyFile          string      `json:"bodyfile" yaml:"bodyfile"`
-	PreserveBodyFile  bool        `json:"preserve_bodyfile" yaml:"preserve_bodyfile" mapstructure:"preserve_bodyfile"`
-	MultipartForm     interface{} `json:"multipart_form" yaml:"multipart_form"`
-	Headers           Headers     `json:"headers" yaml:"headers"`
-	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
-	BasicAuthUser     string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
-	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
-	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
-	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
-	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
-	Resolve           []string    `json:"resolve" yaml:"resolve" mapstructure:"resolve"`
-	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
-	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
-	TLSClientCert     string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
-	TLSClientKey      string      `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
-	TLSRootCA         string      `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
+	Method                    string      `json:"method" yaml:"method"`
+	URL                       string      `json:"url" yaml:"url"`
+	Path                      string      `json:"path" yaml:"path"`
+	Body                      string      `json:"body" yaml:"body"`
+	BodyFile                  string      `json:"bodyfile" yaml:"bodyfile"`
+	PreserveBodyFile          bool        `json:"preserve_bodyfile" yaml:"preserve_bodyfile" mapstructure:"preserve_bodyfile"`
+	MultipartForm             interface{} `json:"multipart_form" yaml:"multipart_form"`
+	Headers                   Headers     `json:"headers" yaml:"headers"`
+	SupportedBodyContentTypes []string    `json:"supported_body_content_types" yaml:"supported_content_body_types" mapstructure:"supported_body_content_types"`
+	IgnoreVerifySSL           bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
+	BasicAuthUser             string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
+	BasicAuthPassword         string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
+	SkipHeaders               bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
+	SkipBody                  bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
+	Proxy                     string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
+	Resolve                   []string    `json:"resolve" yaml:"resolve" mapstructure:"resolve"`
+	NoFollowRedirect          bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
+	UnixSock                  string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
+	TLSClientCert             string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
+	TLSClientKey              string      `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
+	TLSRootCA                 string      `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -207,7 +208,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	if resp.Body != nil {
 		defer resp.Body.Close()
 
-		if !e.SkipBody && isBodySupported(resp) {
+		if !e.SkipBody && e.isBodySupported(resp) {
 			var errr error
 			bb, errr = io.ReadAll(resp.Body)
 			if errr != nil {
@@ -356,8 +357,13 @@ func parseContentType(contentType string) string {
 }
 
 // given https://developer.mozilla.org/fr/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
-func isBodySupported(resp *http.Response) bool {
+func (e Executor) isBodySupported(resp *http.Response) bool {
 	contentType := resp.Header.Get("Content-Type")
+	for _, ct := range e.SupportedBodyContentTypes {
+		if ct == contentType {
+			return true
+		}
+	}
 	return isContentTypeSupported(contentType)
 }
 
