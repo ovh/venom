@@ -36,26 +36,27 @@ type Headers map[string]string
 
 // Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
-	Method            string      `json:"method" yaml:"method"`
-	URL               string      `json:"url" yaml:"url"`
-	Path              string      `json:"path" yaml:"path"`
-	Body              string      `json:"body" yaml:"body"`
-	BodyFile          string      `json:"bodyfile" yaml:"bodyfile"`
-	PreserveBodyFile  bool        `json:"preserve_bodyfile" yaml:"preserve_bodyfile" mapstructure:"preserve_bodyfile"`
-	MultipartForm     interface{} `json:"multipart_form" yaml:"multipart_form"`
-	Headers           Headers     `json:"headers" yaml:"headers"`
-	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
-	BasicAuthUser     string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
-	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
-	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
-	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
-	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
-	Resolve           []string    `json:"resolve" yaml:"resolve" mapstructure:"resolve"`
-	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
-	UnixSock          string      `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
-	TLSClientCert     string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
-	TLSClientKey      string      `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
-	TLSRootCA         string      `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
+	Method            string            `json:"method" yaml:"method"`
+	URL               string            `json:"url" yaml:"url"`
+	Path              string            `json:"path" yaml:"path"`
+	Body              string            `json:"body" yaml:"body"`
+	BodyFile          string            `json:"bodyfile" yaml:"bodyfile"`
+	PreserveBodyFile  bool              `json:"preserve_bodyfile" yaml:"preserve_bodyfile" mapstructure:"preserve_bodyfile"`
+	MultipartForm     interface{}       `json:"multipart_form" yaml:"multipart_form"`
+	Headers           Headers           `json:"headers" yaml:"headers"`
+	IgnoreVerifySSL   bool              `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
+	BasicAuthUser     string            `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
+	BasicAuthPassword string            `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
+	SkipHeaders       bool              `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
+	SkipBody          bool              `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
+	Proxy             string            `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
+	Resolve           []string          `json:"resolve" yaml:"resolve" mapstructure:"resolve"`
+	NoFollowRedirect  bool              `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
+	UnixSock          string            `json:"unix_sock" yaml:"unix_sock" mapstructure:"unix_sock"`
+	TLSClientCert     string            `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
+	TLSClientKey      string            `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
+	TLSRootCA         string            `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
+	QueryParameters   map[string]string `json:"query_parameters" yaml:"query_parameters" mapstructure:"query_parameters"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -335,6 +336,20 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 			return nil, err
 		}
 	}
+
+	if len(e.QueryParameters) > 0 {
+		baseURL, err := url.Parse(path)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse url %s: %v", path, err)
+		}
+		params := url.Values{}
+		for k, v := range e.QueryParameters {
+			params.Add(k, v)
+		}
+		baseURL.RawQuery = params.Encode()
+		path = baseURL.String()
+	}
+
 	req, err := http.NewRequest(method, path, body)
 	if err != nil {
 		return nil, err
