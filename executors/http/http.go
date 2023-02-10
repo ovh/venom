@@ -55,6 +55,7 @@ type Executor struct {
 	TLSClientCert     string      `json:"tls_client_cert" yaml:"tls_client_cert" mapstructure:"tls_client_cert"`
 	TLSClientKey      string      `json:"tls_client_key" yaml:"tls_client_key" mapstructure:"tls_client_key"`
 	TLSRootCA         string      `json:"tls_root_ca" yaml:"tls_root_ca" mapstructure:"tls_root_ca"`
+	WorkDir           string      `json:"workdir" yaml:"workdir" mapstructure:"workdir"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -101,6 +102,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	r := Result{}
 
 	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+	// override the default workdir, useful when creating custom executors
+	if e.WorkDir != "" {
+		workdir = e.WorkDir
+	}
 
 	req, err := e.getRequest(ctx, workdir)
 	if err != nil {
