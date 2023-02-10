@@ -266,7 +266,10 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
 		bodyfilePath := filepath.Join(workdir, e.BodyFile)
-		if _, err := os.Stat(bodyfilePath); !os.IsNotExist(err) {
+		if _, err := os.Stat(bodyfilePath); os.IsNotExist(err) {
+			if err != nil {
+				return nil, err
+			}
 			temp, err := os.ReadFile(bodyfilePath)
 			if err != nil {
 				return nil, err
