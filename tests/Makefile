@@ -16,6 +16,8 @@ venom-postgres.cid:
 	$(call docker_run,postgres,postgres,-p 15432:5432 -e POSTGRES_PASSWORD=venom -e POSTGRES_USER=venom -e POSTGRES_DB=venom)
 venom-mysql.cid:
 	$(call docker_run,mysql/mysql-server,mysql,-p 13306:3306 -e MYSQL_PASSWORD=venom -e MYSQL_USER=venom -e MYSQL_DATABASE=venom)
+venom-mongo.cid:
+	$(call docker_run,mongo,mongo,-p 27017:27017 -e MONGO_INITDB_ROOT_PASSWORD=venom -e MONGO_INITDB_ROOT_USERNAME=venom -e MONGO_INITDB_DATABASE=venom)
 venom-redis.cid:
 	$(call docker_run,redis,redis,-p 16379:6379)
 venom-imap.cid:
@@ -54,6 +56,7 @@ venom-grpc.cid:
 
 start-test-stack: venom-postgres.cid
 start-test-stack: venom-mysql.cid
+start-test-stack: venom-mongo.cid
 start-test-stack: venom-redis.cid
 start-test-stack: venom-imap.cid
 start-test-stack: venom-kafka.cid
