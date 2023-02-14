@@ -152,6 +152,7 @@ func outputXMLFormat(tests Tests) ([]byte, error) {
 		tsXML := TestSuiteXML{
 			Name:    ts.Name,
 			Package: ts.Filepath,
+			Time:    fmt.Sprintf("%f", ts.Duration),
 		}
 
 		for _, tc := range ts.TestCases {
