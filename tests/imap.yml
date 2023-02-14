@@ -1,29 +1,191 @@
-name: SMTP & IMAP testsuite
+name: IMAP testsuite
 vars:
-  smtpHost: 'localhost'
-  smtpPort: "1025"
-  imapHost: 'localhost'
-  imapPort: "1143"
+  withTLS: false
+  imapHost: localhost
+  imapPort: 1143
+  imapUser: address@example.org
+  imapPassword: pass
 testcases:
-- name: test-imap-and-smtp
-  steps:
-  - type: smtp
-    withtls: false
-    timeout: 10
-    host: "{{.smtpHost}}"
-    port: "{{.smtpPort}}"
-    to: test1@venom.ovh
-    from: test1@venom.ovh
-    subject: Title of mail
-    body: body of mail
-  - type: imap
-    withouttls: true
-    imaphost: "{{.imapHost}}"
-    imapPort: "{{.imapPort}}"
-    imapuser: address@example.org
-    imappassword: pass
-    mbox: INBOX
-    mboxifsuccess: venomProcessed
-    searchsubject: Title .*
-    assertions:
-    - result.err ShouldNotBeNil
+  - name: Clear a mailbox
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: clear
+            args:
+              mailboxes:
+                - INBOX
+        assertions:
+          # As multiple commands can be executed in a single testcase, we need to specify which command result we want to assert
+          - result.commands.commands0.err ShouldBeEmpty
+
+  - name: Clear all mailboxes
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: clear
+            args:
+              mailboxes:
+                - "*"
+        assertions:
+          - result.commands.commands0.err ShouldBeEmpty
+
+  - name: Create mailbox and append message in new mailbox
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: create
+            args:
+              mailbox: testBox
+          - name: append
+            args:
+              mailbox: testBox
+              from: address@example.org
+              to: address@example.org
+              subject: Test
+              body: This is a test
+              flags:
+                - Flag1
+                - Flag2
+        assertions:
+          - result.commands.commands0.err ShouldBeEmpty
+          - result.commands.commands1.err ShouldBeEmpty
+          - result.commands.commands1.mail.from ShouldEqual address@example.org
+          - result.commands.commands1.mail.to ShouldEqual address@example.org
+          - result.commands.commands1.mail.subject ShouldEqual Test
+          - result.commands.commands1.mail.body ShouldEqual This is a test
+          - result.commands.commands1.mail.flags.flags0 ShouldEqual Flag1
+          - result.commands.commands1.mail.flags.flags1 ShouldEqual Flag2
+
+  - name: Only fetch mail
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: fetch
+            search:
+              mailbox: testBox
+              from: address@example.org
+              to: .*
+              subject: .*
+              body: .*
+        assertions:
+          - result.commands.commands0.err ShouldBeEmpty
+          - result.commands.commands0.search.from ShouldEqual address@example.org
+          - result.commands.commands0.search.to ShouldEqual address@example.org
+          - result.commands.commands0.search.subject ShouldEqual Test
+          - result.commands.commands0.search.body ShouldEqual This is a test
+          - result.commands.commands0.search.flags.flags0 ShouldEqual Flag1
+
+  - name: Move mail and add then remove flags
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: move
+            search:
+              mailbox: testBox
+              from: address@example.org
+              to: address@example.org
+              subject: Test
+              body: This is a test
+            args:
+              mailbox: INBOX
+          - name: flag
+            search:
+              mailbox: INBOX
+              from: address@example.org
+              to: address@example.org
+              subject: Test
+              body: This is a test
+            args:
+              add:
+                - "\\Flagged"
+              remove:
+                - "\\Flagged"
+                - "\\Seen"
+        assertions:
+          # MOVE command
+          - result.commands.commands0.err ShouldBeEmpty
+          # State of the mail before command execution (search)
+          - result.commands.commands0.search.from ShouldEqual "address@example.org"
+          # Mail as a result of command execution
+          - result.commands.commands0.mail.from ShouldEqual "address@example.org"
+          # FLAG command
+          - result.commands.commands1.err ShouldBeEmpty
+          - result.commands.commands1.search.from ShouldEqual "address@example.org"
+          - result.commands.commands1.mail.from ShouldEqual "address@example.org"
+          - result.commands.commands1.mail.flags.flags0 ShouldEqual Flag1
+          - result.commands.commands1.mail.flags.flags1 ShouldEqual Flag2
+          # Commands that modify mails do a FETCH right after to make sure the command succeeded.
+          # Doing so implicitly adds the "\Seen" flag to the mail
+          - result.commands.commands1.mail.flags.flags2 ShouldEqual \Seen
+
+  - name: Set flags and delete mail
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: flag
+            search:
+              mailbox: INBOX
+              from: address@example.org
+              to: address@example.org
+              subject: Test
+              body: This is a test
+            args:
+              set:
+                - Flag1
+                - Flag2
+          - name: delete
+            search:
+              mailbox: INBOX
+              from: address@example.org
+              to: address@example.org
+              subject: Test
+              body: This is a test
+        assertions:
+          # FLAG command
+          - result.commands.commands0.err ShouldBeEmpty
+          - result.commands.commands0.search.from ShouldEqual "address@example.org"
+          - result.commands.commands0.mail.from ShouldEqual "address@example.org"
+          - result.commands.commands0.mail.flags.flags0 ShouldEqual Flag1
+          - result.commands.commands0.mail.flags.flags1 ShouldEqual Flag2
+          - result.commands.commands0.mail.flags.flags2 ShouldEqual \Seen
+          # DELETE command
+          - result.commands.commands1.err ShouldBeEmpty
+          # DELETE command has no relevant assertion. The command itself already checks if searched mail has been deleted.
+          # The only assertion we can make is to make sure we searched the right mail initially
+          - result.commands.commands1.search.from ShouldEqual "address@example.org"
