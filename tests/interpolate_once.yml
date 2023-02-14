@@ -1,6 +1,8 @@
 ---
 name: e
 version: 2
+vars:
+  randomvar: '{{ randAlpha 3 }}'
 testcases:
 - name: myvar_first
   steps:
