@@ -359,6 +359,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 				break
 			}
 
+			tc.Vars.AddAll(assign)
 			tc.computedVars.AddAll(assign)
 			previousStepVars.AddAll(assign)
 		}
