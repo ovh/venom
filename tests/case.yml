@@ -1,0 +1,10 @@
+name:  Readfile testsuite
+
+testcases:
+- name: testcase-readfile
+  steps:
+  - script: 'echo "{\"foo\": \"foo\", \"FOO\": \"bar\"}"'
+    info: "{{.result.systemoutjson.foo}}-{{.result.systemoutjson.FOO}}"
+    assertions:
+      - result.systemoutjson.foo ShouldEqual foo
+      - result.systemoutjson.FOO ShouldEqual bar

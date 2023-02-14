@@ -2,14 +2,15 @@
 
 Step to load fixtures into **MySQL** and **PostgreSQL** databases.
 
-It use the package `testfixtures/v3` under the hood: https://github.com/go-testfixtures/testfixtures
+It uses the package `testfixtures/v3` under the hood: https://github.com/go-testfixtures/testfixtures
 Please read its documentation for further details about the parameters of this executor, especially `folder` and `files`, and how you should write the fixtures.
 
 ## Input
-In your yaml file, you declare tour step like this
+
+In your yaml file, you declare your step like this
 
 ```yaml
-  - database mandatory [mysql/postgres]
+  - database mandatory [mysql/postgres/sqlite3]
   - dsn mandatory
   - schemas optional
   - migrations optional
