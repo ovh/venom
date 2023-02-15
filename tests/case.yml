@@ -1,7 +1,7 @@
-name:  Readfile testsuite
+name:  case testsuite
 
 testcases:
-- name: testcase-readfile
+- name: testcase-case
   steps:
   - script: 'echo "{\"foo\": \"foo\", \"FOO\": \"bar\"}"'
     info: "{{.result.systemoutjson.foo}}-{{.result.systemoutjson.FOO}}"
