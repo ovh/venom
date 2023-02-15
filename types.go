@@ -166,6 +166,7 @@ type TestCase struct {
 	TestSuiteVars   H                `json:"-" yaml:"-"`
 
 	computedVars    H        `json:"-" yaml:"-"`
+	computedInfo    []string `json:"-" yaml:"-"`
 	computedVerbose []string `json:"-" yaml:"-"`
 	IsExecutor      bool     `json:"-" yaml:"-"`
 	IsEvaluated     bool     `json:"-" yaml:"-"`
