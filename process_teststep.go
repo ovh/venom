@@ -19,7 +19,7 @@ type dumpFile struct {
 }
 
 // RunTestStep executes a venom testcase is a venom context
-func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, tsResult *TestStepResult, stepNumber int, rangedIndex int, step TestStep) {
+func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, tsResult *TestStepResult, stepNumber int, rangedIndex int, step TestStep) interface{} {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	var assertRes AssertionsApplied
@@ -65,8 +65,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.%d.dump.json", slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), stepNumber, rangedIndex))
 
 			if err := os.WriteFile(filename, []byte(output), 0644); err != nil {
-				Error(ctx, "Error while creating file %s: %v", filename, err)
-				return
+				return fmt.Errorf("Error while creating file %s: %v", filename, err)
 			}
 			tc.computedVerbose = append(tc.computedVerbose, fmt.Sprintf("writing %s", filename))
 		}
@@ -93,6 +92,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 				}
 			}
 			Info(ctx, info)
+			tc.computedInfo = append(tc.computedInfo, info)
 			tsResult.ComputedInfo = append(tsResult.ComputedInfo, info)
 		}
 
@@ -108,12 +108,12 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		}
 
 		tsResult.AssertionsApplied = assertRes
-		tsResult.ComputedVars.AddAll(H(mapResult))
+		tc.computedVars.AddAll(H(mapResult))
 
 		if assertRes.OK {
 			break
 		}
-		failures, err := testConditionalStatement(ctx, tc, e.RetryIf(), tsResult.ComputedVars, "")
+		failures, err := testConditionalStatement(ctx, tc, e.RetryIf(), tc.computedVars, "")
 		if err != nil {
 			tsResult.appendError(fmt.Errorf("Error while evaluating retry condition: %v", err))
 			break
@@ -133,6 +133,8 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 
 	tsResult.Systemerr += assertRes.systemerr + "\n"
 	tsResult.Systemout += assertRes.systemout + "\n"
+
+	return result
 }
 
 func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, tc *TestCase, ts *TestStepResult, step TestStep) (interface{}, error) {
