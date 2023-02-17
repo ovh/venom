@@ -12,7 +12,7 @@ var preserveCase string
 func init() {
 	preserveCase = os.Getenv("VENOM_PRESERVE_CASE")
 	if preserveCase == "" || preserveCase == "AUTO" {
-		preserveCase = "OFF"
+		preserveCase = "ON"
 	}
 }
 

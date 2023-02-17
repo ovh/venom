@@ -549,7 +549,7 @@ func ShouldContain(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	if reflect.TypeOf(actual).Kind() != reflect.Slice {
+	if actual == nil || reflect.TypeOf(actual).Kind() != reflect.Slice {
 		return ShouldEqual(actual, expected[0])
 	}
 	actualSlice, err := cast.ToSliceE(actual)

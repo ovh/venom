@@ -28,7 +28,7 @@ It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to ret
 
 ## Input
 
-In your yaml file, you declare tour step like this
+In your yaml file, you declare your step like this
 
 ```yaml
   - dsn mandatory

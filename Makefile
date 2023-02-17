@@ -61,7 +61,7 @@ dist: $(ALL_DIST_TARGETS)
 
 run: ## build binary for current OS only and run it. For development purpose only
 	OS=${UNAME_LOWERCASE} $(MAKE) build -C cmd/venom
-	@cmd/venom/dist/venom_${UNAME_LOWERCASE}_amd64
+	@cmd/venom/dist/venom.${UNAME_LOWERCASE}-amd64
 
 lint: mk_go_lint ## install and run golangci-lint on all go files. doc https://github.com/golangci/golangci-lint
 
