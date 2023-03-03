@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/kafka"
+	"github.com/ovh/venom/executors/lai"
 	"github.com/ovh/venom/executors/mongo"
 	"github.com/ovh/venom/executors/mqtt"
 	"github.com/ovh/venom/executors/ovhapi"
@@ -32,6 +33,7 @@ var Registry map[string]Constructor = map[string]Constructor{
 	http.Name:       http.New,
 	imap.Name:       imap.New,
 	kafka.Name:      kafka.New,
+	lai.Name:        lai.New,
 	mqtt.Name:       mqtt.New,
 	ovhapi.Name:     ovhapi.New,
 	rabbitmq.Name:   rabbitmq.New,
