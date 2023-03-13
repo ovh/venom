@@ -73,17 +73,19 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 }
 
-func (e Executor) createAMQPSession(ctx context.Context) (*amqp.Client, *amqp.Session, error) {
+func (e Executor) createAMQPSession(ctx context.Context) (*amqp.Conn, *amqp.Session, error) {
 	if e.Addr == "" {
 		return nil, nil, errors.New("creating session: addr is mandatory")
 	}
 
-	client, err := amqp.Dial(e.Addr, amqp.ConnSASLAnonymous())
+	client, err := amqp.Dial(e.Addr, &amqp.ConnOptions{
+		SASLType: amqp.SASLTypeAnonymous(),
+	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating session: %w", err)
 	}
 
-	session, err := client.NewSession()
+	session, err := client.NewSession(ctx, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating session: %w", err)
 	}
@@ -100,7 +102,7 @@ func (e Executor) publishMessages(ctx context.Context, session *amqp.Session) (i
 		return nil, errors.New("publishing messages: messages length must be > 0 when clientType is producer")
 	}
 
-	sender, err := session.NewSender(amqp.LinkTargetAddress(e.TargetAddr))
+	sender, err := session.NewSender(ctx, e.TargetAddr, nil)
 	if err != nil {
 		return nil, fmt.Errorf("publishing messages: %w", err)
 	}
@@ -123,7 +125,7 @@ func (e Executor) consumeMessages(ctx context.Context, session *amqp.Session) (i
 		return nil, errors.New("consuming messages: messageLimit must be > 0 when clientType is consumer")
 	}
 
-	recv, err := session.NewReceiver(amqp.LinkSourceAddress(e.SourceAddr))
+	recv, err := session.NewReceiver(ctx, e.SourceAddr, nil)
 	if err != nil {
 		return nil, fmt.Errorf("consuming messages: %w", err)
 	}
@@ -152,7 +154,7 @@ func consumeMessage(ctx context.Context, recv *amqp.Receiver) (msgString string,
 		return "", nil, fmt.Errorf("consuming message: %w", err)
 	}
 
-	if err := msg.Accept(ctx); err != nil {
+	if err = recv.AcceptMessage(context.TODO(), msg); err != nil {
 		return "", nil, fmt.Errorf("consuming message: %w", err)
 	}
 
