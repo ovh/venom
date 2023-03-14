@@ -125,6 +125,8 @@ To perform regexp assertions on headers, you must declare headers to assert in `
 ```yaml
 headers:
     Set-Cookie: "foo=bar; Path=/; Expires=.*?; HttpOnly; SameSite=None"
+headersRegexps:
+- "Set-Cookie"
 ```
 
 To perform regexp assertions on JSON structure, you must declare fields to assert in `json` clause, then list regexp fields in `jsonRegexps`, as follows:
@@ -134,7 +136,7 @@ json:
     foo: "bar"
     spam: "e.*s"
 jsonRegexps:
-- spam
+- "spam"
 ```
 
 This will assert that *spam* JSON field matches `e.*s` regexp. Assertion on *foo* fields will be performed with equality as usual.
