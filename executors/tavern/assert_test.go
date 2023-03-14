@@ -94,14 +94,11 @@ func TestAssertResponseHeaders(t *testing.T) {
 	// nominal case with regexp
 	result = Result{
 		Expected: Response{
-			Headers: Headers{"Foo": "B.r"},
+			Headers:        Headers{"Foo": "B.r"},
 			HeadersRegexps: []string{"Foo"},
 		},
 		Actual: Response{
-			Headers: Headers{
-				"Foo":  "Bar",
-				"Spam": "Eggs",
-			},
+			Headers: Headers{"Foo": "Bar"},
 		},
 	}
 	err = AssertResponse(result)
@@ -111,14 +108,11 @@ func TestAssertResponseHeaders(t *testing.T) {
 	// no match with regexp
 	result = Result{
 		Expected: Response{
-			Headers: Headers{"Foo": "x.*"},
+			Headers:        Headers{"Foo": "x.*"},
 			HeadersRegexps: []string{"Foo"},
 		},
 		Actual: Response{
-			Headers: Headers{
-				"Foo":  "Bar",
-				"Spam": "Eggs",
-			},
+			Headers: Headers{"Foo": "Bar"},
 		},
 	}
 	err = AssertResponse(result)
@@ -313,12 +307,12 @@ func TestAssertResponseJsonExcludes(t *testing.T) {
 func TestAssertResponseJsonRegexps(t *testing.T) {
 	// nominal case
 	var expected interface{}
-	err := json.Unmarshal([]byte(`{"foo": "bar"}`), &expected)
+	err := json.Unmarshal([]byte(`{"foo": "b.r"}`), &expected)
 	if err != nil {
 		t.Fatalf("unmarshaling JSON: %v", err)
 	}
 	var actual interface{}
-	err = json.Unmarshal([]byte(`{"foo": "b.r"}`), &actual)
+	err = json.Unmarshal([]byte(`{"foo": "bar"}`), &actual)
 	if err != nil {
 		t.Fatalf("unmarshaling JSON: %v", err)
 	}
@@ -334,7 +328,7 @@ func TestAssertResponseJsonRegexps(t *testing.T) {
 		t.Fatalf("should have succeeded: %v", err)
 	}
 	// no match
-	err = json.Unmarshal([]byte(`{"foo": "x.*"}`), &actual)
+	err = json.Unmarshal([]byte(`{"foo": "x.*"}`), &expected)
 	if err != nil {
 		t.Fatalf("unmarshaling JSON: %v", err)
 	}
@@ -349,7 +343,7 @@ func TestAssertResponseJsonRegexps(t *testing.T) {
 	if err == nil {
 		t.Fatalf("should have failed: %v", err)
 	}
-	if err.Error() != `diffs in json: expected:foo = "bar" !~ actual:foo = "x.*"` {
+	if err.Error() != `diffs in json: expected:foo = "x.*" !~ actual:foo = "bar"` {
 		t.Fatalf("bad diff message: %v", err)
 	}
 }
@@ -509,5 +503,47 @@ func TestPathToRegexp(t *testing.T) {
 	}
 }
 
-func TextCheckAssertions(t *testing.T) {
+func TestCheckAssertions(t *testing.T) {
+	// can't set both body and bodyRegexps assertions
+	result := Result{
+		Expected: Response{
+			Body:       "test",
+			BodyRegexp: "test",
+		},
+	}
+	err := AssertResponse(result)
+	if err == nil {
+		t.Fatal("should have failed")
+	}
+	if err.Error() != "you can set both body and bodyRegexps assertions" {
+		t.Fatalf("bad error message: %s", err.Error())
+	}
+	// field declared as regexp but not found in headers list
+	result = Result{
+		Expected: Response{
+			Headers:        Headers{"spam": "eggs"},
+			HeadersRegexps: []string{"foo"},
+		},
+	}
+	err = AssertResponse(result)
+	if err == nil {
+		t.Fatal("should have failed")
+	}
+	if err.Error() != "field foo declared as regexp but not found in headers list" {
+		t.Fatalf("bad error message: %s", err.Error())
+	}
+	// JSON field can't be excluded and declared as regexp
+	result = Result{
+		Expected: Response{
+			JSONExcludes: []string{"foo"},
+			JSONRegexps:  []string{"foo"},
+		},
+	}
+	err = AssertResponse(result)
+	if err == nil {
+		t.Fatal("should have failed")
+	}
+	if err.Error() != "JSON field 'foo' can't be excluded and declared as regexp" {
+		t.Fatalf("bad error message: %s", err.Error())
+	}
 }

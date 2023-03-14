@@ -149,7 +149,7 @@ func FilterChangelogRegexps(changelog []diff.Change, filters []string) ([]diff.C
 					if !ok {
 						return nil, fmt.Errorf("regexp filter %s is not a string", path)
 					}
-					m, e := regexp.MatchString(to, from)
+					m, e := regexp.MatchString(from, to)
 					if e != nil {
 						return nil, fmt.Errorf("invalid field regexp: %v", err)
 					}
