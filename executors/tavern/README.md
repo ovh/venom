@@ -63,13 +63,18 @@ For *multipartform*, *basicauth*, *ignoreverifyssl*, *proxy*, *resolve*, *nofoll
 
 Possible fields are:
 
-- **StatusCode**: expected status code
-- **Headers**: expected headers as a map (only defined headers are tested)
-- **Body**: expected text body
-- **Json**: expected JSON body as a structure
-- **JsonExcludes**: a list of paths to excludes from test in JSON response
+- **statusCode**: expected status code
+- **headers**: expected headers as a map (only defined headers are tested)
+- **headersRegexps**: list of headers assertions that are regexps
+- **body**: expected text body
+- **bodyRegexp**: regexp for expected body
+- **json**: expected JSON body as a structure
+- **jsonExcludes**: a list of paths to excludes from test in JSON response
+- **jsonRegexps**: list of json fields assertions that are regexps
 
 Fields that are not set are not checked. Only defined headers are checked, thus Tavern executor won't complain about an additional header.
+
+## Json Excludes
 
 You can exclude paths from JSON during test. For instance, to exclude field `CreationDate` during response comparison, you might add in `response` field:
 
@@ -104,6 +109,35 @@ Thus:
 - **text** matches given entry
 - **\*** matches any entry
 - **\*\*** matches any entries in successive levels
+
+## Regular Expressions
+
+You can perform assertions with regular expressions.
+
+To perform a body assertion with regular expression, you can use `bodyRegexp`. Thus you might write:
+
+```yaml
+bodyRegexp: "Foo.*Bar"
+```
+
+To perform regexp assertions on headers, you must declare headers to assert in `headers` clause, then list regexp fields in `headersRegexps`, as follows:
+
+```yaml
+headers:
+    Set-Cookie: "foo=bar; Path=/; Expires=.*?; HttpOnly; SameSite=None"
+```
+
+To perform regexp assertions on JSON structure, you must declare fields to assert in `json` clause, then list regexp fields in `jsonRegexps`, as follows:
+
+```yaml
+json:
+    foo: "bar"
+    spam: "e.*s"
+jsonRegexps:
+- spam
+```
+
+This will assert that *spam* JSON field matches `e.*s` regexp. Assertion on *foo* fields will be performed with equality as usual.
 
 ## Default Assertions
 
