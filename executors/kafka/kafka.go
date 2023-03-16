@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"os"
@@ -57,6 +58,9 @@ type (
 		WithSASLHandshaked bool   `json:"with_sasl_handshaked,omitempty" yaml:"withSASLHandshaked,omitempty"`
 		User               string `json:"user,omitempty" yaml:"user,omitempty"`
 		Password           string `json:"password,omitempty" yaml:"password,omitempty"`
+
+		// TLS Config
+		InsecureTLS bool `json:"insecure_tls,omitempty" yaml:"InsecureTLS,omitempty"`
 
 		// ClientType must be "consumer" or "producer"
 		ClientType string `json:"client_type,omitempty" yaml:"clientType,omitempty"`
@@ -361,6 +365,9 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 func (e Executor) getKafkaConfig() (*sarama.Config, error) {
 	config := sarama.NewConfig()
 	config.Net.TLS.Enable = e.WithTLS
+	config.Net.TLS.Config = &tls.Config{
+		InsecureSkipVerify: e.InsecureTLS,
+	}
 	config.Net.SASL.Enable = e.WithSASL
 	config.Net.SASL.User = e.User
 	config.Net.SASL.Password = e.Password
