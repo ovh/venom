@@ -22,6 +22,9 @@ func AssertResponse(actual interface{}, expected ...interface{}) error {
 	if !ok {
 		return fmt.Errorf("bad actual type: expected: Result, actual: %T", actual)
 	}
+	if err := CheckAssertions(result.Expected); err != nil {
+		return err
+	}
 	// check status code
 	if result.Expected.StatusCode != 0 {
 		if result.Expected.StatusCode != result.Actual.StatusCode {
@@ -30,14 +33,25 @@ func AssertResponse(actual interface{}, expected ...interface{}) error {
 		}
 	}
 	// check expected headers
-	for k, v := range result.Expected.Headers {
-		value, ok := result.Actual.Headers[k]
+	for key, expected := range result.Expected.Headers {
+		actual, ok := result.Actual.Headers[key]
 		if !ok {
-			return fmt.Errorf("header '%s' not found in response", k)
+			return fmt.Errorf("header '%s' not found in response", key)
 		}
-		if value != v {
-			return fmt.Errorf("bad header '%s' value: expected: '%s', actual: '%s'",
-				k, v, value)
+		if ElementInList(key, result.Expected.HeadersRegexps) {
+			match, err := regexp.MatchString(expected, actual)
+			if err != nil {
+				return fmt.Errorf("bad headers regexp: %v", err)
+			}
+			if !match {
+				return fmt.Errorf("bad header '%s' value: regexp: '%s', doesn't match: '%s'",
+					key, expected, actual)
+			}
+		} else {
+			if actual != expected {
+				return fmt.Errorf("bad header '%s' value: expected: '%s', actual: '%s'",
+					key, expected, actual)
+			}
 		}
 	}
 	// check expected body
@@ -45,6 +59,16 @@ func AssertResponse(actual interface{}, expected ...interface{}) error {
 		if result.Expected.Body != result.Actual.Body {
 			return fmt.Errorf("bad body: expected: '%s', actual: '%s'",
 				result.Expected.Body, result.Actual.Body)
+		}
+	}
+	// check expected body
+	if result.Expected.BodyRegexp != "" {
+		match, err := regexp.MatchString(result.Expected.BodyRegexp, result.Actual.Body)
+		if err != nil {
+			return fmt.Errorf("bad body regexp: %v", err)
+		}
+		if !match {
+			return fmt.Errorf("body doesn't match regexp '%s'", result.Expected.BodyRegexp)
 		}
 	}
 	// check expected JSON body
@@ -56,7 +80,14 @@ func AssertResponse(actual interface{}, expected ...interface{}) error {
 			}
 			if len(result.Expected.JSONExcludes) != 0 {
 				var err error
-				changelog, err = FilterChangelog(changelog, result.Expected.JSONExcludes)
+				changelog, err = FilterChangelogExcludes(changelog, result.Expected.JSONExcludes)
+				if err != nil {
+					return err
+				}
+			}
+			if len(result.Expected.JSONRegexps) != 0 {
+				var err error
+				changelog, err = FilterChangelogRegexps(changelog, result.Expected.JSONRegexps)
 				if err != nil {
 					return err
 				}
@@ -64,7 +95,7 @@ func AssertResponse(actual interface{}, expected ...interface{}) error {
 			if len(changelog) != 0 {
 				var diffs []string
 				for _, change := range changelog {
-					diffs = append(diffs, ChangeMessage(change))
+					diffs = append(diffs, ChangeMessage(change, result.Expected.JSONRegexps))
 				}
 				changes := strings.Join(diffs, "; ")
 				return fmt.Errorf("diffs in json: %s", changes)
@@ -74,8 +105,8 @@ func AssertResponse(actual interface{}, expected ...interface{}) error {
 	return nil
 }
 
-// FilterChangelog filters changelog with JSON excluded fields
-func FilterChangelog(changelog []diff.Change, filters []string) ([]diff.Change, error) {
+// FilterChangelogExcludes filters changelog with JSON excluded fields
+func FilterChangelogExcludes(changelog []diff.Change, filters []string) ([]diff.Change, error) {
 	var filteredChangelog []diff.Change
 	for _, change := range changelog {
 		filtered := false
@@ -97,10 +128,52 @@ func FilterChangelog(changelog []diff.Change, filters []string) ([]diff.Change, 
 	return filteredChangelog, nil
 }
 
+// FilterChangelogRegexps filters changelog with Regexp fields
+func FilterChangelogRegexps(changelog []diff.Change, filters []string) ([]diff.Change, error) {
+	var filteredChangelog []diff.Change
+	for _, change := range changelog {
+		filtered := false
+		path := FormatPath(change.Path)
+		for _, filter := range filters {
+			match, err := regexp.MatchString(PathToRegexp(filter), path)
+			if err != nil {
+				return nil, fmt.Errorf("invalid filter regexp: %v", err)
+			}
+			if match {
+				if change.Type == diff.UPDATE {
+					from, ok := change.From.(string)
+					if !ok {
+						return nil, fmt.Errorf("regexp field %s is not a string", path)
+					}
+					to, ok := change.To.(string)
+					if !ok {
+						return nil, fmt.Errorf("regexp filter %s is not a string", path)
+					}
+					m, e := regexp.MatchString(from, to)
+					if e != nil {
+						return nil, fmt.Errorf("invalid field regexp: %v", err)
+					}
+					if m {
+						filtered = true
+					}
+				}
+				continue
+			}
+		}
+		if !filtered {
+			filteredChangelog = append(filteredChangelog, change)
+		}
+	}
+	return filteredChangelog, nil
+}
+
 // ChangeMessage generates human readable change message
-func ChangeMessage(change diff.Change) string {
+func ChangeMessage(change diff.Change, jsonRegexps []string) string {
 	if change.Type == diff.UPDATE {
 		path := FormatPath(change.Path)
+		if ElementInList(path, jsonRegexps) {
+			return fmt.Sprintf(`expected:%s = "%v" !~ actual:%s = "%v"`, path, change.From, path, change.To)
+		}
 		return fmt.Sprintf(`expected:%s = "%v" != actual:%s = "%v"`, path, change.From, path, change.To)
 	}
 	if change.Type == diff.CREATE {
@@ -127,10 +200,38 @@ func PathToRegexp(path string) string {
 		if element == "*" {
 			parts = append(parts, "[^/]+/")
 		} else if element == "**" {
-			parts = append(parts, "(.*?/)?")
+			parts = append(parts, ".*/?")
 		} else {
 			parts = append(parts, element+"/")
 		}
 	}
 	return "^" + strings.TrimSuffix(strings.Join(parts, ""), "/") + "$"
+}
+
+// ElementInList tells if given path is in filters list
+func ElementInList(path string, filters[]string) bool {
+	for _, filter := range filters {
+		if filter == path {
+			return true
+		}
+	}
+	return false
+}
+
+// CheckAssertions check incompatibles assertions
+func CheckAssertions(expected Response) error {
+	if expected.Body != "" && expected.BodyRegexp != "" {
+		return fmt.Errorf("you can set both body and bodyRegexps assertions")
+	}
+	for _, regexp := range expected.HeadersRegexps {
+		if _, ok := expected.Headers[regexp]; !ok {
+			return fmt.Errorf("field %s declared as regexp but not found in headers list", regexp)
+		}
+	}
+	for _, regexp := range expected.JSONRegexps {
+		if ElementInList(regexp, expected.JSONExcludes) {
+			return fmt.Errorf("JSON field '%s' can't be excluded and declared as regexp", regexp)
+		}
+	}
+	return nil
 }

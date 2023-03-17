@@ -70,11 +70,14 @@ type Request struct {
 
 // Response describes expected response from server
 type Response struct {
-	StatusCode   int         `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
-	Headers      Headers     `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Body         string      `json:"body,omitempty" yaml:"body,omitempty"`
-	JSON         interface{} `json:"json,omitempty" yaml:"json,omitempty"`
-	JSONExcludes []string    `json:"json_excludes,omitempty" yaml:"json_excludes,omitempty"`
+	StatusCode     int         `json:"statusCode,omitempty" yaml:"statusCode,omitempty"`
+	Headers        Headers     `json:"headers,omitempty" yaml:"headers,omitempty"`
+	HeadersRegexps []string    `json:"headers_regexps,omitempty" yaml:"headers_regexps,omitempty"`
+	Body           string      `json:"body,omitempty" yaml:"body,omitempty"`
+	BodyRegexp     string      `json:"body_regexp,omitempty" yaml:"body_regexp,omitempty"`
+	JSON           interface{} `json:"json,omitempty" yaml:"json,omitempty"`
+	JSONExcludes   []string    `json:"json_excludes,omitempty" yaml:"json_excludes,omitempty"`
+	JSONRegexps    []string    `json:"json_regexps,omitempty" yaml:"json_regexps,omitempty"`
 }
 
 // Executor struct. Json and yaml descriptor are used for json output

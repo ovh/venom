@@ -91,6 +91,34 @@ func TestAssertResponseHeaders(t *testing.T) {
 	if err.Error() != "bad header 'Foo' value: expected: 'Bar', actual: 'Baz'" {
 		t.Fatalf("bad error message: %s", err.Error())
 	}
+	// nominal case with regexp
+	result = Result{
+		Expected: Response{
+			Headers:        Headers{"Foo": "B.r"},
+			HeadersRegexps: []string{"Foo"},
+		},
+		Actual: Response{
+			Headers: Headers{"Foo": "Bar"},
+		},
+	}
+	err = AssertResponse(result)
+	if err != nil {
+		t.Fatalf("should have succeeded: %v", err)
+	}
+	// no match with regexp
+	result = Result{
+		Expected: Response{
+			Headers:        Headers{"Foo": "x.*"},
+			HeadersRegexps: []string{"Foo"},
+		},
+		Actual: Response{
+			Headers: Headers{"Foo": "Bar"},
+		},
+	}
+	err = AssertResponse(result)
+	if err == nil {
+		t.Fatalf("should not have succeeded: %v", err)
+	}
 }
 
 func TestAssertResponseBody(t *testing.T) {
@@ -111,6 +139,28 @@ func TestAssertResponseBody(t *testing.T) {
 		t.Fatalf("should have failed")
 	}
 	if err.Error() != "bad body: expected: 'Foo', actual: 'Bar'" {
+		t.Fatalf("bad error message: %s", err.Error())
+	}
+}
+
+func TestAssertResponseBodyRegexp(t *testing.T) {
+	result := Result{
+		Expected: Response{BodyRegexp: "F.o"},
+		Actual:   Response{Body: "Foo"},
+	}
+	err := AssertResponse(result)
+	if err != nil {
+		t.Fatalf("should have succeeded")
+	}
+	result = Result{
+		Expected: Response{BodyRegexp: "x.*"},
+		Actual:   Response{Body: "Foo"},
+	}
+	err = AssertResponse(result)
+	if err == nil {
+		t.Fatalf("should have failed")
+	}
+	if err.Error() != "body doesn't match regexp 'x.*'" {
 		t.Fatalf("bad error message: %s", err.Error())
 	}
 }
@@ -254,6 +304,50 @@ func TestAssertResponseJsonExcludes(t *testing.T) {
 	}
 }
 
+func TestAssertResponseJsonRegexps(t *testing.T) {
+	// nominal case
+	var expected interface{}
+	err := json.Unmarshal([]byte(`{"foo": "b.r"}`), &expected)
+	if err != nil {
+		t.Fatalf("unmarshaling JSON: %v", err)
+	}
+	var actual interface{}
+	err = json.Unmarshal([]byte(`{"foo": "bar"}`), &actual)
+	if err != nil {
+		t.Fatalf("unmarshaling JSON: %v", err)
+	}
+	result := Result{
+		Expected: Response{
+			JSON:        expected,
+			JSONRegexps: []string{"foo"},
+		},
+		Actual: Response{JSON: actual},
+	}
+	err = AssertResponse(result)
+	if err != nil {
+		t.Fatalf("should have succeeded: %v", err)
+	}
+	// no match
+	err = json.Unmarshal([]byte(`{"foo": "x.*"}`), &expected)
+	if err != nil {
+		t.Fatalf("unmarshaling JSON: %v", err)
+	}
+	result = Result{
+		Expected: Response{
+			JSON:        expected,
+			JSONRegexps: []string{"foo"},
+		},
+		Actual: Response{JSON: actual},
+	}
+	err = AssertResponse(result)
+	if err == nil {
+		t.Fatalf("should have failed: %v", err)
+	}
+	if err.Error() != `diffs in json: expected:foo = "x.*" !~ actual:foo = "bar"` {
+		t.Fatalf("bad diff message: %v", err)
+	}
+}
+
 func TestFilterChangelog(t *testing.T) {
 	changelog := []diff.Change{
 		{
@@ -265,7 +359,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// simple two levels path
 	filters := []string{"foo/bar"}
-	filtered, err := FilterChangelog(changelog, filters)
+	filtered, err := FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -274,7 +368,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// path with star in first position
 	filters = []string{"*/bar"}
-	filtered, err = FilterChangelog(changelog, filters)
+	filtered, err = FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -283,7 +377,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// path with star in second position
 	filters = []string{"foo/*"}
-	filtered, err = FilterChangelog(changelog, filters)
+	filtered, err = FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -292,7 +386,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// path with two stars
 	filters = []string{"*/*"}
-	filtered, err = FilterChangelog(changelog, filters)
+	filtered, err = FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -301,7 +395,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// path with a double star
 	filters = []string{"**"}
-	filtered, err = FilterChangelog(changelog, filters)
+	filtered, err = FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -310,7 +404,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// path with a double star and path
 	filters = []string{"**/bar"}
-	filtered, err = FilterChangelog(changelog, filters)
+	filtered, err = FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -319,7 +413,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// path with path and a double star
 	filters = []string{"foo/**"}
-	filtered, err = FilterChangelog(changelog, filters)
+	filtered, err = FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -328,7 +422,7 @@ func TestFilterChangelog(t *testing.T) {
 	}
 	// no filter
 	filters = []string{"spam/eggs"}
-	filtered, err = FilterChangelog(changelog, filters)
+	filtered, err = FilterChangelogExcludes(changelog, filters)
 	if err != nil {
 		t.Fatalf("error filtering changelog: %v", err)
 	}
@@ -345,25 +439,30 @@ func TestChangeMessage(t *testing.T) {
 		Path: []string{"foo", "bar"},
 	}
 	// update
-	message := ChangeMessage(change)
+	message := ChangeMessage(change, nil)
 	if message != `expected:foo/bar = "spam" != actual:foo/bar = "eggs"` {
+		t.Fatalf("bad change message: %v", message)
+	}
+	// update with regexp
+	message = ChangeMessage(change, []string{"foo/bar"})
+	if message != `expected:foo/bar = "spam" !~ actual:foo/bar = "eggs"` {
 		t.Fatalf("bad change message: %v", message)
 	}
 	// create
 	change.Type = diff.CREATE
-	message = ChangeMessage(change)
+	message = ChangeMessage(change, nil)
 	if message != `actual:foo/bar = "eggs" not in expected` {
 		t.Fatalf("bad change message: %v", message)
 	}
 	// delete
 	change.Type = diff.DELETE
-	message = ChangeMessage(change)
+	message = ChangeMessage(change, nil)
 	if message != `expected:foo/bar = "spam" not in actual` {
 		t.Fatalf("bad change message: %v", message)
 	}
 	// unknown
 	change.Type = "unknown"
-	message = ChangeMessage(change)
+	message = ChangeMessage(change, nil)
 	if message != `UNKNOWN TYPE unknown` {
 		t.Fatalf("bad change message: %v", message)
 	}
@@ -394,12 +493,57 @@ func TestPathToRegexp(t *testing.T) {
 	}
 	path = "foo/**"
 	regex = PathToRegexp(path)
-	if regex != "^foo/(.*?/)?$" {
+	if regex != "^foo/.*/?$" {
 		t.Fatalf("bad path regexp: %s", regex)
 	}
 	path = "**/bar"
 	regex = PathToRegexp(path)
-	if regex != "^(.*?/)?bar$" {
+	if regex != "^.*/?bar$" {
 		t.Fatalf("bad path regexp: %s", regex)
+	}
+}
+
+func TestCheckAssertions(t *testing.T) {
+	// can't set both body and bodyRegexps assertions
+	result := Result{
+		Expected: Response{
+			Body:       "test",
+			BodyRegexp: "test",
+		},
+	}
+	err := AssertResponse(result)
+	if err == nil {
+		t.Fatal("should have failed")
+	}
+	if err.Error() != "you can set both body and bodyRegexps assertions" {
+		t.Fatalf("bad error message: %s", err.Error())
+	}
+	// field declared as regexp but not found in headers list
+	result = Result{
+		Expected: Response{
+			Headers:        Headers{"spam": "eggs"},
+			HeadersRegexps: []string{"foo"},
+		},
+	}
+	err = AssertResponse(result)
+	if err == nil {
+		t.Fatal("should have failed")
+	}
+	if err.Error() != "field foo declared as regexp but not found in headers list" {
+		t.Fatalf("bad error message: %s", err.Error())
+	}
+	// JSON field can't be excluded and declared as regexp
+	result = Result{
+		Expected: Response{
+			JSONExcludes: []string{"foo"},
+			JSONRegexps:  []string{"foo"},
+		},
+	}
+	err = AssertResponse(result)
+	if err == nil {
+		t.Fatal("should have failed")
+	}
+	if err.Error() != "JSON field 'foo' can't be excluded and declared as regexp" {
+		t.Fatalf("bad error message: %s", err.Error())
 	}
 }
