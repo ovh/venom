@@ -100,3 +100,28 @@ func TestInterpolation_Of_String(t *testing.T) {
 	fmt.Println(string(b))
 	require.Equal(t, "{\n    \"key\": \"123 test\"\n}", string(b))
 }
+
+func TestInterpolation_without_match_Of_String(t *testing.T) {
+
+	e := &Executor{
+		Method:           "",
+		URL:              "http://example.com",
+		Path:             "",
+		BodyFile:         "tests/http/bodyfile_with_interpolation",
+		PreserveBodyFile: false,
+		MultipartForm:    nil,
+		Headers:          map[string]string{},
+	}
+	ctx := context.Background()
+	keys := make(map[string]string)
+	keys["fullName"] = "{{.name}} test"
+
+	ctx = context.WithValue(ctx, venom.ContextKey("vars"), []string{"fullName"})
+	for k := range keys {
+		ctx = context.WithValue(ctx, venom.ContextKey(fmt.Sprintf("var.%s", k)), keys[k])
+	}
+
+	_, err := e.getRequest(ctx, "../../")
+	require.Errorf(t, err, "unable to interpolate file due to unresolved variables {{.name}}")
+
+}

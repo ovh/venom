@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -281,6 +282,8 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 				h := venom.AllVarsFromCtx(ctx)
 				vars, _ := venom.DumpStringPreserveCase(h)
 				str := string(temp)
+				upperlimit := len(vars)
+				counter := 0
 				for {
 					if !strings.Contains(str, "{{.") {
 						break
@@ -289,7 +292,12 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 					if err != nil {
 						return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
 					}
+					if strings.Compare(str, stemp) == 0 && counter > upperlimit {
+						r, _ := regexp.Compile(`{{\..*}}`)
+						return nil, fmt.Errorf("unable to interpolate file due to unresolved variables %s", strings.Join(r.FindAllString(str, -1), ","))
+					}
 					str = stemp
+					counter++
 				}
 				body = bytes.NewBufferString(str)
 			}
