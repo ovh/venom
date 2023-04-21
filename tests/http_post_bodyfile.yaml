@@ -1,11 +1,27 @@
-name: HTTP post body file with interpolation error
+name: HTTP post body file
+vars:
+  fullName : '{{.name}} test'
 testcases:
-- name: post
-  steps:
-  - type: http
-    method: POST
-    url: https://jsonplaceholder.typicode.com/posts
-    bodyFile: http/bodyfile_with_interpolation_error
-    preserve_bodyfile: true
-    assertions:
-    - result.statuscode ShouldEqual 201
+  - name: post
+    steps:
+      - type: http
+        method: POST
+        url: https://jsonplaceholder.typicode.com/posts
+        bodyFile: http/bodyfile_with_interpolation_error
+        preserve_bodyfile: true
+        assertions:
+          - result.statuscode ShouldEqual 201
+  - name: post with interpolated variable
+    steps:
+      - name: create new variable
+        script: |
+          echo "123"
+        vars:
+            name:
+               from : result.systemout
+      - type: http
+        method: POST
+        url: https://jsonplaceholder.typicode.com/posts
+        bodyFile: http/bodyfile_with_interpolation
+        assertions:
+          - result.statuscode ShouldEqual 201
