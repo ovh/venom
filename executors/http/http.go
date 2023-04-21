@@ -257,7 +257,7 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 		method = "GET"
 	}
 	if (e.Body != "" || e.BodyFile != "") && e.MultipartForm != nil {
-		return nil, fmt.Errorf("Can only use one of 'body', 'body_file' and 'multipart_form'")
+		return nil, fmt.Errorf("can only use one of 'body', 'body_file' and 'multipart_form'")
 	}
 
 	body := &bytes.Buffer{}
@@ -280,11 +280,18 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 			} else {
 				h := venom.AllVarsFromCtx(ctx)
 				vars, _ := venom.DumpStringPreserveCase(h)
-				stemp, err := interpolate.Do(string(temp), vars)
-				if err != nil {
-					return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+				str := string(temp)
+				for {
+					if !strings.Contains(str, "{{.") {
+						break
+					}
+					stemp, err := interpolate.Do(str, vars)
+					if err != nil {
+						return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+					}
+					str = stemp
 				}
-				body = bytes.NewBufferString(stemp)
+				body = bytes.NewBufferString(str)
 			}
 		}
 	} else if e.MultipartForm != nil {
