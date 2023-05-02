@@ -60,7 +60,7 @@ type (
 		Password           string `json:"password,omitempty" yaml:"password,omitempty"`
 
 		// TLS Config
-		InsecureTLS bool `json:"insecure_tls,omitempty" yaml:"InsecureTLS,omitempty"`
+		InsecureTLS bool `json:"insecure_tls,omitempty" yaml:"insecure_tls,omitempty"`
 
 		// ClientType must be "consumer" or "producer"
 		ClientType string `json:"client_type,omitempty" yaml:"clientType,omitempty"`
