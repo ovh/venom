@@ -40,6 +40,9 @@ You can define parameters to configure the browser used during the test suite. A
   * `WARN`: In this mode, you can see warning
   * `INFO`: In this mode, you can see all methods called
   * `DEBUG`: In this mode, you can see all interactions between web driver and browser
+* binaryPath: Binary path of browser, if path is not defined, use default path
+* driverPath: Driver path, if path is not defined, use current directory
+* driverPort: Port to run driver, if port is not defined, use driver default port
 
 ## Action
 Action allow to manipulate browser
@@ -336,12 +339,7 @@ testcases:
         url: https://www.google.fr
     assertions:
     - result.title ShouldEqual Google
-    - result.url ShouldEqual https://www.google.fr/
-  - type: web
-    action:
-      click:
-        find: "#L2AGLb > .QS5gu.sy4vM"
-        wait: 1
+    - result.url ShouldEqual https://www.google.fr
   - type: web
     action:
       find: input[name="q"]
@@ -355,7 +353,8 @@ testcases:
   - type: web
     action:
       click:
-        find: .FPdoLc.lJ9FBc input[value="Recherche Google"]
+        find: input[value="Recherche Google"]
         wait: 1
     screenshot: googlesearch.png
+
 ```
