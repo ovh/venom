@@ -14,7 +14,7 @@ In your yaml file, you can use:
   - with_avro optional - describes if this test should expect Avro schema to be used. NOTE if you used it for consumer, you will have to use it for Producer too.
   - user optional
   - password optional
-  - kafka_version optional, defaut is 0.10.2.0
+  - kafka_version optional, default is 0.10.2.0
 
   - client_type mandator: producer or consumer
 

@@ -58,7 +58,7 @@ testcases:
           - value: '{"a": "b"}'
             contentType: application/json
             contentEncoding: utf8
-            persistant: false
+            persistent: false
             headers: 
               myCustomHeader: value
               myCustomHeader2: value2
@@ -110,7 +110,7 @@ testcases:
           - value: '{"a": "b"}'
             contentType: application/json
             contentEncoding: utf8
-            persistant: false
+            persistent: false
             headers: 
               myCustomHeader: value
               myCustomHeader2: value2

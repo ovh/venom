@@ -4,15 +4,16 @@ Step to execute SQL queries into databases:
 * **MySQL**
 * **PostgreSQL**
 * **Oracle**
+* **Sqlite**
 
-It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retreive rows as a list of map[string]interface{}
+It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retrieve rows as a list of map[string]interface{}
 
 ## Input
 
-In your yaml file, you declare tour step like this
+In your yaml file, you declare your step like this
 
 ```yaml
-  - driver mandatory [mysql/postgres/oracle]
+  - driver mandatory [mysql/postgres/oracle/sqlite]
   - dsn mandatory
   - commands optional
   - file optional
@@ -74,3 +75,5 @@ This executor uses the following SQL drivers:
 - _MySQL_: https://github.com/go-sql-driver/mysql
 - _PostgreSQL_: https://github.com/lib/pq
 - _Oracle_: https://github.com/sijms/go-ora
+- _Sqlite_: https://pkg.go.dev/modernc.org/sqlite
+

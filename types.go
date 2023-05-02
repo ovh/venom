@@ -175,11 +175,13 @@ type TestCase struct {
 type TestStepResult struct {
 	Name              string            `json:"name"`
 	Errors            []Failure         `json:"errors"`
+	Skipped           []Skipped         `json:"skipped" yaml:"skipped"`
 	Status            string            `json:"status" yaml:"status"`
 	Raw               interface{}       `json:"raw" yaml:"raw"`
 	Interpolated      interface{}       `json:"interpolated" yaml:"interpolated"`
 	Number            int               `json:"number" yaml:"number"`
 	RangedIndex       int               `json:"rangedIndex" yaml:"rangedIndex"`
+	RangedEnable      bool              `json:"rangedEnable" yaml:"rangedEnable"`
 	InputVars         map[string]string `json:"inputVars" yaml:"-"`
 	ComputedVars      H                 `json:"computedVars" yaml:"-"`
 	ComputedInfo      []string          `json:"computedInfos" yaml:"-"`
@@ -337,7 +339,7 @@ type Assignment struct {
 	Default interface{} `json:"default" yaml:"default"`
 }
 
-// RemoveNotPrintableChar removes not printable chararacter from a string
+// RemoveNotPrintableChar removes not printable character from a string
 func RemoveNotPrintableChar(in string) string {
 	m := func(r rune) rune {
 		if unicode.IsPrint(r) || unicode.IsSpace(r) || unicode.IsPunct(r) {

@@ -148,7 +148,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		for {
 			line, errs := stdoutreader.ReadString('\n')
 			if errs != nil {
-				// ReadString returns what has been read even though an error was encoutered
+				// ReadString returns what has been read even though an error was encountered
 				// ie. capture outputs with no '\n' at the end
 				result.Systemout += line
 				stdout.Close()
@@ -165,7 +165,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		for {
 			line, errs := stderrreader.ReadString('\n')
 			if errs != nil {
-				// ReadString returns what has been read even though an error was encoutered
+				// ReadString returns what has been read even though an error was encountered
 				// ie. capture outputs with no '\n' at the end
 				result.Systemerr += line
 				stderr.Close()
@@ -181,7 +181,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		result.Err = err.Error()
 		result.Code = "127"
 		venom.Debug(ctx, err.Error())
-		return dump.ToMap(e, nil, dump.WithDefaultLowerCaseFormatter())
+		return dump.ToMap(e, dump.WithDefaultLowerCaseFormatter())
 	}
 
 	<-outchan

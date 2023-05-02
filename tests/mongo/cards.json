@@ -1,0 +1,48 @@
+{
+  "suit": "clubs",
+  "value": "jack"
+}
+{
+  "suit": "clubs",
+  "value": "queen"
+}
+{
+  "suit": "clubs",
+  "value": "king"
+}
+{
+  "suit": "diamonds",
+  "value": "jack"
+}
+{
+  "suit": "diamonds",
+  "value": "queen"
+}
+{
+  "suit": "diamonds",
+  "value": "king"
+}
+{
+  "suit": "hearts",
+  "value": "jack"
+}
+{
+  "suit": "hearts",
+  "value": "queen"
+}
+{
+  "suit": "hearts",
+  "value": "king"
+}
+{
+  "suit": "spades",
+  "value": "jack"
+}
+{
+  "suit": "spades",
+  "value": "queen"
+}
+{
+  "suit": "spades",
+  "value": "king"
+}

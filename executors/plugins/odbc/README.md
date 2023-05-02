@@ -24,11 +24,11 @@ Step to execute SQL queries into databases:
 
 * **ODBC**
 
-It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retreive rows as a list of map[string]interface{}
+It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retrieve rows as a list of map[string]interface{}
 
 ## Input
 
-In your yaml file, you declare tour step like this
+In your yaml file, you declare your step like this
 
 ```yaml
   - dsn mandatory

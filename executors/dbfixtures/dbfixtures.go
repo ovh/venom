@@ -15,6 +15,7 @@ import (
 	// SQL drivers.
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/ovh/venom"
 )
@@ -182,6 +183,8 @@ func getDialect(name string, skipResetSequences bool) func(*fixtures.Loader) err
 		}
 	case "mysql":
 		return fixtures.Dialect("mysql")
+	case "sqlite3":
+		return fixtures.Dialect("sqlite3")
 	}
 	return nil
 }

@@ -9,7 +9,7 @@ vars:
       index: 1
 testcases:
 
-- name: range with harcoded array
+- name: range with hardcoded array
   steps:
   - type: exec
     range:
@@ -24,7 +24,7 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemout ShouldEqual "{{.value.index}} {{.value.expected}}"
 
-- name: range with harcoded string map
+- name: range with hardcoded string map
   steps:
   - type: exec
     range:
@@ -41,7 +41,7 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemout ShouldEqual "{{.value.key}} {{.value.expected}}"
 
-- name: range with harcoded iterations
+- name: range with hardcoded iterations
   steps:
   - type: exec
     range: 5

@@ -298,7 +298,7 @@ func (e Executor) consumeMessages(ctx context.Context) ([]Message, []interface{}
 
 	consumerGroup, err := sarama.NewConsumerGroup(e.Addrs, e.GroupID, config)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error instanciate consumer err: %w", err)
+		return nil, nil, fmt.Errorf("error instantiate consumer err: %w", err)
 	}
 	defer func() { _ = consumerGroup.Close() }()
 

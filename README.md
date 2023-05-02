@@ -5,7 +5,7 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 <a href="https://github.com/ovh/venom/releases/latest"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ovh/venom.svg?logo=github&style=flat-square"></a>
 [![GoDoc](https://godoc.org/github.com/ovh/venom?status.svg)](https://godoc.org/github.com/ovh/venom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/venom)](https://goreportcard.com/report/github.com/ovh/venom)
-[![Dicussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
+[![Discussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
 <a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
  
 # Table of content
@@ -39,11 +39,11 @@ Venom is a CLI (Command Line Interface) that aim to create, manage and run your 
 * [Export tests report](#export-tests-report)
 * [Advanced usage](#advanced-usage)
   * [Debug your testsuites](#debug-your-testsuites)
-  * [Skip testcase](#skip-testcase)
+  * [Skip testcase and teststeps](#skip-testcase-and-teststeps)
   * [Iterating over data](#iterating-over-data)
 * [FAQ](#faq)
   * [Common errors with quotes](#common-errors-with-quotes)
-* [Use venom in CI/CD pipelines](#use-venom-in-ci-cd-pipelines)
+* [Use venom in CI/CD pipelines](#use-venom-in-cicd-pipelines)
 * [Hacking](#hacking)
 * [Contributing](#contributing)
 * [License](#license)
@@ -162,7 +162,7 @@ Flags:
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
+      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
@@ -237,7 +237,7 @@ Flags:
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionnary
+      --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
   -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
 ```
 
@@ -647,7 +647,7 @@ Example:
 
 ### Using logical operators
 
-While assertions use `and` operator implicitely, it is possible to use other logical operators to perform complex assertions.
+While assertions use `and` operator implicitly, it is possible to use other logical operators to perform complex assertions.
 
 Supported operators are `and`, `or` and `xor`.
 
@@ -774,7 +774,7 @@ $ venom run test.yml
     [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
 ```
 
-## Skip testcase
+## Skip testcase and teststeps
 
 It is possible to skip `testcase` according to some `assertions`. For instance, the following example will skip the last testcase.
 
@@ -810,6 +810,34 @@ testcases:
 
 ```
 
+A `skip` statement may also be placed at steps level to partially execute a testcase.
+If all steps from a testcase are skipped, the testcase itself will also be treated as "skipped" rather than "passed"/"failed".
+
+```yaml
+name: "Skip testsuite"
+vars:
+  foo: bar
+
+testcases:
+- name: skip-one-of-these
+  steps:
+  - name: do-not-skip-this
+    type: exec
+    script: exit 0
+    assertions:
+    - result.code ShouldEqual 0
+    skip:
+    - foo ShouldNotBeEmpty
+  - name: skip-this
+    type: exec
+    script: exit 1
+    assertions:
+    - result.code ShouldEqual 0
+    skip:
+    - foo ShouldBeEmpty
+
+```
+
 ## Iterating over data
 
 It is possible to iterate over data using `range` attribute.
@@ -830,7 +858,7 @@ The following data types are supported, each exposing contexted variables `.inde
 
 For instance, the following example will iterate over an array of two items containing maps:
 ```yaml
-- name: range with harcoded array
+- name: range with hardcoded array
   steps:
   - type: exec
     range:
@@ -902,9 +930,42 @@ To display properly the venom output, you probably will have to export the envir
 
 [How to write your own executor?](https://github.com/ovh/venom/tree/master/executors#venom-executor)
 
-How to compile?
+## How to compile?
 ```bash
 $ make build
+```
+
+## How to test?
+
+### Unit tests:
+
+```bash
+make test
+```
+
+### Integration tests:
+
+Prepare the stack:
+
+```bash
+make build OS=linux ARCH=amd64
+cp dist/venom.linux-amd64 tests/venom
+cd tests
+make start-test-stack  # (wait a few seconds)
+make build-test-binary-docker
+```
+
+Run integration tests:
+
+```bash
+make run-test
+```
+
+Cleanup:
+
+```bash
+make clean
+make stop-test-stack
 ```
 
 # Contributing

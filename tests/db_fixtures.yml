@@ -35,3 +35,20 @@ testcases:
      dsn: "user=venom password=venom dbname=venom host={{.pgHost}} port={{.pgPort}} sslmode=disable"
      migrations_path: dbfixtures/testdata/migrations
      folder: dbfixtures/testdata/fixtures
+
+- name: load-fixtures-into-sqlite3-database
+  steps:
+   - type: dbfixtures
+     database: sqlite3
+     dsn: ":memory:"
+     schemas:
+       - dbfixtures/testdata/schemas/sqlite3.sql
+     folder: dbfixtures/testdata/fixtures
+
+- name: initialize-sqlite3-database-with-migrations
+  steps:
+   - type: dbfixtures
+     database: sqlite3
+     dsn: "memory"
+     migrations: dbfixtures/testdata/migrations
+     folder: dbfixtures/testdata/fixtures

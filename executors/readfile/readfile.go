@@ -113,9 +113,9 @@ func (e *Executor) readfile(workdir string) (Result, error) {
 	mod := make(map[string]string)
 
 	for _, f := range filesPath {
-		f, erro := os.Open(f)
-		if erro != nil {
-			return result, fmt.Errorf("Error while opening file: %s", erro)
+		f, error := os.Open(f)
+		if error != nil {
+			return result, fmt.Errorf("Error while opening file: %s", error)
 		}
 		defer f.Close()
 

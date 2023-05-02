@@ -110,7 +110,7 @@ func ShouldBeMap(actual interface{}, expected ...interface{}) error {
 //
 func ShouldEqual(actual interface{}, expected ...interface{}) error {
 	// if expected is an array, we consider that this array is an array of string
-	// so, we concat all values before doing the comparaison
+	// so, we concat all values before doing the comparison
 	if len(expected) > 0 {
 		var args string
 		for i := range expected {
@@ -549,7 +549,7 @@ func ShouldContain(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
-	if reflect.TypeOf(actual).Kind() != reflect.Slice {
+	if actual == nil || reflect.TypeOf(actual).Kind() != reflect.Slice {
 		return ShouldEqual(actual, expected[0])
 	}
 	actualSlice, err := cast.ToSliceE(actual)

@@ -32,7 +32,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 		}
 	}
 
-	// Intialiaze the testsuite varibles and compute a first interpolation over them
+	// Intialiaze the testsuite variables and compute a first interpolation over them
 	ts.Vars.AddAll(v.variables.Clone())
 	vars, _ := DumpStringPreserveCase(ts.Vars)
 	for k, v := range vars {
@@ -96,7 +96,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 }
 
 func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
-	verboseReport := v.Verbose >= 2
+	verboseReport := v.Verbose >= 1
 
 	v.Println(" • %s (%s)", ts.Name, ts.Filepath)
 
@@ -104,37 +104,54 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		tc := &ts.TestCases[i]
 		tc.IsEvaluated = true
 		v.Print(" \t• %s", tc.Name)
-		if verboseReport {
-			v.Print("\n")
-		}
 		var hasFailure bool
+		var hasRanged bool
 		var hasSkipped = len(tc.Skipped) > 0
 		if !hasSkipped {
 			start := time.Now()
 			tc.Start = start
 			ts.Status = StatusRun
+			if verboseReport || hasRanged {
+				v.Print("\n")
+			}
 			// ##### RUN Test Case Here
 			v.runTestCase(ctx, ts, tc)
 			tc.End = time.Now()
 			tc.Duration = tc.End.Sub(tc.Start).Seconds()
 		}
 
+		skippedSteps := 0
 		for _, testStepResult := range tc.TestStepResults {
+			if testStepResult.RangedEnable {
+				hasRanged = true
+			}
 			if testStepResult.Status == StatusFail {
 				hasFailure = true
+			}
+			if testStepResult.Status == StatusSkip {
+				skippedSteps++
 			}
 		}
 
 		if hasFailure {
 			tc.Status = StatusFail
+		} else if skippedSteps == len(tc.TestStepResults) {
+			//If all test steps were skipped, consider the test case as skipped
+			tc.Status = StatusSkip
 		} else if tc.Status != StatusSkip {
 			tc.Status = StatusPass
 		}
 
 		// Verbose mode already reported tests status, so just print them when non-verbose
 		indent := ""
-		if verboseReport {
+		if hasRanged || verboseReport {
 			indent = "\t  "
+			// If the testcase was entirely skipped, then the verbose mode will not have any output
+			// Print something to inform that the testcase was indeed processed although skipped
+			if len(tc.TestStepResults) == 0 {
+				v.Println("\t\t%s", Gray("• (all steps were skipped)"))
+				continue
+			}
 		} else {
 			if hasFailure {
 				v.Println(" %s", Red(StatusFail))
@@ -155,7 +172,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		}
 
 		// Verbose mode already reported failures, so just print them when non-verbose
-		if !verboseReport && hasFailure {
+		if !hasRanged && !verboseReport && hasFailure {
 			for _, testStepResult := range tc.TestStepResults {
 				for _, f := range testStepResult.Errors {
 					v.Println("%s", Yellow(f.Value))

@@ -17,8 +17,8 @@ In your yaml file, you can use:
   - proxy (optional): set to use a proxy server for connection to url
   - resolve (optional): array of custom resolver of host and port pair. example: foo.com:443:127.0.0.1
   - ignore_verify_ssl (optional): set to true if you use a self-signed SSL on remote for example
-  - basic_auth_user (optional): username to use for HTTP basic authentification
-  - basic_auth_password (optional): password to use for HTTP basic authentification
+  - basic_auth_user (optional): username to use for HTTP basic authentication
+  - basic_auth_password (optional): password to use for HTTP basic authentication
   - no_follow_redirect (optional): indicates that you don't want to follow Location if server returns a Redirect (301/302/...)
   - skip_body: skip the body and bodyjson result
   - skip_headers: skip the headers result

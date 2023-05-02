@@ -1,18 +1,64 @@
 name: SMTP testsuite
 vars:
-  smtpHost: 'localhost'
-  smtpPort: '1025'
+  withTLS: false
+  imapHost: localhost
+  imapPort: 1143
+  imapUser: address@example.org
+  imapPassword: pass
+  smtpHost: localhost
+  smtpPort: 1025
 testcases:
-- name: SMTP
-  steps:
-  - type: smtp
-    timeout: 10
-    withtls: false
-    host: "{{.smtpHost}}"
-    port: "{{.smtpPort}}"
-    #user: yourSMTPUsername
-    #password: yourSMTPPassword
-    to: destinationa@yourdomain.com,destinationb@yourdomain.com
-    from: venom@localhost.com
-    subject: title of mail
-    body: body of mail
+  - name: Clear all mailboxes
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: clear
+            args:
+              mailboxes:
+                - "*"
+        assertions:
+          - result.commands.commands0.err ShouldBeEmpty
+  - name: Send mail
+    steps:
+    - type: smtp
+      timeout: 10
+      withtls: {{.withTLS}}
+      host: "{{.smtpHost}}"
+      port: "{{.smtpPort}}"
+      from: venom@smtp.net
+      to: address@example.org
+      subject: Venom SMTP tests
+      body: Hi, I am Venom SMTP Executor!
+  - name: IMAP - Retrieve sent mail
+    steps:
+      - type: imap
+        auth:
+          withtls: {{.withTLS}}
+          host: "{{.imapHost}}"
+          port: "{{.imapPort}}"
+          user: "{{.imapUser}}"
+          password: "{{.imapPassword}}"
+        commands:
+          - name: fetch
+            search:
+              mailbox: INBOX
+              from: venom@smtp.net
+              to: address@example.org
+              subject: Venom SMTP tests
+              body: Hi, I am Venom SMTP Executor!
+        retry: 2 # Sometimes, the SMTP agent does not store the mail fast enough, which causes INBOX to be empty when we run this test
+        retry_if:
+          - result.commands.commands0.err ShouldContainSubstring "empty mailbox"
+        assertions:
+          - result.commands.commands0.err ShouldBeEmpty
+          - result.commands.commands0.search.from ShouldEqual venom@smtp.net
+          - result.commands.commands0.search.to ShouldEqual address@example.org
+          - result.commands.commands0.search.subject ShouldEqual Venom SMTP tests
+          - result.commands.commands0.search.body ShouldEqual Hi, I am Venom SMTP Executor!
+

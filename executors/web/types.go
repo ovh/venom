@@ -18,7 +18,7 @@ type Action struct {
 	Execute         *Execute     `yaml:"execute,omitempy"`
 }
 
-// Fill represents informations needed to fill input/textarea
+// Fill represents information needed to fill input/textarea
 type Fill struct {
 	Find        interface{} `yaml:"find,omitempty"`
 	Text        string      `yaml:"text,omitempty"`
@@ -26,20 +26,20 @@ type Fill struct {
 	SyncTimeout int64       `yaml:"syncTimeout"`
 }
 
-// Click represents informations needed to click on web components
+// Click represents information needed to click on web components
 type Click struct {
 	Find        interface{} `yaml:"find,omitempty"`
 	Wait        int64       `yaml:"wait"`
 	SyncTimeout int64       `yaml:"syncTimeout"`
 }
 
-// Navigate represents informations needed to navigate on defined url
+// Navigate represents information needed to navigate on defined url
 type Navigate struct {
 	URL   string `yaml:"url,omitempty"`
 	Reset bool   `yaml:"reset,omitempty"`
 }
 
-// Select represents informations needed to select an option
+// Select represents information needed to select an option
 type Select struct {
 	Find        interface{} `yaml:"find,omitempty"`
 	Text        string      `yaml:"text,omitempty"`
@@ -47,7 +47,7 @@ type Select struct {
 	SyncTimeout int64       `yaml:"syncTimeout"`
 }
 
-// UploadFile represents informations needed to upload files
+// UploadFile represents information needed to upload files
 type UploadFile struct {
 	Find        interface{} `yaml:"find,omitempty"`
 	Files       []string    `yaml:"files,omitempty"`
@@ -55,7 +55,7 @@ type UploadFile struct {
 	SyncTimeout int64       `yaml:"syncTimeout"`
 }
 
-// SelectFrame represents informations needed to select the frame
+// SelectFrame represents information needed to select the frame
 type SelectFrame struct {
 	Find        interface{} `yaml:"find,omitempty"`
 	SyncTimeout int64       `yaml:"syncTimeout"`
