@@ -35,8 +35,6 @@ func New() venom.Executor {
 type WebContext struct {
 	wd      venomWeb.WebDriver
 	session venomWeb.Session
-	//wd   *agouti.WebDriver
-	//Page *agouti.Page
 }
 
 // Executor struct
@@ -68,12 +66,17 @@ func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error
 	var args = venom.StringSliceVarFromCtx(ctx, "web.args")
 	var prefs = venom.StringMapInterfaceVarFromCtx(ctx, "web.prefs")
 
+	// Binary
+	var binaryPath = venom.StringVarFromCtx(ctx, "web.binaryPath")
+	var driverPath = venom.StringVarFromCtx(ctx, "web.driverPath")
+	var port = venom.StringVarFromCtx(ctx, "web.driverPort")
+
 	// Instanciate web driver (chrome by default)
 	switch driver {
 	case "gecko":
-		webCtx.wd = venomWeb.GeckoDriver(args, prefs)
+		webCtx.wd = venomWeb.GeckoDriver(binaryPath, driverPath, args, prefs, port)
 	default:
-		webCtx.wd = venomWeb.ChromeDriver(args, prefs)
+		webCtx.wd = venomWeb.ChromeDriver(binaryPath, driverPath, args, prefs, port)
 	}
 
 	// Configure web driver
