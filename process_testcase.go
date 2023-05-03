@@ -411,7 +411,11 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 			} else if ts.Status == StatusSkip {
 				v.Println(" %s", Gray(StatusSkip))
 			} else {
-				v.Println(" %s", Green(StatusPass))
+				if ts.Retries == 0 {
+					v.Println(" %s", Green(StatusPass))
+				} else {
+					v.Println(" %s (after %d attempts)", Green(StatusPass), ts.Retries)
+				}
 			}
 		}
 	}

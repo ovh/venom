@@ -23,12 +23,11 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	var assertRes AssertionsApplied
-	var retry int
 	var result interface{}
 
-	for retry = 0; retry <= e.Retry() && !assertRes.OK; retry++ {
-		if retry > 1 && !assertRes.OK {
-			Debug(ctx, "Sleep %d, it's %d attempt", e.Delay(), retry)
+	for tsResult.Retries = 0; tsResult.Retries <= e.Retry() && !assertRes.OK; tsResult.Retries++ {
+		if tsResult.Retries > 1 && !assertRes.OK {
+			Debug(ctx, "Sleep %d, it's %d attempt", e.Delay(), tsResult.Retries)
 			time.Sleep(time.Duration(e.Delay()) * time.Second)
 		}
 
@@ -36,7 +35,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		result, err = v.runTestStepExecutor(ctx, e, tc, tsResult, step)
 		if err != nil {
 			// we save the failure only if it's the last attempt
-			if retry == e.Retry() {
+			if tsResult.Retries == e.Retry() {
 				failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", err)
 				tsResult.appendFailure(*failure)
 			}
@@ -119,15 +118,17 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			break
 		}
 		if len(failures) > 0 {
-			failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-retry))
+			failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-tsResult.Retries))
 			tsResult.Errors = append(tsResult.Errors, *failure)
 			break
 		}
 	}
 
-	if retry > 1 && len(assertRes.errors) > 0 {
-		tsResult.appendFailure(Failure{Value: fmt.Sprintf("It's a failure after %d attempts", retry)})
-	} else if len(assertRes.errors) > 0 {
+	if tsResult.Retries > 1 && len(assertRes.errors) > 0 {
+		tsResult.appendFailure(Failure{Value: fmt.Sprintf("It's a failure after %d attempts", tsResult.Retries)})
+	}
+
+	if len(assertRes.errors) > 0 {
 		tsResult.appendFailure(assertRes.errors...)
 	}
 
