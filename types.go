@@ -13,11 +13,13 @@ import (
 	"github.com/spf13/cast"
 )
 
+type Status string
+
 const (
-	StatusRun  = "RUN"
-	StatusFail = "FAIL"
-	StatusSkip = "SKIP"
-	StatusPass = "PASS"
+	StatusRun  Status = "RUN"
+	StatusFail Status = "FAIL"
+	StatusSkip Status = "SKIP"
+	StatusPass Status = "PASS"
 )
 
 type H map[string]interface{}
@@ -73,7 +75,7 @@ type TestsXML struct {
 
 type Tests struct {
 	TestSuites       []TestSuite `json:"test_suites" yml:"tests_suites"`
-	Status           string      `json:"status" yml:"status"`
+	Status           Status      `json:"status" yml:"status"`
 	NbTestsuitesFail int         `json:"nbTestsuitesFail"  yaml:"-"`
 	NbTestsuitesPass int         `json:"nbTestsuitesPass"  yaml:"-"`
 	NbTestsuitesSkip int         `json:"nbTestsuitesSkip"  yaml:"-"`
@@ -118,7 +120,7 @@ type TestSuite struct {
 	Filepath     string `json:"filepath" yaml:"-"`
 	ComputedVars H      `json:"computed_vars" yaml:"-"`
 	WorkDir      string `json:"workdir" yaml:"_"`
-	Status       string `json:"status" yaml:"status"`
+	Status       Status `json:"status" yaml:"status"`
 
 	Duration float64   `json:"duration" yaml:"-"`
 	Start    time.Time `json:"start" yaml:"-"`
@@ -155,7 +157,7 @@ type TestCase struct {
 	// Computed
 	originalName string
 	Skipped      []Skipped `json:"skipped" yaml:"-"`
-	Status       string    `json:"status" yaml:"-"`
+	Status       Status    `json:"status" yaml:"-"`
 
 	Duration float64   `json:"duration" yaml:"-"`
 	Start    time.Time `json:"start" yaml:"-"`
@@ -176,7 +178,7 @@ type TestStepResult struct {
 	Name              string            `json:"name"`
 	Errors            []Failure         `json:"errors"`
 	Skipped           []Skipped         `json:"skipped" yaml:"skipped"`
-	Status            string            `json:"status" yaml:"status"`
+	Status            Status            `json:"status" yaml:"status"`
 	Raw               interface{}       `json:"raw" yaml:"raw"`
 	Interpolated      interface{}       `json:"interpolated" yaml:"interpolated"`
 	Number            int               `json:"number" yaml:"number"`
@@ -186,6 +188,7 @@ type TestStepResult struct {
 	ComputedVars      H                 `json:"computedVars" yaml:"-"`
 	ComputedInfo      []string          `json:"computedInfos" yaml:"-"`
 	AssertionsApplied AssertionsApplied `json:"assertionsApplied" yaml:"-"`
+	Retries           int               `json:"retries" yaml:"retries"`
 
 	Systemout string    `json:"systemout"`
 	Systemerr string    `json:"systemerr"`
