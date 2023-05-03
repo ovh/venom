@@ -1,0 +1,12 @@
+- name: Bulbasaur
+  types:
+    - grass
+    - poison
+
+- name: Charmander
+  types:
+    - fire
+
+- name: Squirtle
+  types:
+    - water
