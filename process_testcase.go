@@ -273,7 +273,8 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 			tc.testSteps = append(tc.testSteps, step)
 			var e ExecutorRunner
-			ctx, e, err = v.GetExecutorRunner(ctx, step, tc.Vars)
+			Info(ctx, "variables before execution %v", stepVars)
+			ctx, e, err = v.GetExecutorRunner(ctx, step, stepVars)
 			if err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to get executor: %v", err)

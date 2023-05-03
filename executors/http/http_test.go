@@ -2,10 +2,13 @@ package http
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/ovh/venom"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,4 +65,63 @@ func TestExecutor_TLSOptions_From_String(t *testing.T) {
 	opts, err := e.TLSOptions(context.Background())
 	require.NoError(t, err)
 	require.Len(t, opts, 2)
+}
+
+func TestInterpolation_Of_String(t *testing.T) {
+
+	e := &Executor{
+		Method:           "",
+		URL:              "http://example.com",
+		Path:             "",
+		BodyFile:         "tests/http/bodyfile_with_interpolation",
+		PreserveBodyFile: false,
+		MultipartForm:    nil,
+		Headers:          map[string]string{},
+	}
+	ctx := context.Background()
+	keys := make(map[string]string)
+	keys["fullName"] = "{{.name}} test"
+	keys["name"] = "123"
+
+	ctx = context.WithValue(ctx, venom.ContextKey("vars"), []string{"fullName", "name"})
+	for k := range keys {
+		ctx = context.WithValue(ctx, venom.ContextKey(fmt.Sprintf("var.%s", k)), keys[k])
+	}
+	vars := venom.AllVarsFromCtx(ctx)
+	fmt.Println("vars: ", vars)
+	require.Len(t, vars, 2)
+	r, err := e.getRequest(ctx, "../../")
+	require.NoError(t, err)
+	defer r.Body.Close()
+
+	b, err := io.ReadAll(r.Body)
+	require.NoError(t, err)
+	fmt.Printf("Output")
+	fmt.Println(string(b))
+	require.Equal(t, "{\n    \"key\": \"123 test\"\n}", string(b))
+}
+
+func TestInterpolation_without_match_Of_String(t *testing.T) {
+
+	e := &Executor{
+		Method:           "",
+		URL:              "http://example.com",
+		Path:             "",
+		BodyFile:         "tests/http/bodyfile_with_interpolation",
+		PreserveBodyFile: false,
+		MultipartForm:    nil,
+		Headers:          map[string]string{},
+	}
+	ctx := context.Background()
+	keys := make(map[string]string)
+	keys["fullName"] = "{{.name}} test"
+
+	ctx = context.WithValue(ctx, venom.ContextKey("vars"), []string{"fullName"})
+	for k := range keys {
+		ctx = context.WithValue(ctx, venom.ContextKey(fmt.Sprintf("var.%s", k)), keys[k])
+	}
+
+	_, err := e.getRequest(ctx, "../../")
+	require.Errorf(t, err, "unable to interpolate file due to unresolved variables {{.name}}")
+
 }
