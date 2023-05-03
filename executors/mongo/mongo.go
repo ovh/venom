@@ -7,12 +7,14 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"gopkg.in/yaml.v3"
 )
 
 const Name = "mongo"
@@ -49,6 +51,69 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 	for i, action := range e.Actions {
 		actionType := fmt.Sprintf("%v", action["type"])
 		switch actionType {
+		case "loadFixtures":
+			var loadFixturesAction LoadFixturesAction
+			if err := mapstructure.Decode(action, &loadFixturesAction); err != nil {
+				return nil, err
+			}
+
+			if loadFixturesAction.Folder == "" {
+				return nil, fmt.Errorf("folder is required")
+			}
+
+			// First, drop the existing collections in the database to start clean
+			collections, err := mongoClient.Database(e.Database).ListCollectionNames(ctx, bson.M{})
+			if err != nil {
+				return nil, fmt.Errorf("failed to list collections: %w", err)
+			}
+
+			for _, collection := range collections {
+				if strings.HasPrefix(collection, "system.") {
+					continue
+				}
+
+				if err := mongoClient.Database(e.Database).Collection(collection).Drop(ctx); err != nil {
+					return nil, fmt.Errorf("failed to drop collection %s: %w", collection, err)
+				}
+			}
+
+			dirEntries, err := os.ReadDir(path.Join(venom.StringVarFromCtx(ctx, "venom.testsuite.workdir"), loadFixturesAction.Folder))
+			if err != nil {
+				return nil, err
+			}
+
+			fixtures := make([]string, 0, len(dirEntries))
+			for _, file := range dirEntries {
+				if file.IsDir() {
+					continue
+				}
+
+				extension := path.Ext(file.Name())
+				if extension != ".yaml" && extension != ".yml" {
+					continue
+				}
+				fixtures = append(fixtures, file.Name())
+			}
+
+			for _, fixture := range fixtures {
+				collectionName := strings.TrimSuffix(fixture, path.Ext(fixture))
+				filePath := path.Join(venom.StringVarFromCtx(ctx, "venom.testsuite.workdir"), loadFixturesAction.Folder, fixture)
+
+				file, err := os.Open(filePath)
+				if err != nil {
+					return nil, fmt.Errorf("failed to open file %s: %w", filePath, err)
+				}
+
+				var documents []any
+				if err := yaml.NewDecoder(file).Decode(&documents); err != nil {
+					return nil, fmt.Errorf("failed to decode fixture %s: %w", filePath, err)
+				}
+
+				if _, err := mongoClient.Database(e.Database).Collection(collectionName).InsertMany(ctx, documents); err != nil {
+					return nil, fmt.Errorf("failed to insert documents in collection %s: %w", collectionName, err)
+				}
+			}
+
 		case "dropCollection":
 			if err := mongoClient.Database(e.Database).Collection(e.Collection).Drop(ctx); err != nil {
 				return nil, err
@@ -288,6 +353,11 @@ type CountAction struct {
 	Options struct {
 		Limit *int64
 	}
+}
+
+type LoadFixturesAction struct {
+	Action
+	Folder string
 }
 
 type InsertAction struct {

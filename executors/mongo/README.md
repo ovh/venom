@@ -19,6 +19,33 @@ Example:
 }
 ```
 
+### Load fixtures
+
+```yaml
+- type: mongo
+  uri: mongodb://localhost:27017
+  database: my-database
+  actions:
+    - type: loadFixtures
+      folder: fixtures/
+```
+
+This action will first **drop all the collections in the database**, and then load multiple collections at once from a folder.
+The fixtures folder must contain one file per collection, and be named after the collection. For example, `cards.yml` will create a `cards` collection.
+The items in the collections are declared as a YAML array. For example:
+
+```yaml
+# fixtures/cards.yml
+- suit: clubs
+  value: jack
+
+- suit: clubs
+  value: queen
+
+- suit: clubs
+  value: king
+```
+
 ### Insert documents
 
 ```yaml
