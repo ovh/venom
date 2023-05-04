@@ -10,6 +10,7 @@ In your yaml file, you can use:
   - url mandatory
   - unix_sock (optional)
   - path (optional)
+  - query_parameters (optional)
   - body (optional)
   - bodyFile (optional)
   - preserve_bodyfile (optional) skip file content interpolation
