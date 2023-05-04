@@ -91,3 +91,13 @@ testcases:
       - result.body ShouldBeEmpty
       - result.headers ShouldBeEmpty
 
+
+- name: get http (with query parameters)
+  steps:
+  - type: http
+    method: GET
+    url: https://httpbin.org/get
+    query_parameters:
+      a: " b"
+    assertions:
+      - result.bodyjson.args.a ShouldEqual " b"
