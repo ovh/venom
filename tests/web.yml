@@ -1,7 +1,7 @@
 name: TestSuite Web
 vars:
   web:
-    driver: phamtomjs
+    driver: gecko
     width: 1920
     height: 1080
     # driver: chrome
