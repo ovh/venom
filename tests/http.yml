@@ -100,4 +100,4 @@ testcases:
     query_parameters:
       a: " b"
     assertions:
-      - result.bodyjson.args.b ShouldEqual " b"
+      - result.bodyjson.args.a ShouldEqual " b"
