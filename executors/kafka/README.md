@@ -15,6 +15,7 @@ In your yaml file, you can use:
   - user optional
   - password optional
   - kafka_version optional, default is 0.10.2.0
+  - insecure_tls optional, permit to allow self-signed certificates when using tls
 
   - client_type mandator: producer or consumer
 

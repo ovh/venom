@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -257,7 +258,7 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 		method = "GET"
 	}
 	if (e.Body != "" || e.BodyFile != "") && e.MultipartForm != nil {
-		return nil, fmt.Errorf("Can only use one of 'body', 'body_file' and 'multipart_form'")
+		return nil, fmt.Errorf("can only use one of 'body', 'body_file' and 'multipart_form'")
 	}
 
 	body := &bytes.Buffer{}
@@ -265,7 +266,11 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
-		bodyfilePath := filepath.Join(workdir, e.BodyFile)
+		bodyfilePath := e.BodyFile
+		if !filepath.IsAbs(e.BodyFile) {
+			// Only join with the workdir with relative path
+			bodyfilePath = filepath.Join(workdir, e.BodyFile)
+		}
 		if _, err := os.Stat(bodyfilePath); !os.IsNotExist(err) {
 			temp, err := os.ReadFile(bodyfilePath)
 			if err != nil {
@@ -276,11 +281,25 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 			} else {
 				h := venom.AllVarsFromCtx(ctx)
 				vars, _ := venom.DumpStringPreserveCase(h)
-				stemp, err := interpolate.Do(string(temp), vars)
-				if err != nil {
-					return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+				str := string(temp)
+				upperlimit := len(vars)
+				counter := 0
+				for {
+					if !strings.Contains(str, "{{.") {
+						break
+					}
+					stemp, err := interpolate.Do(str, vars)
+					if err != nil {
+						return nil, fmt.Errorf("unable to interpolate file %s: %v", path, err)
+					}
+					if strings.Compare(str, stemp) == 0 && counter > upperlimit {
+						r, _ := regexp.Compile(`{{\..*}}`)
+						return nil, fmt.Errorf("unable to interpolate file due to unresolved variables %s", strings.Join(r.FindAllString(str, -1), ","))
+					}
+					str = stemp
+					counter++
 				}
-				body = bytes.NewBufferString(stemp)
+				body = bytes.NewBufferString(str)
 			}
 		}
 	} else if e.MultipartForm != nil {

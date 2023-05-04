@@ -5,6 +5,50 @@ vars:
   mongo_collection: cards
 
 testcases:
+  - name: Load fixtures
+    steps:
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        actions:
+          - type: loadFixtures
+            folder: mongo/fixturesA
+
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: cards
+        actions:
+          - type: count
+        assertions:
+          - result.actions.actions0.count ShouldEqual 3
+
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        actions:
+          - type: loadFixtures
+            folder: mongo/fixturesB
+
+      # Ensure fixturesA have been dropped
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: cards
+        actions:
+          - type: count
+        assertions:
+          - result.actions.actions0.count ShouldEqual 0
+        
+      - type: mongo
+        uri: "{{.mongo_uri}}"
+        database: "{{.mongo_database}}"
+        collection: pokemons
+        actions:
+          - type: count
+        assertions:
+          - result.actions.actions0.count ShouldEqual 3
+
   - name: Reset collection
     steps:
       - type: mongo
