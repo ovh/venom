@@ -95,16 +95,18 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 		ts := &v.Tests.TestSuites[i]
 		ts.Vars.Add("venom.testsuite", ts.Name)
 
-		Info(ctx, "Parsing testsuite %s : %+v", ts.Filepath, ts.Vars)
+		Info(ctx, "Parsing testsuite %s", ts.Filepath)
 		tvars, textractedVars, err := v.parseTestSuite(ts)
 		if err != nil {
 			return err
 		}
 
-		Debug(ctx, "Testsuite (%s) variables: %+v", ts.Filepath, ts.Vars)
 		for k := range ts.Vars {
 			textractedVars = append(textractedVars, k)
 		}
+
+		Debug(ctx, "Testsuite (%s) variables: %s", ts.Filepath, strings.Join(textractedVars, ","))
+
 		for _, k := range tvars {
 			var found bool
 			for i := 0; i < len(missingVars); i++ {

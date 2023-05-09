@@ -2,6 +2,9 @@ package venom
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -30,6 +33,23 @@ func fieldsFromContext(ctx context.Context, keys ...string) logrus.Fields {
 		}
 	}
 	return fields
+}
+
+func HideSensitive(ctx context.Context, arg interface{}) string {
+	s := ctx.Value(ContextKey("secrets"))
+	cleanVars := fmt.Sprint(arg)
+	if s != nil && &s != nil {
+		switch reflect.TypeOf(s).Kind() {
+		case reflect.Slice:
+			secrets := reflect.ValueOf(s)
+			for i := 0; i < secrets.Len(); i++ {
+				secret := fmt.Sprint(secrets.Index(i).Interface())
+				stringArg := fmt.Sprint(arg)
+				cleanVars = strings.ReplaceAll(stringArg, secret, "__hidden__")
+			}
+		}
+	}
+	return cleanVars
 }
 
 func Debug(ctx context.Context, format string, args ...interface{}) {

@@ -42,7 +42,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			continue
 		}
 
-		Debug(ctx, "result of runTestStepExecutor: %+v", result)
+		Debug(ctx, "result of runTestStepExecutor: %+v", HideSensitive(ctx, result))
 		mapResult := GetExecutorResult(result)
 		mapResultString, _ := DumpString(result)
 
