@@ -141,8 +141,17 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	tc.Vars.AddAll(ts.ComputedVars)
 	tc.computedVars = H{}
 
-	computedSecrets := []string{}
+	ctx = v.processSecrets(ctx, ts, tc)
 
+	Info(ctx, "Starting testcase")
+
+	defer Info(ctx, "Ending testcase")
+	// ##### RUN Test Steps Here
+	v.runTestSteps(ctx, tc, nil)
+}
+
+func (v *Venom) processSecrets(ctx context.Context, ts *TestSuite, tc *TestCase) context.Context {
+	computedSecrets := []string{}
 	for k, v := range tc.Vars {
 		for _, s := range ts.Secrets {
 			if strings.Compare(k, s) == 0 {
@@ -150,13 +159,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 			}
 		}
 	}
-	ctx = context.WithValue(ctx, ContextKey("secrets"), computedSecrets)
-
-	Info(ctx, "Starting testcase")
-
-	defer Info(ctx, "Ending testcase")
-	// ##### RUN Test Steps Here
-	v.runTestSteps(ctx, tc, nil)
+	return context.WithValue(ctx, ContextKey("secrets"), computedSecrets)
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepResult) {

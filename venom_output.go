@@ -2,6 +2,7 @@ package venom
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -21,6 +22,23 @@ func init() {
 	if os.Getenv("IS_TTY") == "" || strings.ToLower(os.Getenv("IS_TTY")) == "true" || os.Getenv("IS_TTY") == "1" {
 		color.NoColor = false
 	}
+}
+
+func (v *Venom) CleanUpSecrets(testSuite *TestSuite) *TestSuite {
+	for _, testCase := range testSuite.TestCases {
+		ctx := v.processSecrets(context.Background(), testSuite, &testCase)
+		for _, result := range testCase.TestStepResults {
+			for i, v := range result.ComputedVars {
+				result.ComputedVars[i] = HideSensitive(ctx, v)
+			}
+			for i, v := range result.InputVars {
+				result.ComputedVars[i] = HideSensitive(ctx, v)
+			}
+			result.Systemout = HideSensitive(ctx, result.Systemout)
+			result.Systemerr = HideSensitive(ctx, result.Systemerr)
+		}
+	}
+	return testSuite
 }
 
 // OutputResult output result to sdtout, files...
