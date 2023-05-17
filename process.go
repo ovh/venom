@@ -17,7 +17,16 @@ import (
 // InitLogger initializes venom logger
 func (v *Venom) InitLogger() error {
 	v.Tests.TestSuites = []TestSuite{}
-	logrus.SetLevel(logrus.DebugLevel)
+
+	if v.LoggingLevel != "" {
+		level, err := logrus.ParseLevel(v.LoggingLevel)
+		if err != nil {
+			return errors.Wrapf(err, "unable to parse logging level")
+		}
+		logrus.SetLevel(level)
+	} else {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 
 	if v.OutputDir != "" {
 		if err := os.MkdirAll(v.OutputDir, os.FileMode(0755)); err != nil {

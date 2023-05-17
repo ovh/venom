@@ -32,7 +32,8 @@ var (
 	libDir        string
 	htmlReport    bool
 	stopOnFailure bool
-	verbose       int = 0 // Set the default value for verboseFlag
+	verbose       int    = 0 // Set the default value for verboseFlag
+	loggingLevel  string = "debug"
 
 	variablesFlag     *[]string
 	formatFlag        *string
@@ -42,6 +43,7 @@ var (
 	stopOnFailureFlag *bool
 	htmlReportFlag    *bool
 	verboseFlag       *int
+	loggingLevelFlag  *string
 )
 
 func init() {
@@ -53,6 +55,7 @@ func init() {
 	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	outputDirFlag = Cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
 	libDirFlag = Cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+	loggingLevelFlag = Cmd.Flags().String("logging-level", "debug", "Change the logging level")
 }
 
 func initArgs(cmd *cobra.Command) {
@@ -95,6 +98,10 @@ func initFromCommandArguments(f *pflag.Flag) {
 	case "lib-dir":
 		if libDirFlag != nil {
 			libDir = *libDirFlag
+		}
+	case "logging-level":
+		if loggingLevelFlag != nil {
+			loggingLevel = *loggingLevelFlag
 		}
 	case "verbose":
 		if verboseFlag != nil {
@@ -159,6 +166,7 @@ type ConfigFileData struct {
 	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
 	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
 	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
+	LoggingLevel   *string   `json:"logging_level,omitempty" yaml:"logging_level,omitempty"`
 }
 
 // Configuration file overrides the environment variables.
@@ -202,6 +210,9 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.Verbosity != nil {
 		verbose = *configFileData.Verbosity
+	}
+	if configFileData.LoggingLevel != nil {
+		loggingLevel = *configFileData.LoggingLevel
 	}
 
 	return nil
@@ -272,6 +283,9 @@ func initFromEnv(environ []string) ([]string, error) {
 		v2 := int(v)
 		verbose = v2
 	}
+	if os.Getenv("VENOM_LOGGING_LEVEL") != "" {
+		loggingLevel = os.Getenv("VENOM_LOGGING_LEVEL")
+	}
 
 	var cast = func(vS string) interface{} {
 		var v interface{}
@@ -299,6 +313,7 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option variables=%v", strings.Join(variables, " "))
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "option verbose=%v", verbose)
+	venom.Debug(ctx, "option loggingLevel=%v", loggingLevel)
 }
 
 // Cmd run
@@ -338,6 +353,7 @@ var Cmd = &cobra.Command{
 		v.StopOnFailure = stopOnFailure
 		v.HtmlReport = htmlReport
 		v.Verbose = verbose
+		v.LoggingLevel = loggingLevel
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
