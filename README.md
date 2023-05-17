@@ -259,7 +259,7 @@ Flags and their equivalent with environment variables usage:
 
 - `--format="json"` flag is equivalent to `VENOM_FORMAT="json"` environment variable
 - `--lib-dir="/etc/venom/lib:$HOME/venom.d/lib"` flag is equivalent to `VENOM_LIB_DIR="/etc/venom/lib"` environment variable
-- `--logging-level="info"` flag is equivalent to `VENOM_LOGGING_LEVEL` environment variable
+- `--logging-level="info"` flag is equivalent to `VENOM_LOGGING_LEVEL="info"` environment variable
 - `--output-dir="test-results"` flag is equivalent to `VENOM_OUTPUT_DIR="test-results"` environment variable
 - `--stop-on-failure` flag is equivalent to `VENOM_STOP_ON_FAILURE=true` environment variable
 - `--var foo=bar` flag is equivalent to `VENOM_VAR_foo='bar'` environment variable
@@ -283,6 +283,7 @@ format: xml
 output_dir: output
 lib_dir: lib
 verbosity: 3
+logging_level: info
 ```
 
 Please note that the command line flags overrides the configuration file. The configuration file overrides the environment variables.
