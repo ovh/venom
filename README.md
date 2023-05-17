@@ -159,6 +159,7 @@ Flags:
   -h, --help                    help for run
       --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
+      --logging-level string    Change the logging level (default "debug")
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
@@ -234,6 +235,7 @@ Flags:
   -h, --help                    help for run
       --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
+      --logging-level string    Change the logging level (default "debug")      
       --output-dir string       Output Directory: create tests results file inside this directory
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
@@ -257,6 +259,7 @@ Flags and their equivalent with environment variables usage:
 
 - `--format="json"` flag is equivalent to `VENOM_FORMAT="json"` environment variable
 - `--lib-dir="/etc/venom/lib:$HOME/venom.d/lib"` flag is equivalent to `VENOM_LIB_DIR="/etc/venom/lib"` environment variable
+- `--logging-level="info"` flag is equivalent to `VENOM_LOGGING_LEVEL` environment variable
 - `--output-dir="test-results"` flag is equivalent to `VENOM_OUTPUT_DIR="test-results"` environment variable
 - `--stop-on-failure` flag is equivalent to `VENOM_STOP_ON_FAILURE=true` environment variable
 - `--var foo=bar` flag is equivalent to `VENOM_VAR_foo='bar'` environment variable
