@@ -418,6 +418,13 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 					v.Println(" %s (after %d attempts)", Green(StatusPass), ts.Retries)
 				}
 			}
+			for _, i := range tc.computedInfo {
+				v.Println("\t  %s%s %s", "\t  ", Cyan("[info]"), Cyan(i))
+			}
+			for _, i := range tc.computedVerbose {
+				v.PrintlnIndentedTrace(i, "\t  ")
+			}
+
 		}
 	}
 }
