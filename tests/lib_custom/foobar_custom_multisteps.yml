@@ -6,5 +6,8 @@ steps:
     content:
       from: result.systemout
 - script: echo "{{.content}} world"
+  vars:
+    systemout:
+      from: result.systemout
 output:
-  foobar: "{{.result.systemout}}"
+  foobar: "{{.systemout}}"

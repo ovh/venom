@@ -49,6 +49,11 @@ testcases:
     - or:
       - result.statuscode ShouldEqual 401
       - result.statuscode ShouldEqual 415
+    vars:
+      statuscode:
+        from: result.statuscode
+      body:
+        from: result.bodyjson
 
 - name: post http enhanced assertions
   steps:
@@ -67,16 +72,16 @@ testcases:
       - result.bodyjson.bodyjson0 ShouldContainKey prefix
       - result.bodyjson.bodyjson0 ShouldContainKey examples
       - result.bodyjson.bodyjson0 ShouldNotContainKey lol
-      - result.statuscode ShouldNotEqual {{.post-http-multipart.result.statuscode}}
+      - result.statuscode ShouldNotEqual {{.post-http-multipart.statuscode}}
 
 - name: get http with templated variables
   steps:
   - type: http
     method: POST
-    url: https://eu.api.ovh.com/1.0/{{.post-http-multipart.result.bodyjson.bodyjson0.fieldName}}
+    url: https://eu.api.ovh.com/1.0/{{.post-http-multipart.body.body0.fieldName}}
     assertions:
       - result.statuscode ShouldEqual 404
-      - result.statuscode ShouldNotEqual {{.post-http-multipart.result.statuscode}}
+      - result.statuscode ShouldNotEqual {{.post-http-multipart.statuscode}}
 
 - name: get http (with skip body)
   steps:
