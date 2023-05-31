@@ -6,7 +6,12 @@ steps:
   assertions:
   - result.code ShouldEqual 0
   info: "{{.result.systemoutjson.hello}}"
+  vars:
+    hello:
+      from: result.systemoutjson.hello
+    systemout:
+      from: result.systemout
 output:
   display:
-    hello: "{{.result.systemoutjson.hello}}"
-  therawout: '{{.result.systemout}}'
+    hello: "{{.hello}}"
+  therawout: '{{.systemout}}'

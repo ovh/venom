@@ -56,6 +56,9 @@ testcases:
       file: '@./venom.gif'
     assertions:
     - result.statuscode ShouldEqual 401
+    vars:
+      statuscode:
+        from: result.statuscode
 
 - name: post http enhanced assertions
   steps:
@@ -74,7 +77,7 @@ testcases:
       - result.bodyjson.bodyjson0 ShouldContainKey prefix
       - result.bodyjson.bodyjson0 ShouldContainKey examples
       - result.bodyjson.bodyjson0 ShouldNotContainKey lol
-      - result.statuscode ShouldNotEqual {{.post-http-multipart.result.statuscode}}
+      - result.statuscode ShouldNotEqual {{.post-http-multipart.statuscode}}
 
 - name: get http (with options)
   steps:

@@ -8,8 +8,11 @@ testcases:
     script: NO_COLOR=1 ./venom run failing/verbose_output.yml {{.value.opt}}
     info: NO_COLOR=1 ./venom run failing/verbose_output.yml {{.value.opt}}
     range:
-      verbose:
+      verbose-level2:
         opt: "-vv"
+        op: Should
+      verbose-level1:
+        opt: "-v"
         op: Should
       default:
         opt: ""
@@ -25,9 +28,9 @@ testcases:
     - result.systemout {{.value.op}}ContainSubstring 'step1 PASS'
     - result.systemout {{.value.op}}ContainSubstring 'step2 FAIL'
     # ranged steps
-    - result.systemout ShouldContainSubstring 'exec (range=0) PASS'
-    - result.systemout ShouldContainSubstring 'exec (range=1) FAIL'
-    - result.systemout ShouldContainSubstring 'exec (range=2) PASS'
+    - result.systemout {{.value.op}}ContainSubstring 'exec (range=0) PASS'
+    - result.systemout {{.value.op}}ContainSubstring 'exec (range=1) FAIL'
+    - result.systemout {{.value.op}}ContainSubstring 'exec (range=2) PASS'
     # must assertions
     - result.systemout {{.value.op}}ContainSubstring 'must1 FAIL'
     - result.systemout ShouldContainSubstring 'At least one required assertion failed, skipping remaining steps'

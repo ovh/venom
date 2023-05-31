@@ -7,6 +7,11 @@ steps:
     res: users
     assertions:
       - result.statuscode ShouldEqual 200
+    vars:
+      statuscode:
+        from: result.statuscode
+      bodyjson:
+        from: result.bodyjson
 output:
-  statuscode: "{{.result.statuscode}}"
-  body: "{{.result.bodyjson}}"
+  statuscode: "{{.statuscode}}"
+  body: "{{.bodyjson}}"

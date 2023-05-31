@@ -7,6 +7,9 @@ testcases:
   - type: exec
     script: "echo myvar {{.randomvar}}"
     info: "{{.result.systemout}}"
+    vars:
+      systemout:
+        from: result.systemout
 
 - name: myvar_second
   steps:
@@ -14,4 +17,4 @@ testcases:
     script: "echo myvar {{.randomvar}}"
     info: "{{.result.systemout}}"
     assertions:
-    - result.systemout ShouldContainSubstring "{{.myvar_first.result.systemout}}"
+    - result.systemout ShouldContainSubstring "{{.myvar_first.systemout}}"
