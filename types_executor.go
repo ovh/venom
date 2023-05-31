@@ -276,10 +276,6 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, err
 	}
 
-	// re-inject info into executorRunner
-	b := runner.(*executor)
-	b.info = append(b.info, tc.computedInfo...)
-
 	var outputResult interface{}
 	if err := yaml.Unmarshal([]byte(outputS), &outputResult); err != nil {
 		return nil, errors.Wrapf(err, "unable to unmarshal")
