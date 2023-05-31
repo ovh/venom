@@ -1,0 +1,22 @@
+name: Assertions only tests suite
+
+vars:
+  fiveARegex: "a{5}"
+  customVariable : '123456-abcd-end'
+
+testcases:
+  - name: ShouldMatchRegex on global variable
+    steps:
+      - type: exec
+        script: |
+          echo "aaaaa"
+        assertions:
+          - result.systemout ShouldMatchRegex '{{.fiveARegex}}'
+      - script: echo '{{.customVariable}}'
+        assertion:
+          - result.systemout ShouldMatchRegex '^[0-9]{2,}-[a-z]{4}-end$'
+      - type: exec
+        script: |
+          echo "{\"key\":\"testing\"}"
+        assertions:
+          - result.systemoutjson.key ShouldMatchRegex [a-z]{6,}

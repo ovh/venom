@@ -1,6 +1,8 @@
 package assertions
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -1401,6 +1403,57 @@ func TestShouldTimeEqual(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := ShouldTimeEqual(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
 				t.Errorf("ShouldTimeEqual() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestShouldMatchRegex(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "with string",
+			args: args{
+				actual:   `a`,
+				expected: []interface{}{`a`},
+			},
+		},
+		{
+			name: "with string regex",
+			args: args{
+				actual:   `abc`,
+				expected: []interface{}{`a.*c$`},
+			},
+		},
+		{
+			name: "with number regex",
+			args: args{
+				actual:   `abc-123`,
+				expected: []interface{}{`.*[0-9]{3}$`},
+			},
+		},
+		{
+			name: "with regex throwing error",
+			args: args{
+				actual:   `abc-123`,
+				expected: []interface{}{`.*[0-9]{6}$`},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldMatchRegex(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				msg := fmt.Sprintf("value %v not matching pattern : %v", tt.args.actual, tt.args.expected[0])
+				assert.ErrorContainsf(t, err, msg, "Contains message")
+				t.Errorf("ShouldMatchRegex() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
