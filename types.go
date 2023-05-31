@@ -187,6 +187,7 @@ type TestStepResult struct {
 	InputVars         map[string]string `json:"inputVars" yaml:"-"`
 	ComputedVars      H                 `json:"computedVars" yaml:"-"`
 	ComputedInfo      []string          `json:"computedInfos" yaml:"-"`
+	ComputedVerbose   []string          `json:"computedVerbose" yaml:"-"`
 	AssertionsApplied AssertionsApplied `json:"assertionsApplied" yaml:"-"`
 	Retries           int               `json:"retries" yaml:"retries"`
 

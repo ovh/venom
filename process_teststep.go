@@ -66,6 +66,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			if err := os.WriteFile(filename, []byte(output), 0644); err != nil {
 				return fmt.Errorf("Error while creating file %s: %v", filename, err)
 			}
+			tsResult.ComputedVerbose = append(tsResult.ComputedVerbose, fmt.Sprintf("writing %s", filename))
 			tc.computedVerbose = append(tc.computedVerbose, fmt.Sprintf("writing %s", filename))
 		}
 
