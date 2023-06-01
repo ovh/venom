@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/ovh/venom"
 	"github.com/ovh/venom/cmd/venom/root"
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 	if err := root.New().Execute(); err != nil {
-		log.Fatalf("Err:%s", err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		venom.OSExit(2)
 	}
 }

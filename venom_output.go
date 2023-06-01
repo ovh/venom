@@ -12,7 +12,7 @@ import (
 
 	"github.com/fatih/color"
 	tap "github.com/mndrix/tap-go"
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -56,25 +56,25 @@ func (v *Venom) OutputResult() error {
 		case "json":
 			data, err = json.MarshalIndent(testsResult, "", "  ")
 			if err != nil {
-				log.Fatalf("Error: cannot format output json (%s)", err)
+				return errors.Wrapf(err, "Error: cannot format output json (%s)", err)
 			}
 		case "tap":
 			data, err = outputTapFormat(*testsResult)
 			if err != nil {
-				log.Fatalf("Error: cannot format output tap (%s)", err)
+				return errors.Wrapf(err, "Error: cannot format output tap (%s)", err)
 			}
 		case "yml", "yaml":
 			data, err = yaml.Marshal(testsResult)
 			if err != nil {
-				log.Fatalf("Error: cannot format output yaml (%s)", err)
+				return errors.Wrapf(err, "Error: cannot format output yaml (%s)", err)
 			}
 		case "xml":
 			data, err = outputXMLFormat(*testsResult)
 			if err != nil {
-				log.Fatalf("Error: cannot format output xml (%s)", err)
+				return errors.Wrapf(err, "Error: cannot format output xml (%s)", err)
 			}
 		case "html":
-			log.Fatalf("Error: you have to use the --html-report flag")
+			return errors.New("Error: you have to use the --html-report flag")
 		}
 
 		fname := strings.TrimSuffix(v.Tests.TestSuites[i].Filepath, filepath.Ext(v.Tests.TestSuites[i].Filepath))
@@ -100,12 +100,12 @@ func (v *Venom) OutputResult() error {
 
 		data, err := outputHTML(testsResult)
 		if err != nil {
-			log.Fatalf("Error: cannot format output html (%s)", err)
+			return errors.Wrapf(err, "Error: cannot format output html")
 		}
 		var filename = filepath.Join(v.OutputDir, computeOutputFilename("test_results.html"))
 		v.PrintFunc("Writing html file %s\n", filename)
 		if err := os.WriteFile(filename, data, 0600); err != nil {
-			return fmt.Errorf("Error while creating file %s: %v", filename, err)
+			return errors.Wrapf(err, "Error while creating file %s", filename)
 		}
 	}
 
@@ -135,7 +135,6 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 					continue
 				}
 			}
-
 			tapValue.Pass(name)
 		}
 	}
@@ -145,7 +144,6 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 }
 
 func outputXMLFormat(tests Tests) ([]byte, error) {
-
 	testsXML := TestsXML{}
 
 	for _, ts := range tests.TestSuites {
@@ -191,9 +189,9 @@ func outputXMLFormat(tests Tests) ([]byte, error) {
 		testsXML.TestSuites = append(testsXML.TestSuites, tsXML)
 	}
 
-	dataxml, errm := xml.MarshalIndent(testsXML, "", "  ")
-	if errm != nil {
-		log.Fatalf("Error: cannot format xml output: %s", errm)
+	dataxml, err := xml.MarshalIndent(testsXML, "", "  ")
+	if err != nil {
+		errors.Wrapf(err, "Error: cannot format xml output")
 	}
 	data := append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 
