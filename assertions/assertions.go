@@ -1174,9 +1174,9 @@ func ShouldTimeEqual(actual interface{}, expected ...interface{}) error {
 	return fmt.Errorf("expected '%v' to be time equals to '%v' ", actualTime, expectedTime)
 }
 
-// ShouldJSONEqual receives exactly JSON arguments and does a JSON equality check.
+// ShouldJSONEqual receives exactly 2 JSON arguments and does a JSON equality check.
 // This means the keys can be in different order, and whitespace (except in keys or values) is ignored.
-// JSON can start with { or [.
+// JSON can be an object or array (i.e. start with `{` or `[`).
 //
 // Example of testsuite file:
 //
