@@ -1458,3 +1458,143 @@ func TestShouldMatchRegex(t *testing.T) {
 		})
 	}
 }
+
+func TestShouldJSONEqual(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			args: args{
+				actual:   `{"a":1,"b":"foo"}`,
+				expected: []interface{}{`{"a":1,"b":"foo"}`},
+			},
+		},
+		{
+			// Same with map
+			name: "ok",
+			args: args{
+				actual:   map[string]interface{}{"a": 1, "b": "foo"},
+				expected: []interface{}{`{"a":1,"b":"foo"}`},
+			},
+		},
+		{
+			// Spaces, newlines, tabs and key order don't matter
+			name: "ok",
+			args: args{
+				actual:   `{"a":1,"b":"foo"}`,
+				expected: []interface{}{` { "b" : "foo" ,` + "\n\t" + ` "a" : 1 } `},
+			},
+		},
+		{
+			// Order in nested objects doesn't matter
+			name: "ok",
+			args: args{
+				actual:   `{"a":{"nested1":1,"nested2":2}}`,
+				expected: []interface{}{`{"a":{"nested2":2,"nested1":1}}`},
+			},
+		},
+		{
+			// An array instead of object is valid JSON too
+			name: "ok",
+			args: args{
+				actual:   `[1,2]`,
+				expected: []interface{}{`[1,2]`},
+			},
+		},
+		{
+			// Same with slice
+			name: "ok",
+			args: args{
+				actual:   []interface{}{1, 2},
+				expected: []interface{}{`[1,2]`},
+			},
+		},
+		{
+			// Bad value
+			name: "ko",
+			args: args{
+				actual:   `{"a":1}`,
+				expected: []interface{}{`{"a":2}`},
+			},
+			wantErr: true,
+		},
+		{
+			// Bad type
+			name: "ko",
+			args: args{
+				actual:   `{"a":1}`,
+				expected: []interface{}{`{"a":"1"}`},
+			},
+			wantErr: true,
+		},
+		{
+			// Missing key
+			name: "ko",
+			args: args{
+				actual:   `{"a":1,"b":"foo"}`,
+				expected: []interface{}{`{"a":1}`},
+			},
+			wantErr: true,
+		},
+		{
+			// Wrong array order
+			name: "ko",
+			args: args{
+				actual:   `{"a":[1,2]}`,
+				expected: []interface{}{`{"a":[2,1]}`},
+			},
+			wantErr: true,
+		},
+		{
+			// Object instead of array
+			name: "ko",
+			args: args{
+				actual:   `{"a":1}`,
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			// Same with map
+			name: "ko",
+			args: args{
+				actual:   map[string]interface{}{"a": 1},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			// Array instead of object
+			name: "ko",
+			args: args{
+				actual:   `[1]`,
+				expected: []interface{}{`{"a":1}}`},
+			},
+			wantErr: true,
+		},
+		{
+			// Same with slice
+			name: "ko",
+			args: args{
+				actual:   []interface{}{1},
+				expected: []interface{}{`{"a":1}}`},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldJSONEqual(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldJSONEqual() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

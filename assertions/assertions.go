@@ -59,6 +59,7 @@ var assertMap = map[string]AssertFunc{
 	"ShouldHappenOnOrAfter":        ShouldHappenOnOrAfter,
 	"ShouldHappenBetween":          ShouldHappenBetween,
 	"ShouldTimeEqual":              ShouldTimeEqual,
+	"ShouldJSONEqual":              ShouldJSONEqual,
 	"ShouldBeArray":                ShouldBeArray,
 	"ShouldBeMap":                  ShouldBeMap,
 	"ShouldMatchRegex":             ShouldMatchRegex,
@@ -770,7 +771,6 @@ func ShouldHaveLength(actual interface{}, expected ...interface{}) error {
 	}
 
 	return fmt.Errorf("expected '%v' have length of %d but it wasn't (%d)", actual, length, actualLength)
-
 }
 
 // ShouldStartWith receives exactly 2 string parameters and ensures that the first starts with the second.
@@ -1172,6 +1172,120 @@ func ShouldTimeEqual(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 	return fmt.Errorf("expected '%v' to be time equals to '%v' ", actualTime, expectedTime)
+}
+
+// ShouldJSONEqual receives exactly JSON arguments and does a JSON equality check.
+// This means the keys can be in different order, and whitespace (except in keys or values) is ignored.
+// JSON can start with { or [.
+//
+// Example of testsuite file:
+//
+//	name: test ShouldJSONEqual
+//	vars:
+//	  json_expected: '{"a":1,"b":"foo"}'
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - type: exec
+//	    script: echo '{ "b" : "foo", "a" : 1 }'
+//	    assertions:
+//	      - result.systemout ShouldJSONEqual '{{.json_expected}}'
+func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
+	if err := need(1, expected); err != nil {
+		return err
+	}
+
+	expectedString, err := cast.ToStringE(expected[0])
+	if err != nil {
+		return err
+	}
+
+	// `actual` can be a map, slice or the string representation of a JSON object or array.
+	var actualMap map[string]interface{}
+	var actualSlice []interface{}
+	var obj bool
+	switch actual.(type) {
+	case map[string]interface{}:
+		obj = true
+		var err error
+		actualMap, err = cast.ToStringMapE(actual)
+		if err != nil {
+			return err
+		}
+		// Marshal and unmarshal for later deepequal to work
+		actualBytes, err := json.Marshal(actualMap)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(actualBytes, &actualMap)
+		if err != nil {
+			return err
+		}
+	case []interface{}:
+		obj = false
+		var err error
+		actualSlice, err = cast.ToSliceE(actual)
+		if err != nil {
+			return err
+		}
+		// Marshal and unmarshal for later deepequal to work
+		actualBytes, err := json.Marshal(actualSlice)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(actualBytes, &actualSlice)
+		if err != nil {
+			return err
+		}
+	case string:
+		actualString, err := cast.ToStringE(actual)
+		if err != nil {
+			return err
+		}
+
+		// JSON can start with { or [
+		if strings.TrimSpace(actualString)[0] == '{' {
+			obj = true
+			actualMap = map[string]interface{}{}
+			err = json.Unmarshal([]byte(actualString), &actualMap)
+			if err != nil {
+				return err
+			}
+		} else if strings.TrimSpace(actualString)[0] == '[' {
+			obj = false
+			actualSlice = []interface{}{}
+			err = json.Unmarshal([]byte(actualString), &actualSlice)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("actual string must represent a JSON object or array, starting with '{' or '['")
+		}
+	default:
+		return fmt.Errorf("unexpected type for actual: %T", actual)
+	}
+
+	if obj {
+		expectedMap := map[string]interface{}{}
+		err = json.Unmarshal([]byte(expectedString), &expectedMap)
+		if err != nil {
+			return err
+		}
+		if reflect.DeepEqual(actualMap, expectedMap) {
+			return nil
+		}
+		return fmt.Errorf("expected '%#v' to be JSON equals to '%#v' ", actualMap, expectedMap)
+	} else {
+		expectedSlice := []interface{}{}
+		err = json.Unmarshal([]byte(expectedString), &expectedSlice)
+		if err != nil {
+			return err
+		}
+		if reflect.DeepEqual(actualSlice, expectedSlice) {
+			return nil
+		}
+		return fmt.Errorf("expected '%#v' to be JSON equals to '%#v' ", actualSlice, expectedSlice)
+	}
 }
 
 func getTimeFromString(in interface{}) (time.Time, error) {
