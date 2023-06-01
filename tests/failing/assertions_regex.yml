@@ -1,0 +1,15 @@
+name: Assertions only tests suite
+
+vars:
+  fiveARegex: "a{5}"
+
+testcases:
+  - name: ShouldMatchRegex on global variable
+    steps:
+      - type: exec
+        script: |
+          echo "1234"
+        assertions:
+          - result.systemout ShouldMatchRegex '{{.fiveARegex}}'
+
+
