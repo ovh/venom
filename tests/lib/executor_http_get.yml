@@ -5,6 +5,11 @@ steps:
 - type: http
   method: GET
   url: "{{.input.url}}"
+  vars:
+    statuscode:
+      from: result.statuscode
+    body:
+      from: result.body
 output:
-  statuscode: "{{.result.statuscode}}"
-  body: "{{.result.body}}"
+  statuscode: "{{.statuscode}}"
+  body: "{{.body}}"

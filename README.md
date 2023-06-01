@@ -377,10 +377,15 @@ steps:
 - script: echo "{\"hello\":\"{{.input.myarg}}\"}"
   assertions:
   - result.code ShouldEqual 0
+  vars:
+    hello:
+      from: result.systemoutjson.hello
+    all:
+      from: result.systemoutjson
 output:
   display:
-    hello: "{{.result.systemoutjson.hello}}"
-  all: "{{.result.systemoutjson}}"
+    hello: "{{.hello}}"
+  all: "{{.all}}"
 ```
 
 file `testsuite.yml`:
@@ -430,8 +435,11 @@ steps:
   script: {{ .input.script | nindent 4 }}
   assertions:
   - result.code ShouldEqual 0
+  vars:
+    all:
+      from: result.systemoutjson
 output:
-  all: '{{.result.systemoutjson}}'
+  all: '{{.all}}'
 ```
 
 

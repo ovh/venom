@@ -15,19 +15,24 @@ testcases:
     myarg: World
     assertions:
     - result.display.hello ShouldEqual World
+    vars:
+      therawout:
+        from: result.therawout
+      hello:
+        from: result.display.hello
 
 - name: testAResultDisplay
   steps:
-  - script: echo '{{.testA.result.therawout}}'
-    info: value is "{{.testA.result.therawout}}"
+  - script: echo '{{.testA.therawout}}'
+    info: value is "{{.testA.therawout}}"
     assertions:
     - result.systemoutjson.hello ShouldEqual World
 
 - name: testB
   steps:
-  - script: echo "{{.testA.result.display.hello}}"
+  - script: echo "{{.testA.hello}}"
     assertions:
-    - result.systemout ShouldEqual {{.testA.result.display.hello}}
+    - result.systemout ShouldEqual World
 
 - name: testfoobar
   steps:

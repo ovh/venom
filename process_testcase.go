@@ -313,7 +313,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			} else {
 				tsResult.Start = time.Now()
 				tsResult.Status = StatusRun
-				result := v.RunTestStep(ctx, e, tc, tsResult, stepNumber, rangedIndex, step)
+				v.RunTestStep(ctx, e, tc, tsResult, stepNumber, rangedIndex, step)
 				if len(tsResult.Errors) > 0 || !tsResult.AssertionsApplied.OK {
 					tsResult.Status = StatusFail
 				} else {
@@ -322,9 +322,6 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 				tsResult.End = time.Now()
 				tsResult.Duration = tsResult.End.Sub(tsResult.Start).Seconds()
-
-				mapResult := GetExecutorResult(result)
-				previousStepVars.AddAll(H(mapResult))
 
 				tc.testSteps = append(tc.testSteps, step)
 			}
@@ -341,17 +338,16 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 				if isRequired {
 					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
 					tsResult.appendFailure(*failure)
-					v.printTestStepResult(tc, tsResult, tsIn, ranged, stepNumber, true)
+					v.printTestStepResult(tc, tsResult, tsIn, stepNumber, true)
 					return
 				}
-				v.printTestStepResult(tc, tsResult, tsIn, ranged, stepNumber, false)
+				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 				continue
 			}
-			v.printTestStepResult(tc, tsResult, tsIn, ranged, stepNumber, false)
+			v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 
 			allVars := tc.Vars.Clone()
-			allVars.AddAll(tc.computedVars.Clone())
-			tsResult.ComputedVars = tc.computedVars.Clone()
+			allVars.AddAll(tsResult.ComputedVars.Clone())
 
 			assign, _, err := processVariableAssignments(ctx, tc.Name, allVars, rawStep)
 			if err != nil {
@@ -376,47 +372,46 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 		}
 	}
 	if ranged.Enabled {
-		if rangedIndex == 0 {
-			v.Print("\n")
-		}
 		name = fmt.Sprintf("%s (range=%s)", name, rangedData.Key)
 	}
 	ts.Name = name
 
-	if print || ranged.Enabled {
+	if print {
 		v.Print(" \t\t• %s", ts.Name)
 	}
 }
 
 // Print a single step result (if verbosity is enabled)
-func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, ranged Range, stepNumber int, mustAssertionFailed bool) {
-	fromUserExecutor := tsIn != nil
-	if fromUserExecutor {
+func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
+	if tsIn != nil {
 		tsIn.appendFailure(ts.Errors...)
-	}
-	if ranged.Enabled || v.Verbose >= 1 {
-		if !fromUserExecutor { //Else print step status
-			if len(ts.Errors) > 0 {
-				v.Println(" %s", Red(StatusFail))
-				for _, f := range ts.Errors {
-					v.Println(" \t\t  %s", Yellow(f.Value))
-				}
-				if mustAssertionFailed {
-					skipped := len(tc.RawTestSteps) - stepNumber - 1
-					if skipped == 1 {
-						v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other step was skipped", skipped)))
-					} else {
-						v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other steps were skipped", skipped)))
-					}
-				}
-			} else if ts.Status == StatusSkip {
-				v.Println(" %s", Gray(StatusSkip))
-			} else {
-				if ts.Retries == 0 {
-					v.Println(" %s", Green(StatusPass))
+	} else if v.Verbose >= 1 {
+		if len(ts.Errors) > 0 {
+			v.Println(" %s", Red(StatusFail))
+			for _, i := range ts.ComputedInfo {
+				v.Println(" \t\t  %s %s", Cyan("[info]"), Cyan(i))
+			}
+			for _, f := range ts.Errors {
+				v.Println(" \t\t  %s", Yellow(f.Value))
+			}
+			if mustAssertionFailed {
+				skipped := len(tc.RawTestSteps) - stepNumber - 1
+				if skipped == 1 {
+					v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other step was skipped", skipped)))
 				} else {
-					v.Println(" %s (after %d attempts)", Green(StatusPass), ts.Retries)
+					v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other steps were skipped", skipped)))
 				}
+			}
+		} else if ts.Status == StatusSkip {
+			v.Println(" %s", Gray(StatusSkip))
+		} else {
+			if ts.Retries == 0 {
+				v.Println(" %s", Green(StatusPass))
+			} else {
+				v.Println(" %s (after %d attempts)", Green(StatusPass), ts.Retries)
+			}
+			for _, i := range ts.ComputedInfo {
+				v.Println(" \t\t  %s %s", Cyan("[info]"), Cyan(i))
 			}
 		}
 	}

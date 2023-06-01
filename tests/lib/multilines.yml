@@ -6,5 +6,8 @@ steps:
   script: {{ .input.script | nindent 4 }}
   assertions:
   - result.code ShouldEqual 0
+  vars:
+    systemoutjson:
+      from: result.systemout
 output:
-  all: '{{.result.systemoutjson}}'
+  all: '{{.systemoutjson}}'
