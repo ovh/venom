@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -48,7 +48,7 @@ func init() {
 	formatFlag = Cmd.Flags().String("format", "xml", "--format:json, tap, xml, yaml")
 	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
 	htmlReportFlag = Cmd.Flags().Bool("html-report", false, "Generate HTML Report")
-	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling")
+	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -v (INFO level in venom.log file), -vv to very verbose (DEBUG level) and -vvv to very verbose with CPU Profiling")
 	varFilesFlag = Cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary")
 	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	outputDirFlag = Cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
@@ -347,11 +347,13 @@ var Cmd = &cobra.Command{
 		if v.Verbose == 3 {
 			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
 			if err != nil {
-				log.Errorf("error while create profile file %v", err)
+				fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
+				venom.OSExit(2)
 			}
 			fMem, err := os.Create(filepath.Join(v.OutputDir, "pprof_mem_profile.prof"))
 			if err != nil {
-				log.Errorf("error while create profile file %v", err)
+				fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
+				venom.OSExit(2)
 			}
 			if fCPU != nil && fMem != nil {
 				pprof.StartCPUProfile(fCPU) //nolint
@@ -371,7 +373,8 @@ var Cmd = &cobra.Command{
 			}
 			fi, err := os.Open(f)
 			if err != nil {
-				return fmt.Errorf("unable to open var-from-file %s: %v", f, err)
+				fmt.Fprintf(os.Stderr, "unable to open var-from-file %s: %v\n", f, err)
+				venom.OSExit(2)
 			}
 			defer fi.Close()
 			readers = append(readers, fi)
@@ -428,11 +431,11 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 
 		stemp, err := interpolate.Do(string(btes), nil)
 		if err != nil {
-			return nil, fmt.Errorf("unable to interpolate file %v", err)
+			return nil, errors.Wrap(err, "unable to interpolate file")
 		}
 
 		if err := yaml.Unmarshal([]byte(stemp), &tmpResult); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "unable to unmarshal file")
 		}
 
 		for k, v := range tmpResult {
@@ -451,7 +454,7 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 		}
 		stemp, err := interpolate.Do(tuple[1], nil)
 		if err != nil {
-			return nil, fmt.Errorf("unable to interpolate arg %s: %v", arg, err)
+			return nil, errors.Wrapf(err, "unable to interpolate arg %s", arg)
 		}
 		result[tuple[0]] = cast(stemp)
 		venom.Debug(ctx, "Adding variable from vars arg %s=%s", tuple[0], result[tuple[0]])
