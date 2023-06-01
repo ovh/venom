@@ -12,7 +12,7 @@ testcases:
     - result.timeseconds ShouldBeLessThan 1
     vars:
       myvariable:
-        from: result.systemout
+        from: result.systemoutd
         regex: foo with a ([a-z]+) here
 
 - name: testB
