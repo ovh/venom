@@ -1,0 +1,10 @@
+name: test ShouldJSONEqual
+vars:
+  json_expected: '{"a":1,"b":"foo"}'
+testcases:
+- name: test assertion
+  steps:
+  - type: exec
+    script: "echo '{ \"b\" : \"foo\", \"a\" : 1 }'"
+    assertions:
+      - result.systemout ShouldJSONEqual "{{.json_expected}}"
