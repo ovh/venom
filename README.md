@@ -149,9 +149,9 @@ Examples:
   Run a single testsuite and specify a variable: venom run mytestfile.yml --var="foo=bar"
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
   Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
-  
+
   Notice that variables initialized with -var-from-file argument can be overrided with -var argument
-  
+
   More info: https://github.com/ovh/venom
 
 Flags:
@@ -163,7 +163,7 @@ Flags:
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
-  -v, --verbose count           verbose. -vv to very verbose and -vvv to very verbose with CPU Profiling
+  -v, --verbose count           verbose. -v (INFO level in venom.log file), -vv to very verbose (DEBUG level) and -vvv to very verbose with CPU Profiling
 ```
 
 ## Run test suites in a specific order

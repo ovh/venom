@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 )
 
@@ -215,7 +214,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 	}
 
 	for _, f := range executorsPath {
-		log.Info("Reading ", f)
+		Info(ctx, "Reading %v", f)
 		btes, ok := v.executorFileCache[f]
 		if !ok {
 			btes, err = os.ReadFile(f)
@@ -260,7 +259,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
 		}
 
-		log.Debugf("User executor %q revolved with content %v", f, content)
+		Debug(ctx, "User executor %q revolved with content %v", f, content)
 
 		for k, vr := range varsComputed {
 			ux.Input.Add(k, vr)
