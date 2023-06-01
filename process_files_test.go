@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,7 +34,6 @@ func randomString(n int) string {
 func Test_getFilesPath(t *testing.T) {
 	InitTestLogger(t)
 	rand.Seed(time.Now().UnixNano())
-	log.SetLevel(log.DebugLevel)
 
 	tests := []struct {
 		init    func(t *testing.T) ([]string, error)

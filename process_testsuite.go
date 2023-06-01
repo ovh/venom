@@ -9,10 +9,10 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/ovh/cds/sdk/interpolate"
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
-func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
+func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	if v.Verbose == 3 {
 		var filename, filenameCPU, filenameMem string
 		if v.OutputDir != "" {
@@ -23,7 +23,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 		fCPU, errCPU := os.Create(filenameCPU)
 		fMem, errMem := os.Create(filenameMem)
 		if errCPU != nil || errMem != nil {
-			log.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
+			return fmt.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
 		} else {
 			pprof.StartCPUProfile(fCPU)
 			p := pprof.Lookup("heap")
@@ -38,14 +38,14 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 	for k, v := range vars {
 		computedV, err := interpolate.Do(fmt.Sprintf("%v", v), vars)
 		if err != nil {
-			log.Errorf("error while computing variable %s=%q: %v", k, v, err)
+			return errors.Wrapf(err, "error while computing variable %s=%q", k, v)
 		}
 		ts.Vars.Add(k, computedV)
 	}
 
 	exePath, err := os.Executable()
 	if err != nil {
-		log.Errorf("failed to get executable path: %v", err)
+		return errors.Wrapf(err, "failed to get executable path")
 	} else {
 		ts.Vars.Add("venom.executable", exePath)
 	}
@@ -93,6 +93,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) {
 		ts.Status = StatusPass
 		v.Tests.NbTestsuitesPass++
 	}
+	return nil
 }
 
 func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {

@@ -17,7 +17,15 @@ import (
 // InitLogger initializes venom logger
 func (v *Venom) InitLogger() error {
 	v.Tests.TestSuites = []TestSuite{}
-	logrus.SetLevel(logrus.DebugLevel)
+
+	switch v.Verbose {
+	case 1:
+		logrus.SetLevel(logrus.InfoLevel)
+	case 2:
+		logrus.SetLevel(logrus.DebugLevel)
+	default:
+		logrus.SetLevel(logrus.WarnLevel)
+	}
 
 	if v.OutputDir != "" {
 		if err := os.MkdirAll(v.OutputDir, os.FileMode(0755)); err != nil {
@@ -172,7 +180,9 @@ func (v *Venom) Process(ctx context.Context, path []string) error {
 
 		v.Tests.TestSuites[i].Start = time.Now()
 		// ##### RUN Test Suite Here
-		v.runTestSuite(ctx, &v.Tests.TestSuites[i])
+		if err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
+			return err
+		}
 
 		v.Tests.TestSuites[i].End = time.Now()
 		v.Tests.TestSuites[i].Duration = v.Tests.TestSuites[i].End.Sub(v.Tests.TestSuites[i].Start).Seconds()

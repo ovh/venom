@@ -8,16 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rockbears/yaml"
-
 	"github.com/mattn/go-zglob"
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
-func getFilesPath(path []string) (filePaths []string, err error) {
+func getFilesPath(path []string) ([]string, error) {
+	filePaths := make([]string, 0)
+
 	for _, p := range path {
 		p = strings.TrimSpace(p)
 
@@ -31,7 +31,6 @@ func getFilesPath(path []string) (filePaths []string, err error) {
 
 		fpaths, err := zglob.Glob(p)
 		if err != nil {
-			log.Errorf("error reading files on path %q err:%v", path, err)
 			return nil, errors.Wrapf(err, "error reading files on path %q", path)
 		}
 
@@ -61,14 +60,9 @@ func uniq(stringSlice []string) []string {
 	return list
 }
 
-type partialTestSuite struct {
-	Name string `json:"name" yaml:"name"`
-	Vars H      `yaml:"vars" json:"vars"`
-}
-
 func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 	for _, filePath := range filesPath {
-		log.Info("Reading ", filePath)
+		Info(ctx, "Reading %v", filePath)
 		btes, err := os.ReadFile(filePath)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read file %q", filePath)
