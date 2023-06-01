@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -60,6 +61,7 @@ var assertMap = map[string]AssertFunc{
 	"ShouldTimeEqual":              ShouldTimeEqual,
 	"ShouldBeArray":                ShouldBeArray,
 	"ShouldBeMap":                  ShouldBeMap,
+	"ShouldMatchRegex":             ShouldMatchRegex,
 }
 
 func Get(s string) (AssertFunc, bool) {
@@ -100,14 +102,13 @@ func ShouldBeMap(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: Assertions testsuite
-//  testcases:
-//  - name: test assertion
-//    steps:
-//    - script: echo 'foo'
-//      assertions:
-//      - result.code ShouldEqual 0
-//
+//	name: Assertions testsuite
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - script: echo 'foo'
+//	    assertions:
+//	    - result.code ShouldEqual 0
 func ShouldEqual(actual interface{}, expected ...interface{}) error {
 	// if expected is an array, we consider that this array is an array of string
 	// so, we concat all values before doing the comparison
@@ -133,6 +134,29 @@ func ShouldEqual(actual interface{}, expected ...interface{}) error {
 		return nil
 	}
 	return fmt.Errorf("expected: %v got: %v", expected[0], actual)
+}
+
+// ShouldMatchRegex receives exactly two parameters and does a regex match check.
+func ShouldMatchRegex(actual interface{}, expected ...interface{}) error {
+	if need(1, expected) != nil {
+		return fmt.Errorf("expected one regex pattern")
+	}
+	expectedAsString, regexNotString := cast.ToStringE(expected[0])
+	if regexNotString != nil {
+		return fmt.Errorf("expected a string for regex pattern")
+	}
+	reg, err := regexp.Compile(expectedAsString)
+	if err != nil {
+		return err
+	}
+	actualAsString, castingErr := cast.ToStringE(actual)
+	if castingErr != nil {
+		return castingErr
+	}
+	if !reg.MatchString(actualAsString) {
+		return fmt.Errorf("value %v not matching pattern : %v", actual, expected[0])
+	}
+	return nil
 }
 
 // ShouldNotEqual receives exactly two parameters and does an inequality check.
@@ -625,14 +649,13 @@ func ShouldNotContainKey(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: Assertions testsuite
-//  testcases:
-//    - name: ShouldBeIn
-//      steps:
-//      - script: echo 1
-//        assertions:
-//        - result.systemoutjson ShouldBeIn 1 2
-//
+//	name: Assertions testsuite
+//	testcases:
+//	  - name: ShouldBeIn
+//	    steps:
+//	    - script: echo 1
+//	      assertions:
+//	      - result.systemoutjson ShouldBeIn 1 2
 func ShouldBeIn(actual interface{}, expected ...interface{}) error {
 	if err := atLeast(1, expected); err != nil {
 		return err
@@ -657,14 +680,13 @@ func ShouldBeIn(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: Assertions testsuite
-//  testcases:
-//    - name: ShouldNotBeIn
-//      steps:
-//      - script: echo 3
-//        assertions:
-//        - result.systemoutjson ShouldNotBeIn 1 2
-//
+//	name: Assertions testsuite
+//	testcases:
+//	  - name: ShouldNotBeIn
+//	    steps:
+//	    - script: echo 3
+//	      assertions:
+//	      - result.systemoutjson ShouldNotBeIn 1 2
 func ShouldNotBeIn(actual interface{}, expected ...interface{}) error {
 	if err := atLeast(1, expected); err != nil {
 		return err
@@ -936,17 +958,17 @@ func ShouldEqualTrimSpace(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: test ShouldHappenBefore
-//  vars:
-//    time: 2006-01-02T15:04:05+07:00
-//    time_with_5s_after: 2006-01-02T15:04:10+07:00
-//  testcases:
-//  - name: test assertion
-//    steps:
-//    - type: exec
-//      script: "echo {{.time}}"
-//      assertions:
-//        - result.systemout ShouldHappenBefore "{{.time_with_5s_after}}"
+//	name: test ShouldHappenBefore
+//	vars:
+//	  time: 2006-01-02T15:04:05+07:00
+//	  time_with_5s_after: 2006-01-02T15:04:10+07:00
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - type: exec
+//	    script: "echo {{.time}}"
+//	    assertions:
+//	      - result.systemout ShouldHappenBefore "{{.time_with_5s_after}}"
 func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -973,17 +995,17 @@ func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: test ShouldHappenOnOrBefore
-//  vars:
-//    time: 2006-01-02T15:04:05+07:00
-//    time_with_5s_after: 2006-01-02T15:04:10+07:00
-//  testcases:
-//  - name: test assertion
-//    steps:
-//    - type: exec
-//      script: "echo {{.time}}"
-//      assertions:
-//        - result.systemout ShouldHappenOnOrBefore "{{.time_with_5s_after}}"
+//	name: test ShouldHappenOnOrBefore
+//	vars:
+//	  time: 2006-01-02T15:04:05+07:00
+//	  time_with_5s_after: 2006-01-02T15:04:10+07:00
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - type: exec
+//	    script: "echo {{.time}}"
+//	    assertions:
+//	      - result.systemout ShouldHappenOnOrBefore "{{.time_with_5s_after}}"
 func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1009,17 +1031,17 @@ func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: test ShouldHappenAfter
-//  vars:
-//    time_with_5s_before: 2006-01-02T15:04:00+07:00
-//    time: 2006-01-02T15:04:05+07:00
-//  testcases:
-//  - name: test assertion
-//    steps:
-//    - type: exec
-//      script: "echo {{.time}}"
-//      assertions:
-//        - result.systemout ShouldHappenAfter "{{.time_with_5s_before}}"
+//	name: test ShouldHappenAfter
+//	vars:
+//	  time_with_5s_before: 2006-01-02T15:04:00+07:00
+//	  time: 2006-01-02T15:04:05+07:00
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - type: exec
+//	    script: "echo {{.time}}"
+//	    assertions:
+//	      - result.systemout ShouldHappenAfter "{{.time_with_5s_before}}"
 func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1045,17 +1067,17 @@ func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: test ShouldHappenOnOrAfter
-//  vars:
-//    time_with_5s_before: 2006-01-02T15:04:00+07:00
-//    time: 2006-01-02T15:04:05+07:00
-//  testcases:
-//  - name: test assertion
-//    steps:
-//    - type: exec
-//      script: "echo {{.time}}"
-//      assertions:
-//        - result.systemout ShouldHappenOnOrAfter "{{.time_with_5s_before}}"
+//	name: test ShouldHappenOnOrAfter
+//	vars:
+//	  time_with_5s_before: 2006-01-02T15:04:00+07:00
+//	  time: 2006-01-02T15:04:05+07:00
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - type: exec
+//	    script: "echo {{.time}}"
+//	    assertions:
+//	      - result.systemout ShouldHappenOnOrAfter "{{.time_with_5s_before}}"
 func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1081,18 +1103,18 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: test ShouldHappenBetween
-//  vars:
-//    time_with_5s_before: 2006-01-02T15:04:00+07:00
-//    time: 2006-01-02T15:04:05+07:00
-//    time_with_5s_after: 2006-01-02T15:04:10+07:00
-//  testcases:
-//  - name: test assertion
-//    steps:
-//    - type: exec
-//      script: "echo {{.time}}"
-//      assertions:
-//        - result.systemout ShouldHappenBetween "{{.time_with_5s_before}}" "{{.time_with_5s_after}}"
+//	name: test ShouldHappenBetween
+//	vars:
+//	  time_with_5s_before: 2006-01-02T15:04:00+07:00
+//	  time: 2006-01-02T15:04:05+07:00
+//	  time_with_5s_after: 2006-01-02T15:04:10+07:00
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - type: exec
+//	    script: "echo {{.time}}"
+//	    assertions:
+//	      - result.systemout ShouldHappenBetween "{{.time_with_5s_before}}" "{{.time_with_5s_after}}"
 func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 	if err := need(2, expected); err != nil {
 		return err
@@ -1122,17 +1144,17 @@ func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 //
 // Example of testsuite file:
 //
-//  name: test ShouldTimeEqual
-//  vars:
-//    time_expected: 2006-01-02T13:04:00Z
-//    time: 2006-01-02T15:04:00+02:00
-//  testcases:
-//  - name: test assertion
-//    steps:
-//    - type: exec
-//      script: "echo {{.time}}"
-//      assertions:
-//        - result.systemout ShouldTimeEqual "{{.time_expected}}"
+//	name: test ShouldTimeEqual
+//	vars:
+//	  time_expected: 2006-01-02T13:04:00Z
+//	  time: 2006-01-02T15:04:00+02:00
+//	testcases:
+//	- name: test assertion
+//	  steps:
+//	  - type: exec
+//	    script: "echo {{.time}}"
+//	    assertions:
+//	      - result.systemout ShouldTimeEqual "{{.time_expected}}"
 func ShouldTimeEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
