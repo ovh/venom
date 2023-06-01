@@ -1187,9 +1187,9 @@ func ShouldTimeEqual(actual interface{}, expected ...interface{}) error {
 //	- name: test assertion
 //	  steps:
 //	  - type: exec
-//	    script: echo '{ "b" : "foo", "a" : 1 }'
+//	    script: "echo '{ \"b\" : \"foo\", \"a\" : 1 }'"
 //	    assertions:
-//	      - result.systemout ShouldJSONEqual '{{.json_expected}}'
+//	      - result.systemout ShouldJSONEqual "{{.json_expected}}"
 func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
