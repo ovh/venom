@@ -24,18 +24,25 @@ func init() {
 	}
 }
 
+// CleanUpSecrets This method tries to hide all the sensitive variables
 func (v *Venom) CleanUpSecrets(testSuite TestSuite) TestSuite {
 	for _, testCase := range testSuite.TestCases {
 		ctx := v.processSecrets(context.Background(), &testSuite, &testCase)
 		for _, result := range testCase.TestStepResults {
-			for i, v := range result.ComputedVars {
-				result.ComputedVars[i] = HideSensitive(ctx, v)
+			for k, v := range result.ComputedVars {
+				if !strings.HasPrefix(k, "venom.") {
+					result.ComputedVars[k] = HideSensitive(ctx, v)
+				}
 			}
-			for i, v := range result.InputVars {
-				result.InputVars[i] = HideSensitive(ctx, v)
+			for k, v := range result.InputVars {
+				if !strings.HasPrefix(k, "venom.") {
+					result.InputVars[k] = HideSensitive(ctx, v)
+				}
 			}
-			for i, v := range testCase.TestCaseInput.Vars {
-				testCase.TestCaseInput.Vars[i] = HideSensitive(ctx, v)
+			for k, v := range testCase.TestCaseInput.Vars {
+				if !strings.HasPrefix(k, "venom.") {
+					testCase.TestCaseInput.Vars[k] = HideSensitive(ctx, v)
+				}
 			}
 			result.Raw = HideSensitive(ctx, fmt.Sprint(result.Raw))
 			result.Interpolated = HideSensitive(ctx, fmt.Sprint(result.Interpolated))

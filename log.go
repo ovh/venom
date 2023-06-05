@@ -35,6 +35,7 @@ func fieldsFromContext(ctx context.Context, keys ...string) logrus.Fields {
 	return fields
 }
 
+// HideSensitive replace the value with __hidden__
 func HideSensitive(ctx context.Context, arg interface{}) string {
 	s := ctx.Value(ContextKey("secrets"))
 	cleanVars := fmt.Sprint(arg)
@@ -44,8 +45,7 @@ func HideSensitive(ctx context.Context, arg interface{}) string {
 			secrets := reflect.ValueOf(s)
 			for i := 0; i < secrets.Len(); i++ {
 				secret := fmt.Sprint(secrets.Index(i).Interface())
-				stringArg := fmt.Sprint(arg)
-				cleanVars = strings.ReplaceAll(stringArg, secret, "__hidden__")
+				cleanVars = strings.ReplaceAll(cleanVars, secret, "__hidden__")
 			}
 		}
 	}
