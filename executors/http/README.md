@@ -60,6 +60,22 @@ testcases:
       statuscode:
         from: result.statuscode
 
+- name: post http with body
+  steps:
+    - type: http
+      method: POST
+      url: https://httpbin.org/post
+      body: |
+        {"key": "value"}
+      headers:
+        Content-Type: application/json
+      assertions:
+        - result.statuscode ShouldEqual 200
+        - result.bodyjson.url ShouldEqual https://httpbin.org/post
+      vars:
+        statuscode:
+          from: result.statuscode
+          
 - name: post http enhanced assertions
   steps:
   - type: http
