@@ -68,7 +68,7 @@ You can find latest binary release from: https://github.com/ovh/venom/releases/l
 Example for Linux:
 
 ```bash
-$ curl https://github.com/ovh/venom/releases/download/v1.0.1/venom.linux-amd64 -L -o /usr/local/bin/venom && chmod +x /usr/local/bin/venom
+$ curl https://github.com/ovh/venom/releases/download/v1.1.0/venom.linux-amd64 -L -o /usr/local/bin/venom && chmod +x /usr/local/bin/venom
 $ venom -h
 ```
 
@@ -83,8 +83,8 @@ $ venom update
 The `venom update` command will download the latest version and replace the current binary:
 
 ```bash
-Url to update venom: https://github.com/ovh/venom/releases/download/v1.0.1/venom.darwin-amd64
-Getting latest release from: https://github.com/ovh/venom/releases/download/v1.0.1/venom.darwin-amd64 ...
+Url to update venom: https://github.com/ovh/venom/releases/download/v1.1.0/venom.darwin-amd64
+Getting latest release from: https://github.com/ovh/venom/releases/download/v1.1.0/venom.darwin-amd64 ...
 Update done.
 ```
 
@@ -92,7 +92,7 @@ Check the new version with `venom version` command:
 
 ```bash
 $ venom version
-Version venom: v1.0.1 
+Version venom: v1.1.0 
 ```
 
 # Docker image
