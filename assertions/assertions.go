@@ -1175,43 +1175,29 @@ func ShouldTimeEqual(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldJSONEqual receives exactly 2 JSON arguments and does a JSON equality check.
-// This means the keys can be in different order, and whitespace (except in keys or values) is ignored.
-// JSON can be an object or array (i.e. start with `{` or `[`).
+// The latest JSON spec doesn't only allow objects and arrays, but primitive values are valid JSON as well.
+// For object equality keys can be in different order, and whitespace (except in keys or values) is ignored.
+// For arrays the order is important, but whitespace (except in values) is ignored.
+// String, number, true/false are compared as-is.
+// `null` JSON values are currently passed as empty string, and are compared against the "null" string.
 //
-// Example of testsuite file:
-//
-//	name: test ShouldJSONEqual
-//	vars:
-//	  json_expected: '{"a":1,"b":"foo"}'
-//	testcases:
-//	- name: test assertion
-//	  steps:
-//	  - type: exec
-//	    script: "echo '{ \"b\" : \"foo\", \"a\" : 1 }'"
-//	    assertions:
-//	      - result.systemout ShouldJSONEqual "{{.json_expected}}"
+// For an example scenario see `tests/assertions/ShouldJSONEqual.yml`.
 func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
 
-	expectedString, err := cast.ToStringE(expected[0])
-	if err != nil {
-		return err
-	}
-
-	// `actual` can be a map, slice or the string representation of a JSON object or array.
-	var actualMap map[string]interface{}
-	var actualSlice []interface{}
-	var obj bool
 	switch actual.(type) {
 	case map[string]interface{}:
-		obj = true
-		var err error
-		actualMap, err = cast.ToStringMapE(actual)
+		actualMap, err := cast.ToStringMapE(actual)
 		if err != nil {
 			return err
 		}
+		expectedString, err := cast.ToStringE(expected[0])
+		if err != nil {
+			return err
+		}
+
 		// Marshal and unmarshal for later deepequal to work
 		actualBytes, err := json.Marshal(actualMap)
 		if err != nil {
@@ -1221,13 +1207,26 @@ func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 		if err != nil {
 			return err
 		}
-	case []interface{}:
-		obj = false
-		var err error
-		actualSlice, err = cast.ToSliceE(actual)
+
+		expectedMap := map[string]interface{}{}
+		err = json.Unmarshal([]byte(expectedString), &expectedMap)
 		if err != nil {
 			return err
 		}
+		if reflect.DeepEqual(actualMap, expectedMap) {
+			return nil
+		}
+		return fmt.Errorf("expected '%v' to be JSON equals to '%v' ", actualMap, expectedMap)
+	case []interface{}:
+		actualSlice, err := cast.ToSliceE(actual)
+		if err != nil {
+			return err
+		}
+		expectedString, err := cast.ToStringE(expected[0])
+		if err != nil {
+			return err
+		}
+
 		// Marshal and unmarshal for later deepequal to work
 		actualBytes, err := json.Marshal(actualSlice)
 		if err != nil {
@@ -1237,45 +1236,7 @@ func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 		if err != nil {
 			return err
 		}
-	case string:
-		actualString, err := cast.ToStringE(actual)
-		if err != nil {
-			return err
-		}
 
-		// JSON can start with { or [
-		if strings.TrimSpace(actualString)[0] == '{' {
-			obj = true
-			actualMap = map[string]interface{}{}
-			err = json.Unmarshal([]byte(actualString), &actualMap)
-			if err != nil {
-				return err
-			}
-		} else if strings.TrimSpace(actualString)[0] == '[' {
-			obj = false
-			actualSlice = []interface{}{}
-			err = json.Unmarshal([]byte(actualString), &actualSlice)
-			if err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf("actual string must represent a JSON object or array, starting with '{' or '['")
-		}
-	default:
-		return fmt.Errorf("unexpected type for actual: %T", actual)
-	}
-
-	if obj {
-		expectedMap := map[string]interface{}{}
-		err = json.Unmarshal([]byte(expectedString), &expectedMap)
-		if err != nil {
-			return err
-		}
-		if reflect.DeepEqual(actualMap, expectedMap) {
-			return nil
-		}
-		return fmt.Errorf("expected '%#v' to be JSON equals to '%#v' ", actualMap, expectedMap)
-	} else {
 		expectedSlice := []interface{}{}
 		err = json.Unmarshal([]byte(expectedString), &expectedSlice)
 		if err != nil {
@@ -1284,7 +1245,58 @@ func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 		if reflect.DeepEqual(actualSlice, expectedSlice) {
 			return nil
 		}
-		return fmt.Errorf("expected '%#v' to be JSON equals to '%#v' ", actualSlice, expectedSlice)
+		return fmt.Errorf("expected '%v' to be JSON equals to '%v' ", actualSlice, expectedSlice)
+	case string:
+		actualString, err := cast.ToStringE(actual)
+		if err != nil {
+			return err
+		}
+		expectedString, err := cast.ToStringE(expected[0])
+		if err != nil {
+			return err
+		}
+
+		if actualString == expectedString {
+			return nil
+		}
+		// Special case: Venom passes an empty string when `actual` JSON is JSON's `null`.
+		// Above check is already valid when `expected` is an empty string, but
+		// the user might have passed `null` explicitly.
+		// TODO: This should be changed as soon as Venom passes Go's `nil` for JSON `null` values.
+		if actualString == "" && expectedString == "null" {
+			return nil
+		}
+		return fmt.Errorf("expected '%v' to be JSON equals to '%v' ", actualString, expectedString)
+	case json.Number:
+		actualFloat, err := cast.ToFloat64E(actual)
+		if err != nil {
+			return err
+		}
+		expectedFloat, err := cast.ToFloat64E(expected[0])
+		if err != nil {
+			return err
+		}
+
+		if actualFloat == expectedFloat {
+			return nil
+		}
+		return fmt.Errorf("expected '%v' to be JSON equals to '%v' ", actualFloat, expectedFloat)
+	case bool:
+		actualBool, err := cast.ToBoolE(actual)
+		if err != nil {
+			return err
+		}
+		expectedBool, err := cast.ToBoolE(expected[0])
+		if err != nil {
+			return err
+		}
+
+		if actualBool == expectedBool {
+			return nil
+		}
+		return fmt.Errorf("expected '%v' to be JSON equals to '%v' ", actualBool, expectedBool)
+	default:
+		return fmt.Errorf("unexpected type for actual: %T", actual)
 	}
 }
 

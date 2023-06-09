@@ -1,10 +1,12 @@
 package assertions
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldEqual(t *testing.T) {
@@ -1470,101 +1472,72 @@ func TestShouldJSONEqual(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
+		// Objects and arrays
 		{
-			name: "ok",
+			name: "object",
 			args: args{
-				actual:   `{"a":1,"b":"foo"}`,
-				expected: []interface{}{`{"a":1,"b":"foo"}`},
+				actual:   map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}},
+				expected: []interface{}{`{"a":1,"b":2,"c":{"x":1,"y":2}}`},
 			},
 		},
 		{
-			// Same with map
-			name: "ok",
+			// Spaces, newlines, tabs and key order (including in nested objects) don't matter
+			name: "object",
 			args: args{
-				actual:   map[string]interface{}{"a": 1, "b": "foo"},
-				expected: []interface{}{`{"a":1,"b":"foo"}`},
+				actual:   map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}},
+				expected: []interface{}{` { "c" : { "y" : 2 , "x" : 1 }, "b" : 2 ,` + "\n\t" + ` "a" : 1 } `},
 			},
 		},
 		{
-			// Spaces, newlines, tabs and key order don't matter
-			name: "ok",
-			args: args{
-				actual:   `{"a":1,"b":"foo"}`,
-				expected: []interface{}{` { "b" : "foo" ,` + "\n\t" + ` "a" : 1 } `},
-			},
-		},
-		{
-			// Order in nested objects doesn't matter
-			name: "ok",
-			args: args{
-				actual:   `{"a":{"nested1":1,"nested2":2}}`,
-				expected: []interface{}{`{"a":{"nested2":2,"nested1":1}}`},
-			},
-		},
-		{
-			// An array instead of object is valid JSON too
-			name: "ok",
-			args: args{
-				actual:   `[1,2]`,
-				expected: []interface{}{`[1,2]`},
-			},
-		},
-		{
-			// Same with slice
-			name: "ok",
+			name: "array",
 			args: args{
 				actual:   []interface{}{1, 2},
 				expected: []interface{}{`[1,2]`},
 			},
 		},
 		{
-			// Bad value
-			name: "ko",
+			// Spaces, newlines and tabs don't matter
+			name: "array",
 			args: args{
-				actual:   `{"a":1}`,
+				actual:   []interface{}{1, 2},
+				expected: []interface{}{` [ 1 ,` + "\n\t" + ` 2 ] `},
+			},
+		},
+		// Object and array errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   map[string]interface{}{"a": 1},
 				expected: []interface{}{`{"a":2}`},
 			},
 			wantErr: true,
 		},
 		{
-			// Bad type
-			name: "ko",
+			name: "bad type",
 			args: args{
-				actual:   `{"a":1}`,
+				actual:   map[string]interface{}{"a": 1},
 				expected: []interface{}{`{"a":"1"}`},
 			},
 			wantErr: true,
 		},
 		{
-			// Missing key
-			name: "ko",
+			name: "missing key",
 			args: args{
-				actual:   `{"a":1,"b":"foo"}`,
+				actual:   map[string]interface{}{"a": 1, "b": 2},
 				expected: []interface{}{`{"a":1}`},
 			},
 			wantErr: true,
 		},
 		{
-			// Wrong array order
-			name: "ko",
+			name: "bad array order",
 			args: args{
-				actual:   `{"a":[1,2]}`,
+				actual:   map[string]interface{}{"a": []float64{1, 2}},
 				expected: []interface{}{`{"a":[2,1]}`},
 			},
 			wantErr: true,
 		},
 		{
-			// Object instead of array
-			name: "ko",
-			args: args{
-				actual:   `{"a":1}`,
-				expected: []interface{}{`[1]`},
-			},
-			wantErr: true,
-		},
-		{
-			// Same with map
-			name: "ko",
+			name: "object instead of array",
 			args: args{
 				actual:   map[string]interface{}{"a": 1},
 				expected: []interface{}{`[1]`},
@@ -1572,20 +1545,71 @@ func TestShouldJSONEqual(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			// Array instead of object
-			name: "ko",
+			name: "array instead of object",
 			args: args{
-				actual:   `[1]`,
+				actual:   []interface{}{1},
 				expected: []interface{}{`{"a":1}}`},
 			},
 			wantErr: true,
 		},
+		// Primitive values
 		{
-			// Same with slice
-			name: "ko",
+			name: "string",
 			args: args{
-				actual:   []interface{}{1},
-				expected: []interface{}{`{"a":1}}`},
+				actual:   "a",
+				expected: []interface{}{"a"},
+			},
+		},
+		{
+			name: "empty string",
+			args: args{
+				actual:   "",
+				expected: []interface{}{""},
+			},
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   json.Number("1"),
+				expected: []interface{}{`1`},
+			},
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   json.Number("1.2"),
+				expected: []interface{}{`1.2`},
+			},
+		},
+		{
+			name: "boolean",
+			args: args{
+				actual:   true,
+				expected: []interface{}{`true`},
+			},
+		},
+		{
+			// TODO: Shouldn't be valid, but Venom currently passes an empty string to the assertion function when the JSON value is `null`.
+			name: "null",
+			args: args{
+				actual:   "",
+				expected: []interface{}{`null`},
+			},
+		},
+		// Primitive value errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   "a",
+				expected: []interface{}{"b"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   float64(1),
+				expected: []interface{}{"1"},
 			},
 			wantErr: true,
 		},
