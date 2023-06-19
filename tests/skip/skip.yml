@@ -1,0 +1,29 @@
+name : "Testing skip"
+testcases:
+  - name : "skip something"
+    steps:
+      - info:
+          - Set a variable to 1
+      - script : "echo '1'"
+        vars :
+          out:
+            from : result.systemout
+      - info:
+          - "do not skip it as the value of out is different to 2"
+        skip :
+          - out ShouldEqual '2'
+      - name: skip-this
+        skip:
+          - out ShouldEqual '1'
+      - script: "echo 'false'"
+        vars:
+          outAsBool:
+            from: result.systemout
+      - info:
+          - "Fail should be skipped"
+        skip :
+          - out ShouldEqual 1
+      - info:
+          - "Fail should be skipped as false"
+        skip:
+          - outAsBool ShouldBeFalse

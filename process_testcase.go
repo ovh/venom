@@ -333,7 +333,6 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 				tsResult.End = time.Now()
 				tsResult.Duration = tsResult.End.Sub(tsResult.Start).Seconds()
-
 				tc.testSteps = append(tc.testSteps, step)
 			}
 
@@ -440,13 +439,13 @@ func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []
 
 	// Evaluate skip assertions
 	if len(assertions.Skip) > 0 {
-		results, err := testConditionalStatement(ctx, tc, assertions.Skip, tc.Vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
+		failures, err := testConditionalStatement(ctx, tc, assertions.Skip, tc.computedVars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
 		if err != nil {
 			Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
 			return false, err
 		}
-		if len(results) > 0 {
-			for _, s := range results {
+		if len(failures) == 0 {
+			for _, s := range failures {
 				ts.Skipped = append(ts.Skipped, Skipped{Value: s})
 				Warn(ctx, s)
 			}
