@@ -164,12 +164,13 @@ type ConfigFileData struct {
 // Configuration file overrides the environment variables.
 func initFromReaderConfigFile(reader io.Reader) error {
 	btes, err := io.ReadAll(reader)
-	if err != nil {
+
+	if err != nil && err != io.EOF {
 		return err
 	}
 
 	var configFileData ConfigFileData
-	if err := yaml.Unmarshal(btes, &configFileData); err != nil {
+	if err := yaml.Unmarshal(btes, &configFileData); err != nil && err != io.EOF {
 		return err
 	}
 
