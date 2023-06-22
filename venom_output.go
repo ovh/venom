@@ -183,6 +183,7 @@ func outputXMLFormat(tests Tests) ([]byte, error) {
 				Systemout: systemout,
 				Systemerr: systemerr,
 				Time:      tc.Duration,
+				Id:        tc.Id,
 			}
 			tsXML.TestCases = append(tsXML.TestCases, tcXML)
 		}
