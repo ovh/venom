@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/rockbears/yaml"
 	"io"
 	"os"
 	"path/filepath"
@@ -28,7 +29,8 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Path string `json:"path,omitempty" yaml:"path,omitempty"`
+	Path     string `json:"path,omitempty" yaml:"path,omitempty"`
+	FileType string `json:"filetype,omitempty" yaml:"filetype,omitempty"`
 }
 
 // Result represents a step result
@@ -73,7 +75,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	start := time.Now()
 
 	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
-	result, errr := e.readfile(workdir)
+	result, errr := e.readfile(ctx, workdir)
 	if errr != nil {
 		result.Err = errr.Error()
 	}
@@ -84,7 +86,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	return result, nil
 }
 
-func (e *Executor) readfile(workdir string) (Result, error) {
+func (e *Executor) readfile(ctx context.Context, workdir string) (Result, error) {
 	result := Result{}
 
 	absPath := e.Path
@@ -113,31 +115,31 @@ func (e *Executor) readfile(workdir string) (Result, error) {
 	mod := make(map[string]string)
 
 	for _, f := range filesPath {
-		f, error := os.Open(f)
-		if error != nil {
-			return result, fmt.Errorf("Error while opening file: %s", error)
+		f, errOpening := os.Open(f)
+		if errOpening != nil {
+			return result, fmt.Errorf("error while opening file: %s", errOpening)
 		}
 		defer f.Close()
 
-		relativeName, err := filepath.Rel(workdir, f.Name())
-		if err != nil {
-			return result, fmt.Errorf("Error cannot evaluate relative path to file at %s: %s", f.Name(), err)
+		relativeName, errRelative := filepath.Rel(workdir, f.Name())
+		if errRelative != nil {
+			return result, fmt.Errorf("error cannot evaluate relative path to file at %s: %s", f.Name(), errRelative)
 		}
 
 		h := md5.New()
 		tee := io.TeeReader(f, h)
 
-		b, errr := io.ReadAll(tee)
-		if errr != nil {
-			return result, fmt.Errorf("Error while reading file: %s", errr)
+		b, errReadAll := io.ReadAll(tee)
+		if errReadAll != nil {
+			return result, fmt.Errorf("error while reading file: %s", errReadAll)
 		}
 		content += string(b)
 
 		md5sum[relativeName] = hex.EncodeToString(h.Sum(nil))
 
-		stat, errs := f.Stat()
-		if errs != nil {
-			return result, fmt.Errorf("Error while compute file size: %s", errs)
+		stat, errStat := f.Stat()
+		if errStat != nil {
+			return result, fmt.Errorf("error while compute file size: %s", errStat)
 		}
 
 		size[relativeName] = stat.Size()
@@ -146,18 +148,27 @@ func (e *Executor) readfile(workdir string) (Result, error) {
 	}
 
 	result.Content = content
-
-	var m interface{}
-	decoder := json.NewDecoder(strings.NewReader(string(content)))
-	decoder.UseNumber()
-	if err := decoder.Decode(&m); err == nil {
-		result.ContentJSON = m
-	}
-
 	result.Md5sum = md5sum
 	result.Size = size
 	result.ModTime = modtime
 	result.Mod = mod
+	result.ContentJSON = []map[string]string{}
+
+	var m interface{}
+	if strings.Compare(strings.ToLower(e.FileType), "yaml") == 0 {
+		venom.Debug(ctx, "trying to parse yaml file")
+		resp, errConvert := yaml.YAMLToJSON([]byte(content))
+		if errConvert != nil {
+			venom.Warn(ctx, "could not convert payload from file")
+			return result, nil
+		}
+		content = string(resp)
+	}
+	decoder := json.NewDecoder(strings.NewReader(content))
+	decoder.UseNumber()
+	if err := decoder.Decode(&m); err == nil {
+		result.ContentJSON = m
+	}
 
 	return result, nil
 }

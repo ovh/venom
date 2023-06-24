@@ -39,3 +39,18 @@ testcases:
     info: "result.contentjson.total: {{.result.contentjson.total}}"
     assertions:
     - result.contentjson.total ShouldEqual 42
+
+- name : testcase-readfile-as-yaml
+  steps:
+    - type: readfile
+      path: readfile/test.yml
+      filetype: "yaml"
+      info: "Yaml conversion"
+      vars:
+        payload :
+          from : result.contentjson
+    - name : "Checking the payload"
+      assertions:
+        - payload.key MustEqual 12345
+        - payload.messages.messages0 MustContainKey "name"
+        - payload.messages.messages0 MustContainKey "type"

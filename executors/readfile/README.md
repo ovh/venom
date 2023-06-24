@@ -27,6 +27,17 @@ testcases:
     assertions:
     - result.err ShouldBeEmpty
 ```
+```yaml
+name: TestSuite Read Yaml File
+testcases:
+  - name: Read File
+    steps:
+      - type: readfile
+        path: yourfile.yml
+        filetype: yaml
+        assertions:
+          - result.err ShouldBeEmpty
+```
 
 ## Output
 
