@@ -694,7 +694,7 @@ Open it in your favorite editor or IDE and fill it with this content:
 name: APIIntegrationTest
 
 vars:
-  url: https://eu.api.ovh.com/
+  url: https://eu.api.ovh.com
 
 testcases:
 - name: GET http testcase, with 5 seconds timeout
