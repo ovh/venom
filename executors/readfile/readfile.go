@@ -29,8 +29,7 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Path     string `json:"path,omitempty" yaml:"path,omitempty"`
-	FileType string `json:"filetype,omitempty" yaml:"filetype,omitempty"`
+	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 }
 
 // Result represents a step result
@@ -155,7 +154,7 @@ func (e *Executor) readfile(ctx context.Context, workdir string) (Result, error)
 	result.ContentJSON = []map[string]string{}
 
 	var m interface{}
-	if strings.Compare(strings.ToLower(e.FileType), "yaml") == 0 {
+	if strings.HasSuffix(e.Path, "yaml") || strings.HasSuffix(e.Path, "yml") {
 		venom.Debug(ctx, "trying to parse yaml file")
 		resp, errConvert := yaml.YAMLToJSON([]byte(content))
 		if errConvert != nil {

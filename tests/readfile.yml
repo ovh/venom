@@ -44,7 +44,6 @@ testcases:
   steps:
     - type: readfile
       path: readfile/test.yml
-      filetype: "yaml"
       info: "Yaml conversion"
       vars:
         payload :
