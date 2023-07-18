@@ -1,0 +1,134 @@
+{
+  "test_suites": [
+    {
+      "name": "testsuite with a user executor in custom dir which has multiple steps",
+      "testcases": [
+        {
+          "name": "testfoobar-multisteps-custom",
+          "vars": {
+            "__Len__": "8",
+            "__Type__": "Map",
+            "venom.datetime": "2023-07-18T20:59:34+01:00",
+            "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+            "venom.libdir": "lib_custom",
+            "venom.outputdir": ".",
+            "venom.testcase": "testfoobar-multisteps-custom",
+            "venom.testsuite": "testsuite with a user executor in custom dir which has multiple steps",
+            "venom.testsuite.filename": "user_executor_custom_multisteps.yml",
+            "venom.testsuite.filepath": "user_executor_custom_multisteps.yml",
+            "venom.testsuite.name": "testsuite with a user executor in custom dir which has multiple steps",
+            "venom.testsuite.shortName": "user_executor_custom_multisteps",
+            "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+            "venom.timestamp": "1689710374"
+          },
+          "skip": null,
+          "steps": [
+            {
+              "assertions": [
+                "result.foobar ShouldEqual \"hello world\""
+              ],
+              "type": "foobarcustommultisteps"
+            }
+          ],
+          "skipped": null,
+          "status": "PASS",
+          "duration": 0.01294225,
+          "start": "2023-07-18T20:59:34.820555+01:00",
+          "end": "2023-07-18T20:59:34.833497+01:00",
+          "results": [
+            {
+              "name": "foobarcustommultisteps",
+              "errors": null,
+              "skipped": null,
+              "status": "PASS",
+              "raw": "YXNzZXJ0aW9uczoKICAgIC0gcmVzdWx0LmZvb2JhciBTaG91bGRFcXVhbCAiaGVsbG8gd29ybGQiCnR5cGU6IGZvb2JhcmN1c3RvbW11bHRpc3RlcHMK",
+              "interpolated": "YXNzZXJ0aW9uczoKICAgIC0gcmVzdWx0LmZvb2JhciBTaG91bGRFcXVhbCAiaGVsbG8gd29ybGQiCnR5cGU6IGZvb2JhcmN1c3RvbW11bHRpc3RlcHMK",
+              "number": 0,
+              "rangedIndex": 0,
+              "rangedEnable": false,
+              "inputVars": {
+                "__Len__": "15",
+                "__Type__": "Map",
+                "venom.datetime": "2023-07-18T20:59:34+01:00",
+                "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+                "venom.libdir": "lib_custom",
+                "venom.outputdir": ".",
+                "venom.testcase": "testfoobar-multisteps-custom",
+                "venom.teststep.number": "0",
+                "venom.testsuite": "testsuite with a user executor in custom dir which has multiple steps",
+                "venom.testsuite.filename": "user_executor_custom_multisteps.yml",
+                "venom.testsuite.filepath": "user_executor_custom_multisteps.yml",
+                "venom.testsuite.name": "testsuite with a user executor in custom dir which has multiple steps",
+                "venom.testsuite.shortName": "user_executor_custom_multisteps",
+                "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+                "venom.timestamp": "1689710374"
+              },
+              "computedVars": {
+                "__len__": 6,
+                "__type__": "Map",
+                "result": {
+                  "foobar": "hello world"
+                },
+                "result.__Len__": 1,
+                "result.__Type__": "Map",
+                "result.__len__": 1,
+                "result.__type__": "Map",
+                "result.foobar": "hello world"
+              },
+              "computedInfos": null,
+              "assertionsApplied": {
+                "ok": true,
+                "assertions": [
+                  {
+                    "assertion": "result.foobar ShouldEqual \"hello world\"",
+                    "isOK": true
+                  }
+                ]
+              },
+              "retries": 0,
+              "systemout": "\n",
+              "systemerr": "\n",
+              "duration": 0.010702292,
+              "start": "2023-07-18T20:59:34.822771+01:00",
+              "end": "2023-07-18T20:59:34.833473+01:00"
+            }
+          ]
+        }
+      ],
+      "vars": {
+        "__Len__": "8",
+        "__Type__": "Map",
+        "venom.datetime": "2023-07-18T20:59:34+01:00",
+        "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+        "venom.libdir": "lib_custom",
+        "venom.outputdir": ".",
+        "venom.testsuite": "testsuite with a user executor in custom dir which has multiple steps",
+        "venom.testsuite.filename": "user_executor_custom_multisteps.yml",
+        "venom.testsuite.filepath": "user_executor_custom_multisteps.yml",
+        "venom.testsuite.name": "testsuite with a user executor in custom dir which has multiple steps",
+        "venom.testsuite.shortName": "user_executor_custom_multisteps",
+        "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+        "venom.timestamp": "1689710374"
+      },
+      "shortname": "user_executor_custom_multisteps",
+      "filename": "user_executor_custom_multisteps.yml",
+      "filepath": "user_executor_custom_multisteps.yml",
+      "computed_vars": {},
+      "workdir": "/Users/fokion/GolandProjects/venom/tests",
+      "status": "PASS",
+      "duration": 0.012971083,
+      "start": "2023-07-18T20:59:34.820534+01:00",
+      "end": "2023-07-18T20:59:34.833505+01:00",
+      "nbTestcasesFail": 0,
+      "nbTestcasesPass": 1,
+      "nbTestcasesSkip": 0
+    }
+  ],
+  "status": "PASS",
+  "nbTestsuitesFail": 0,
+  "nbTestsuitesPass": 1,
+  "nbTestsuitesSkip": 0,
+  "duration": 0.012971083,
+  "start": "2023-07-18T20:59:34.820534+01:00",
+  "end": "2023-07-18T20:59:34.833505+01:00"
+}

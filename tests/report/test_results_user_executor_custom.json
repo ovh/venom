@@ -1,0 +1,227 @@
+{
+  "test_suites": [
+    {
+      "name": "testsuite with a user executor in custom dir",
+      "testcases": [
+        {
+          "name": "testfoobar",
+          "vars": {
+            "__Len__": "8",
+            "__Type__": "Map",
+            "venom.datetime": "2023-07-18T20:59:34+01:00",
+            "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+            "venom.libdir": "lib_custom",
+            "venom.outputdir": ".",
+            "venom.testcase": "testfoobar",
+            "venom.testsuite": "testsuite with a user executor in custom dir",
+            "venom.testsuite.filename": "user_executor_custom.yml",
+            "venom.testsuite.filepath": "user_executor_custom.yml",
+            "venom.testsuite.name": "testsuite with a user executor in custom dir",
+            "venom.testsuite.shortName": "user_executor_custom",
+            "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+            "venom.timestamp": "1689710374"
+          },
+          "skip": null,
+          "steps": [
+            {
+              "assertions": [
+                "result.foobar ShouldEqual foo-hop"
+              ],
+              "bar": "hop",
+              "type": "foobar"
+            }
+          ],
+          "skipped": null,
+          "status": "PASS",
+          "duration": 0.008023875,
+          "start": "2023-07-18T20:59:34.803184+01:00",
+          "end": "2023-07-18T20:59:34.811208+01:00",
+          "results": [
+            {
+              "name": "foobar",
+              "errors": null,
+              "skipped": null,
+              "status": "PASS",
+              "raw": "YXNzZXJ0aW9uczoKICAgIC0gcmVzdWx0LmZvb2JhciBTaG91bGRFcXVhbCBmb28taG9wCmJhcjogaG9wCnR5cGU6IGZvb2Jhcgo=",
+              "interpolated": "YXNzZXJ0aW9uczoKICAgIC0gcmVzdWx0LmZvb2JhciBTaG91bGRFcXVhbCBmb28taG9wCmJhcjogaG9wCnR5cGU6IGZvb2Jhcgo=",
+              "number": 0,
+              "rangedIndex": 0,
+              "rangedEnable": false,
+              "inputVars": {
+                "__Len__": "15",
+                "__Type__": "Map",
+                "venom.datetime": "2023-07-18T20:59:34+01:00",
+                "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+                "venom.libdir": "lib_custom",
+                "venom.outputdir": ".",
+                "venom.testcase": "testfoobar",
+                "venom.teststep.number": "0",
+                "venom.testsuite": "testsuite with a user executor in custom dir",
+                "venom.testsuite.filename": "user_executor_custom.yml",
+                "venom.testsuite.filepath": "user_executor_custom.yml",
+                "venom.testsuite.name": "testsuite with a user executor in custom dir",
+                "venom.testsuite.shortName": "user_executor_custom",
+                "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+                "venom.timestamp": "1689710374"
+              },
+              "computedVars": {
+                "__len__": 6,
+                "__type__": "Map",
+                "result": {
+                  "foobar": "foo-hop"
+                },
+                "result.__Len__": 1,
+                "result.__Type__": "Map",
+                "result.__len__": 1,
+                "result.__type__": "Map",
+                "result.foobar": "foo-hop"
+              },
+              "computedInfos": null,
+              "assertionsApplied": {
+                "ok": true,
+                "assertions": [
+                  {
+                    "assertion": "result.foobar ShouldEqual foo-hop",
+                    "isOK": true
+                  }
+                ]
+              },
+              "retries": 0,
+              "systemout": "\n",
+              "systemerr": "\n",
+              "duration": 0.005822667,
+              "start": "2023-07-18T20:59:34.805367+01:00",
+              "end": "2023-07-18T20:59:34.811189+01:00"
+            }
+          ]
+        },
+        {
+          "name": "testfoobar-custom",
+          "vars": {
+            "__Len__": "8",
+            "__Type__": "Map",
+            "venom.datetime": "2023-07-18T20:59:34+01:00",
+            "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+            "venom.libdir": "lib_custom",
+            "venom.outputdir": ".",
+            "venom.testcase": "testfoobar-custom",
+            "venom.testsuite": "testsuite with a user executor in custom dir",
+            "venom.testsuite.filename": "user_executor_custom.yml",
+            "venom.testsuite.filepath": "user_executor_custom.yml",
+            "venom.testsuite.name": "testsuite with a user executor in custom dir",
+            "venom.testsuite.shortName": "user_executor_custom",
+            "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+            "venom.timestamp": "1689710374"
+          },
+          "skip": null,
+          "steps": [
+            {
+              "assertions": [
+                "result.foobar ShouldEqual custom-hop"
+              ],
+              "bar": "hop",
+              "type": "foobarcustom"
+            }
+          ],
+          "skipped": null,
+          "status": "PASS",
+          "duration": 0.009031666,
+          "start": "2023-07-18T20:59:34.81122+01:00",
+          "end": "2023-07-18T20:59:34.820252+01:00",
+          "results": [
+            {
+              "name": "foobarcustom",
+              "errors": null,
+              "skipped": null,
+              "status": "PASS",
+              "raw": "YXNzZXJ0aW9uczoKICAgIC0gcmVzdWx0LmZvb2JhciBTaG91bGRFcXVhbCBjdXN0b20taG9wCmJhcjogaG9wCnR5cGU6IGZvb2JhcmN1c3RvbQo=",
+              "interpolated": "YXNzZXJ0aW9uczoKICAgIC0gcmVzdWx0LmZvb2JhciBTaG91bGRFcXVhbCBjdXN0b20taG9wCmJhcjogaG9wCnR5cGU6IGZvb2JhcmN1c3RvbQo=",
+              "number": 0,
+              "rangedIndex": 0,
+              "rangedEnable": false,
+              "inputVars": {
+                "__Len__": "15",
+                "__Type__": "Map",
+                "venom.datetime": "2023-07-18T20:59:34+01:00",
+                "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+                "venom.libdir": "lib_custom",
+                "venom.outputdir": ".",
+                "venom.testcase": "testfoobar-custom",
+                "venom.teststep.number": "0",
+                "venom.testsuite": "testsuite with a user executor in custom dir",
+                "venom.testsuite.filename": "user_executor_custom.yml",
+                "venom.testsuite.filepath": "user_executor_custom.yml",
+                "venom.testsuite.name": "testsuite with a user executor in custom dir",
+                "venom.testsuite.shortName": "user_executor_custom",
+                "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+                "venom.timestamp": "1689710374"
+              },
+              "computedVars": {
+                "__len__": 6,
+                "__type__": "Map",
+                "result": {
+                  "foobar": "custom-hop"
+                },
+                "result.__Len__": 1,
+                "result.__Type__": "Map",
+                "result.__len__": 1,
+                "result.__type__": "Map",
+                "result.foobar": "custom-hop"
+              },
+              "computedInfos": null,
+              "assertionsApplied": {
+                "ok": true,
+                "assertions": [
+                  {
+                    "assertion": "result.foobar ShouldEqual custom-hop",
+                    "isOK": true
+                  }
+                ]
+              },
+              "retries": 0,
+              "systemout": "\n",
+              "systemerr": "\n",
+              "duration": 0.005883625,
+              "start": "2023-07-18T20:59:34.814337+01:00",
+              "end": "2023-07-18T20:59:34.82022+01:00"
+            }
+          ]
+        }
+      ],
+      "vars": {
+        "__Len__": "8",
+        "__Type__": "Map",
+        "venom.datetime": "2023-07-18T20:59:34+01:00",
+        "venom.executable": "/Users/fokion/GolandProjects/venom/tests/venom.darwin-arm64",
+        "venom.libdir": "lib_custom",
+        "venom.outputdir": ".",
+        "venom.testsuite": "testsuite with a user executor in custom dir",
+        "venom.testsuite.filename": "user_executor_custom.yml",
+        "venom.testsuite.filepath": "user_executor_custom.yml",
+        "venom.testsuite.name": "testsuite with a user executor in custom dir",
+        "venom.testsuite.shortName": "user_executor_custom",
+        "venom.testsuite.workdir": "/Users/fokion/GolandProjects/venom/tests",
+        "venom.timestamp": "1689710374"
+      },
+      "shortname": "user_executor_custom",
+      "filename": "user_executor_custom.yml",
+      "filepath": "user_executor_custom.yml",
+      "computed_vars": {},
+      "workdir": "/Users/fokion/GolandProjects/venom/tests",
+      "status": "PASS",
+      "duration": 0.017092959,
+      "start": "2023-07-18T20:59:34.803166+01:00",
+      "end": "2023-07-18T20:59:34.82026+01:00",
+      "nbTestcasesFail": 0,
+      "nbTestcasesPass": 2,
+      "nbTestcasesSkip": 0
+    }
+  ],
+  "status": "PASS",
+  "nbTestsuitesFail": 0,
+  "nbTestsuitesPass": 2,
+  "nbTestsuitesSkip": 0,
+  "duration": 0.017092959,
+  "start": "2023-07-18T20:59:34.803166+01:00",
+  "end": "2023-07-18T20:59:34.82026+01:00"
+}

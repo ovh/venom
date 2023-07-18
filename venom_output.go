@@ -30,26 +30,11 @@ func (v *Venom) OutputResult(ctx context.Context) error {
 		return nil
 	}
 
-	for i := range v.Tests.TestSuites {
-		tcFiltered := TestSuite{}
-		files, err := filepath.Glob("test_results_.*\\." + v.OutputFormat)
-		if err != nil {
-			return err
-		}
-		for _, f := range files {
-			bts, err := os.ReadFile(f)
-			if err != nil {
-				Fatal(ctx, "could not read test result %v", f)
-				return err
-			}
-			errUnMarshal := json.Unmarshal(bts, &tcFiltered)
-			if errUnMarshal != nil {
-				Fatal(ctx, "Could not read test result %v", f)
-				return errUnMarshal
-			}
-		}
-		v.Tests.TestSuites[i] = tcFiltered
+	suites, err2 := gatherPartialReports(ctx, v.OutputDir, v.OutputFormat)
+	if err2 != nil {
+		return err2
 	}
+	v.Tests.TestSuites = suites
 
 	if v.HtmlReport {
 		testsResult := &Tests{
@@ -75,6 +60,33 @@ func (v *Venom) OutputResult(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func gatherPartialReports(ctx context.Context, directory string, outputFormat string) ([]TestSuite, error) {
+	reports := []TestSuite{}
+	files, err := filepath.Glob(filepath.Join(directory, "test_results_*."+outputFormat))
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range files {
+		tcFiltered := Tests{}
+		bts, err := os.ReadFile(f)
+		if err != nil {
+			Fatal(ctx, "could not read test result %v", f)
+			return nil, err
+		}
+		errUnMarshal := json.Unmarshal(bts, &tcFiltered)
+		if errUnMarshal != nil {
+			Fatal(ctx, "Could not read test result %v", f)
+			return nil, errUnMarshal
+		}
+		for _, suite := range tcFiltered.TestSuites {
+			reports = append(reports, suite)
+		}
+
+	}
+
+	return reports, nil
 }
 func (v *Venom) GenerateOutputForTestSuite(ctx context.Context, ts *TestSuite) error {
 	if v.OutputDir == "" {
