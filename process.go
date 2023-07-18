@@ -176,38 +176,32 @@ func (v *Venom) Process(ctx context.Context, path []string) error {
 	v.Tests.Status = StatusRun
 	v.Tests.Start = time.Now()
 	Debug(ctx, "nb testsuites: %d", len(v.Tests.TestSuites))
-	for i := range v.Tests.TestSuites {
-
-		v.Tests.TestSuites[i].Start = time.Now()
+	testsSize := len(v.Tests.TestSuites)
+	var ts TestSuite
+	nSkip := 0
+	for i := 0; i < testsSize; i++ {
+		ts, v.Tests.TestSuites = v.Tests.TestSuites[0], v.Tests.TestSuites[1:]
+		ts.Start = time.Now()
 		// ##### RUN Test Suite Here
-		if err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
-			return err
+		if err := v.runTestSuite(ctx, &ts); err != nil {
+			v.Tests.Status = StatusFail
+			break
 		}
 
-		v.Tests.TestSuites[i].End = time.Now()
-		v.Tests.TestSuites[i].Duration = v.Tests.TestSuites[i].End.Sub(v.Tests.TestSuites[i].Start).Seconds()
+		if ts.Status == StatusFail {
+			v.Tests.Status = StatusFail
+			break
+		} else if ts.Status == StatusSkip {
+			nSkip++
+			if nSkip == testsSize {
+				v.Tests.Status = StatusSkip
+			}
+		} else {
+			v.Tests.Status = StatusPass
+		}
 	}
 	v.Tests.End = time.Now()
 	v.Tests.Duration = v.Tests.End.Sub(v.Tests.Start).Seconds()
-
-	var isFailed bool
-	var nSkip int
-	for i := range v.Tests.TestSuites {
-		if v.Tests.TestSuites[i].Status == StatusFail {
-			isFailed = true
-			break
-		} else if v.Tests.TestSuites[i].Status == StatusSkip {
-			nSkip++
-		}
-	}
-	if isFailed {
-		v.Tests.Status = StatusFail
-	} else if nSkip > 0 && nSkip == len(v.Tests.TestSuites) {
-		v.Tests.Status = StatusSkip
-	} else {
-		v.Tests.Status = StatusPass
-	}
-
 	Debug(ctx, "final status: %s", v.Tests.Status)
 
 	return nil

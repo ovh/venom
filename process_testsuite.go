@@ -68,7 +68,9 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 
 	// ##### RUN Test Cases Here
 	v.runTestCases(ctx, ts)
-
+	//## Calculate the time here
+	ts.End = time.Now()
+	ts.Duration = ts.End.Sub(ts.Start).Seconds()
 	var isFailed bool
 	var nSkip int
 	for _, tc := range ts.TestCases {
@@ -92,6 +94,11 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	} else {
 		ts.Status = StatusPass
 		v.Tests.NbTestsuitesPass++
+	}
+	//##export report
+	err = v.GenerateOutputForTestSuite(ts)
+	if err != nil {
+		return err
 	}
 	return nil
 }

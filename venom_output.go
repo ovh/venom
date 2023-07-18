@@ -111,6 +111,96 @@ func (v *Venom) OutputResult() error {
 
 	return nil
 }
+func (v *Venom) GenerateOutputForTestSuite(ts *TestSuite) error {
+	if v.OutputDir == "" {
+		return nil
+	}
+
+	tcFiltered := []TestCase{}
+	for _, tc := range ts.TestCases {
+		if tc.IsEvaluated {
+			tcFiltered = append(tcFiltered, tc)
+		}
+	}
+	ts.TestCases = tcFiltered
+
+	testsResult := &Tests{
+		TestSuites:       []TestSuite{*ts},
+		Status:           ts.Status,
+		NbTestsuitesFail: ts.NbTestcasesFail,
+		NbTestsuitesPass: ts.NbTestcasesPass,
+		NbTestsuitesSkip: ts.NbTestcasesSkip,
+		Duration:         ts.Duration,
+		Start:            ts.Start,
+		End:              ts.End,
+	}
+
+	var data []byte
+	var err error
+
+	switch v.OutputFormat {
+	case "json":
+		data, err = json.MarshalIndent(testsResult, "", "  ")
+		if err != nil {
+			log.Fatalf("Error: cannot format output json (%s)", err)
+		}
+	case "tap":
+		data, err = outputTapFormat(*testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output tap (%s)", err)
+		}
+	case "yml", "yaml":
+		data, err = yaml.Marshal(testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output yaml (%s)", err)
+		}
+	case "xml":
+		data, err = outputXMLFormat(*testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output xml (%s)", err)
+		}
+	case "html":
+		log.Fatalf("Error: you have to use the --html-report flag")
+	}
+
+	fname := strings.TrimSuffix(ts.Filepath, filepath.Ext(ts.Filepath))
+	fname = strings.ReplaceAll(fname, "/", "_")
+	filename := path.Join(v.OutputDir, "partial_test_results_"+fname+"."+v.OutputFormat)
+	if err := os.WriteFile(filename, data, 0600); err != nil {
+		return fmt.Errorf("error while creating file %s: %v", filename, err)
+	}
+	if _, err := v.PrintFunc("Writing file %s\n", filename); err != nil {
+		return fmt.Errorf("error while writing in file %s: %v", filename, err)
+	}
+
+	if v.HtmlReport {
+		testsResult := &Tests{
+			TestSuites:       []TestSuite{*ts},
+			Status:           ts.Status,
+			NbTestsuitesFail: ts.NbTestcasesFail,
+			NbTestsuitesPass: ts.NbTestcasesPass,
+			NbTestsuitesSkip: ts.NbTestcasesSkip,
+			Duration:         ts.Duration,
+			Start:            ts.Start,
+			End:              ts.End,
+		}
+
+		data, err := outputHTML(testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output html (%s)", err)
+		}
+		var filename = filepath.Join(v.OutputDir, computeOutputFilename("partial_test_results_"+fname+".html"))
+
+		if _, err := v.PrintFunc("Writing html file %s\n", filename); err != nil {
+			return fmt.Errorf("error while creating file %s: %v", filename, err)
+		}
+		if err := os.WriteFile(filename, data, 0600); err != nil {
+			return fmt.Errorf("error while changing permissions of file %s: %v", filename, err)
+		}
+	}
+
+	return nil
+}
 
 func outputTapFormat(tests Tests) ([]byte, error) {
 	tapValue := tap.New()
