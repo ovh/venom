@@ -96,7 +96,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 		v.Tests.NbTestsuitesPass++
 	}
 	//##export report
-	err = v.GenerateOutputForTestSuite(ts)
+	err = v.GenerateOutputForTestSuite(ctx, ts)
 	if err != nil {
 		return err
 	}
