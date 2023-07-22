@@ -43,7 +43,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 			return nil, nil, errors.Wrapf(err, "unable to unmarshal teststep")
 		}
 
-		_, exec, err := v.GetExecutorRunner(context.Background(), step, tc.Vars)
+		_, exec, err := v.GetExecutorRunner(context.Background(), &step, &tc.Vars)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -285,7 +285,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			tc.testSteps = append(tc.testSteps, step)
 			var e ExecutorRunner
 			Info(ctx, "variables before execution %v", stepVars)
-			ctx, e, err = v.GetExecutorRunner(ctx, step, stepVars)
+			ctx, e, err = v.GetExecutorRunner(ctx, &step, &stepVars)
 			if err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to get executor: %v", err)

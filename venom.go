@@ -15,7 +15,6 @@ import (
 
 	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
 	"github.com/spf13/cast"
@@ -122,7 +121,7 @@ func (v *Venom) RegisterExecutorUser(name string, e Executor) {
 
 // GetExecutorRunner initializes a test by name
 // no type -> exec is default
-func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (context.Context, ExecutorRunner, error) {
+func (v *Venom) GetExecutorRunner(ctx context.Context, ts *TestStep, h *H) (context.Context, ExecutorRunner, error) {
 	name, _ := ts.StringValue("type")
 	script, _ := ts.StringValue("script")
 	if name == "" && script != "" {
@@ -146,7 +145,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	}
 
 	info, _ := ts.StringSliceValue("info")
-	vars, err := DumpStringPreserveCase(h)
+	vars, err := DumpStringPreserveCase(*h)
 	if err != nil {
 		return ctx, nil, err
 	}
@@ -166,7 +165,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 		return ctx, newExecutorRunner(ex, name, "builtin", retry, retryIf, delay, timeout, info), nil
 	}
 
-	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
+	if err := v.registerUserExecutors(ctx, name); err != nil {
 		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
 	}
 
@@ -185,13 +184,14 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
 }
 
-func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []string, err error) {
+func (v *Venom) getUserExecutorFilesPath(workdir string) (filePaths []string, err error) {
 	var libpaths []string
 	if v.LibDir != "" {
 		p := strings.Split(v.LibDir, string(os.PathListSeparator))
 		libpaths = append(libpaths, p...)
 	}
-	libpaths = append(libpaths, path.Join(vars["venom.testsuite.workdir"], "lib"))
+
+	libpaths = append(libpaths, path.Join(workdir, "lib"))
 
 	for _, p := range libpaths {
 		p = strings.TrimSpace(p)
@@ -215,8 +215,16 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 	return filePaths, nil
 }
 
-func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
-	executorsPath, err := v.getUserExecutorFilesPath(vars)
+func (v *Venom) registerUserExecutors(ctx context.Context, name string) error {
+	_, ok := v.executorsUser[name]
+	if ok {
+		return nil
+	}
+	if v.executorFileCache != nil && len(v.executorFileCache) != 0 {
+		return errors.Errorf("Could not find executor with name %v ", name)
+	}
+	workdir := StringVarFromCtx(ctx, "venom.testsuite.workdir")
+	executorsPath, err := v.getUserExecutorFilesPath(workdir)
 	if err != nil {
 		return err
 	}
@@ -230,6 +238,11 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 				return errors.Wrapf(err, "unable to read file %q", f)
 			}
 			v.executorFileCache[f] = btes
+		}
+		executorName, _ := getExecutorName(btes)
+		if len(executorName) == 0 {
+			fileName := filepath.Base(f)
+			executorName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
 		}
 
 		varsFromInput, err := getUserExecutorInputYML(ctx, btes)
@@ -246,34 +259,16 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			}
 		}
 
-		varsComputed := map[string]string{}
-		for k, v := range vars {
-			varsComputed[k] = v
-		}
-		for k, v := range varsFromInputMap {
-			// we only take vars from varsFromInputMap if it's not already exist in vars from teststep vars
-			if _, ok := vars[k]; !ok {
-				varsComputed[k] = v
-			}
-		}
-
-		content, err := interpolate.Do(string(btes), varsComputed)
-		if err != nil {
-			return err
-		}
-
 		ux := UserExecutor{Filename: f}
-		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
-			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
+		if err := yaml.Unmarshal(btes, &ux); err != nil {
+			return errors.Wrapf(err, "unable to parse file %q with content %v", f, string(btes))
 		}
-
-		Debug(ctx, "User executor %q revolved with content %v", f, content)
-
-		for k, vr := range varsComputed {
+		for k, vr := range varsFromInputMap {
 			ux.Input.Add(k, vr)
 		}
-
-		v.RegisterExecutorUser(ux.Executor, ux)
+		ux.Executor = executorName
+		v.RegisterExecutorUser(executorName, ux)
+		Debug(ctx, "Registered %v executor from %q ", executorName, f)
 	}
 	return nil
 }

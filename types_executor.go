@@ -219,7 +219,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		}
 	}
 	// reload the user executor with the interpolated vars
-	_, exe, err := v.GetExecutorRunner(ctx, step, vrs)
+	_, exe, err := v.GetExecutorRunner(ctx, &step, &vrs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to reload executor")
 	}
