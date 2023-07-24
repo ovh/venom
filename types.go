@@ -107,12 +107,14 @@ type TestSuiteInput struct {
 	Name      string          `json:"name" yaml:"name"`
 	TestCases []TestCaseInput `json:"testcases" yaml:"testcases"`
 	Vars      H               `json:"vars" yaml:"vars"`
+	Secrets   []string        `json:"secrets" yaml:"secrets"`
 }
 
 type TestSuite struct {
 	Name      string     `json:"name" yaml:"name"`
 	TestCases []TestCase `json:"testcases" yaml:"testcases"`
 	Vars      H          `json:"vars" yaml:"vars"`
+	Secrets   []string   `json:"secrets" yaml:"secrets"`
 
 	// computed
 	ShortName    string `json:"shortname" yaml:"-"`
