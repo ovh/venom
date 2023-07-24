@@ -26,6 +26,7 @@ var (
 	v    *venom.Venom
 
 	variables     []string
+	secrets       []string
 	format        string = "xml" // Set the default value for formatFlag
 	varFiles      []string
 	outputDir     string
@@ -302,7 +303,6 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option outputDir=%v", outputDir)
 	venom.Debug(ctx, "option stopOnFailure=%v", stopOnFailure)
 	venom.Debug(ctx, "option htmlReport=%v", htmlReport)
-	venom.Debug(ctx, "option variables=%v", strings.Join(variables, " "))
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "option verbose=%v", verbose)
 }

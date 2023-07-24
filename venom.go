@@ -48,6 +48,7 @@ func New() *Venom {
 		executorsUser:     map[string]Executor{},
 		executorFileCache: map[string][]byte{},
 		variables:         map[string]interface{}{},
+		secrets:           map[string]interface{}{},
 		OutputFormat:      "xml",
 	}
 	return v
@@ -64,6 +65,7 @@ type Venom struct {
 
 	Tests     Tests
 	variables H
+	secrets   H
 
 	LibDir        string
 	OutputFormat  string
@@ -94,6 +96,12 @@ func (v *Venom) PrintlnIndentedTrace(s string, indent string) {
 func (v *Venom) AddVariables(variables map[string]interface{}) {
 	for k, variable := range variables {
 		v.variables[k] = variable
+	}
+}
+
+func (v *Venom) AddSecrets(secrets map[string]interface{}) {
+	for k, s := range secrets {
+		v.secrets[k] = s
 	}
 }
 
