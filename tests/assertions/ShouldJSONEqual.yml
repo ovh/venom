@@ -1,0 +1,33 @@
+name: test ShouldJSONEqual
+testcases:
+- name: test assertion
+  steps:
+  - type: exec
+    script: |
+      echo '{
+        "o" : {
+          "a" : 1,
+          "b" : 2,
+          "c" : {
+              "x":1,
+              "y":2
+          }
+        },
+        "a" : [1,2],
+        "s" : "foo",
+        "n" : 1.2,
+        "t" : true,
+        "f" : false,
+        "z" : null
+      }'
+    assertions:
+      - result.systemoutjson.o ShouldJSONEqual ' { "c":{ "y" :2 , "x" :1 }, "b" :2 , "a" :1 } '
+      - result.systemoutjson.o.c ShouldJSONEqual ' { "y" :2 , "x" :1 }'
+      - result.systemoutjson.a ShouldJSONEqual ' [ 1 , 2 ] '
+      - result.systemoutjson.s ShouldJSONEqual 'foo'
+      - result.systemoutjson.n ShouldJSONEqual 1.2
+      - result.systemoutjson.t ShouldJSONEqual true
+      - result.systemoutjson.f ShouldJSONEqual false
+      - result.systemoutjson.z ShouldJSONEqual null
+      - result.systemoutjson.z ShouldJSONEqual 'null' # ⚠️ Shouldn't be valid, but is required for above `null` check to work
+      - result.systemoutjson.z ShouldJSONEqual '' # ⚠️ Shouldn't be valid, but Venom treats null as empty string
