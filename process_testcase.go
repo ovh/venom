@@ -163,21 +163,23 @@ func (v *Venom) processSecrets(ctx context.Context, ts *TestSuite, tc *TestCase)
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepResult) {
-	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
-	if err != nil {
-		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
-		testStepResult := TestStepResult{}
-		testStepResult.appendError(err)
-		tc.TestStepResults = append(tc.TestStepResults, testStepResult)
-		return
-	}
-	if len(results) > 0 {
-		tc.Status = StatusSkip
-		for _, s := range results {
-			tc.Skipped = append(tc.Skipped, Skipped{Value: s})
-			Warn(ctx, s)
+	if len(tc.Skip) > 0 {
+		results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
+		if err != nil {
+			Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
+			testStepResult := TestStepResult{}
+			testStepResult.appendError(err)
+			tc.TestStepResults = append(tc.TestStepResults, testStepResult)
+			return
 		}
-		return
+		if len(results) == 0 {
+			tc.Status = StatusSkip
+			for _, s := range results {
+				tc.Skipped = append(tc.Skipped, Skipped{Value: s})
+				Warn(ctx, s)
+			}
+			return
+		}
 	}
 
 	var knowExecutors = map[string]struct{}{}
