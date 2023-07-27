@@ -1,0 +1,19 @@
+name : "Testing skip"
+testcases:
+  - name : "producer"
+    steps:
+      - info:
+          - Set a variable to 1
+      - script : "echo '1'"
+        vars :
+          out:
+            from : result.systemout
+  - name: "consumer"
+    skip:
+      - producer.out ShouldEqual 1
+    step:
+      - info:
+          - "Fail should be skipped"
+        script: |
+          exit 1
+
