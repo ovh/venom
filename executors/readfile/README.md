@@ -34,7 +34,6 @@ testcases:
     steps:
       - type: readfile
         path: yourfile.yml
-        filetype: yaml
         assertions:
           - result.err ShouldBeEmpty
 ```
