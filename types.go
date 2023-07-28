@@ -144,6 +144,7 @@ type TestCaseXML struct {
 	Systemout InnerResult  `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
 	Systemerr InnerResult  `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
 	Time      float64      `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
+	ID        string       `xml:"id,attr,omitempty" json:"id" yaml:"id"`
 }
 
 type TestCaseInput struct {
@@ -151,6 +152,7 @@ type TestCaseInput struct {
 	Vars         H                 `json:"vars" yaml:"vars"`
 	Skip         []string          `json:"skip" yaml:"skip"`
 	RawTestSteps []json.RawMessage `json:"steps" yaml:"steps"`
+	ID           string            `json:"id" yaml:"id"`
 }
 
 type TestCase struct {
