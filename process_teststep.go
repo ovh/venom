@@ -112,15 +112,17 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		if assertRes.OK {
 			break
 		}
-		failures, err := testConditionalStatement(ctx, tc, e.RetryIf(), AllVarsFromCtx(ctx), "")
-		if err != nil {
-			tsResult.appendError(fmt.Errorf("Error while evaluating retry condition: %v", err))
-			break
-		}
-		if len(failures) > 0 {
-			failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-tsResult.Retries))
-			tsResult.Errors = append(tsResult.Errors, *failure)
-			break
+		if len(e.RetryIf()) > 0{
+			failures, err := testConditionalStatement(ctx, tc, e.RetryIf(), AllVarsFromCtx(ctx), "")
+			if err != nil {
+				tsResult.appendError(fmt.Errorf("Error while evaluating retry condition: %v", err))
+				break
+			}
+			if len(failures) == 0 {
+				failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-tsResult.Retries))
+				tsResult.Errors = append(tsResult.Errors, *failure)
+				break
+			}
 		}
 	}
 
