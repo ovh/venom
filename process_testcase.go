@@ -26,7 +26,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	vars := []string{}
 	extractedVars := []string{}
 
-	// the value of each var can contains a double-quote -> "
+	// the value of each var can contain a double-quote -> "
 	// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
 	// This also avoids injections into the json structure of a step
 	for i := range dvars {
@@ -67,7 +67,7 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 				}
 				extractedVars = append(extractedVars, tc.Name+"."+k)
 				if strings.HasSuffix(k, "__type__") && dumpE[k] == "Map" {
-					// go-dump doesnt dump the map name, here is a workaround
+					// go-dump doesn't dump the map name, here is a workaround
 					k = strings.TrimSuffix(k, "__type__")
 					extractedVars = append(extractedVars, tc.Name+"."+k)
 				}
@@ -134,21 +134,32 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 
 func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	ctx = context.WithValue(ctx, ContextKey("testcase"), tc.Name)
+
 	tc.TestSuiteVars = ts.Vars.Clone()
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)
 	tc.computedVars = H{}
 
-	Info(ctx, "Starting testcase")
+	ctx = v.processSecrets(ctx, ts, tc)
 
-	for k, v := range tc.Vars {
-		Debug(ctx, "Running testcase with variable %s: %+v", k, v)
-	}
+	Info(ctx, "Starting testcase")
 
 	defer Info(ctx, "Ending testcase")
 	// ##### RUN Test Steps Here
 	v.runTestSteps(ctx, tc, nil)
+}
+
+func (v *Venom) processSecrets(ctx context.Context, ts *TestSuite, tc *TestCase) context.Context {
+	computedSecrets := []string{}
+	for k, v := range tc.Vars {
+		for _, s := range ts.Secrets {
+			if strings.Compare(k, s) == 0 {
+				computedSecrets = append(computedSecrets, fmt.Sprint(v))
+			}
+		}
+	}
+	return context.WithValue(ctx, ContextKey("secrets"), computedSecrets)
 }
 
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepResult) {
@@ -240,9 +251,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			}
 
 			if ranged.Enabled {
-				Info(ctx, "Step #%d-%d content is: %s", stepNumber, rangedIndex, content)
+				Info(ctx, "Step #%d-%d content is: %s", stepNumber, rangedIndex, HideSensitive(ctx, content))
 			} else {
-				Info(ctx, "Step #%d content is: %s", stepNumber, content)
+				Info(ctx, "Step #%d content is: %s", stepNumber, HideSensitive(ctx, content))
 			}
 
 			data, err := yaml.Marshal(rawStep)

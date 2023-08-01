@@ -2,6 +2,7 @@ package venom
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -23,12 +24,41 @@ func init() {
 	}
 }
 
+// CleanUpSecrets This method tries to hide all the sensitive variables
+func (v *Venom) CleanUpSecrets(testSuite TestSuite) TestSuite {
+	for _, testCase := range testSuite.TestCases {
+		ctx := v.processSecrets(context.Background(), &testSuite, &testCase)
+		for _, result := range testCase.TestStepResults {
+			for k, v := range result.ComputedVars {
+				if !strings.HasPrefix(k, "venom.") {
+					result.ComputedVars[k] = HideSensitive(ctx, v)
+				}
+			}
+			for k, v := range result.InputVars {
+				if !strings.HasPrefix(k, "venom.") {
+					result.InputVars[k] = HideSensitive(ctx, v)
+				}
+			}
+			for k, v := range testCase.TestCaseInput.Vars {
+				if !strings.HasPrefix(k, "venom.") {
+					testCase.TestCaseInput.Vars[k] = HideSensitive(ctx, v)
+				}
+			}
+			result.Raw = HideSensitive(ctx, fmt.Sprint(result.Raw))
+			result.Interpolated = HideSensitive(ctx, fmt.Sprint(result.Interpolated))
+			result.Systemout = HideSensitive(ctx, result.Systemout)
+			result.Systemerr = HideSensitive(ctx, result.Systemerr)
+		}
+	}
+	return testSuite
+}
+
 // OutputResult output result to sdtout, files...
 func (v *Venom) OutputResult() error {
 	if v.OutputDir == "" {
 		return nil
 	}
-
+	cleanedTs := []TestSuite{}
 	for i := range v.Tests.TestSuites {
 		tcFiltered := []TestCase{}
 		for _, tc := range v.Tests.TestSuites[i].TestCases {
@@ -37,9 +67,11 @@ func (v *Venom) OutputResult() error {
 			}
 		}
 		v.Tests.TestSuites[i].TestCases = tcFiltered
+		ts := v.CleanUpSecrets(v.Tests.TestSuites[i])
+		cleanedTs = append(cleanedTs, ts)
 
 		testsResult := &Tests{
-			TestSuites:       []TestSuite{v.Tests.TestSuites[i]},
+			TestSuites:       []TestSuite{ts},
 			Status:           v.Tests.Status,
 			NbTestsuitesFail: v.Tests.NbTestsuitesFail,
 			NbTestsuitesPass: v.Tests.NbTestsuitesPass,
@@ -77,7 +109,7 @@ func (v *Venom) OutputResult() error {
 			return errors.New("Error: you have to use the --html-report flag")
 		}
 
-		fname := strings.TrimSuffix(v.Tests.TestSuites[i].Filepath, filepath.Ext(v.Tests.TestSuites[i].Filepath))
+		fname := strings.TrimSuffix(ts.Filepath, filepath.Ext(ts.Filepath))
 		fname = strings.ReplaceAll(fname, "/", "_")
 		filename := path.Join(v.OutputDir, "test_results_"+fname+"."+v.OutputFormat)
 		if err := os.WriteFile(filename, data, 0600); err != nil {
@@ -88,7 +120,7 @@ func (v *Venom) OutputResult() error {
 
 	if v.HtmlReport {
 		testsResult := &Tests{
-			TestSuites:       v.Tests.TestSuites,
+			TestSuites:       cleanedTs,
 			Status:           v.Tests.Status,
 			NbTestsuitesFail: v.Tests.NbTestsuitesFail,
 			NbTestsuitesPass: v.Tests.NbTestsuitesPass,
@@ -183,6 +215,7 @@ func outputXMLFormat(tests Tests) ([]byte, error) {
 				Systemout: systemout,
 				Systemerr: systemerr,
 				Time:      tc.Duration,
+				ID:        tc.ID,
 			}
 			tsXML.TestCases = append(tsXML.TestCases, tcXML)
 		}

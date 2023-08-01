@@ -156,7 +156,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 				return
 			}
 			result.Systemout += line
-			venom.Debug(ctx, line)
+			venom.Debug(ctx, venom.HideSensitive(ctx, line))
 		}
 	}()
 
@@ -173,7 +173,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 				return
 			}
 			result.Systemerr += line
-			venom.Debug(ctx, line)
+			venom.Debug(ctx, venom.HideSensitive(ctx, line))
 		}
 	}()
 

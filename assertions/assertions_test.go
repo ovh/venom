@@ -1,10 +1,12 @@
 package assertions
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldEqual(t *testing.T) {
@@ -1454,6 +1456,168 @@ func TestShouldMatchRegex(t *testing.T) {
 				msg := fmt.Sprintf("value %v not matching pattern : %v", tt.args.actual, tt.args.expected[0])
 				assert.ErrorContainsf(t, err, msg, "Contains message")
 				t.Errorf("ShouldMatchRegex() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestShouldJSONEqual(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "object",
+			args: args{
+				actual:   map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}},
+				expected: []interface{}{`{"a":1,"b":2,"c":{"x":1,"y":2}}`},
+			},
+		},
+		{
+			// Spaces, newlines, tabs and key order (including in nested objects) don't matter
+			name: "object",
+			args: args{
+				actual:   map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}},
+				expected: []interface{}{` { "c" : { "y" : 2 , "x" : 1 }, "b" : 2 ,` + "\n\t" + ` "a" : 1 } `},
+			},
+		},
+		{
+			name: "array",
+			args: args{
+				actual:   []interface{}{1, 2},
+				expected: []interface{}{`[1,2]`},
+			},
+		},
+		{
+			// Spaces, newlines and tabs don't matter
+			name: "array",
+			args: args{
+				actual:   []interface{}{1, 2},
+				expected: []interface{}{` [ 1 ,` + "\n\t" + ` 2 ] `},
+			},
+		},
+		// Object and array errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   map[string]interface{}{"a": 1},
+				expected: []interface{}{`{"a":2}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   map[string]interface{}{"a": 1},
+				expected: []interface{}{`{"a":"1"}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   map[string]interface{}{"a": 1, "b": 2},
+				expected: []interface{}{`{"a":1}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad array order",
+			args: args{
+				actual:   map[string]interface{}{"a": []float64{1, 2}},
+				expected: []interface{}{`{"a":[2,1]}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "object instead of array",
+			args: args{
+				actual:   map[string]interface{}{"a": 1},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "array instead of object",
+			args: args{
+				actual:   []interface{}{1},
+				expected: []interface{}{`{"a":1}}`},
+			},
+			wantErr: true,
+		},
+		// Primitive values
+		{
+			name: "string",
+			args: args{
+				actual:   "a",
+				expected: []interface{}{"a"},
+			},
+		},
+		{
+			name: "empty string",
+			args: args{
+				actual:   "",
+				expected: []interface{}{""},
+			},
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   json.Number("1"),
+				expected: []interface{}{`1`},
+			},
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   json.Number("1.2"),
+				expected: []interface{}{`1.2`},
+			},
+		},
+		{
+			name: "boolean",
+			args: args{
+				actual:   true,
+				expected: []interface{}{`true`},
+			},
+		},
+		{
+			// TODO: Shouldn't be valid, but Venom currently passes an empty string to the assertion function when the JSON value is `null`.
+			name: "null",
+			args: args{
+				actual:   "",
+				expected: []interface{}{`null`},
+			},
+		},
+		// Primitive value errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   "a",
+				expected: []interface{}{"b"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   float64(1),
+				expected: []interface{}{"1"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldJSONEqual(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldJSONEqual() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

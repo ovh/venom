@@ -121,12 +121,14 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			Name:      testSuiteInput.Name,
 			TestCases: make([]TestCase, len(testSuiteInput.TestCases)),
 			Vars:      testSuiteInput.Vars,
+			Secrets:   testSuiteInput.Secrets,
 		}
 		for i := range testSuiteInput.TestCases {
 			ts.TestCases[i] = TestCase{
 				TestCaseInput: testSuiteInput.TestCases[i],
 			}
 		}
+		Info(ctx, "Has %d Secrets", len(ts.Secrets))
 
 		// Default workdir is testsuite directory
 		ts.WorkDir, err = filepath.Abs(filepath.Dir(filePath))
