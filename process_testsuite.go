@@ -32,7 +32,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 		}
 	}
 
-	// Intialiaze the testsuite variables and compute a first interpolation over them
+	// Initialize the testsuite variables and compute a first interpolation over them
 	ts.Vars.AddAll(v.variables.Clone())
 	vars, _ := DumpStringPreserveCase(ts.Vars)
 	for k, v := range vars {
@@ -65,7 +65,10 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	}
 
 	ts.Status = StatusRun
-
+	Info(ctx, "With secrets in testsuite")
+	for _, v := range ts.Secrets {
+		Info(ctx, "secret  %+v", v)
+	}
 	// ##### RUN Test Cases Here
 	v.runTestCases(ctx, ts)
 
