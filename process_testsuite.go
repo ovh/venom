@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
+func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) (*TestSuite, error) {
 	if v.Verbose == 3 {
 		var filename, filenameCPU, filenameMem string
 		if v.OutputDir != "" {
@@ -23,7 +23,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 		fCPU, errCPU := os.Create(filenameCPU)
 		fMem, errMem := os.Create(filenameMem)
 		if errCPU != nil || errMem != nil {
-			return fmt.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
+			return nil, fmt.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
 		} else {
 			pprof.StartCPUProfile(fCPU)
 			p := pprof.Lookup("heap")
@@ -38,14 +38,14 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	for k, v := range vars {
 		computedV, err := interpolate.Do(fmt.Sprintf("%v", v), vars)
 		if err != nil {
-			return errors.Wrapf(err, "error while computing variable %s=%q", k, v)
+			return nil, errors.Wrapf(err, "error while computing variable %s=%q", k, v)
 		}
 		ts.Vars.Add(k, computedV)
 	}
 
 	exePath, err := os.Executable()
 	if err != nil {
-		return errors.Wrapf(err, "failed to get executable path")
+		return nil, errors.Wrapf(err, "failed to get executable path")
 	} else {
 		ts.Vars.Add("venom.executable", exePath)
 	}
@@ -71,7 +71,8 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	}
 	// ##### RUN Test Cases Here
 	v.runTestCases(ctx, ts)
-
+	ts.End = time.Now()
+	ts.Duration = ts.End.Sub(ts.Start).Seconds()
 	var isFailed bool
 	var nSkip int
 	for _, tc := range ts.TestCases {
@@ -96,7 +97,13 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 		ts.Status = StatusPass
 		v.Tests.NbTestsuitesPass++
 	}
-	return nil
+	clean := v.CleanUpSecrets(*ts)
+	errOutput := v.GenerateOutputForTestSuite(&clean)
+	if errOutput != nil {
+		Error(ctx, "could not generate output for testsuite")
+		return ts, nil
+	}
+	return &clean, nil
 }
 
 func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {

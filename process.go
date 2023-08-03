@@ -182,7 +182,7 @@ func (v *Venom) Process(ctx context.Context, path []string) error {
 
 		v.Tests.TestSuites[i].Start = time.Now()
 		// ##### RUN Test Suite Here
-		if err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
+		if _, err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
 			return err
 		}
 
