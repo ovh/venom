@@ -33,7 +33,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) (*TestSuite, er
 	}
 
 	// Initialize the testsuite variables and compute a first interpolation over them
-	ts.Vars.AddAll(v.variables.Clone())
+	ts.Vars.AddAll(v.variables)
 	vars, _ := DumpStringPreserveCase(ts.Vars)
 	for k, v := range vars {
 		computedV, err := interpolate.Do(fmt.Sprintf("%v", v), vars)
@@ -110,7 +110,8 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 	verboseReport := v.Verbose >= 1
 
 	v.Println(" • %s (%s)", ts.Name, ts.Filepath)
-
+	previousVariables := H{}
+	previousVariables.AddAll(ts.Vars)
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
 		tc.IsEvaluated = true
@@ -126,7 +127,10 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 				v.Print("\n")
 			}
 			// ##### RUN Test Case Here
-			v.runTestCase(ctx, ts, tc)
+			tc.Vars.AddAll(previousVariables)
+			tc.Vars.Add("venom.testcase", tc.Name)
+			computedVariables := v.runTestCase(ctx, ts, tc)
+			previousVariables.AddAllWithPrefix(tc.Name, computedVariables)
 			tc.End = time.Now()
 			tc.Duration = tc.End.Sub(tc.Start).Seconds()
 		}

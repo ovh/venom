@@ -182,10 +182,11 @@ func (v *Venom) Process(ctx context.Context, path []string) error {
 
 		v.Tests.TestSuites[i].Start = time.Now()
 		// ##### RUN Test Suite Here
-		if _, err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
+		cleanTs, err := v.runTestSuite(ctx, &v.Tests.TestSuites[i])
+		if err != nil {
 			return err
 		}
-
+		v.Tests.TestSuites[i] = *cleanTs
 		v.Tests.TestSuites[i].End = time.Now()
 		v.Tests.TestSuites[i].Duration = v.Tests.TestSuites[i].End.Sub(v.Tests.TestSuites[i].Start).Seconds()
 	}

@@ -94,7 +94,7 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 				if err != nil {
 					return errors.Wrapf(err, "unable to parse variable %q", k)
 				}
-				varCloned.Add(k, valueInterpolated)
+				varsFromPartial[k] = valueInterpolated
 			}
 		}
 
@@ -142,7 +142,6 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		ts.ShortName = strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
 		// a.yml
 		ts.Filename = filepath.Base(filePath)
-		ts.Vars = varCloned
 
 		ts.Vars.Add("venom.testsuite.workdir", ts.WorkDir)
 		ts.Vars.Add("venom.testsuite.name", ts.Name)

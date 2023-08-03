@@ -200,8 +200,9 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 	return result
 }
 
-func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, tsIn *TestStepResult, step TestStep) (interface{}, error) {
-	vrs := tcIn.TestSuiteVars.Clone()
+func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, tsIn *TestStepResult, step TestStep, vars *H) (interface{}, error) {
+	vrs := H{}
+	vrs.AddAll(*vars)
 	uxIn := runner.GetExecutor().(UserExecutor)
 
 	for k, va := range uxIn.Input {
@@ -224,31 +225,43 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, errors.Wrapf(err, "unable to reload executor")
 	}
 	ux := exe.GetExecutor().(UserExecutor)
-
+	testStepResult := &TestStepResult{Name: slug.Make(ux.Executor)}
 	tc := &TestCase{
 		TestCaseInput: TestCaseInput{
 			Name:         ux.Executor,
 			RawTestSteps: ux.RawTestSteps,
 			Vars:         vrs,
 		},
+		originalName:    ux.Executor,
 		TestSuiteVars:   tcIn.TestSuiteVars,
 		IsExecutor:      true,
 		TestStepResults: make([]TestStepResult, 0),
 	}
 
-	tc.originalName = tc.Name
-	tc.Name = slug.Make(tc.Name)
+	tc.Name = ux.Executor
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.Add("venom.executor.filename", ux.Filename)
 	tc.Vars.Add("venom.executor.name", ux.Executor)
+	tc.Vars.AddAll(vrs)
+	if tc.TestSuiteVars == nil {
+		tc.TestSuiteVars = H{}
+	}
+	tc.TestSuiteVars.AddAll(vrs)
 	tc.computedVars = H{}
 
-	Debug(ctx, "running user executor %v", tc.Name)
-	Debug(ctx, "with vars: %v", vrs)
+	Debug(ctx, "running user executor %v", ux.Executor)
 
-	v.runTestSteps(ctx, tc, tsIn)
-
-	computedVars, err := DumpString(tc.computedVars)
+	newVars := v.runTestSteps(ctx, tc, tsIn)
+	if newVars != nil {
+		testStepResult.ComputedVars.AddAll(newVars)
+		vrs.AddAll(newVars)
+	}
+	computedVars, err := DumpStringPreserveCase(vrs)
+	otherVars, _ := DumpString(vrs)
+	//adding the DumpString in order to preserve functionality
+	for k, v := range otherVars {
+		computedVars[k] = v
+	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
 	}
