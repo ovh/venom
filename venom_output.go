@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -55,72 +56,13 @@ func (v *Venom) CleanUpSecrets(testSuite TestSuite) TestSuite {
 
 // OutputResult output result to sdtout, files...
 func (v *Venom) OutputResult() error {
-	if v.OutputDir == "" {
-		return nil
-	}
-	cleanedTs := []TestSuite{}
-	for i := range v.Tests.TestSuites {
-		tcFiltered := []TestCase{}
-		for _, tc := range v.Tests.TestSuites[i].TestCases {
-			if tc.IsEvaluated {
-				tcFiltered = append(tcFiltered, tc)
-			}
-		}
-		v.Tests.TestSuites[i].TestCases = tcFiltered
-		ts := v.CleanUpSecrets(v.Tests.TestSuites[i])
-		cleanedTs = append(cleanedTs, ts)
-
-		testsResult := &Tests{
-			TestSuites:       []TestSuite{ts},
-			Status:           v.Tests.Status,
-			NbTestsuitesFail: v.Tests.NbTestsuitesFail,
-			NbTestsuitesPass: v.Tests.NbTestsuitesPass,
-			NbTestsuitesSkip: v.Tests.NbTestsuitesSkip,
-			Duration:         v.Tests.Duration,
-			Start:            v.Tests.Start,
-			End:              v.Tests.End,
-		}
-
-		var data []byte
-		var err error
-
-		switch v.OutputFormat {
-		case "json":
-			data, err = json.MarshalIndent(testsResult, "", "  ")
-			if err != nil {
-				return errors.Wrapf(err, "Error: cannot format output json (%s)", err)
-			}
-		case "tap":
-			data, err = outputTapFormat(*testsResult)
-			if err != nil {
-				return errors.Wrapf(err, "Error: cannot format output tap (%s)", err)
-			}
-		case "yml", "yaml":
-			data, err = yaml.Marshal(testsResult)
-			if err != nil {
-				return errors.Wrapf(err, "Error: cannot format output yaml (%s)", err)
-			}
-		case "xml":
-			data, err = outputXMLFormat(*testsResult)
-			if err != nil {
-				return errors.Wrapf(err, "Error: cannot format output xml (%s)", err)
-			}
-		case "html":
-			return errors.New("Error: you have to use the --html-report flag")
-		}
-
-		fname := strings.TrimSuffix(ts.Filepath, filepath.Ext(ts.Filepath))
-		fname = strings.ReplaceAll(fname, "/", "_")
-		filename := path.Join(v.OutputDir, "test_results_"+fname+"."+v.OutputFormat)
-		if err := os.WriteFile(filename, data, 0600); err != nil {
-			return fmt.Errorf("Error while creating file %s: %v", filename, err)
-		}
-		v.PrintFunc("Writing file %s\n", filename)
-	}
-
 	if v.HtmlReport {
+		if v.OutputDir == "" {
+			return nil
+		}
+
 		testsResult := &Tests{
-			TestSuites:       cleanedTs,
+			TestSuites:       v.Tests.TestSuites,
 			Status:           v.Tests.Status,
 			NbTestsuitesFail: v.Tests.NbTestsuitesFail,
 			NbTestsuitesPass: v.Tests.NbTestsuitesPass,
@@ -141,6 +83,68 @@ func (v *Venom) OutputResult() error {
 		}
 	}
 
+	return nil
+}
+
+func (v *Venom) GenerateOutputForTestSuite(ts *TestSuite) error {
+	if v.OutputDir == "" {
+		return nil
+	}
+
+	tcFiltered := []TestCase{}
+	for _, tc := range ts.TestCases {
+		if tc.IsEvaluated {
+			tcFiltered = append(tcFiltered, tc)
+		}
+	}
+	ts.TestCases = tcFiltered
+
+	testsResult := &Tests{
+		TestSuites:       []TestSuite{*ts},
+		Status:           ts.Status,
+		NbTestsuitesFail: ts.NbTestcasesFail,
+		NbTestsuitesPass: ts.NbTestcasesPass,
+		NbTestsuitesSkip: ts.NbTestcasesSkip,
+		Duration:         ts.Duration,
+		Start:            ts.Start,
+		End:              ts.End,
+	}
+
+	var data []byte
+	var err error
+
+	switch v.OutputFormat {
+	case "json":
+		data, err = json.MarshalIndent(testsResult, "", "  ")
+		if err != nil {
+			log.Fatalf("Error: cannot format output json (%s)", err)
+		}
+	case "tap":
+		data, err = outputTapFormat(*testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output tap (%s)", err)
+		}
+	case "yml", "yaml":
+		data, err = yaml.Marshal(testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output yaml (%s)", err)
+		}
+	case "xml":
+		data, err = outputXMLFormat(*testsResult)
+		if err != nil {
+			log.Fatalf("Error: cannot format output xml (%s)", err)
+		}
+	}
+
+	fname := strings.TrimSuffix(ts.Filepath, filepath.Ext(ts.Filepath))
+	fname = strings.ReplaceAll(fname, "/", "_")
+	filename := path.Join(v.OutputDir, "partial_test_results_"+fname+"."+v.OutputFormat)
+	if err := os.WriteFile(filename, data, 0600); err != nil {
+		return fmt.Errorf("error while creating file %s: %v", filename, err)
+	}
+	if _, err := v.PrintFunc("Writing file %s\n", filename); err != nil {
+		return fmt.Errorf("error while writing in file %s: %v", filename, err)
+	}
 	return nil
 }
 
