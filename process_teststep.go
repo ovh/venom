@@ -71,7 +71,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			flag, exists := os.LookupEnv("VENOM_LOGS_WITH_TIMESTAMP")
 			if exists && flag == "ON" {
 				format = "%s.%s.%s.step.%d.%d.dump.json"
-				name = fmt.Sprintf(format, slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), time.Now().UTC().Format("15.04.05"), stepNumber, rangedIndex)
+				name = fmt.Sprintf(format, slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), time.Now().UTC().Format("15.04.05.000"), slug.Make(tc.Name), stepNumber, rangedIndex)
 			}
 			filename := path.Join(oDir, name)
 

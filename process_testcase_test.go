@@ -26,7 +26,7 @@ func TestProcessVariableAssignments(t *testing.T) {
 
 	tcVars := H{"here.some.value": "this is the \nvalue"}
 
-	result, is, err := processVariableAssignments(context.TODO(), "", tcVars, b)
+	result, is, err := processVariableAssignments(context.TODO(), "", &tcVars, b)
 	assert.True(t, is)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -38,7 +38,7 @@ func TestProcessVariableAssignments(t *testing.T) {
 script: echo 'foo'
 `)
 	assert.NoError(t, yaml.Unmarshal(b, &wrongStepIn))
-	result, is, err = processVariableAssignments(context.TODO(), "", tcVars, b)
+	result, is, err = processVariableAssignments(context.TODO(), "", &tcVars, b)
 	assert.False(t, is)
 	assert.NoError(t, err)
 	assert.Nil(t, result)

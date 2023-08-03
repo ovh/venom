@@ -1,0 +1,42 @@
+name : "Testing skip"
+testcases:
+  - name : "skip something"
+    steps:
+      - info:
+          - Set a variable to 1
+      - script : "echo '1'"
+        vars :
+          out:
+            from : result.systemout
+      - name: "Skip this as out is 1 and we are checking if its equal with 2"
+        script: |
+          exit 1
+        skip:
+          - out ShouldEqual 2
+      - script: "echo 'false'"
+        vars:
+          outAsBool:
+            from: result.systemout
+      - name: "skip as outAsBool is False"
+        script: |
+          exit 1
+        skip:
+          - outAsBool ShouldBeTrue
+  - name : "producer"
+    steps:
+      - info:
+          - Set a variable to 1
+      - script : "echo '1'"
+        vars :
+          out:
+            from : result.systemout
+  - name: "consumer"
+    skip:
+      - producer.out ShouldEqual 1
+    step:
+      - info:
+          - "Fail should be skipped as we are checking that the producer.out is equal with 1"
+        script: |
+          exit 1
+
+
