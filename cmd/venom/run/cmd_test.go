@@ -2,20 +2,33 @@ package run
 
 import (
 	"context"
-	"io"
-	"strings"
-	"testing"
-
 	"github.com/ovh/venom"
 	"github.com/stretchr/testify/require"
+	"os"
+	"path/filepath"
+	"testing"
 )
 
 func Test_readInitialVariables(t *testing.T) {
 	venom.InitTestLogger(t)
 	type args struct {
 		argsVars     []string
-		argVarsFiles []io.Reader
+		argVarsFiles []string
 		env          []string
+	}
+	location := filepath.Join(os.TempDir(), "test.yml")
+	defer os.Remove(location)
+	payload := `
+a: 1
+b: B
+c:
+ - 1
+ - 2
+ - 3`
+
+	err := os.WriteFile(location, []byte(payload), 777)
+	if err != nil {
+		t.Error(err)
 	}
 	tests := []struct {
 		name    string
@@ -46,15 +59,7 @@ func Test_readInitialVariables(t *testing.T) {
 		{
 			name: "from readers",
 			args: args{
-				argVarsFiles: []io.Reader{
-					strings.NewReader(`
-a: 1
-b: B
-c:
-  - 1
-  - 2
-  - 3`),
-				},
+				argVarsFiles: []string{location},
 			},
 			want: map[string]interface{}{
 				"a": 1.0,
@@ -65,7 +70,7 @@ c:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := readInitialVariables(context.TODO(), tt.args.argsVars, tt.args.argVarsFiles, tt.args.env)
+			got, err := readInitialVariables(context.TODO(), tt.args.argsVars, tt.args.argVarsFiles)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("readInitialVariables() error = %v, wantErr %v", err, tt.wantErr)
 				return

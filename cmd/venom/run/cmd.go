@@ -367,21 +367,7 @@ var Cmd = &cobra.Command{
 			displayArg(context.Background())
 		}
 
-		var readers = []io.Reader{}
-		for _, f := range varFiles {
-			if f == "" {
-				continue
-			}
-			fi, err := os.Open(f)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "unable to open var-from-file %s: %v\n", f, err)
-				venom.OSExit(2)
-			}
-			defer fi.Close()
-			readers = append(readers, fi)
-		}
-
-		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
+		mapvars, err := readInitialVariables(context.Background(), variables, varFiles, os.Environ())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
@@ -414,7 +400,7 @@ var Cmd = &cobra.Command{
 	},
 }
 
-func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
+func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []string, environ []string) (map[string]interface{}, error) {
 	var cast = func(vS string) interface{} {
 		var v interface{}
 		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
@@ -425,7 +411,7 @@ func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles [
 
 	for _, r := range argVarsFiles {
 		var tmpResult = map[string]interface{}{}
-		btes, err := io.ReadAll(r)
+		btes, err := os.ReadFile(r)
 		if err != nil {
 			return nil, err
 		}
