@@ -50,7 +50,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			tsResult.ComputedVars.Add(k, value)
 			newVars.Add(k, value)
 		}
-		tsResult.ComputedVars.AddAll(AllVarsFromCtx(ctx))
+
 		if v.Verbose >= 2 {
 			fdump := dumpFile{
 				Result:    result,
@@ -82,6 +82,10 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			tc.computedVerbose = append(tc.computedVerbose, fmt.Sprintf("writing %s", filename))
 		}
 		allvars, _ := DumpStringPreserveCase(tsResult.ComputedVars)
+		inputVars, _ := DumpStringPreserveCase(tsResult.InputVars)
+		for k, value := range inputVars {
+			allvars[k] = value
+		}
 		for ninfo, i := range e.Info() {
 			info, err := interpolate.Do(i, allvars)
 			if err != nil {

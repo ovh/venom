@@ -483,10 +483,17 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 		return ranged, fmt.Errorf("unable to parse range expression: %v", err)
 	}
 
+	if !ranged.Enabled {
+		ranged.Items = []RangeData{}
+		ranged.Items = append(ranged.Items, RangeData{})
+		return ranged, nil
+	}
+
 	switch ranged.RawContent.(type) {
 
 	//Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
 	case nil:
+		ranged.Items = []RangeData{}
 		ranged.Items = append(ranged.Items, RangeData{})
 		return ranged, nil
 
