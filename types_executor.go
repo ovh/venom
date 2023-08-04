@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
+	"os"
 	"strings"
 
 	"github.com/gosimple/slug"
@@ -164,6 +164,23 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 	if err != nil {
 		panic(err)
 	}
+	for key, value := range d {
+		switch z := value.(type) {
+		case string:
+			m, e := processJsonBlob(key, z)
+			if e != nil {
+				panic(e)
+			}
+			if len(m) > 0 {
+				for s, i := range m {
+					if !strings.HasPrefix(s, "__") {
+						d[s] = i
+					}
+				}
+			}
+		}
+	}
+
 	return d
 }
 
@@ -204,7 +221,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	vrs := H{}
 	vrs.AddAll(*vars)
 	uxIn := runner.GetExecutor().(UserExecutor)
-
+	inputOnlyVrs := H{}
 	for k, va := range uxIn.Input {
 		if strings.HasPrefix(k, "input.") {
 			// do not reinject input.vars from parent user executor if exists
@@ -212,10 +229,13 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		} else if !strings.HasPrefix(k, "venom") {
 			if vl, ok := step[k]; ok && vl != "" { // value from step
 				vrs.AddWithPrefix("input", k, vl)
+				inputOnlyVrs.AddWithPrefix("input", k, vl)
 			} else { // default value from executor
 				vrs.AddWithPrefix("input", k, va)
+				inputOnlyVrs.AddWithPrefix("input", k, va)
 			}
 		} else {
+			inputOnlyVrs.Add(k, va)
 			vrs.Add(k, va)
 		}
 	}
@@ -230,19 +250,20 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		TestCaseInput: TestCaseInput{
 			Name:         ux.Executor,
 			RawTestSteps: ux.RawTestSteps,
-			Vars:         vrs,
+			Vars:         inputOnlyVrs,
 		},
 		originalName:    ux.Executor,
 		TestSuiteVars:   tcIn.TestSuiteVars,
 		IsExecutor:      true,
 		TestStepResults: make([]TestStepResult, 0),
 	}
+	tc.Vars.AddAll(vrs)
 
 	tc.Name = ux.Executor
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.Add("venom.executor.filename", ux.Filename)
 	tc.Vars.Add("venom.executor.name", ux.Executor)
-	tc.Vars.AddAll(vrs)
+
 	if tc.TestSuiteVars == nil {
 		tc.TestSuiteVars = H{}
 	}
@@ -252,6 +273,9 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	Debug(ctx, "running user executor %v", ux.Executor)
 
 	newVars := v.runTestSteps(ctx, tc, tsIn)
+
+	Debug(ctx, "finished running steps of user executor %v", ux.Executor)
+
 	if newVars != nil {
 		testStepResult.ComputedVars.AddAll(newVars)
 		vrs.AddAll(newVars)
@@ -312,32 +336,20 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, errors.Wrapf(err, "unable to compute result")
 	}
 
-	for k, v := range result {
-		switch z := v.(type) {
-		case string:
-			var outJSON interface{}
-			if err := JSONUnmarshal([]byte(z), &outJSON); err == nil {
-				result[k+"json"] = outJSON
-				// Now we have to dump this object, but the key will change if this is a array or not
-				if reflect.ValueOf(outJSON).Kind() == reflect.Slice {
-					prefix := k + "json"
-					splitPrefix := strings.Split(prefix, ".")
-					prefix += "." + splitPrefix[len(splitPrefix)-1]
-					outJSONDump, err := Dump(outJSON)
-					if err != nil {
-						return nil, errors.Wrapf(err, "unable to compute result")
-					}
-					for ko, vo := range outJSONDump {
-						result[prefix+ko] = vo
-					}
-				} else {
-					outJSONDump, err := DumpWithPrefix(outJSON, k+"json")
-					if err != nil {
-						return nil, errors.Wrapf(err, "unable to compute result")
-					}
-					for ko, vo := range outJSONDump {
-						result[ko] = vo
-					}
+	json_updates := os.Getenv("VENOM_NO_JSON_EXPANSION")
+	if json_updates == "ON" {
+		//ignore the json
+
+	} else {
+		for k, value := range result {
+			switch z := value.(type) {
+			case string:
+				items, err := processJsonBlob(k, z)
+				if err != nil {
+					return nil, err
+				}
+				for key, nv := range items {
+					result[key] = nv
 				}
 			}
 		}

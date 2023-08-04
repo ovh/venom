@@ -3,6 +3,7 @@ package venom
 import (
 	"bufio"
 	"context"
+	"reflect"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -22,8 +23,11 @@ func getUserExecutorInputYML(ctx context.Context, btesIn []byte) (H, error) {
 			return nil, err
 		}
 	}
-	for k, v := range tmpResult {
-		result[k] = v
+	tmp, ok := tmpResult["foo"]
+	if ok {
+		if reflect.ValueOf(tmp).Kind() == reflect.Map {
+			result = tmp.(map[string]interface{})
+		}
 	}
 
 	return result, nil

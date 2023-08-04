@@ -50,7 +50,6 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			tsResult.ComputedVars.Add(k, value)
 			newVars.Add(k, value)
 		}
-		tsResult.ComputedVars.AddAll(AllVarsFromCtx(ctx))
 
 		if v.Verbose >= 2 {
 			fdump := dumpFile{
@@ -109,6 +108,10 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 				}
 			}
 			Info(ctx, info)
+			flag, exists := os.LookupEnv("VENOM_LOGS_SHOW_INFO")
+			if exists && flag == "ON" {
+				v.Println(fmt.Sprintf("\n\t\t\t\t %s", Cyan(info)))
+			}
 			tsResult.ComputedInfo = append(tsResult.ComputedInfo, info)
 		}
 

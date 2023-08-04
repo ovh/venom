@@ -248,33 +248,14 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 		}
 
 		// varsFromInput contains the default vars from the executor
-		var varsFromInputMap map[string]string
-		if len(varsFromInput) > 0 {
-			varsFromInputMap, err = DumpStringPreserveCase(varsFromInput)
-			if err != nil {
-				return errors.Wrapf(err, "unable to parse variables")
-			}
-		}
 
-		varsComputed := map[string]string{}
-		for k, v := range vars {
-			varsComputed[k] = v
-		}
-		for k, v := range varsFromInputMap {
-			// we only take vars from varsFromInputMap if it's not already exist in vars from teststep vars
-			if _, ok := vars[k]; !ok {
-				varsComputed[k] = v
-			}
-		}
 
 		ux := UserExecutor{Filename: f}
 		if err := yaml.Unmarshal(btes, &ux); err != nil {
 			return errors.Wrapf(err, "unable to parse file %q", f)
 		}
 
-		for k, vr := range varsComputed {
-			ux.Input.Add(k, vr)
-		}
+		ux.Input.AddAll(varsFromInput)
 		ux.Executor = executorName
 		v.RegisterExecutorUser(executorName, ux)
 	}

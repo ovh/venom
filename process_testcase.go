@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -248,12 +249,16 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			}
 
 			var content string
+			payloadBytes, _ := json.Marshal(rawStep)
+			content = string(payloadBytes)
 			for i := 0; i < 10; i++ {
-				content, err = interpolate.Do(string(rawStep), vars)
+				content, err = interpolate.Do(content, vars)
+				//content, err = interpolate.Do(strings.ReplaceAll(string(payloadBytes), "\\\"", "'"), vars)
 				if err != nil {
 					tsResult.appendError(err)
 					Error(ctx, "unable to interpolate step: %v", err)
-					return nil
+					tsResult.Status = StatusFail
+					break
 				}
 				if !strings.Contains(content, "{{") {
 					break
@@ -480,19 +485,17 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 	//Load "range" attribute and perform actions depending on its typing
 	var ranged Range
 	if err := json.Unmarshal(rawStep, &ranged); err != nil {
-		return ranged, fmt.Errorf("unable to parse range expression: %v", err)
-	}
-
-	if !ranged.Enabled {
+		ranged.Enabled = false
 		ranged.Items = []RangeData{}
 		ranged.Items = append(ranged.Items, RangeData{})
-		return ranged, nil
+		return ranged, fmt.Errorf("unable to parse range expression: %v", err)
 	}
 
 	switch ranged.RawContent.(type) {
 
 	//Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
 	case nil:
+		ranged.Enabled = false
 		ranged.Items = []RangeData{}
 		ranged.Items = append(ranged.Items, RangeData{})
 		return ranged, nil
@@ -580,6 +583,45 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 	return ranged, nil
 }
 
+func processJsonBlob(key string, value string) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+	var outJSON interface{}
+	if err := JSONUnmarshal([]byte(value), &outJSON); err == nil {
+		result[key+"json"] = outJSON
+		initialDump, err := DumpStringPreserveCase(outJSON)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to compute result")
+		}
+		// Now we have to dump this object, but the key will change if this is a array or not
+		if reflect.ValueOf(outJSON).Kind() == reflect.Slice {
+			prefix := key + "json"
+			splitPrefix := strings.Split(prefix, ".")
+			prefix += "." + splitPrefix[len(splitPrefix)-1]
+			for ko, vo := range initialDump {
+				result[prefix+ko] = vo
+			}
+		} else {
+			outJSONDump := map[string]interface{}{}
+			for ko, vo := range initialDump {
+				if !strings.Contains(ko, "__Type__") && !strings.Contains(ko, "__Len__") {
+					outJSONDump[key+"json."+ko] = vo
+				} else {
+					outJSONDump[ko] = vo
+				}
+			}
+			for ko, vo := range outJSONDump {
+				result[ko] = vo
+			}
+		}
+	}
+	//make it compatible with the one before (ie all lowercase)
+	for k, v := range result {
+		result[strings.ToLower(k)] = v
+	}
+
+	return result, nil
+}
+
 func processVariableAssignments(ctx context.Context, tcName string, tcVars *H, rawStep json.RawMessage) (H, bool, error) {
 	var stepAssignment AssignStep
 	var result = make(H)
@@ -600,10 +642,49 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars *H, r
 
 	for varname, assignment := range stepAssignment.Assignments {
 		Debug(ctx, "Processing %s assignment", varname)
+		if strings.Contains(assignment.From, "json") {
+			_, has := localVars[assignment.From]
+			if !has {
+				parts := strings.Split(assignment.From, ".")
+				keyparts := []string{}
+				for _, part := range parts {
+					if strings.HasSuffix(part, "json") {
+						keyparts = append(keyparts, strings.Replace(part, "json", "", 1))
+						break
+					} else {
+						keyparts = append(keyparts, part)
+					}
+				}
+
+				key := strings.Join(keyparts, ".")
+				varValue, has := localVars[key]
+				if !has {
+					if assignment.Default == nil {
+						err := fmt.Errorf("%s reference not found and tried to create json for %s", assignment.From, key)
+						Error(ctx, "%v", err)
+						return nil, true, err
+					}
+					localVars[key] = assignment.Default
+					result.Add(varname, assignment.Default)
+				} else {
+					Debug(ctx, "process json %v", key)
+					varjson, err := processJsonBlob(key, fmt.Sprintf("%v", varValue))
+					if err != nil {
+						err := fmt.Errorf("%s could not parse json for %s", assignment.From, key)
+						Error(ctx, "%v", err)
+						return nil, true, err
+					}
+					localVars.AddAll(varjson)
+				}
+			}
+
+		}
 		varValue, has := localVars[assignment.From]
+
 		if !has {
 			varValue, has = localVars[tcName+"."+assignment.From]
 			if !has {
+
 				if assignment.Default == nil {
 					err := fmt.Errorf("%s reference not found in %s", assignment.From, strings.Join(tcVarsKeys, "\n"))
 					Error(ctx, "%v", err)
