@@ -50,6 +50,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			tsResult.ComputedVars.Add(k, value)
 			newVars.Add(k, value)
 		}
+		tsResult.ComputedVars.AddAll(AllVarsFromCtx(ctx))
 
 		if v.Verbose >= 2 {
 			fdump := dumpFile{

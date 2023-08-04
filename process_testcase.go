@@ -355,8 +355,8 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 				assign, _, err := processVariableAssignments(ctx, tc.Name, &previousStepVars, rawStep)
 				if err != nil {
 					Error(ctx, "unable to process variable assignments: %v", err)
+					tsResult.Status = StatusFail
 					tsResult.appendError(err)
-					return nil
 				}
 				if assign != nil {
 					tsResult.ComputedVars.AddAll(assign)
@@ -606,7 +606,7 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars *H, r
 			if !has {
 				if assignment.Default == nil {
 					err := fmt.Errorf("%s reference not found in %s", assignment.From, strings.Join(tcVarsKeys, "\n"))
-					Info(ctx, "%v", err)
+					Error(ctx, "%v", err)
 					return nil, true, err
 				}
 				varValue = assignment.Default
