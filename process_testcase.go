@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -642,42 +643,35 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars *H, r
 
 	for varname, assignment := range stepAssignment.Assignments {
 		Debug(ctx, "Processing %s assignment", varname)
-		if strings.Contains(assignment.From, "json") {
-			_, has := localVars[assignment.From]
-			if !has {
-				parts := strings.Split(assignment.From, ".")
-				keyparts := []string{}
-				for _, part := range parts {
-					if strings.HasSuffix(part, "json") {
-						keyparts = append(keyparts, strings.Replace(part, "json", "", 1))
-						break
-					} else {
-						keyparts = append(keyparts, part)
-					}
-				}
-
-				key := strings.Join(keyparts, ".")
-				varValue, has := localVars[key]
+		//
+		jsonUpdates := os.Getenv("VENOM_NO_JSON_EXPANSION")
+		if jsonUpdates == "ON" {
+			if strings.Contains(assignment.From, "json") {
+				_, has := localVars[assignment.From]
 				if !has {
-					if assignment.Default == nil {
-						err := fmt.Errorf("%s reference not found and tried to create json for %s", assignment.From, key)
-						Error(ctx, "%v", err)
-						return nil, true, err
+					key := getKeyForLookup(assignment.From)
+					varValue, has := localVars[key]
+					if !has {
+						if assignment.Default == nil {
+							err := fmt.Errorf("%s reference not found and tried to create json for %s", assignment.From, key)
+							Error(ctx, "%v", err)
+							return nil, true, err
+						}
+						localVars[key] = assignment.Default
+						result.Add(varname, assignment.Default)
+					} else {
+						Debug(ctx, "process json %v", key)
+						varjson, err := processJsonBlob(key, fmt.Sprintf("%v", varValue))
+						if err != nil {
+							err := fmt.Errorf("%s could not parse json for %s", assignment.From, key)
+							Error(ctx, "%v", err)
+							return nil, true, err
+						}
+						localVars.AddAll(varjson)
 					}
-					localVars[key] = assignment.Default
-					result.Add(varname, assignment.Default)
-				} else {
-					Debug(ctx, "process json %v", key)
-					varjson, err := processJsonBlob(key, fmt.Sprintf("%v", varValue))
-					if err != nil {
-						err := fmt.Errorf("%s could not parse json for %s", assignment.From, key)
-						Error(ctx, "%v", err)
-						return nil, true, err
-					}
-					localVars.AddAll(varjson)
 				}
-			}
 
+			}
 		}
 		varValue, has := localVars[assignment.From]
 
@@ -719,4 +713,20 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars *H, r
 		}
 	}
 	return result, true, nil
+}
+
+// getKeyForLookup we need the first json key in order to process the json blob
+func getKeyForLookup(originalKey string) string {
+	parts := strings.Split(originalKey, ".")
+	keyparts := []string{}
+	for _, part := range parts {
+		if strings.HasSuffix(part, "json") {
+			keyparts = append(keyparts, strings.Replace(part, "json", "", 1))
+			break
+		} else {
+			keyparts = append(keyparts, part)
+		}
+	}
+	key := strings.Join(keyparts, ".")
+	return key
 }

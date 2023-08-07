@@ -164,17 +164,20 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 	if err != nil {
 		panic(err)
 	}
-	for key, value := range d {
-		switch z := value.(type) {
-		case string:
-			m, e := processJsonBlob(key, z)
-			if e != nil {
-				panic(e)
-			}
-			if len(m) > 0 {
-				for s, i := range m {
-					if !strings.HasPrefix(s, "__") {
-						d[s] = i
+	jsonUpdates := os.Getenv("VENOM_NO_JSON_EXPANSION")
+	if jsonUpdates == "ON" {
+		for key, value := range d {
+			switch z := value.(type) {
+			case string:
+				m, e := processJsonBlob(key, z)
+				if e != nil {
+					panic(e)
+				}
+				if len(m) > 0 {
+					for s, i := range m {
+						if !strings.Contains(strings.ToUpper(s), "__Type__") && !strings.Contains(strings.ToUpper(s), "__Len__") {
+							d[s] = i
+						}
 					}
 				}
 			}
@@ -336,10 +339,10 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, errors.Wrapf(err, "unable to compute result")
 	}
 
-	json_updates := os.Getenv("VENOM_NO_JSON_EXPANSION")
-	if json_updates == "ON" {
+	jsonUpdates := os.Getenv("VENOM_NO_JSON_EXPANSION")
+	if jsonUpdates == "ON" {
 		//ignore the json
-
+		Debug(ctx, "%s", "ignore the json expansion")
 	} else {
 		for k, value := range result {
 			switch z := value.(type) {

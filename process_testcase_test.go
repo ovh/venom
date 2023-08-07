@@ -75,3 +75,10 @@ func TestProcessJsonBlobWithArray(t *testing.T) {
 	assert.Equal(t, items["__Type__"], "Map")
 	assert.Contains(t, items, "__Len__")
 }
+
+func TestGetKeyForLookup(t *testing.T) {
+	InitTestLogger(t)
+	assert.Equal(t, "test", getKeyForLookup("testjson.key"))
+	assert.Equal(t, "test", getKeyForLookup("testjson.anArray.anArray0"))
+}
+
