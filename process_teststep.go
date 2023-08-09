@@ -55,7 +55,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			fdump := dumpFile{
 				Result:    result,
 				TestStep:  step,
-				Variables: tsResult.ComputedVars,
+				Variables: *vars,
 			}
 			output, err := json.MarshalIndent(fdump, "", " ")
 			if err != nil {
@@ -114,14 +114,16 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			}
 			tsResult.ComputedInfo = append(tsResult.ComputedInfo, info)
 		}
-
+		varsForAssertions := H{}
+		varsForAssertions.AddAll(*vars)
 		if result == nil {
-			assertRes = applyAssertions(ctx, AllVarsFromCtx(ctx), *tc, stepNumber, rangedIndex, step, nil)
+			assertRes = applyAssertions(ctx, &varsForAssertions, tc, stepNumber, rangedIndex, step, nil)
 		} else {
+			varsForAssertions.AddAll(mapResult)
 			if h, ok := e.(executorWithDefaultAssertions); ok {
-				assertRes = applyAssertions(ctx, result, *tc, stepNumber, rangedIndex, step, h.GetDefaultAssertions())
+				assertRes = applyAssertions(ctx, &varsForAssertions, tc, stepNumber, rangedIndex, step, h.GetDefaultAssertions())
 			} else {
-				assertRes = applyAssertions(ctx, result, *tc, stepNumber, rangedIndex, step, nil)
+				assertRes = applyAssertions(ctx, &varsForAssertions, tc, stepNumber, rangedIndex, step, nil)
 			}
 		}
 

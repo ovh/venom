@@ -82,3 +82,16 @@ func TestGetKeyForLookup(t *testing.T) {
 	assert.Equal(t, "test", getKeyForLookup("testjson.anArray.anArray0"))
 }
 
+func TestProcessRange(t *testing.T) {
+	InitTestLogger(t)
+	rawStep := []byte("{\"account_id\":\"{{.value}}\",\"name\":\"Account validation\",\"range\":\"{{.account_ids}}\",\"type\":\"account_validation\"}")
+	vars := H{}
+	vars.Add("account_ids", []string{`1`, `2`})
+	ranged, err := parseRanged(context.Background(), rawStep, vars)
+	assert.NoError(t, err)
+	assert.NotNil(t, ranged)
+	assert.NotNil(t, ranged.Items)
+	assert.Nil(t, ranged.RawContent)
+	assert.True(t, ranged.Enabled)
+	assert.Equal(t, 2, len(ranged.Items))
+}

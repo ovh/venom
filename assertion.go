@@ -28,7 +28,7 @@ type AssertionApplied struct {
 	IsOK      bool      `json:"isOK" yml:"-"`
 }
 
-func applyAssertions(ctx context.Context, r interface{}, tc TestCase, stepNumber int, rangedIndex int, step TestStep, defaultAssertions *StepAssertions) AssertionsApplied {
+func applyAssertions(ctx context.Context, vars *H, tc *TestCase, stepNumber int, rangedIndex int, step TestStep, defaultAssertions *StepAssertions) AssertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var systemerr, systemout string
@@ -46,12 +46,11 @@ func applyAssertions(ctx context.Context, r interface{}, tc TestCase, stepNumber
 		sa = *defaultAssertions
 	}
 
-	executorResult := GetExecutorResult(r)
-
 	isOK := true
+	localVars := *vars
 	assertions := []AssertionApplied{}
 	for _, assertion := range sa.Assertions {
-		errs := check(ctx, tc, stepNumber, rangedIndex, assertion, executorResult)
+		errs := check(ctx, *tc, stepNumber, rangedIndex, assertion, localVars)
 		isAssertionOK := true
 		if errs != nil {
 			errors = append(errors, *errs)
@@ -64,12 +63,12 @@ func applyAssertions(ctx context.Context, r interface{}, tc TestCase, stepNumber
 		})
 	}
 
-	if _, ok := executorResult["result.systemerr"]; ok {
-		systemerr = fmt.Sprintf("%v", executorResult["result.systemerr"])
+	if _, ok := localVars["result.systemerr"]; ok {
+		systemerr = fmt.Sprintf("%v", localVars["result.systemerr"])
 	}
 
-	if _, ok := executorResult["result.systemout"]; ok {
-		systemout = fmt.Sprintf("%v", executorResult["result.systemout"])
+	if _, ok := localVars["result.systemout"]; ok {
+		systemout = fmt.Sprintf("%v", localVars["result.systemout"])
 	}
 
 	return AssertionsApplied{

@@ -178,20 +178,20 @@ type TestCase struct {
 }
 
 type TestStepResult struct {
-	Name              string            `json:"name"`
-	Errors            []Failure         `json:"errors"`
-	Skipped           []Skipped         `json:"skipped" yaml:"skipped"`
-	Status            Status            `json:"status" yaml:"status"`
-	Raw               interface{}       `json:"raw" yaml:"raw"`
-	Interpolated      interface{}       `json:"interpolated" yaml:"interpolated"`
-	Number            int               `json:"number" yaml:"number"`
-	RangedIndex       int               `json:"rangedIndex" yaml:"rangedIndex"`
-	RangedEnable      bool              `json:"rangedEnable" yaml:"rangedEnable"`
-	InputVars         map[string]string `json:"inputVars" yaml:"-"`
-	ComputedVars      H                 `json:"computedVars" yaml:"-"`
-	ComputedInfo      []string          `json:"computedInfos" yaml:"-"`
-	AssertionsApplied AssertionsApplied `json:"assertionsApplied" yaml:"-"`
-	Retries           int               `json:"retries" yaml:"retries"`
+	Name              string                 `json:"name"`
+	Errors            []Failure              `json:"errors"`
+	Skipped           []Skipped              `json:"skipped" yaml:"skipped"`
+	Status            Status                 `json:"status" yaml:"status"`
+	Raw               interface{}            `json:"raw" yaml:"raw"`
+	Interpolated      interface{}            `json:"interpolated" yaml:"interpolated"`
+	Number            int                    `json:"number" yaml:"number"`
+	RangedIndex       int                    `json:"rangedIndex" yaml:"rangedIndex"`
+	RangedEnable      bool                   `json:"rangedEnable" yaml:"rangedEnable"`
+	InputVars         map[string]interface{} `json:"inputVars" yaml:"-"`
+	ComputedVars      H                      `json:"computedVars" yaml:"-"`
+	ComputedInfo      []string               `json:"computedInfos" yaml:"-"`
+	AssertionsApplied AssertionsApplied      `json:"assertionsApplied" yaml:"-"`
+	Retries           int                    `json:"retries" yaml:"retries"`
 
 	Systemout string    `json:"systemout"`
 	Systemerr string    `json:"systemerr"`

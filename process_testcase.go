@@ -296,7 +296,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			tsResult.Number = stepNumber
 			tsResult.RangedIndex = rangedIndex
 			tsResult.RangedEnable = ranged.Enabled
-			tsResult.InputVars = vars
+			tsResult.InputVars = stepVars
 
 			tc.testSteps = append(tc.testSteps, step)
 			var e ExecutorRunner
