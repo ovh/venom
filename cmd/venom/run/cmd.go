@@ -367,7 +367,7 @@ var Cmd = &cobra.Command{
 			displayArg(context.Background())
 		}
 
-		mapvars, err := readInitialVariables(context.Background(), variables, varFiles, os.Environ())
+		mapvars, err := readInitialVariables(context.Background(), variables, varFiles)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
@@ -400,7 +400,7 @@ var Cmd = &cobra.Command{
 	},
 }
 
-func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []string, environ []string) (map[string]interface{}, error) {
+func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []string) (map[string]interface{}, error) {
 	var cast = func(vS string) interface{} {
 		var v interface{}
 		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
