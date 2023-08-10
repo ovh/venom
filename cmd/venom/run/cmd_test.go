@@ -3,6 +3,8 @@ package run
 import (
 	"context"
 	"github.com/ovh/venom"
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
@@ -109,4 +111,19 @@ func Test_initFromEnv(t *testing.T) {
 			nb++
 		}
 	}
+}
+
+func TestRunCmd(t *testing.T) {
+	var validArgs []string
+
+	validArgs = append(validArgs, "run", "../../../tests/assertions")
+
+	rootCmd := &cobra.Command{
+		Use:   "venom",
+		Short: "Venom aim to create, manage and run your integration tests with efficiency",
+	}
+	rootCmd.SetArgs(validArgs)
+	rootCmd.AddCommand(Cmd)
+	err := rootCmd.Execute()
+	assert.NoError(t, err)
 }
