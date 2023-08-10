@@ -61,12 +61,12 @@ func initArgs(cmd *cobra.Command) {
 	// Configuration file overrides the environment variables.
 	if _, err := initFromEnv(os.Environ()); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		venom.OSExit(2)
+		v.OSExit(2)
 	}
 
 	if err := initFromConfigFile(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		venom.OSExit(2)
+		v.OSExit(2)
 	}
 	cmd.LocalFlags().VisitAll(initFromCommandArguments)
 }
@@ -244,6 +244,10 @@ func initFromEnv(environ []string) ([]string, error) {
 		v := strings.Split(os.Getenv("VENOM_VAR"), " ")
 		variables = v
 	}
+	// VENOM_TEST_MODE is used to set the venom not calling os.Exit() at the end of the run
+	if os.Getenv("VENOM_TEST_MODE") != "" {
+		v.InTestMode = os.Getenv("VENOM_TEST_MODE") == "true"
+	}
 	if os.Getenv("VENOM_VAR_FROM_FILE") != "" {
 		varFiles = strings.Split(os.Getenv("VENOM_VAR_FROM_FILE"), " ")
 	}
@@ -346,19 +350,19 @@ var Cmd = &cobra.Command{
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			v.OSExit(2)
 		}
 
 		if v.Verbose == 3 {
 			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
-				venom.OSExit(2)
+				v.OSExit(2)
 			}
 			fMem, err := os.Create(filepath.Join(v.OutputDir, "pprof_mem_profile.prof"))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
-				venom.OSExit(2)
+				v.OSExit(2)
 			}
 			if fCPU != nil && fMem != nil {
 				pprof.StartCPUProfile(fCPU) //nolint
@@ -379,7 +383,7 @@ var Cmd = &cobra.Command{
 			fi, err := os.Open(f)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "unable to open var-from-file %s: %v\n", f, err)
-				venom.OSExit(2)
+				v.OSExit(2)
 			}
 			defer fi.Close()
 			readers = append(readers, fi)
@@ -388,31 +392,31 @@ var Cmd = &cobra.Command{
 		mapvars, err := readInitialVariables(context.Background(), variables, readers, os.Environ())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			v.OSExit(2)
 		}
 		v.AddVariables(mapvars)
 
 		if err := v.Parse(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			v.OSExit(2)
 		}
 
 		if err := v.Process(context.Background(), path); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			v.OSExit(2)
 		}
 
 		if err := v.OutputResult(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			venom.OSExit(2)
+			v.OSExit(2)
 		}
 
 		if v.Tests.Status == venom.StatusPass {
 			fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Green(v.Tests.Status))
-			venom.OSExit(0)
+			v.OSExit(0)
 		}
 		fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Red(v.Tests.Status))
-		venom.OSExit(2)
+		v.OSExit(2)
 
 		return nil
 	},

@@ -27,11 +27,21 @@ var (
 	IsTest  = ""
 )
 
+// OSExit is a wrapper for os.Exit
 func OSExit(exitCode int) {
 	if IsTest != "" {
 		bincover.ExitCode = exitCode
 	} else {
 		os.Exit(exitCode)
+	}
+}
+
+// OSExit is a wrapper for os.Exit
+func (v *Venom) OSExit(exitCode int) {
+	if v.InTestMode {
+		bincover.ExitCode = exitCode
+	} else {
+		OSExit(exitCode)
 	}
 }
 
@@ -73,6 +83,7 @@ type Venom struct {
 	StopOnFailure bool
 	HtmlReport    bool
 	Verbose       int
+	InTestMode    bool
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()
