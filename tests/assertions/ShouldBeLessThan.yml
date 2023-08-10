@@ -8,10 +8,8 @@ testcases:
 
 - name:  bodyjson assert comparator test
   steps:
-  - type: http
-    method: GET
-    url: https://eu.api.ovh.com/1.0/sms/rates/destinations?billingCountry=fr&country=fr
-    headers:
-      Content-type: application/json
+  - type: exec
+    script : |
+      echo '{"credit": 0.5}'
     assertions:
-    - result.bodyjson.credit ShouldBeLessThan 2
+    - result.systemoutjson.credit ShouldBeLessThan 2
