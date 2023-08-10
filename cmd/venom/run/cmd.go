@@ -60,12 +60,12 @@ func initArgs(cmd *cobra.Command) {
 	// command line flags overrides the configuration file.
 	// Configuration file overrides the environment variables.
 	if _, err := initFromEnv(os.Environ()); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 		venom.OSExit(2)
 	}
 
 	if err := initFromConfigFile(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 		venom.OSExit(2)
 	}
 	cmd.LocalFlags().VisitAll(initFromCommandArguments)
@@ -132,7 +132,13 @@ func initFromConfigFile() error {
 		if err != nil {
 			return err
 		}
-		defer fi.Close()
+		defer func(fi *os.File) {
+			err := fi.Close()
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
+				venom.OSExit(2)
+			}
+		}(fi)
 		return initFromReaderConfigFile(fi)
 	}
 
@@ -145,7 +151,13 @@ func initFromConfigFile() error {
 		if err != nil {
 			return err
 		}
-		defer fi.Close()
+		defer func(fi *os.File) {
+			err := fi.Close()
+			if err != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
+				venom.OSExit(2)
+			}
+		}(fi)
 		return initFromReaderConfigFile(fi)
 	}
 	return nil
@@ -158,6 +170,7 @@ type ConfigFileData struct {
 	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
 	HtmlReport     *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
 	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Secrets        *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
 	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
 	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
 }
@@ -193,6 +206,11 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	if configFileData.Variables != nil {
 		for _, varFromFile := range *configFileData.Variables {
 			variables = mergeVariables(varFromFile, variables)
+		}
+	}
+	if configFileData.Secrets != nil {
+		for _, secret := range *configFileData.Secrets {
+			secrets = append(secrets, secret)
 		}
 	}
 	if configFileData.VariablesFiles != nil {
@@ -314,7 +332,7 @@ var Cmd = &cobra.Command{
   Run a single testsuite and load all variables from a file: venom run mytestfile.yml --var-from-file variables.yaml
   Run all testsuites containing in files ending with *.yml or *.yaml with verbosity: VENOM_VERBOSE=2 venom run
   
-  Notice that variables initialized with -var-from-file argument can be overrided with -var argument
+  Notice that variables initialized with -var-from-file argument can be overridden with -var argument
   
   More info: https://github.com/ovh/venom`,
 	Long: `run integration tests`,
@@ -341,26 +359,36 @@ var Cmd = &cobra.Command{
 		v.Verbose = verbose
 
 		if err := v.InitLogger(); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
 		}
 
 		if v.Verbose == 3 {
 			fCPU, err := os.Create(filepath.Join(v.OutputDir, "pprof_cpu_profile.prof"))
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
+				_, _ = fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
 				venom.OSExit(2)
 			}
 			fMem, err := os.Create(filepath.Join(v.OutputDir, "pprof_mem_profile.prof"))
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
+				_, _ = fmt.Fprintf(os.Stderr, "error while create profile file %v\n", err)
 				venom.OSExit(2)
 			}
 			if fCPU != nil && fMem != nil {
-				pprof.StartCPUProfile(fCPU) //nolint
-				p := pprof.Lookup("heap")
-				defer p.WriteTo(fMem, 1) //nolint
+				err := pprof.StartCPUProfile(fCPU)
+				if err != nil {
+					_, _ = fmt.Fprintf(os.Stderr, "error while starting cpu profiling %v\n", err)
+					venom.OSExit(2)
+				} //nolint
 				defer pprof.StopCPUProfile()
+				p := pprof.Lookup("heap")
+				defer func(p *pprof.Profile, w io.Writer, debug int) {
+					err := p.WriteTo(w, debug)
+					if err != nil {
+						_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
+						venom.OSExit(2)
+					}
+				}(p, fMem, 1) //nolint
 			}
 		}
 		if verbose >= 2 {
@@ -369,33 +397,32 @@ var Cmd = &cobra.Command{
 
 		mapvars, err := readInitialVariables(context.Background(), variables, varFiles)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
 		}
 		v.AddVariables(mapvars)
 
 		if err := v.Parse(context.Background(), path); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
 		}
 
 		if err := v.Process(context.Background(), path); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
 		}
 
 		if err := v.OutputResult(); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 			venom.OSExit(2)
 		}
 
 		if v.Tests.Status == venom.StatusPass {
-			fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Green(v.Tests.Status))
-			venom.OSExit(0)
+			_, _ = fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Green(v.Tests.Status))
+		} else {
+			_, _ = fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Red(v.Tests.Status))
+			venom.OSExit(2)
 		}
-		fmt.Fprintf(os.Stdout, "final status: %v\n", venom.Red(v.Tests.Status))
-		venom.OSExit(2)
-
 		return nil
 	},
 }
