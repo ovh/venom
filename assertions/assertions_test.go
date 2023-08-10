@@ -838,6 +838,55 @@ func TestShouldBeEmpty(t *testing.T) {
 		})
 	}
 }
+func TestShouldNotExist(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "is nil",
+			args: args{
+				actual: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "is empty",
+			args: args{
+				actual: "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "is zero value",
+			args: args{
+				actual: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "is_not_empty",
+			args: args{
+				actual: map[string]interface{}{"a": ""},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldNotExist(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldNotExist() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+
+}
 
 func TestShouldNotBeEmpty(t *testing.T) {
 	type args struct {
