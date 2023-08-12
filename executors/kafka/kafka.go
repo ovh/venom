@@ -549,12 +549,15 @@ func convertFromMessage2JSON(message *Message, msgJSON *MessageJSON) {
 
 func convertToRecordHeaders(headers map[string]string) []sarama.RecordHeader {
 	results := make([]sarama.RecordHeader, len(headers))
+	idx := 0
 
 	for k, v := range headers {
-		results = append(results, sarama.RecordHeader{
+		results[idx] = sarama.RecordHeader{
 			Key:   sarama.ByteEncoder(k),
 			Value: sarama.ByteEncoder(v),
-		})
+		}
+
+		idx++
 	}
 
 	return results
