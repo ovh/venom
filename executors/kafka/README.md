@@ -33,6 +33,7 @@ In your yaml file, you can use:
   # for producer client type:
   - messages
   - messages.topic - Topic where to post message
+  - messages.headers - Headers for message
   - messages.value - Value for message
   - messages.valueFile - Take value for message from file provided here
   - messages.avroSchemaFile - Specify Avro schema file. messages.valueFile or messages.value should have value, which can be encoded with that schema. If not provided, then it will retrieve the latest available version from schema registry using Topic Name strategy, that is, ${topicName}-value as subject.
