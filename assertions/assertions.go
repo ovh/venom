@@ -970,13 +970,13 @@ func ShouldEqualTrimSpace(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenBefore "{{.time_with_5s_after}}"
-//  - name: test assertion with humanize format
-//    steps:
-//    - type: exec
-//      script: "echo {{.venom.datetime}}"
-//      assertions:
-//        - "result.systemout ShouldHappenBefore tomorrow"
-//        - "result.systemout ShouldHappenBefore '5 minutes from now'"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenBefore tomorrow"
+//	       - "result.systemout ShouldHappenBefore '5 minutes from now'"
 func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1014,13 +1014,13 @@ func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenOnOrBefore "{{.time_with_5s_after}}"
-//  - name: test assertion with humanize format
-//    steps:
-//    - type: exec
-//      script: "echo {{.venom.datetime}}"
-//      assertions:
-//        - "result.systemout ShouldHappenOnOrBefore tomorrow"
-//        - "result.systemout ShouldHappenOnOrBefore '5 minutes from now'"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenOnOrBefore tomorrow"
+//	       - "result.systemout ShouldHappenOnOrBefore '5 minutes from now'"
 func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1057,13 +1057,13 @@ func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenAfter "{{.time_with_5s_before}}"
-//  - name: test assertion with humanize format
-//    steps:
-//    - type: exec
-//      script: "echo {{.venom.datetime}}"
-//      assertions:
-//        - "result.systemout ShouldHappenAfter yesterday"
-//        - "result.systemout ShouldHappenAfter '5 minutes ago'"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenAfter yesterday"
+//	       - "result.systemout ShouldHappenAfter '5 minutes ago'"
 func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1100,13 +1100,13 @@ func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenOnOrAfter "{{.time_with_5s_before}}"
-//  - name: test assertion with humanize format
-//    steps:
-//    - type: exec
-//      script: "echo {{.venom.datetime}}"
-//      assertions:
-//        - "result.systemout ShouldHappenOnOrAfter yesterday"
-//        - "result.systemout ShouldHappenOnOrAfter '5 minutes ago'"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenOnOrAfter yesterday"
+//	       - "result.systemout ShouldHappenOnOrAfter '5 minutes ago'"
 func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1144,13 +1144,13 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenBetween "{{.time_with_5s_before}}" "{{.time_with_5s_after}}"
-//  - name: test assertion with humanize format
-//    steps:
-//    - type: exec
-//      script: "echo {{.venom.datetime}}"
-//      assertions:
-//        - "result.systemout ShouldHappenBetween yesterday tomorrow"
-//        - "result.systemout ShouldHappenBetween '5 minutes ago' '5 minutes from now'"
+//	- name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenBetween yesterday tomorrow"
+//	       - "result.systemout ShouldHappenBetween '5 minutes ago' '5 minutes from now'"
 func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 	if err := need(2, expected); err != nil {
 		return err
