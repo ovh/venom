@@ -181,6 +181,11 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.LibDir != nil {
 		libDir = *configFileData.LibDir
+		if absPath, err := filepath.Abs(libDir); err == nil {
+			libDir = absPath
+		} else {
+			return err
+		}
 	}
 	if configFileData.OutputDir != nil {
 		outputDir = *configFileData.OutputDir
