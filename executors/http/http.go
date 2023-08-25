@@ -109,8 +109,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, err
 	}
 
-	e.setDefaultHeader("Accept", "application/json")
-	e.setDefaultHeader("Content-Type", "application/json")
+	if e.MultipartForm == nil {
+		e.setDefaultHeader("Accept", "application/json")
+		e.setDefaultHeader("Content-Type", "application/json")
+	}
 
 	for k, v := range e.Headers {
 		req.Header.Set(k, v)
