@@ -110,7 +110,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	if e.MultipartForm == nil {
-		e.setDefaultHeader("Accept", "application/json")
 		e.setDefaultHeader("Content-Type", "application/json")
 	}
 
