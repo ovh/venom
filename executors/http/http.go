@@ -110,6 +110,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, err
 	}
 
+	if e.MultipartForm == nil {
+		e.setDefaultHeader("Content-Type", "application/json")
+	}
+
 	for k, v := range e.Headers {
 		req.Header.Set(k, v)
 		if strings.ToLower(k) == "host" {
@@ -419,6 +423,13 @@ func isContentTypeSupported(contentType string) bool {
 func isBodyJSONSupported(resp *http.Response) bool {
 	contentType := parseContentType(resp.Header.Get("Content-Type"))
 	return strings.Contains(contentType, "application/json") || strings.HasSuffix(contentType, "+json")
+}
+
+// setDefaultHeader is a utility function to set a default header if it's not already present
+func (e Executor) setDefaultHeader(headerName, defaultValue string) {
+	if _, present := e.Headers[headerName]; !present {
+		e.Headers[headerName] = defaultValue
+	}
 }
 
 func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error, error) {
