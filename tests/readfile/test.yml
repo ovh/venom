@@ -1,0 +1,4 @@
+key: 12345
+messages:
+  - name: content
+    type: yaml
