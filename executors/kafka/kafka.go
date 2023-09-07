@@ -33,11 +33,12 @@ func New() venom.Executor {
 type (
 	// Message represents the object sended or received from kafka
 	Message struct {
-		Topic          string `json:"topic" yaml:"topic"`
-		Key            string `json:"key" yaml:"key"`
-		Value          string `json:"value,omitempty" yaml:"value,omitempty"`
-		ValueFile      string `json:"valueFile,omitempty" yaml:"valueFile,omitempty"`
-		AvroSchemaFile string `json:"avroSchemaFile,omitempty" yaml:"avroSchemaFile,omitempty"`
+		Topic          string            `json:"topic" yaml:"topic"`
+		Key            string            `json:"key" yaml:"key"`
+		Headers        map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
+		Value          string            `json:"value,omitempty" yaml:"value,omitempty"`
+		ValueFile      string            `json:"valueFile,omitempty" yaml:"valueFile,omitempty"`
+		AvroSchemaFile string            `json:"avroSchemaFile,omitempty" yaml:"avroSchemaFile,omitempty"`
 	}
 
 	// MessageJSON represents the object sended or received from kafka
@@ -212,9 +213,10 @@ func (e Executor) produceMessages(workdir string) error {
 			return err
 		}
 		messages = append(messages, &sarama.ProducerMessage{
-			Topic: message.Topic,
-			Key:   sarama.ByteEncoder([]byte(message.Key)),
-			Value: sarama.ByteEncoder(value),
+			Topic:   message.Topic,
+			Key:     sarama.ByteEncoder([]byte(message.Key)),
+			Headers: convertToRecordHeaders(message.Headers),
+			Value:   sarama.ByteEncoder(value),
 		})
 	}
 
@@ -543,4 +545,20 @@ func convertFromMessage2JSON(message *Message, msgJSON *MessageJSON) {
 	} else {
 		msgJSON.Key = listMessageJSON
 	}
+}
+
+func convertToRecordHeaders(headers map[string]string) []sarama.RecordHeader {
+	results := make([]sarama.RecordHeader, len(headers))
+	idx := 0
+
+	for k, v := range headers {
+		results[idx] = sarama.RecordHeader{
+			Key:   sarama.ByteEncoder(k),
+			Value: sarama.ByteEncoder(v),
+		}
+
+		idx++
+	}
+
+	return results
 }
