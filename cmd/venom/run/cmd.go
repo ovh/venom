@@ -158,6 +158,7 @@ type ConfigFileData struct {
 	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
 	HtmlReport     *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
 	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Secrets        *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
 	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
 	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
 }
@@ -199,6 +200,9 @@ func initFromReaderConfigFile(reader io.Reader) error {
 		for _, varFromFile := range *configFileData.Variables {
 			variables = mergeVariables(varFromFile, variables)
 		}
+	}
+	if configFileData.Secrets != nil {
+		secrets = append(secrets, *configFileData.Secrets...)
 	}
 	if configFileData.VariablesFiles != nil {
 		for _, varFile := range *configFileData.VariablesFiles {

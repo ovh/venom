@@ -284,7 +284,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 			tc.testSteps = append(tc.testSteps, step)
 			var e ExecutorRunner
-			Info(ctx, "variables before execution %v", stepVars)
+			Info(ctx, "variables before execution %v", HideSensitive(ctx, stepVars))
 			ctx, e, err = v.GetExecutorRunner(ctx, step, stepVars)
 			if err != nil {
 				tsResult.appendError(err)

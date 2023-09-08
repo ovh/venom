@@ -488,6 +488,8 @@ Each user variable used in testsuite must be declared in this section. You can o
 - In variable definitions files, either specified on the command line `--var-from-file`.
 - As environment variables.
 
+
+
 ### Variable helpers
 
 Available helpers and some examples:
@@ -591,6 +593,25 @@ Builtin variables:
 * {{.venom.testsuite}}
 * {{.venom.timestamp}}
 
+
+### Secrets variables
+
+Example:
+
+```yml
+name: Your Testsuite
+vars:
+  foo : this-value-is-secret
+secrets:
+  - foo
+testcases:
+- name: myvar_first
+  steps:
+  - type: exec
+    script: "echo myvar {{.foo}}"
+```
+
+The value `this-value-is-secret` will not be printed in your console, `venom.log` and `...dump.json` files.
 
 ## Assertions
 
