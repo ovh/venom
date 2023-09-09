@@ -1378,7 +1378,7 @@ func TestShouldHappenBetween(t *testing.T) {
 			name: "ok",
 			args: args{
 				actual:   time.Now(),
-				expected: []interface{}{"1 second ago", "1 second from now"},
+				expected: []interface{}{"1 minute ago", "1 minute from now"},
 			},
 		},
 	}
