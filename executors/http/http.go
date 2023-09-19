@@ -68,6 +68,7 @@ type Result struct {
 	BodyJSON    interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
 	Headers     Headers     `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
+	Systemout   string      `json:"systemout,omitempty" yaml:"systemout,omitempty"`
 }
 
 type HTTPRequest struct {
@@ -100,7 +101,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	// dirty: mapstructure doesn't like decoding map[interface{}]interface{}, let's force manually
 	e.MultipartForm = step["multipart_form"]
 
-	r := Result{}
+	result := Result{}
 
 	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 
@@ -183,8 +184,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	cReq := req.Clone(ctx)
-	r.Request.Method = cReq.Method
-	r.Request.URL = req.URL.String()
+	result.Request.Method = cReq.Method
+	result.Request.URL = req.URL.String()
 	if cReq.Body != nil {
 		body, err := cReq.GetBody()
 		if err != nil {
@@ -195,64 +196,77 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			return nil, err
 		}
 		defer cReq.Body.Close()
-		r.Request.Body = string(btes)
+		result.Request.Body = string(btes)
 	}
-	r.Request.Header = cReq.Header
-	r.Request.Form = cReq.Form
-	r.Request.PostForm = cReq.PostForm
+	result.Request.Header = cReq.Header
+	result.Request.Form = cReq.Form
+	result.Request.PostForm = cReq.PostForm
 
 	start := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		result.Err = err.Error()
+		return result, err
 	}
 	elapsed := time.Since(start)
-	r.TimeSeconds = elapsed.Seconds()
+	result.TimeSeconds = elapsed.Seconds()
 
 	var bb []byte
 	if resp.Body != nil {
 		defer resp.Body.Close()
 
 		if !e.SkipBody && isBodySupported(resp) {
-			var errr error
-			bb, errr = io.ReadAll(resp.Body)
-			if errr != nil {
-				return nil, errr
+			var err error
+			bb, err = io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
 			}
-			r.Body = string(bb)
+			result.Body = string(bb)
+			result.Systemout = result.Body
 
 			if isBodyJSONSupported(resp) {
 				var m interface{}
 				decoder := json.NewDecoder(strings.NewReader(string(bb)))
 				decoder.UseNumber()
 				if err := decoder.Decode(&m); err == nil {
-					r.BodyJSON = m
+					result.BodyJSON = m
 				}
+			}
+
+			if result.BodyJSON != nil {
+				// Convert the map to a JSON string
+				jsonString, err := json.Marshal(result.BodyJSON)
+				if err != nil {
+					return nil, err
+				}
+				result.Systemout = string(jsonString)
+			} else {
+				result.Systemout = result.Body
 			}
 		}
 	}
 
 	if !e.SkipHeaders {
-		r.Headers = make(map[string]string)
+		result.Headers = make(map[string]string)
 		for k, v := range resp.Header {
 			if strings.ToLower(k) == "set-cookie" {
-				r.Headers[k] = strings.Join(v, "; ")
+				result.Headers[k] = strings.Join(v, "; ")
 			} else {
-				r.Headers[k] = v[0]
+				result.Headers[k] = v[0]
 			}
 		}
 	}
 
-	requestContentType := r.Request.Header.Get("Content-Type")
+	requestContentType := result.Request.Header.Get("Content-Type")
 	// if PreserveBodyFile == true, the body is not interpolated.
 	// So, no need to keep it in request here (to re-inject it in vars)
 	// this will avoid to be interpolated after in vars too.
 	if e.PreserveBodyFile || !isContentTypeSupported(requestContentType) {
-		r.Request.Body = ""
+		result.Request.Body = ""
 	}
 
-	r.StatusCode = resp.StatusCode
-	return r, nil
+	result.StatusCode = resp.StatusCode
+	return result, nil
 }
 
 // getRequest returns the request correctly set for the current executor
