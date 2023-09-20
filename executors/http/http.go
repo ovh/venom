@@ -222,7 +222,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 				return nil, err
 			}
 			result.Body = string(bb)
-			result.Systemout = result.Body
 
 			if isBodyJSONSupported(resp) {
 				var m interface{}
@@ -239,9 +238,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 				if err != nil {
 					return nil, err
 				}
-				result.Systemout = string(jsonString)
+				result.Systemout = fmt.Sprintf("%s-----%s----->%s ", resp.Request.Method, resp.Request.URL, string(jsonString))
 			} else {
-				result.Systemout = result.Body
+				result.Systemout = fmt.Sprintf("%s-----%s----->%s ", resp.Request.Method, resp.Request.URL, result.Body)
 			}
 		}
 	}
