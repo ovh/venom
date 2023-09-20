@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
+	"github.com/tj/go-naturaldate"
 )
 
 type AssertFunc func(actual interface{}, expected ...interface{}) error
@@ -954,7 +955,7 @@ func ShouldEqualTrimSpace(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenBefore receives exactly 2 time.Time arguments and asserts that the first happens before the second.
-// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+// The arguments have to respect the date format RFC3339 (ie. 2006-01-02T15:04:00+07:00) or humanize format (ie. now, tomorrow, yesterday, 5 minutes ago)
 //
 // Example of testsuite file:
 //
@@ -969,6 +970,13 @@ func ShouldEqualTrimSpace(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenBefore "{{.time_with_5s_after}}"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenBefore tomorrow"
+//	       - "result.systemout ShouldHappenBefore '5 minutes from now'"
 func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -991,7 +999,7 @@ func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenOnOrBefore receives exactly 2 time.Time arguments and asserts that the first happens on or before the second.
-// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+// The arguments have to respect the date format RFC3339 (ie. 2006-01-02T15:04:00+07:00) or humanize format (ie. now, tomorrow, yesterday, 5 minutes ago)
 //
 // Example of testsuite file:
 //
@@ -1006,6 +1014,13 @@ func ShouldHappenBefore(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenOnOrBefore "{{.time_with_5s_after}}"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenOnOrBefore tomorrow"
+//	       - "result.systemout ShouldHappenOnOrBefore '5 minutes from now'"
 func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1027,7 +1042,7 @@ func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenAfter receives exactly 2 time.Time arguments and asserts that the first happens after the second.
-// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+// The arguments have to respect the date format RFC3339 (ie. 2006-01-02T15:04:00+07:00) or humanize format (ie. now, tomorrow, yesterday, 5 minutes ago)
 //
 // Example of testsuite file:
 //
@@ -1042,6 +1057,13 @@ func ShouldHappenOnOrBefore(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenAfter "{{.time_with_5s_before}}"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenAfter yesterday"
+//	       - "result.systemout ShouldHappenAfter '5 minutes ago'"
 func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1063,7 +1085,7 @@ func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenOnOrAfter receives exactly 2 time.Time arguments and asserts that the first happens on or after the second.
-// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+// The arguments have to respect the date format RFC3339 (ie. 2006-01-02T15:04:00+07:00) or humanize format (ie. now, tomorrow, yesterday, 5 minutes ago)
 //
 // Example of testsuite file:
 //
@@ -1078,6 +1100,13 @@ func ShouldHappenAfter(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenOnOrAfter "{{.time_with_5s_before}}"
+//	 - name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenOnOrAfter yesterday"
+//	       - "result.systemout ShouldHappenOnOrAfter '5 minutes ago'"
 func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
@@ -1099,7 +1128,7 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 }
 
 // ShouldHappenBetween receives exactly 3 time.Time arguments and asserts that the first happens between (not on) the second and third.
-// The arguments have to respect the date format RFC3339, as 2006-01-02T15:04:00+07:00
+// The arguments have to respect the date format RFC3339 (ie. 2006-01-02T15:04:00+07:00) or humanize format (ie. yesterday, 5 minutes ago)
 //
 // Example of testsuite file:
 //
@@ -1115,6 +1144,13 @@ func ShouldHappenOnOrAfter(actual interface{}, expected ...interface{}) error {
 //	    script: "echo {{.time}}"
 //	    assertions:
 //	      - result.systemout ShouldHappenBetween "{{.time_with_5s_before}}" "{{.time_with_5s_after}}"
+//	- name: test assertion with humanize format
+//	   steps:
+//	   - type: exec
+//	     script: "echo {{.venom.datetime}}"
+//	     assertions:
+//	       - "result.systemout ShouldHappenBetween yesterday tomorrow"
+//	       - "result.systemout ShouldHappenBetween '5 minutes ago' '5 minutes from now'"
 func ShouldHappenBetween(actual interface{}, expected ...interface{}) error {
 	if err := need(2, expected); err != nil {
 		return err
@@ -1304,14 +1340,21 @@ func getTimeFromString(in interface{}) (time.Time, error) {
 	if t, isTime := in.(time.Time); isTime {
 		return t, nil
 	}
+
 	s, err := cast.ToStringE(in)
 	if err != nil {
 		return time.Time{}, errors.Errorf("invalid date provided: %q", in)
 	}
 
 	t, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return time.Time{}, errors.Errorf("invalid date RFC3339 provided with %q", in)
+	if err == nil {
+		return t, nil
 	}
+
+	t, innerErr := naturaldate.Parse(s, time.Now())
+	if innerErr != nil {
+		return time.Time{}, errors.Errorf("invalid date provided with %q not in RFC3339 format or humanize format", in)
+	}
+
 	return t, nil
 }
