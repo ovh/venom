@@ -1,0 +1,102 @@
+Licences:
+Apache-2.0
+BSD-2-Clause
+BSD-3-Clause
+EPL-2.0
+ISC
+MIT
+MPL-2.0
+Unknown
+Unlicense
+
+Packages:
+github.com/Azure/go-amqp; MIT
+github.com/Shopify/sarama; MIT
+github.com/antonfisher/nested-logrus-formatter; MIT
+github.com/aokoli/goutils; Apache-2.0
+github.com/bufbuild/protocompile; Apache-2.0
+github.com/confluentinc/bincover; MIT
+github.com/davecgh/go-spew; ISC
+github.com/dustin/go-humanize; MIT
+github.com/eapache/go-resiliency; MIT
+github.com/eapache/go-xerial-snappy; MIT
+github.com/eapache/queue; MIT
+github.com/eclipse/paho.mqtt.golang; EPL-2.0
+github.com/fatih/color; MIT
+github.com/fsamin/go-dump; Apache-2.0
+github.com/fullstorydev/grpcurl; MIT
+github.com/garyburd/redigo; Apache-2.0
+github.com/go-gorp/gorp/v3; Unknown. See go/github.com/go-gorp/gorp/v3/LICENSE file
+github.com/go-sql-driver/mysql; MPL-2.0
+github.com/go-testfixtures/testfixtures/v3; MIT
+github.com/golang/go; BSD-3-Clause
+github.com/golang/protobuf; BSD-3-Clause
+github.com/golang/snappy; BSD-3-Clause
+github.com/google/go-github; BSD-3-Clause
+github.com/google/go-querystring; BSD-3-Clause
+github.com/google/uuid; BSD-3-Clause
+github.com/gorilla/websocket; BSD-2-Clause
+github.com/gosimple/slug; MPL-2.0
+github.com/gosimple/unidecode; Apache-2.0
+github.com/hashicorp/errwrap; MPL-2.0
+github.com/hashicorp/go-multierror; MPL-2.0
+github.com/hashicorp/go-uuid; MPL-2.0
+github.com/huandu/xstrings; Unknown. See go/github.com/huandu/xstrings/LICENSE file
+github.com/inconshreveable/go-update; Apache-2.0
+github.com/jcmturner/aescts/v2; Apache-2.0
+github.com/jcmturner/dnsutils/v2; Apache-2.0
+github.com/jcmturner/gofork; BSD-3-Clause
+github.com/jcmturner/gokrb5/v8; Apache-2.0
+github.com/jcmturner/rpc/v2; Apache-2.0
+github.com/jhump/protoreflect; Apache-2.0
+github.com/jmoiron/sqlx; MIT
+github.com/kevinramage/venomWeb; Unknown. See go/github.com/kevinramage/venomWeb/LICENSE file
+github.com/klauspost/compress; Apache-2.0
+github.com/landoop/schema-registry; Apache-2.0
+github.com/lib/pq; MIT
+github.com/linkedin/goavro/v2; Apache-2.0
+github.com/mattn/go-colorable; MIT
+github.com/mattn/go-isatty; MIT
+github.com/mattn/go-shellwords; MIT
+github.com/mattn/go-sqlite3; MIT
+github.com/mattn/go-zglob; Unknown. See go/github.com/mattn/go-zglob/LICENSE file
+github.com/mitchellh/go-homedir; MIT
+github.com/mitchellh/mapstructure; MIT
+github.com/mndrix/tap-go; Unlicense
+github.com/montanaflynn/stats; MIT
+github.com/ovh/cds/sdk/interpolate; BSD-3-Clause
+github.com/ovh/go-ovh; BSD-3-Clause
+github.com/pierrec/lz4/v4; BSD-3-Clause
+github.com/pkg/errors; BSD-2-Clause
+github.com/rcrowley/go-metrics; BSD-2-Clause
+github.com/remyoudompheng/bigfft; BSD-3-Clause
+github.com/rockbears/yaml; Unknown. See go/github.com/rockbears/yaml/LICENSE file
+github.com/rubenv/sql-migrate; MIT
+github.com/sijms/go-ora; MIT
+github.com/sirupsen/logrus; MIT
+github.com/spf13/cast; MIT
+github.com/spf13/cobra; Apache-2.0
+github.com/spf13/pflag; BSD-3-Clause
+github.com/streadway/amqp; BSD-2-Clause
+github.com/xdg-go/pbkdf2; Apache-2.0
+github.com/xdg-go/scram; Apache-2.0
+github.com/xdg-go/stringprep; Apache-2.0
+github.com/yesnault/go-imap; BSD-3-Clause
+github.com/youmark/pkcs8; MIT
+go.mongodb.org/mongo-driver; Apache-2.0
+golang.org/x/crypto; BSD-3-Clause
+golang.org/x/exp; BSD-3-Clause
+golang.org/x/net; BSD-3-Clause
+golang.org/x/sync; BSD-3-Clause
+golang.org/x/sys; BSD-3-Clause
+golang.org/x/text; BSD-3-Clause
+google.golang.org/genproto; Apache-2.0
+google.golang.org/grpc; Apache-2.0
+google.golang.org/protobuf; BSD-3-Clause
+gopkg.in/ini.v1; Apache-2.0
+gopkg.in/yaml.v2; Apache-2.0
+gopkg.in/yaml.v3; Apache-2.0
+modernc.org/libc; BSD-2-Clause
+modernc.org/mathutil; BSD-3-Clause
+modernc.org/memory; BSD-2-Clause
+modernc.org/sqlite; BSD-3-Clause

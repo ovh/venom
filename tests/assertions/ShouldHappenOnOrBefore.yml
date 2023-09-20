@@ -1,11 +1,18 @@
-name: test ShouldHappenOnOrBefore - use RFC3339 format
+name: test ShouldHappenOnOrBefore
 vars:
   time: 2006-01-02T15:04:05+07:00
   time_with_5s_after: 2006-01-02T15:04:10+07:00
 testcases:
-- name: test assertion
+- name: test assertion with RFC3339 date format
   steps:
   - type: exec
     script: "echo {{.time}}"
     assertions:
       - result.systemout ShouldHappenOnOrBefore "{{.time_with_5s_after}}"
+- name: test assertion with humanize format
+  steps:
+  - type: exec
+    script: "echo {{.venom.datetime}}"
+    assertions:
+      - "result.systemout ShouldHappenOnOrBefore tomorrow"
+      - "result.systemout ShouldHappenOnOrBefore '5 minutes from now'"

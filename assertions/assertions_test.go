@@ -1184,6 +1184,13 @@ func TestShouldHappenBefore(t *testing.T) {
 			},
 		},
 		{
+			name: "ok",
+			args: args{
+				actual:   time.Now(),
+				expected: []interface{}{"1 minute from now"},
+			},
+		},
+		{
 			name: "ko",
 			args: args{
 				actual:   time.Now(),
@@ -1216,6 +1223,13 @@ func TestShouldHappenOnOrBefore(t *testing.T) {
 			args: args{
 				actual:   time.Now(),
 				expected: []interface{}{time.Now().Add(1 * time.Second)},
+			},
+		},
+		{
+			name: "ok",
+			args: args{
+				actual:   time.Now(),
+				expected: []interface{}{"1 minute from now"},
 			},
 		},
 		{
@@ -1254,6 +1268,13 @@ func TestShouldHappenAfter(t *testing.T) {
 			},
 		},
 		{
+			name: "ok",
+			args: args{
+				actual:   time.Now(),
+				expected: []interface{}{"1 second ago"},
+			},
+		},
+		{
 			name: "ko",
 			args: args{
 				actual:   time.Now(),
@@ -1286,6 +1307,13 @@ func TestShouldHappenOnOrAfter(t *testing.T) {
 			args: args{
 				actual:   time.Now(),
 				expected: []interface{}{time.Now().Add(-1 * time.Second)},
+			},
+		},
+		{
+			name: "ok",
+			args: args{
+				actual:   time.Now(),
+				expected: []interface{}{"1 second ago"},
 			},
 		},
 		{
@@ -1345,6 +1373,13 @@ func TestShouldHappenBetween(t *testing.T) {
 				expected: []interface{}{"2006-01-02T15:04:05+07:00", "2006-01-02T15:04:10+07:00"},
 			},
 			wantErr: true,
+		},
+		{
+			name: "ok",
+			args: args{
+				actual:   time.Now(),
+				expected: []interface{}{"1 minute ago", "1 minute from now"},
+			},
 		},
 	}
 	for _, tt := range tests {
