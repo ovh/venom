@@ -14,7 +14,7 @@ In your yaml file, you can use:
   - body (optional)
   - bodyFile (optional)
   - preserve_bodyfile (optional) skip file content interpolation
-  - headers (optional), default values: Content-Type is set to "application/json"
+  - headers (optional), default values: Accept and Content-type are set to "application/json"
   - proxy (optional): set to use a proxy server for connection to url
   - resolve (optional): array of custom resolver of host and port pair. example: foo.com:443:127.0.0.1
   - ignore_verify_ssl (optional): set to true if you use a self-signed SSL on remote for example
