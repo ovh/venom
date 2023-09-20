@@ -101,7 +101,7 @@ func (v *Venom) OutputResult() error {
 				return errors.Wrapf(err, "Error: cannot format output yaml (%s)", err)
 			}
 		case "xml":
-			data, err = outputXMLFormat(*testsResult)
+			data, err = outputXMLFormat(*testsResult, v.Verbose)
 			if err != nil {
 				return errors.Wrapf(err, "Error: cannot format output xml (%s)", err)
 			}
@@ -175,7 +175,7 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func outputXMLFormat(tests Tests) ([]byte, error) {
+func outputXMLFormat(tests Tests, verbose int) ([]byte, error) {
 	testsXML := TestsXML{}
 
 	for _, ts := range tests.TestSuites {
@@ -203,8 +203,12 @@ func outputXMLFormat(tests Tests) ([]byte, error) {
 						Value: failure.Value,
 					})
 				}
-				systemout.Value += result.Systemout
-				systemerr.Value += result.Systemerr
+				if len(result.Errors) > 0 {
+					appendCleanValue(&systemout.Value, result.Systemout)
+				} else if verbose > 1 {
+					appendCleanValue(&systemout.Value, result.Systemout)
+				}
+				appendCleanValue(&systemerr.Value, result.Systemerr)
 			}
 
 			tcXML := TestCaseXML{
@@ -229,4 +233,9 @@ func outputXMLFormat(tests Tests) ([]byte, error) {
 	data := append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 
 	return data, nil
+}
+
+func appendCleanValue(dest *string, source string) {
+	cleanedValue := strings.ReplaceAll(source, "\x03", "")
+	*dest += cleanedValue
 }
