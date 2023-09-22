@@ -289,7 +289,7 @@ func initFromEnv(environ []string) ([]string, error) {
 		if strings.HasPrefix(env, "VENOM_VAR_") {
 			tuple := strings.Split(env, "=")
 			k := strings.TrimPrefix(tuple[0], "VENOM_VAR_")
-			variables = append(variables, fmt.Sprintf("%v=%v", k, cast(tuple[1])))
+			variables = append(variables, fmt.Sprintf("%v=%v", k, cast(strings.Join(tuple[1:], "="))))
 		}
 	}
 
