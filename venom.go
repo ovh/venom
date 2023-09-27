@@ -15,7 +15,6 @@ import (
 
 	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
 	"github.com/spf13/cast"
@@ -216,13 +215,19 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 }
 
 func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
+	_, ok := v.executorsUser[name]
+	if ok {
+		return nil
+	}
+	if v.executorFileCache != nil && len(v.executorFileCache) != 0 {
+		return errors.Errorf("Could not find executor with name %v ", name)
+	}
 	executorsPath, err := v.getUserExecutorFilesPath(vars)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range executorsPath {
-		Info(ctx, "Reading %v", f)
 		btes, ok := v.executorFileCache[f]
 		if !ok {
 			btes, err = os.ReadFile(f)
@@ -231,49 +236,24 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 			}
 			v.executorFileCache[f] = btes
 		}
+		executorName, _ := getExecutorName(btes)
+		if len(executorName) == 0 {
+			fileName := filepath.Base(f)
+			executorName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
+		}
 
 		varsFromInput, err := getUserExecutorInputYML(ctx, btes)
 		if err != nil {
 			return err
 		}
-
-		// varsFromInput contains the default vars from the executor
-		var varsFromInputMap map[string]string
-		if len(varsFromInput) > 0 {
-			varsFromInputMap, err = DumpStringPreserveCase(varsFromInput)
-			if err != nil {
-				return errors.Wrapf(err, "unable to parse variables")
-			}
-		}
-
-		varsComputed := map[string]string{}
-		for k, v := range vars {
-			varsComputed[k] = v
-		}
-		for k, v := range varsFromInputMap {
-			// we only take vars from varsFromInputMap if it's not already exist in vars from teststep vars
-			if _, ok := vars[k]; !ok {
-				varsComputed[k] = v
-			}
-		}
-
-		content, err := interpolate.Do(string(btes), varsComputed)
-		if err != nil {
-			return err
-		}
-
 		ux := UserExecutor{Filename: f}
-		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
-			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
+		if err := yaml.Unmarshal(btes, &ux); err != nil {
+			return errors.Wrapf(err, "unable to parse file %q", f)
 		}
 
-		Debug(ctx, "User executor %q revolved with content %v", f, content)
-
-		for k, vr := range varsComputed {
-			ux.Input.Add(k, vr)
-		}
-
-		v.RegisterExecutorUser(ux.Executor, ux)
+		ux.Input.AddAll(varsFromInput)
+		ux.Executor = executorName
+		v.RegisterExecutorUser(executorName, ux)
 	}
 	return nil
 }
