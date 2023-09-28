@@ -86,8 +86,8 @@ testcases:
             file: mongo/cards.json
         info: "{{.result.actions}}"
         assertions:
-          - result.actions.actions0.InsertedIds ShouldHaveLength 2
-          - result.actions.actions1.InsertedIds ShouldHaveLength 12
+          - result.actions.actions0.InsertedIDs ShouldHaveLength 2
+          - result.actions.actions1.InsertedIDs ShouldHaveLength 12
 
   - name: Count the inserted data
     steps:
