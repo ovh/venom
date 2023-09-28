@@ -42,8 +42,8 @@ testcases:
         messageLimit: 1
         assertions: 
           - result.bodyjson.bodyjson0.a ShouldEqual b   
-          - result.headers.headers0.mycustomheader ShouldEqual value
-          - result.headers.headers0.mycustomheader2 ShouldEqual value2
+          - result.headers.headers0.myCustomHeader ShouldEqual value
+          - result.headers.headers0.myCustomHeader2 ShouldEqual value2
           - result.messages.messages0.contentencoding ShouldEqual utf8
           - result.messages.messages0.contenttype ShouldEqual application/json
 
