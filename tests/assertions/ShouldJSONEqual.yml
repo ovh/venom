@@ -1,6 +1,6 @@
 name: test ShouldJSONEqual
 testcases:
-- name: test assertion
+- name: test assertion ShouldJSONEqual
   steps:
   - type: exec
     script: |

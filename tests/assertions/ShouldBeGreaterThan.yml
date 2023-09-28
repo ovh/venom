@@ -1,12 +1,12 @@
 name: Assertions testsuite
 testcases:
-- name: test assertion
+- name: test assertion ShouldBeGreaterThan
   steps:
   - script: echo '["foo", "bar", "foo2"]'
     assertions:
     - result.systemoutjson.__len__ ShouldBeGreaterThan 2
 
-- name: ShouldBeGreaterThan100
+- name: ShouldBeGreaterThan100 ShouldBeGreaterThan
   steps:
   - type: exec
     script: echo 100
@@ -14,7 +14,7 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemout ShouldBeGreaterThan 29
 
-- name: ShouldBeGreaterThan100FromJSON
+- name: ShouldBeGreaterThan100FromJSON ShouldBeGreaterThan
   steps:
   - type: exec
     script: echo '{"nb":100}'
