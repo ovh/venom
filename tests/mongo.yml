@@ -86,8 +86,8 @@ testcases:
             file: mongo/cards.json
         info: "{{.result.actions}}"
         assertions:
-          - result.actions.actions0.insertedids ShouldHaveLength 2
-          - result.actions.actions1.insertedids ShouldHaveLength 12
+          - result.actions.actions0.insertedIds ShouldHaveLength 2
+          - result.actions.actions1.insertedIds ShouldHaveLength 12
 
   - name: Count the inserted data
     steps:
@@ -170,9 +170,9 @@ testcases:
               }
         info: "{{.result.actions}}"
         assertions:
-          - result.actions.actions0.matchedcount ShouldEqual 3
-          - result.actions.actions0.modifiedcount ShouldEqual 3
-          - result.actions.actions0.upsertedcount ShouldEqual 0
+          - result.actions.actions0.matchedCount ShouldEqual 3
+          - result.actions.actions0.modifiedCount ShouldEqual 3
+          - result.actions.actions0.upsertedCount ShouldEqual 0
 
           - result.actions.actions1.count ShouldEqual 4
 
@@ -199,7 +199,7 @@ testcases:
 
         info: "{{.result.actions}}"
         assertions:
-          - result.actions.actions0.deletedcount ShouldEqual 3
+          - result.actions.actions0.deletedCount ShouldEqual 3
           - result.actions.actions1.count ShouldEqual 0
           - result.actions.actions2.count ShouldEqual 11
 
