@@ -55,8 +55,8 @@ testcases:
     topics:
       - test-topic-avro
     assertions:
-    - result.messagesjson.messagesjson0.value.id ShouldEqual 1
-    - result.messagesjson.messagesjson0.value.message ShouldEqual "Some test"
-    - result.messagesjson.messagesjson1.value.id ShouldEqual 2
-    - result.messagesjson.messagesjson2.value.id ShouldEqual 3
+    - result.messagesjson.messagesjson0.Value.id ShouldEqual 1
+    - result.messagesjson.messagesjson0.Value.message ShouldEqual "Some test"
+    - result.messagesjson.messagesjson1.Value.id ShouldEqual 2
+    - result.messagesjson.messagesjson2.Value.id ShouldEqual 3
     - result.messages.__Len__ ShouldEqual 3
