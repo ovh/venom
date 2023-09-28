@@ -24,7 +24,7 @@ testcases:
     url: https://eu.api.ovh.com/1.0/auth/logout
     assertions:
     - result.statuscode ShouldEqual 401
-    - result.headers.x-ovh-queryid ShouldNotBeEmpty
+    - result.headers.X-Ovh-Queryid ShouldNotBeEmpty
     - result.timeseconds ShouldBeLessThan 5
 
 - name: post http testcase with body file
