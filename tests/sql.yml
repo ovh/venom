@@ -9,5 +9,5 @@ testcases:
      commands:
        - "SELECT * FROM test_table;"
      assertions:
-       - result.queries.__len__ ShouldEqual 1
+       - result.queries.__Len__ ShouldEqual 1
        - result.queries.queries0.rows.rows0.name ShouldEqual test row 1
