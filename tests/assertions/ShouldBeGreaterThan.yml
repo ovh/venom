@@ -4,7 +4,7 @@ testcases:
   steps:
   - script: echo '["foo", "bar", "foo2"]'
     assertions:
-    - result.systemoutjson.__len__ ShouldBeGreaterThan 2
+    - result.systemoutjson.__Len__ ShouldBeGreaterThan 2
 
 - name: ShouldBeGreaterThan100 ShouldBeGreaterThan
   steps:
