@@ -46,8 +46,8 @@ testcases:
         messageLimit: 1
         assertions:
           - result.error ShouldBeEmpty
-          - result.messages.__len__ ShouldEqual 1
-          - result.messagesjson.__len__ ShouldEqual 1
+          - result.messages.__Len__ ShouldEqual 1
+          - result.messagesjson.__Len__ ShouldEqual 1
           - result.messagesjson.messagesjson0.c ShouldEqual 1
           - result.topics.topics0 ShouldEqual "{{.topic}}"
       - type: mqtt

@@ -1,12 +1,12 @@
 name: Assertions testsuite
 testcases:
-- name: test assertion
+- name: test assertion ShouldBeBetweenOrEqual
   steps:
   - script: echo 2
     assertions:
     - result.systemout ShouldBeBetweenOrEqual 1 2
 
-- name: test assertion float
+- name: test assertion ShouldBeBetweenOrEqual float
   steps:
   - script: echo 2.3
     assertions:

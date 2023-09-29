@@ -1,6 +1,6 @@
 name: Assertions testsuite
 testcases:
-- name: test assertion
+- name: test assertion ShouldStartWith
   steps:
   - script: echo 'foo2'
     assertions:
