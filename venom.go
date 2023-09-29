@@ -40,15 +40,15 @@ type ContextKey string
 // New instantiates a new venom on venom run cmd
 func New() *Venom {
 	v := &Venom{
-		LogOutput:         os.Stdout,
-		PrintFunc:         fmt.Printf,
-		executorsBuiltin:  map[string]Executor{},
-		executorsPlugin:   map[string]Executor{},
-		executorsUser:     map[string]Executor{},
-		executorFileCache: map[string][]byte{},
-		variables:         map[string]interface{}{},
-		secrets:           map[string]interface{}{},
-		OutputFormat:      "xml",
+		LogOutput:        os.Stdout,
+		PrintFunc:        fmt.Printf,
+		executorsBuiltin: map[string]Executor{},
+		executorsPlugin:  map[string]Executor{},
+		executorsUser:    map[string]Executor{},
+
+		variables:    map[string]interface{}{},
+		secrets:      map[string]interface{}{},
+		OutputFormat: "xml",
 	}
 	return v
 }
@@ -56,11 +56,10 @@ func New() *Venom {
 type Venom struct {
 	LogOutput io.Writer
 
-	PrintFunc         func(format string, a ...interface{}) (n int, err error)
-	executorsBuiltin  map[string]Executor
-	executorsPlugin   map[string]Executor
-	executorsUser     map[string]Executor
-	executorFileCache map[string][]byte
+	PrintFunc        func(format string, a ...interface{}) (n int, err error)
+	executorsBuiltin map[string]Executor
+	executorsPlugin  map[string]Executor
+	executorsUser    map[string]Executor
 
 	Tests     Tests
 	variables H
@@ -165,7 +164,7 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 		return ctx, newExecutorRunner(ex, name, "builtin", retry, retryIf, delay, timeout, info), nil
 	}
 
-	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
+	if err := v.registerUserExecutors(name, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
 	}
 
@@ -214,48 +213,37 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 	return filePaths, nil
 }
 
-func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
+func (v *Venom) registerUserExecutors(name string, vars map[string]string) error {
 	_, ok := v.executorsUser[name]
 	if ok {
 		return nil
 	}
-	if v.executorFileCache != nil && len(v.executorFileCache) != 0 {
-		return errors.Errorf("Could not find executor with name %v ", name)
-	}
+
 	executorsPath, err := v.getUserExecutorFilesPath(vars)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range executorsPath {
-		btes, ok := v.executorFileCache[f]
-		if !ok {
-			btes, err = os.ReadFile(f)
-			if err != nil {
-				return errors.Wrapf(err, "unable to read file %q", f)
-			}
-			v.executorFileCache[f] = btes
-		}
-		executorName, _ := getExecutorName(btes)
-		if len(executorName) == 0 {
-			fileName := filepath.Base(f)
-			executorName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
-		}
-
-		varsFromInput, err := getUserExecutorInputYML(ctx, btes)
+		executorPointer, err := createUserExecutorFromFile(f)
 		if err != nil {
 			return err
 		}
-		ux := UserExecutor{Filename: f}
-		if err := yaml.Unmarshal(btes, &ux); err != nil {
-			return errors.Wrapf(err, "unable to parse file %q", f)
-		}
-
-		ux.Input.AddAll(varsFromInput)
-		ux.Executor = executorName
-		v.RegisterExecutorUser(executorName, ux)
+		v.RegisterExecutorUser(executorPointer.Executor, *executorPointer)
 	}
 	return nil
+}
+
+func createUserExecutorFromFile(name string) (*UserExecutor, error) {
+	executorBytes, err := os.ReadFile(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to read file %q", name)
+	}
+	ux := UserExecutor{Filename: name}
+	if err := yaml.Unmarshal(executorBytes, &ux); err != nil {
+		return nil, errors.Wrapf(err, "unable to parse file %q", name)
+	}
+	return &ux, nil
 }
 
 func (v *Venom) registerPlugin(ctx context.Context, name string, vars map[string]string) error {

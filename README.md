@@ -432,7 +432,7 @@ input:
   script: "echo 'foo'"
 steps:
 - type: exec
-  script: {{ .input.script | nindent 4 }}
+  script: '{{ .input.script | nindent 4 }}'
   assertions:
   - result.code ShouldEqual 0
   vars:
