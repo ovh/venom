@@ -203,7 +203,7 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, tsIn *TestStepResult, step TestStep) (interface{}, error) {
 	vrs := tcIn.TestSuiteVars.Clone()
 	uxIn := runner.GetExecutor().(UserExecutor)
-
+	inputOnlyVrs := H{}
 	for k, va := range uxIn.Input {
 		if strings.HasPrefix(k, "input.") {
 			// do not reinject input.vars from parent user executor if exists
@@ -211,11 +211,14 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		} else if !strings.HasPrefix(k, "venom") {
 			if vl, ok := step[k]; ok && vl != "" { // value from step
 				vrs.AddWithPrefix("input", k, vl)
+				inputOnlyVrs.AddWithPrefix("input", k, vl)
 			} else { // default value from executor
 				vrs.AddWithPrefix("input", k, va)
+				inputOnlyVrs.AddWithPrefix("input", k, va)
 			}
 		} else {
 			vrs.Add(k, va)
+			inputOnlyVrs.Add(k, va)
 		}
 	}
 	// reload the user executor with the interpolated vars
@@ -229,12 +232,13 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		TestCaseInput: TestCaseInput{
 			Name:         ux.Executor,
 			RawTestSteps: ux.RawTestSteps,
-			Vars:         vrs,
+			Vars:         inputOnlyVrs,
 		},
 		TestSuiteVars:   tcIn.TestSuiteVars,
 		IsExecutor:      true,
 		TestStepResults: make([]TestStepResult, 0),
 	}
+	tc.Vars.AddAll(vrs)
 
 	tc.originalName = tc.Name
 	tc.Name = slug.Make(tc.Name)

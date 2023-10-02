@@ -1,0 +1,13 @@
+executor: my-test
+input:
+  script: ""
+steps:
+  - type: exec
+    script: '{{ .input.script | nindent 4 }}'
+    assertions:
+      - result.code ShouldEqual 0
+    vars:
+      output:
+        from: result.systemout
+output:
+  all: '{{.output}}'

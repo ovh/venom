@@ -44,6 +44,21 @@ func getVarFromPartialYML(ctx context.Context, btesIn []byte) (H, error) {
 	return partial.Vars, nil
 }
 
+func getExecutorName(btes []byte) (string, error) {
+	content := readPartialYML(btes, "executor")
+	type partialType struct {
+		Executor string `yaml:"executor" json:"executor"`
+	}
+	partial := &partialType{}
+	if len(content) > 0 {
+		if err := yaml.Unmarshal([]byte(content), &partial); err != nil {
+			Error(context.Background(), "file content: %s", string(btes))
+			return "", errors.Wrapf(err, "error while unmarshal - see venom.log")
+		}
+	}
+	return partial.Executor, nil
+}
+
 // readPartialYML extract a yml part from a given string
 func readPartialYML(btes []byte, attribute string) string {
 	var result []string
