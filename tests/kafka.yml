@@ -33,8 +33,8 @@ testcases:
     topics:
       - test-topic
     assertions:
-    - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
-    - result.messages.__len__ ShouldEqual 1
+    - result.messagesjson.messagesjson0.Value.hello ShouldEqual bar
+    - result.messages.__Len__ ShouldEqual 1
   - type: kafka
     clientType: consumer
     withTLS: false
@@ -50,7 +50,7 @@ testcases:
     topics:
       - test-topic
     assertions:
-    - result.messages.__len__ ShouldBeGreaterThanOrEqualTo 1
-    - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
+    - result.messages.__Len__ ShouldBeGreaterThanOrEqualTo 1
+    - result.messagesjson.messagesjson0.Value.hello ShouldEqual bar
   - type: exec
     script: command -v kt && KT_BROKER="{{.kafkaHost}}:{{.kafkaPort}}" kt admin --deletetopic test-topic || true

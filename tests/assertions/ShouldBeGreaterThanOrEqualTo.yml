@@ -1,6 +1,6 @@
 name: Assertions testsuite
 testcases:
-- name: test assertion
+- name: test assertion ShouldBeGreaterThanOrEqualTo
   steps:
   - script: echo 2.4
     assertions:

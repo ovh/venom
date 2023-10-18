@@ -90,10 +90,10 @@ func Test_mergeVariables(t *testing.T) {
 }
 
 func Test_initFromEnv(t *testing.T) {
-	env := []string{`VENOM_VAR_a=1`, `VENOM_VAR_b="B"`, `VENOM_VAR_c=[1,2,3]`}
+	env := []string{`VENOM_VAR_a=1`, `VENOM_VAR_b="B"`, `VENOM_VAR_c=[1,2,3]`, `VENOM_VAR_d="e=f"`}
 	found, err := initFromEnv(env)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(found))
+	require.Equal(t, 4, len(found))
 	var nb int
 	for i := range found {
 		if found[i] == "a=1" {
@@ -101,6 +101,8 @@ func Test_initFromEnv(t *testing.T) {
 		} else if found[i] == "b=B" {
 			nb++
 		} else if found[i] == "c=[1,2,3]" {
+			nb++
+		} else if found[i] == "d=e=f" {
 			nb++
 		}
 	}
