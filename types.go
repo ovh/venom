@@ -160,6 +160,7 @@ type TestCase struct {
 
 	// Computed
 	originalName string
+	number       int
 	Skipped      []Skipped `json:"skipped" yaml:"-"`
 	Status       Status    `json:"status" yaml:"-"`
 
