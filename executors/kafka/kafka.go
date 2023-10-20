@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
 )
