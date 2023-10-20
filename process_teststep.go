@@ -61,7 +61,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			if oDir == "" {
 				oDir = "."
 			}
-			filename := path.Join(oDir, fmt.Sprintf("%s.%s.step.%d.%d.dump.json", slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), stepNumber, rangedIndex))
+			filename := path.Join(oDir, fmt.Sprintf("%s.%s.testcase.%d.step.%d.%d.dump.json", slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), tc.number, stepNumber, rangedIndex))
 
 			if err := os.WriteFile(filename, []byte(HideSensitive(ctx, string(output))), 0644); err != nil {
 				Error(ctx, "Error while creating file %s: %v", filename, err)
