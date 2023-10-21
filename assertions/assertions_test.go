@@ -1657,3 +1657,75 @@ func TestShouldJSONEqual(t *testing.T) {
 		})
 	}
 }
+func TestShouldBeArray(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "json array",
+			args: args{
+				actual:   `[{"amount":10.0},{"amount":20.0}]`,
+				expected: []interface{}{},
+			},
+		},
+		{
+			name: "array",
+			args: args{
+				actual: []interface{}{`1`, `2`},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldBeArray(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldBeArray() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestShouldBeMap(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	aMap := map[string]interface{}{}
+	aMap["key"] = "value"
+	aMap["another"] = 123
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "json map",
+			args: args{
+				actual:   `{"amount":10.0}`,
+				expected: []interface{}{},
+			},
+		},
+		{
+			name: "map",
+			args: args{
+				actual: aMap,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldBeMap(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldBeArray() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
