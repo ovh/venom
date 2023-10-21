@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
+	"os"
 	"strings"
 
 	"github.com/gosimple/slug"
@@ -164,6 +164,26 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 	if err != nil {
 		panic(err)
 	}
+	jsonUpdates := os.Getenv(LAZY_JSON_EXPANSION_FLAG)
+	if jsonUpdates == "ON" {
+		for key, value := range d {
+			switch z := value.(type) {
+			case string:
+				m, e := UnmarshalJSON(key, z)
+				if e != nil {
+					panic(e)
+				}
+				if len(m) > 0 {
+					for s, i := range m {
+						if !strings.Contains(strings.ToUpper(s), "__Type__") && !strings.Contains(strings.ToUpper(s), "__Len__") {
+							d[s] = i
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return d
 }
 
@@ -289,7 +309,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	// here, we have the user executor results.
 	// and for each key in output, we try to add the json version
 	// this will allow user to use json version of output (map, etc...)
-	// because, it's not possible to to that:
+	// because, it's not possible to do that:
 	// output:
 	//   therawout: {{.result.systemout}}
 	//
@@ -300,32 +320,20 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, errors.Wrapf(err, "unable to compute result")
 	}
 
-	for k, v := range result {
-		switch z := v.(type) {
-		case string:
-			var outJSON interface{}
-			if err := JSONUnmarshal([]byte(z), &outJSON); err == nil {
-				result[k+"json"] = outJSON
-				// Now we have to dump this object, but the key will change if this is a array or not
-				if reflect.ValueOf(outJSON).Kind() == reflect.Slice {
-					prefix := k + "json"
-					splitPrefix := strings.Split(prefix, ".")
-					prefix += "." + splitPrefix[len(splitPrefix)-1]
-					outJSONDump, err := Dump(outJSON)
-					if err != nil {
-						return nil, errors.Wrapf(err, "unable to compute result")
-					}
-					for ko, vo := range outJSONDump {
-						result[prefix+ko] = vo
-					}
-				} else {
-					outJSONDump, err := DumpWithPrefix(outJSON, k+"json")
-					if err != nil {
-						return nil, errors.Wrapf(err, "unable to compute result")
-					}
-					for ko, vo := range outJSONDump {
-						result[ko] = vo
-					}
+	lazilyLoadJSON := os.Getenv(LAZY_JSON_EXPANSION_FLAG) == FLAG_ENABLED
+	if lazilyLoadJSON {
+		//ignore the json
+		Debug(ctx, "%s", "ignore the json unmarshalling till we need it")
+	} else {
+		for k, value := range result {
+			switch z := value.(type) {
+			case string:
+				items, err := UnmarshalJSON(k, z)
+				if err != nil {
+					return nil, err
+				}
+				for key, nv := range items {
+					result[key] = nv
 				}
 			}
 		}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -574,13 +576,43 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars H, ra
 
 	for varname, assignment := range stepAssignment.Assignments {
 		Debug(ctx, "Processing %s assignment", varname)
+		lazilyLoadJSON := os.Getenv(LAZY_JSON_EXPANSION_FLAG) == FLAG_ENABLED
+		if lazilyLoadJSON {
+			if strings.Contains(assignment.From, "json") {
+				_, has := tcVars[assignment.From]
+				if !has {
+					key := getKeyForLookup(assignment.From)
+					varValue, has := tcVars[key]
+					if !has {
+						if assignment.Default == nil {
+							err := fmt.Errorf("%s reference not found and tried to create json for %s", assignment.From, key)
+							Error(ctx, "%v", err)
+							return nil, true, err
+						}
+						tcVars[key] = assignment.Default
+						result.Add(varname, assignment.Default)
+					} else {
+						Debug(ctx, "process json %v", key)
+						varjson, err := UnmarshalJSON(key, fmt.Sprintf("%v", varValue))
+						if err != nil {
+							err := fmt.Errorf("%s could not parse json for %s", assignment.From, key)
+							Error(ctx, "%v", err)
+							return nil, true, err
+						}
+						tcVars.AddAll(varjson)
+					}
+				}
+
+			}
+		}
 		varValue, has := tcVars[assignment.From]
+
 		if !has {
 			varValue, has = tcVars[tcName+"."+assignment.From]
 			if !has {
 				if assignment.Default == nil {
 					err := fmt.Errorf("%s reference not found in %s", assignment.From, strings.Join(tcVarsKeys, "\n"))
-					Info(ctx, "%v", err)
+					Error(ctx, "%v", err)
 					return nil, true, err
 				}
 				varValue = assignment.Default
@@ -612,4 +644,62 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars H, ra
 		}
 	}
 	return result, true, nil
+}
+
+// UnmarshalJSON tries to unmarshal the value as a json object and
+// creates a map with the key as the name of the `key` that we are
+// passing as argument and the value as the unmarshalled json object.
+func UnmarshalJSON(key string, value string) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+	var outJSON interface{}
+	if err := JSONUnmarshal([]byte(value), &outJSON); err == nil {
+		result[key+"json"] = outJSON
+		initialDump, err := DumpStringPreserveCase(outJSON)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to compute result")
+		}
+		// Now we have to dump this object, but the key will change if this is a array or not
+		if reflect.ValueOf(outJSON).Kind() == reflect.Slice {
+			prefix := key + "json"
+			splitPrefix := strings.Split(prefix, ".")
+			prefix += "." + splitPrefix[len(splitPrefix)-1]
+			for ko, vo := range initialDump {
+				result[prefix+ko] = vo
+			}
+		} else {
+			outJSONDump := map[string]interface{}{}
+			for ko, vo := range initialDump {
+				if !strings.Contains(ko, "__Type__") && !strings.Contains(ko, "__Len__") {
+					outJSONDump[key+"json."+ko] = vo
+				} else {
+					outJSONDump[ko] = vo
+				}
+			}
+			for ko, vo := range outJSONDump {
+				result[ko] = vo
+			}
+		}
+	}
+	//make it compatible with the one before (ie all lowercase)
+	for k, v := range result {
+		result[strings.ToLower(k)] = v
+	}
+
+	return result, nil
+}
+
+// getKeyForLookup we need the first json key in order to process the json blob
+func getKeyForLookup(originalKey string) string {
+	parts := strings.Split(originalKey, ".")
+	keyparts := []string{}
+	for _, part := range parts {
+		if strings.HasSuffix(part, "json") {
+			keyparts = append(keyparts, strings.Replace(part, "json", "", 1))
+			break
+		} else {
+			keyparts = append(keyparts, part)
+		}
+	}
+	key := strings.Join(keyparts, ".")
+	return key
 }
