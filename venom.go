@@ -30,7 +30,6 @@ var (
 const (
 	LAZY_JSON_EXPANSION_FLAG = "VENOM_NO_JSON_EXPANSION"
 	FLAG_ENABLED             = "ON"
-	FLAG_DISABLED            = "OFF"
 )
 
 func OSExit(exitCode int) {

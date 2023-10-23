@@ -165,7 +165,7 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 		panic(err)
 	}
 	jsonUpdates := os.Getenv(LAZY_JSON_EXPANSION_FLAG)
-	if jsonUpdates == "ON" {
+	if jsonUpdates == FLAG_ENABLED {
 		for key, value := range d {
 			switch z := value.(type) {
 			case string:
@@ -175,7 +175,8 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 				}
 				if len(m) > 0 {
 					for s, i := range m {
-						if !strings.Contains(strings.ToUpper(s), "__Type__") && !strings.Contains(strings.ToUpper(s), "__Len__") {
+						//we are skipping this as whenever we use a value we will do DumpString or Dump which means will generate those values
+						if !strings.Contains(strings.ToUpper(s), "__TYPE__") && !strings.Contains(strings.ToUpper(s), "__LEN__") {
 							d[s] = i
 						}
 					}
