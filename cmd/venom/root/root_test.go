@@ -1,12 +1,12 @@
 package root
 
 import (
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,13 +24,12 @@ func TestRunCmd(t *testing.T) {
 	var validArgs []string
 
 	validArgs = append(validArgs, "run", filepath.Join(getTopLevelFolder(), "tests", "assertions"))
-
 	rootCmd := New()
 	rootCmd.SetArgs(validArgs)
-	os.Setenv("VENOM_TEST_MODE", "true")
+	venom.IsTest = "test"
 	assert.Equal(t, 3, len(rootCmd.Commands()))
 	err := rootCmd.Execute()
 	assert.NoError(t, err)
 	rootCmd.Execute()
-	os.Unsetenv("VENOM_TEST_MODE")
+
 }

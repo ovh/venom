@@ -36,15 +36,6 @@ func OSExit(exitCode int) {
 	}
 }
 
-// OSExit is a wrapper for os.Exit
-func (v *Venom) OSExit(exitCode int) {
-	if v.InTestMode {
-		bincover.ExitCode = exitCode
-	} else {
-		OSExit(exitCode)
-	}
-}
-
 // ContextKey can be added in context to store contextual infos. Also used by logger.
 type ContextKey string
 
@@ -83,7 +74,6 @@ type Venom struct {
 	StopOnFailure bool
 	HtmlReport    bool
 	Verbose       int
-	InTestMode    bool
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()
