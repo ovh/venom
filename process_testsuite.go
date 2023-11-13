@@ -210,6 +210,7 @@ func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
 		tc.originalName = tc.Name
+		tc.number = i
 		tc.Name = slug.Make(tc.Name)
 		tc.Vars = ts.Vars.Clone()
 		tc.Vars.Add("venom.testcase", tc.Name)
