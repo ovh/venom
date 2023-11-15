@@ -2,7 +2,7 @@ package venom
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"reflect"
 	"strings"
 	"testing"
@@ -35,16 +35,21 @@ func fieldsFromContext(ctx context.Context, keys ...string) logrus.Fields {
 	return fields
 }
 
+func asJsonString(i interface{}) string {
+	btes, _ := json.Marshal(i)
+	return string(btes)
+}
+
 // HideSensitive replace the value with __hidden__
 func HideSensitive(ctx context.Context, arg interface{}) string {
 	s := ctx.Value(ContextKey("secrets"))
-	cleanVars := fmt.Sprint(arg)
-	if s != nil && &s != nil {
+	cleanVars := asJsonString(arg)
+	if s != nil {
 		switch reflect.TypeOf(s).Kind() {
 		case reflect.Slice:
 			secrets := reflect.ValueOf(s)
 			for i := 0; i < secrets.Len(); i++ {
-				secret := fmt.Sprint(secrets.Index(i).Interface())
+				secret := asJsonString(secrets.Index(i).Interface())
 				cleanVars = strings.ReplaceAll(cleanVars, secret, "__hidden__")
 			}
 		}
