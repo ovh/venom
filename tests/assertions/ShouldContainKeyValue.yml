@@ -1,0 +1,7 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion ShouldContainKeyValue
+  steps:
+  - script: echo '[{"foo":"bar"}, {"foo2":"bar2"}, {"foo2":"bar3" }]'
+    assertions:
+    - result.systemoutjson ShouldContainKeyValue foo2 bar2

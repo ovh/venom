@@ -771,6 +771,67 @@ func TestShouldContainKey(t *testing.T) {
 	}
 }
 
+func TestShouldContainKeyValue(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "with string",
+			args: args{
+				actual: []interface{}{
+					map[string]interface{}{"a": "test", "c": "y"},
+					map[string]interface{}{"a": "z", "c": "1"},
+					map[string]interface{}{"a": "z", "c": "12"},
+				},
+				expected: []interface{}{`a`, `test`},
+			},
+		},
+		{
+			name: "with duplicate key and value",
+			args: args{
+				actual: []interface{}{
+					map[string]interface{}{"a": "test", "c": "y"},
+					map[string]interface{}{"a": "z", "c": "1"},
+					map[string]interface{}{"a": "z", "c": "12"},
+				},
+				expected: []interface{}{`a`, `z`},
+			},
+		}, {
+			name: "not found",
+			args: args{
+				actual: []interface{}{
+					map[string]interface{}{"a": "test", "c": "y"},
+					map[string]interface{}{"a": "z", "c": "1"},
+					map[string]interface{}{"a": "z", "c": "12"},
+				},
+				expected: []interface{}{`c`, `z`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "raise error",
+			args: args{
+				actual:   map[string]interface{}{"a": "", "c": ""},
+				expected: []interface{}{`b`, `l`},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldContainKeyValue(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldContainKeyValue() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestShouldNotContainKey(t *testing.T) {
 	type args struct {
 		actual   interface{}
