@@ -231,6 +231,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 			RawTestSteps: ux.RawTestSteps,
 			Vars:         vrs,
 		},
+		number:          tcIn.number,
 		TestSuiteVars:   tcIn.TestSuiteVars,
 		IsExecutor:      true,
 		TestStepResults: make([]TestStepResult, 0),

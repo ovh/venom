@@ -1,6 +1,6 @@
 name: Assertions testsuite
 testcases:
-- name: test assertion
+- name: test assertion ShouldBeZeroValue
   steps:
   - script: echo ''
     assertions:

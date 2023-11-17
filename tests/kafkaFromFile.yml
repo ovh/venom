@@ -30,5 +30,5 @@ testcases:
     topics:
       - test-topic-with-file
     assertions:
-    - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
-    - result.messages.__len__ ShouldEqual 1
+    - result.messagesjson.messagesjson0.Value.hello ShouldEqual bar
+    - result.messages.__Len__ ShouldEqual 1

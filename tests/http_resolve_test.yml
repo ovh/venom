@@ -11,4 +11,4 @@ testcases:
     info: 
     - '{{.result.bodyjson.basepath}}'
     assertions:
-    - result.headers.x-ovh-queryid ShouldContainSubstring "EU.ext"
+    - result.headers.X-Ovh-Queryid ShouldContainSubstring "EU.ext"

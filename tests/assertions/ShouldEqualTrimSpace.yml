@@ -1,6 +1,6 @@
 name: Assertions testsuite
 testcases:
-- name: test assertion
+- name: test assertion ShouldEqualTrimSpace
   steps:
   - script: echo 'foo '
     assertions:

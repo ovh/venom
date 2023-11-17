@@ -3,7 +3,7 @@ vars:
   time_expected: 2006-01-02T13:04:00Z
   time: 2006-01-02T15:04:00+02:00
 testcases:
-  - name: test assertion
+  - name: test assertion ShouldTimeEqual
     steps:
       - type: exec
         script: "echo {{.time}}"
