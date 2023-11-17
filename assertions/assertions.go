@@ -39,6 +39,7 @@ var assertMap = map[string]AssertFunc{
 	"ShouldContain":                ShouldContain,
 	"ShouldNotContain":             ShouldNotContain,
 	"ShouldContainKey":             ShouldContainKey,
+	"ShouldContainKeyValue":        ShouldContainKeyValue,
 	"ShouldNotContainKey":          ShouldNotContainKey,
 	"ShouldBeIn":                   ShouldBeIn,
 	"ShouldNotBeIn":                ShouldNotBeIn,
@@ -624,6 +625,43 @@ func ShouldContainKey(actual interface{}, expected ...interface{}) error {
 		}
 	}
 	return fmt.Errorf("expected '%v' contain key %v but it wasnt", actual, expected[0])
+}
+
+// ShouldContainKeyValue expects three parameters: a map as the first argument,
+// the key to check as the second argument, and the corresponding value for the key
+// as the third argument.
+func ShouldContainKeyValue(actual interface{}, expected ...interface{}) error {
+	if err := need(2, expected); err != nil {
+		return err
+	}
+	var result []map[string]interface{}
+
+	switch actual := actual.(type) {
+	case []map[string]interface{}:
+		result = actual
+	case []interface{}:
+		// If input is []interface{}, try to convert each element to map[string]interface{}
+		for _, item := range actual {
+			if m, ok := item.(map[string]interface{}); ok {
+				result = append(result, m)
+			} else {
+				return errors.New("element in the array is not map[string]interface{}")
+			}
+		}
+	default:
+		return errors.New("unsupported input type")
+	}
+
+	for _, mapItem := range result {
+		for key, value := range mapItem {
+			if key == expected[0] {
+				if ShouldEqual(value, expected[1]) == nil {
+					return nil
+				}
+			}
+		}
+	}
+	return fmt.Errorf("expected '%v' to contain key %v and value %v but it wasnt", actual, expected[0], expected[1])
 }
 
 // ShouldNotContainKey receives exactly two parameters. The first is a map and the
