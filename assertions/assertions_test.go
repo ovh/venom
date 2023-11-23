@@ -736,6 +736,562 @@ func TestShouldNotContain(t *testing.T) {
 	}
 }
 
+func TestShouldJSONContain(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{`{"a":1,"b":2,"c":{"x":1,"y":2}}`},
+			},
+		},
+		{
+			// Spaces, newlines, tabs and key order (including in nested objects) don't matter
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{` { "c" : { "y" : 2 , "x" : 1 }, "b" : 2 ,` + "\n\t" + ` "a" : 1 } `},
+			},
+		},
+		{
+			name: "array",
+			args: args{
+				actual:   []interface{}{[]interface{}{1, 2}},
+				expected: []interface{}{`[1,2]`},
+			},
+		},
+		{
+			// Spaces, newlines and tabs don't matter
+			name: "array",
+			args: args{
+				actual:   []interface{}{[]interface{}{1, 2}},
+				expected: []interface{}{` [ 1 ,` + "\n\t" + ` 2 ] `},
+			},
+		},
+		// Object and array errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`{"a":2}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`{"a":"1"}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2}},
+				expected: []interface{}{`{"a":1}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad array order",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1, 2}}},
+				expected: []interface{}{`{"a":[2,1]}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "object instead of array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "array instead of object",
+			args: args{
+				actual:   []interface{}{[]interface{}{1}},
+				expected: []interface{}{`{"a":1}}`},
+			},
+			wantErr: true,
+		},
+		// Primitive values
+		{
+			name: "string",
+			args: args{
+				actual:   []interface{}{"a"},
+				expected: []interface{}{"a"},
+			},
+		},
+		{
+			name: "empty string",
+			args: args{
+				actual:   []interface{}{""},
+				expected: []interface{}{""},
+			},
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   []interface{}{json.Number("1")},
+				expected: []interface{}{`1`},
+			},
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   []interface{}{json.Number("1.2")},
+				expected: []interface{}{`1.2`},
+			},
+		},
+		{
+			name: "boolean",
+			args: args{
+				actual:   []interface{}{true},
+				expected: []interface{}{`true`},
+			},
+		},
+		{
+			// TODO: Shouldn't be valid, but Venom currently passes an empty string to the assertion function when the JSON value is `null`.
+			name: "null",
+			args: args{
+				actual:   []interface{}{""},
+				expected: []interface{}{`null`},
+			},
+		},
+		// Primitive value errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   []interface{}{"a"},
+				expected: []interface{}{"b"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   []interface{}{float64(1)},
+				expected: []interface{}{"1"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldJSONContain(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldJSONContain() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestShouldNotJSONContain(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{`{"a":1,"b":2,"c":{"x":1,"y":2}}`},
+			},
+			wantErr: true,
+		},
+		{
+			// Spaces, newlines, tabs and key order (including in nested objects) don't matter
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{` { "c" : { "y" : 2 , "x" : 1 }, "b" : 2 ,` + "\n\t" + ` "a" : 1 } `},
+			},
+			wantErr: true,
+		},
+		{
+			name: "array",
+			args: args{
+				actual:   []interface{}{[]interface{}{1, 2}},
+				expected: []interface{}{`[1,2]`},
+			},
+			wantErr: true,
+		},
+		{
+			// Spaces, newlines and tabs don't matter
+			name: "array",
+			args: args{
+				actual:   []interface{}{[]interface{}{1, 2}},
+				expected: []interface{}{` [ 1 ,` + "\n\t" + ` 2 ] `},
+			},
+			wantErr: true,
+		},
+		// Object and array errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`{"a":2}`},
+			},
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`{"a":"1"}`},
+			},
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2}},
+				expected: []interface{}{`{"a":1}`},
+			},
+		},
+		{
+			name: "bad array order",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1, 2}}},
+				expected: []interface{}{`{"a":[2,1]}`},
+			},
+		},
+		{
+			name: "object instead of array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`[1]`},
+			},
+		},
+		{
+			name: "array instead of object",
+			args: args{
+				actual:   []interface{}{[]interface{}{1}},
+				expected: []interface{}{`{"a":1}}`},
+			},
+		},
+		// Primitive values
+		{
+			name: "string",
+			args: args{
+				actual:   []interface{}{"a"},
+				expected: []interface{}{"a"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty string",
+			args: args{
+				actual:   []interface{}{""},
+				expected: []interface{}{""},
+			},
+			wantErr: true,
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   []interface{}{json.Number("1")},
+				expected: []interface{}{`1`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "number",
+			args: args{
+				actual:   []interface{}{json.Number("1.2")},
+				expected: []interface{}{`1.2`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "boolean",
+			args: args{
+				actual:   []interface{}{true},
+				expected: []interface{}{`true`},
+			},
+			wantErr: true,
+		},
+		{
+			// TODO: Shouldn't be valid, but Venom currently passes an empty string to the assertion function when the JSON value is `null`.
+			name: "null",
+			args: args{
+				actual:   []interface{}{""},
+				expected: []interface{}{`null`},
+			},
+			wantErr: true,
+		},
+		// Primitive value errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   []interface{}{"a"},
+				expected: []interface{}{"b"},
+			},
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   []interface{}{float64(1)},
+				expected: []interface{}{"1"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldNotJSONContain(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldNotJSONContain() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestShouldJSONContainWithKey(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{"c", `{"x":1,"y":2}`},
+			},
+		},
+		{
+			// Spaces, newlines, tabs and key order (including in nested objects) don't matter
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{"c", ` { "y" : 2 ,` + "\n\t" + ` "x" : 1 } `},
+			},
+		},
+		{
+			name: "array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []interface{}{1, 2}}},
+				expected: []interface{}{"a", `[1,2]`},
+			},
+		},
+		{
+			// Spaces, newlines and tabs don't matter
+			name: "array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []interface{}{1, 2}}},
+				expected: []interface{}{"a", ` [ 1 ,` + "\n\t" + ` 2 ] `},
+			},
+		},
+		// Object and array errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{"a", `2`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{"a", "1"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2}},
+				expected: []interface{}{"c", `3`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad array order",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1, 2}}},
+				expected: []interface{}{"a", `[2,1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "object instead of array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "array instead of object",
+			args: args{
+				actual:   []interface{}{[]interface{}{1}},
+				expected: []interface{}{`{"a":1}}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1}}},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1}}},
+				expected: []interface{}{"a"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldJSONContainWithKey(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldJSONContainWithKey() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestShouldNotJSONContainWithKey(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{"c", `{"x":1,"y":2}`},
+			},
+			wantErr: true,
+		},
+		{
+			// Spaces, newlines, tabs and key order (including in nested objects) don't matter
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{"c", ` { "y" : 2 ,` + "\n\t" + ` "x" : 1 } `},
+			},
+			wantErr: true,
+		},
+		{
+			name: "array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []interface{}{1, 2}}},
+				expected: []interface{}{"a", `[1,2]`},
+			},
+			wantErr: true,
+		},
+		{
+			// Spaces, newlines and tabs don't matter
+			name: "array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []interface{}{1, 2}}},
+				expected: []interface{}{"a", ` [ 1 ,` + "\n\t" + ` 2 ] `},
+			},
+			wantErr: true,
+		},
+		// Object and array errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{"a", `2`},
+			},
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{"a", "1"},
+			},
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2}},
+				expected: []interface{}{"c", `3`},
+			},
+		},
+		{
+			name: "bad array order",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1, 2}}},
+				expected: []interface{}{"a", `[2,1]`},
+			},
+		},
+		{
+			name: "object instead of array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "array instead of object",
+			args: args{
+				actual:   []interface{}{[]interface{}{1}},
+				expected: []interface{}{`{"a":1}}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1}}},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1}}},
+				expected: []interface{}{"a"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldNotJSONContainWithKey(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldNotJSONContainWithKey() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestShouldContainKey(t *testing.T) {
 	type args struct {
 		actual   interface{}
