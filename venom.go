@@ -27,6 +27,11 @@ var (
 	IsTest  = ""
 )
 
+const (
+	LAZY_JSON_EXPANSION_FLAG = "VENOM_NO_JSON_EXPANSION"
+	FLAG_ENABLED             = "ON"
+)
+
 func OSExit(exitCode int) {
 	if IsTest != "" {
 		bincover.ExitCode = exitCode

@@ -18,7 +18,7 @@ func New() *cobra.Command {
 	return rootCmd
 }
 
-//AddCommands adds child commands to the root command rootCmd.
+// AddCommands adds child commands to the root command rootCmd.
 func addCommands(cmd *cobra.Command) {
 	cmd.AddCommand(run.Cmd)
 	cmd.AddCommand(version.Cmd)
