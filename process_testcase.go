@@ -184,6 +184,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 	var previousStepVars = H{}
 	fromUserExecutor := tsIn != nil
 
+loopRawTestSteps:
 	for stepNumber, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
 		stepVars.AddAll(previousStepVars)
@@ -193,7 +194,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 		ranged, err := parseRanged(ctx, rawStep, stepVars)
 		if err != nil {
 			Error(ctx, "unable to parse \"range\" attribute: %v", err)
-			tsIn.appendError(err)
+			testStepResult := TestStepResult{}
+			testStepResult.appendError(err)
+			tc.TestStepResults = append(tc.TestStepResults, testStepResult)
 			return
 		}
 
@@ -267,7 +270,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to parse step #%d: %v", stepNumber, err)
-				return
+				Error(ctx, content)
+				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+				break loopRawTestSteps
 			}
 
 			data2, err := yaml.JSONToYAML([]byte(content))
@@ -284,12 +289,12 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 			tc.testSteps = append(tc.testSteps, step)
 			var e ExecutorRunner
-			Info(ctx, "variables before execution %v", HideSensitive(ctx, stepVars))
 			ctx, e, err = v.GetExecutorRunner(ctx, step, stepVars)
 			if err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to get executor: %v", err)
-				break
+				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+				break loopRawTestSteps
 			}
 
 			if e != nil {
@@ -310,9 +315,10 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 					}(ctx)
 				}
 			}
-
-			printStepName := v.Verbose >= 1 && !fromUserExecutor
-			v.setTestStepName(tsResult, e, step, &ranged, &rangedData, rangedIndex, printStepName)
+			v.setTestStepName(tsResult, e, step, &ranged, &rangedData, rangedIndex)
+			if v.Verbose >= 1 && !fromUserExecutor {
+				v.Print(" \t\t• %s", tsResult.Name)
+			}
 
 			// ##### RUN Test Step Here
 			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber)
@@ -339,15 +345,20 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 
 			var isRequired bool
 
+			if tsResult.Status != StatusFail {
+				Warn(ctx, "Step %q result is %q", tsResult.Name, tsResult.Status)
+			}
+
 			if tsResult.Status == StatusFail {
+				Error(ctx, "Step %q result is %q", tsResult.Name, tsResult.Status)
 				Error(ctx, "Errors: ")
 				for _, e := range tsResult.Errors {
 					Error(ctx, "%v", e)
-					isRequired = isRequired || e.AssertionRequired
+					isRequired = isRequired || e.AssertionRequired || v.StopOnFailure
 				}
 
 				if isRequired {
-					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("At least one required assertion failed, skipping remaining steps"))
+					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", errors.New("At least one required assertion failed, skipping remaining steps"))
 					tsResult.appendFailure(*failure)
 					v.printTestStepResult(tc, tsResult, tsIn, stepNumber, true)
 					return
@@ -355,16 +366,20 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 				continue
 			}
-			v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 
 			allVars := tc.Vars.Clone()
 			allVars.AddAll(tsResult.ComputedVars.Clone())
 
-			assign, _, err := processVariableAssignments(ctx, tc.Name, allVars, rawStep)
-			if err != nil {
-				tsResult.appendError(err)
-				Error(ctx, "unable to process variable assignments: %v", err)
-				break
+			assign, _, errAssignment := processVariableAssignments(ctx, tc.Name, allVars, rawStep)
+			if errAssignment != nil {
+				tsResult.appendError(errAssignment)
+				Error(ctx, "unable to process variable assignments: %v", errAssignment)
+			}
+
+			v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+
+			if errAssignment != nil {
+				break loopRawTestSteps
 			}
 
 			tc.computedVars.AddAll(assign)
@@ -374,7 +389,7 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 }
 
 // Set test step name (defaults to executor name, excepted if it got a "name" attribute. in range, also print key)
-func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestStep, ranged *Range, rangedData *RangeData, rangedIndex int, print bool) {
+func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestStep, ranged *Range, rangedData *RangeData, rangedIndex int) {
 	name := e.Name()
 	if value, ok := step["name"]; ok {
 		switch value := value.(type) {
@@ -386,10 +401,6 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 		name = fmt.Sprintf("%s (range=%s)", name, rangedData.Key)
 	}
 	ts.Name = name
-
-	if print {
-		v.Print(" \t\t• %s", ts.Name)
-	}
 }
 
 // Print a single step result (if verbosity is enabled)
@@ -579,8 +590,8 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars H, ra
 			varValue, has = tcVars[tcName+"."+assignment.From]
 			if !has {
 				if assignment.Default == nil {
-					err := fmt.Errorf("%s reference not found in %s", assignment.From, strings.Join(tcVarsKeys, "\n"))
-					Info(ctx, "%v", err)
+					err := fmt.Errorf("%s reference not found", assignment.From)
+					Error(ctx, "%v", err)
 					return nil, true, err
 				}
 				varValue = assignment.Default

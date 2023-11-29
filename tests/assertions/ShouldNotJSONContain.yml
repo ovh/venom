@@ -1,0 +1,20 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion ShouldNotJSONContain
+  steps:
+  - script: |
+      echo '[
+        {
+          "a" : 1,
+          "b" : 2,
+          "c" : {
+            "x":1,
+            "y":2
+          }
+        },
+        {
+          "bar": "baz"
+        }
+      ]'
+    assertions:
+    - result.systemoutjson ShouldNotJSONContain ' { "baz":"baz" } '
