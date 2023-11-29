@@ -4,11 +4,11 @@ testcases:
   steps:
   - type: http
     method: GET
-    url: https://ca.api.ovh.com/1.0/
+    url: https://eu.api.ovh.com/1.0/
     resolve: 
-    - ca.api.ovh.com:443:eu.api.ovh.com
+    - eu.api.ovh.com:443:ca.api.ovh.com
     ignore_verify_ssl: true
     info: 
     - '{{.result.bodyjson.basepath}}'
     assertions:
-    - result.headers.X-Ovh-Queryid ShouldContainSubstring "EU.ext"
+    - result.headers.X-Ovh-Queryid ShouldContainSubstring "CA.ext"
