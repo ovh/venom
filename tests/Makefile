@@ -24,18 +24,18 @@ venom-imap.cid:
 	$(call docker_run,tomadele/mail-server,imap,-p 1025:25 -p 1143:143 -p 1993:993 -e MAILNAME=example.org -e MAIL_ADDRESS=address@example.org -e MAIL_PASS=pass)
 venom-kafka.cid:
 	docker network create --driver bridge $(docker-network)
-	$(call docker_run,confluentinc/cp-zookeeper:6.0.0,kafka-zookeeper,\
+	$(call docker_run,confluentinc/cp-zookeeper:7.4.3,kafka-zookeeper,\
 		--network $(docker-network) \
 		-p 2181:2181 \
 		-e ZOOKEEPER_CLIENT_PORT=2181 \
 		-e ZOOKEEPER_TICK_TIME=2000 \
 	)
-	$(call docker_run,confluentinc/cp-kafka:6.0.0,kafka-broker,\
+	$(call docker_run,confluentinc/cp-kafka:7.4.3,kafka-broker,\
 		--network $(docker-network) \
 		-p 9092:9092 -p 9101:9101 -p 29092:29092 \
 		--env-file kafka/broker.env \
 	)
-	$(call docker_run,confluentinc/cp-schema-registry:6.0.0,kafka-schema-registry,\
+	$(call docker_run,confluentinc/cp-schema-registry:7.4.3,kafka-schema-registry,\
 		--network $(docker-network) \
 		-p 8081:8081 \
 		-e SCHEMA_REGISTRY_HOST_NAME=venom-kafka-schema-registry \
