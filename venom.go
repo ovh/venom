@@ -27,6 +27,7 @@ var (
 	IsTest  = ""
 )
 
+// OSExit is a wrapper for os.Exit
 func OSExit(exitCode int) {
 	if IsTest != "" {
 		bincover.ExitCode = exitCode

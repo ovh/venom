@@ -244,6 +244,7 @@ func initFromEnv(environ []string) ([]string, error) {
 		v := strings.Split(os.Getenv("VENOM_VAR"), " ")
 		variables = v
 	}
+
 	if os.Getenv("VENOM_VAR_FROM_FILE") != "" {
 		varFiles = strings.Split(os.Getenv("VENOM_VAR_FROM_FILE"), " ")
 	}
