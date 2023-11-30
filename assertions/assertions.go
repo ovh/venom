@@ -39,6 +39,10 @@ var assertMap = map[string]AssertFunc{
 	"ShouldNotBeBetweenOrEqual":    ShouldNotBeBetweenOrEqual,
 	"ShouldContain":                ShouldContain,
 	"ShouldNotContain":             ShouldNotContain,
+	"ShouldJSONContain":            ShouldJSONContain,
+	"ShouldNotJSONContain":         ShouldNotJSONContain,
+	"ShouldJSONContainWithKey":     ShouldJSONContainWithKey,
+	"ShouldNotJSONContainWithKey":  ShouldNotJSONContainWithKey,
 	"ShouldContainKey":             ShouldContainKey,
 	"ShouldNotContainKey":          ShouldNotContainKey,
 	"ShouldBeIn":                   ShouldBeIn,
@@ -625,6 +629,108 @@ func ShouldNotContain(actual interface{}, expected ...interface{}) error {
 	for i := range actualSlice {
 		if ShouldEqual(actualSlice[i], expected[0]) == nil {
 			return fmt.Errorf("expected '%v' not contain %v but it was", actual, expected[0])
+		}
+	}
+	return nil
+}
+
+// ShouldJSONContain receives exactly two parameters. The first is a slice, the
+// second is a proposed JSON member.
+// Equality is determined using ShouldJSONEqual.
+func ShouldJSONContain(actual interface{}, expected ...interface{}) error {
+	if err := need(1, expected); err != nil {
+		return err
+	}
+	actualSlice, err := cast.ToSliceE(actual)
+	if err != nil {
+		return err
+	}
+	for i := range actualSlice {
+		if ShouldJSONEqual(actualSlice[i], expected[0]) == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("expected '%v' to contain %v but it wasnt", actual, expected[0])
+}
+
+// ShouldNotJSONContain receives exactly two parameters. The first is a slice, the
+// second is a proposed JSON member.
+// Equality is determined using ShouldJSONEqual.
+func ShouldNotJSONContain(actual interface{}, expected ...interface{}) error {
+	if err := need(1, expected); err != nil {
+		return err
+	}
+	actualSlice, err := cast.ToSliceE(actual)
+	if err != nil {
+		return err
+	}
+	for i := range actualSlice {
+		if ShouldJSONEqual(actualSlice[i], expected[0]) == nil {
+			return fmt.Errorf("expected '%v' not contain %v but it was", actual, expected[0])
+		}
+	}
+	return nil
+}
+
+// ShouldJSONContainWithKey receives exactly three parameters. The first is a slice, the
+// second is a key in the inner slice structure and the third is a proposed value associated to the key.
+// Equality is determined using ShouldJSONEqual.
+func ShouldJSONContainWithKey(actual interface{}, expected ...interface{}) error {
+	if err := need(2, expected); err != nil {
+		return err
+	}
+	actualSlice, err := cast.ToSliceE(actual)
+	if err != nil {
+		return err
+	}
+	if reflect.TypeOf(expected[0]).Kind() != reflect.String {
+		return fmt.Errorf("expected '%v' to be a string", expected[0])
+	}
+	expectedKey := cast.ToString(expected[0])
+	for i := range actualSlice {
+		if reflect.TypeOf(actualSlice[i]).Kind() != reflect.Map && reflect.TypeOf(actualSlice[i]).Kind() != reflect.Struct {
+			return fmt.Errorf("expected '%v' to be a map or a struct", actualSlice[i])
+		}
+		elem := cast.ToStringMap(actualSlice[i])
+		if err != nil {
+			return err
+		}
+		if _, ok := elem[expectedKey]; ok {
+			if ShouldJSONEqual(elem[expectedKey], expected[1]) == nil {
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("expected '%v' contain a key '%s' with value %v but it wasnt", actual, expectedKey, expected[1])
+}
+
+// ShouldNotJSONContainWithKey receives exactly three parameters. The first is a slice, the
+// second is a key in the inner slice structure and the third is a proposed value associated to the key.
+// Equality is determined using ShouldJSONEqual.
+func ShouldNotJSONContainWithKey(actual interface{}, expected ...interface{}) error {
+	if err := need(2, expected); err != nil {
+		return err
+	}
+	actualSlice, err := cast.ToSliceE(actual)
+	if err != nil {
+		return err
+	}
+	if reflect.TypeOf(expected[0]).Kind() != reflect.String {
+		return fmt.Errorf("expected '%v' to be a string", expected[0])
+	}
+	expectedKey := cast.ToString(expected[0])
+	for i := range actualSlice {
+		if reflect.TypeOf(actualSlice[i]).Kind() != reflect.Map && reflect.TypeOf(actualSlice[i]).Kind() != reflect.Struct {
+			return fmt.Errorf("expected '%v' to be a map or a struct currently %v", actualSlice[i], reflect.TypeOf(actualSlice[i]).Kind())
+		}
+		elem := cast.ToStringMap(actualSlice[i])
+		if err != nil {
+			return err
+		}
+		if _, ok := elem[expectedKey]; ok {
+			if ShouldJSONEqual(elem[expectedKey], expected[1]) == nil {
+				return fmt.Errorf("expected '%v' not contain a key '%s' with value %v but it was", actual, expectedKey, expected[1])
+			}
 		}
 	}
 	return nil
