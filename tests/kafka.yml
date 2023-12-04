@@ -4,7 +4,8 @@ testcases:
 - name: Kafka test
   description: Test kafka
   steps:
-  - type: kafka
+  - name: produce-test
+    type: kafka
     clientType: producer
     withSASL: false
     withTLS: false
@@ -18,7 +19,8 @@ testcases:
         'x-api-key': 'hola'
         'x-something-else': 'ole'
       value: '{"hello":"bar"}'
-  - type: kafka
+  - name: consume-test
+    type: kafka
     clientType: consumer
     withTLS: false
     withSASL: false
@@ -35,7 +37,8 @@ testcases:
     assertions:
     - result.messagesjson.messagesjson0.Value.hello ShouldEqual bar
     - result.messages.__Len__ ShouldEqual 1
-  - type: kafka
+  - name: consume-test-2
+    type: kafka
     clientType: consumer
     withTLS: false
     withSASL: false
@@ -43,7 +46,7 @@ testcases:
     password: "{{.kafkaPwd}}"
     markOffset: false
     initialOffset: oldest
-    waitFor: 1
+    waitFor: 5
     groupID: venom-wait-for
     addrs:
       - "{{.kafkaHost}}:{{.kafkaPort}}"

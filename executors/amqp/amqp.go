@@ -78,7 +78,7 @@ func (e Executor) createAMQPSession(ctx context.Context) (*amqp.Conn, *amqp.Sess
 		return nil, nil, errors.New("creating session: addr is mandatory")
 	}
 
-	client, err := amqp.Dial(e.Addr, &amqp.ConnOptions{
+	client, err := amqp.Dial(ctx, e.Addr, &amqp.ConnOptions{
 		SASLType: amqp.SASLTypeAnonymous(),
 	})
 	if err != nil {
@@ -108,7 +108,7 @@ func (e Executor) publishMessages(ctx context.Context, session *amqp.Session) (i
 	}
 
 	for _, m := range e.Messages {
-		if err := sender.Send(ctx, amqp.NewMessage([]byte(m))); err != nil {
+		if err := sender.Send(ctx, amqp.NewMessage([]byte(m)), nil); err != nil {
 			return nil, fmt.Errorf("publishing messages: %w", err)
 		}
 	}
@@ -149,7 +149,7 @@ func (e Executor) consumeMessages(ctx context.Context, session *amqp.Session) (i
 }
 
 func consumeMessage(ctx context.Context, recv *amqp.Receiver) (msgString string, msgJSON interface{}, err error) {
-	msg, err := recv.Receive(ctx)
+	msg, err := recv.Receive(ctx, nil)
 	if err != nil {
 		return "", nil, fmt.Errorf("consuming message: %w", err)
 	}

@@ -27,6 +27,7 @@ var (
 	IsTest  = ""
 )
 
+// OSExit is a wrapper for os.Exit
 func OSExit(exitCode int) {
 	if IsTest != "" {
 		bincover.ExitCode = exitCode
@@ -266,8 +267,6 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
 			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
 		}
-
-		Debug(ctx, "User executor %q revolved with content %v", f, content)
 
 		for k, vr := range varsComputed {
 			ux.Input.Add(k, vr)

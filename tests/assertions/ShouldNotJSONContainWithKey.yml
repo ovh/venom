@@ -1,0 +1,28 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion ShouldNotJSONContainWithKey
+  steps:
+  - script: |
+      echo '[
+        {
+          "o" : {
+            "a" : 1,
+            "b" : 2,
+            "c" : {
+                "x":1,
+                "y":2
+            }
+          },
+          "a" : [1,2],
+          "s" : "foo",
+          "n" : 1.2,
+          "t" : true,
+          "f" : false,
+          "z" : null
+        },
+        {
+          "bar": "baz"
+        }
+      ]'
+    assertions:
+    - result.systemoutjson ShouldNotJSONContainWithKey o ' { "c":{ "y" :20 , "x" :10 }, "b" :20 , "a" :10 } '
