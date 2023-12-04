@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,10 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
 	// This also avoids injections into the json structure of a step
 	for i := range dvars {
+		if runtime.GOOS == "windows" {
+			// Replace forward slashes with backslashes for Windows
+			dvars[i] = strings.ReplaceAll(dvars[i], "/", "\"")
+		}
 		dvars[i] = strings.ReplaceAll(dvars[i], "\"", "\\\"")
 	}
 	for _, rawStep := range tc.RawTestSteps {
