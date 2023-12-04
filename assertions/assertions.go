@@ -41,6 +41,7 @@ var assertMap = map[string]AssertFunc{
 	"ShouldJSONContain":            ShouldJSONContain,
 	"ShouldNotJSONContain":         ShouldNotJSONContain,
 	"ShouldJSONContainWithKey":     ShouldJSONContainWithKey,
+	"ShouldJSONContainAllWithKey":  ShouldJSONContainAllWithKey,
 	"ShouldNotJSONContainWithKey":  ShouldNotJSONContainWithKey,
 	"ShouldContainKey":             ShouldContainKey,
 	"ShouldNotContainKey":          ShouldNotContainKey,
@@ -680,6 +681,38 @@ func ShouldJSONContainWithKey(actual interface{}, expected ...interface{}) error
 		}
 	}
 	return fmt.Errorf("expected '%v' contain a key '%s' with value %v but it wasnt", actual, expectedKey, expected[1])
+}
+
+// ShouldJSONContainAllWithKey receives exactly three parameters. The first is a slice, the
+// second is a key in the inner slice structure and the third is a proposed value associated to the key.
+// Equality is determined using ShouldJSONEqual.
+func ShouldJSONContainAllWithKey(actual interface{}, expected ...interface{}) error {
+	if err := need(2, expected); err != nil {
+		return err
+	}
+	actualSlice, err := cast.ToSliceE(actual)
+	if err != nil {
+		return err
+	}
+	if reflect.TypeOf(expected[0]).Kind() != reflect.String {
+		return fmt.Errorf("expected '%v' to be a string", expected[0])
+	}
+	expectedKey := cast.ToString(expected[0])
+	for i := range actualSlice {
+		if reflect.TypeOf(actualSlice[i]).Kind() != reflect.Map && reflect.TypeOf(actualSlice[i]).Kind() != reflect.Struct {
+			return fmt.Errorf("expected '%v' to be a map or a struct", actualSlice[i])
+		}
+		elem := cast.ToStringMap(actualSlice[i])
+		if err != nil {
+			return err
+		}
+		if _, ok := elem[expectedKey]; ok {
+			if ShouldJSONEqual(elem[expectedKey], expected[1]) != nil {
+				return fmt.Errorf("expected '%v' contain a key '%s' with value %v but it wasnt", actual, expectedKey, expected[1])
+			}
+		}
+	}
+	return nil
 }
 
 // ShouldNotJSONContainWithKey receives exactly three parameters. The first is a slice, the
