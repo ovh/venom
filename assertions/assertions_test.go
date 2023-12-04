@@ -1176,6 +1176,122 @@ func TestShouldJSONContainWithKey(t *testing.T) {
 	}
 }
 
+func TestShouldJSONContainAllWithKey(t *testing.T) {
+	type args struct {
+		actual   interface{}
+		expected []interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// Objects and arrays
+		{
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{"c", `{"x":1,"y":2}`},
+			},
+		},
+		{
+			// Spaces, newlines, tabs and key order (including in nested objects) don't matter
+			name: "object",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": map[string]interface{}{"x": 1, "y": 2}}},
+				expected: []interface{}{"c", ` { "y" : 2 ,` + "\n\t" + ` "x" : 1 } `},
+			},
+		},
+		{
+			name: "array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []interface{}{1, 2}}, map[string]interface{}{"a": []interface{}{1, 2}}},
+				expected: []interface{}{"a", `[1,2]`},
+			},
+		},
+		{
+			// Spaces, newlines and tabs don't matter
+			name: "array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []interface{}{1, 2}}, map[string]interface{}{"a": []interface{}{1, 2}}},
+				expected: []interface{}{"a", ` [ 1 ,` + "\n\t" + ` 2 ] `},
+			},
+		},
+		// Object and array errors
+		{
+			name: "bad value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{"a", `2`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad type",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{"a", "1"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing key in second element of the array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1, "b": 2, "c": 3}, map[string]interface{}{"a": 1, "b": 2}},
+				expected: []interface{}{"c", `3`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "bad array order in second element of the array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{2, 1}}, map[string]interface{}{"a": []float64{1, 2}}},
+				expected: []interface{}{"a", `[2,1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "object instead of array",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": 1}},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "array instead of object",
+			args: args{
+				actual:   []interface{}{[]interface{}{1}},
+				expected: []interface{}{`{"a":1}}`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing key",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1}}},
+				expected: []interface{}{`[1]`},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing value",
+			args: args{
+				actual:   []interface{}{map[string]interface{}{"a": []float64{1}}},
+				expected: []interface{}{"a"},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ShouldJSONContainAllWithKey(tt.args.actual, tt.args.expected...); (err != nil) != tt.wantErr {
+				t.Errorf("ShouldJSONContainAllWithKey() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestShouldNotJSONContainWithKey(t *testing.T) {
 	type args struct {
 		actual   interface{}
