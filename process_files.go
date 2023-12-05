@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -132,6 +133,10 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 
 		// Default workdir is testsuite directory
 		ts.WorkDir, err = filepath.Abs(filepath.Dir(filePath))
+		if runtime.GOOS == "windows" {
+			// Replace backslashes with forward slashes for Windows
+			ts.WorkDir = strings.ReplaceAll(ts.WorkDir, "\\", "/")
+		}
 		if err != nil {
 			return errors.Wrapf(err, "Unable to get testsuite's working directory")
 		}
