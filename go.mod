@@ -44,7 +44,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b
 	go.mongodb.org/mongo-driver v1.12.1
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/net v0.19.0
 	google.golang.org/grpc v1.59.0
