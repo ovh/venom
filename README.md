@@ -639,6 +639,7 @@ The value `this-value-is-secret` will not be printed in your console, `venom.log
 * ShouldJSONContain - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldJSONContain.yml)
 * ShouldNotJSONContain - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldNotJSONContain.yml)
 * ShouldJSONContainWithKey - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldJSONContainWithKey.yml)
+* ShouldJSONContainAllWithKey - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldJSONContainAllWithKey.yml)
 * ShouldNotJSONContainWithKey - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldNotJSONContainWithKey.yml)
 * ShouldContainKey - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldContainKey.yml)
 * ShouldNotContainKey - [example](https://github.com/ovh/venom/tree/master/tests/assertions/ShouldNotContainKey.yml)
