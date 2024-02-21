@@ -104,17 +104,19 @@ type TestSuiteXML struct {
 }
 
 type TestSuiteInput struct {
-	Name      string          `json:"name" yaml:"name"`
-	TestCases []TestCaseInput `json:"testcases" yaml:"testcases"`
-	Vars      H               `json:"vars" yaml:"vars"`
-	Secrets   []string        `json:"secrets" yaml:"secrets"`
+	Name        string          `json:"name" yaml:"name"`
+	Description string          `json:"description" yaml:"description"`
+	TestCases   []TestCaseInput `json:"testcases" yaml:"testcases"`
+	Vars        H               `json:"vars" yaml:"vars"`
+	Secrets     []string        `json:"secrets" yaml:"secrets"`
 }
 
 type TestSuite struct {
-	Name      string     `json:"name" yaml:"name"`
-	TestCases []TestCase `json:"testcases" yaml:"testcases"`
-	Vars      H          `json:"vars" yaml:"vars"`
-	Secrets   []string   `json:"secrets" yaml:"secrets"`
+	Name        string     `json:"name" yaml:"name"`
+	Description string     `json:"description,omitempty" yaml:"description"`
+	TestCases   []TestCase `json:"testcases" yaml:"testcases"`
+	Vars        H          `json:"vars" yaml:"vars"`
+	Secrets     []string   `json:"secrets" yaml:"secrets"`
 
 	// computed
 	ShortName    string `json:"shortname" yaml:"-"`
@@ -357,8 +359,10 @@ func RemoveNotPrintableChar(in string) string {
 	return strings.Map(m, in)
 }
 
-var Red = color.New(color.FgRed).SprintFunc()
-var Yellow = color.New(color.FgYellow).SprintFunc()
-var Green = color.New(color.FgGreen).SprintFunc()
-var Cyan = color.New(color.FgCyan).SprintFunc()
-var Gray = color.New(color.Attribute(90)).SprintFunc()
+var (
+	Red    = color.New(color.FgRed).SprintFunc()
+	Yellow = color.New(color.FgYellow).SprintFunc()
+	Green  = color.New(color.FgGreen).SprintFunc()
+	Cyan   = color.New(color.FgCyan).SprintFunc()
+	Gray   = color.New(color.Attribute(90)).SprintFunc()
+)
