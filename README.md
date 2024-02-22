@@ -299,6 +299,7 @@ In `venom` a testsuite is written in one `YAML` file respecting the following st
 ```yaml
 
 name: Title of TestSuite
+description: A detailed description of the TestSuite, in markdown.
 testcases:
 - name: TestCase with default value, exec cmd. Check if exit code != 1
   steps:
