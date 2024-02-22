@@ -195,6 +195,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 						if tc.Status == "" {
 							tc.Status = StatusSkip
 							tc.IsEvaluated = true
+							tc.Skipped = append(tc.Skipped, Skipped{Value: "===== stop-on-failure: enabled ====="})
 						}
 					}
 					return
