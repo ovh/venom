@@ -228,16 +228,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 				}
 			}
 
-			if result.BodyJSON != nil {
-				// Convert the map to a JSON string
-				jsonString, err := json.Marshal(result.BodyJSON)
-				if err != nil {
-					return nil, err
-				}
-				result.Systemout = fmt.Sprintf("%s-----%s----->%s ", resp.Request.Method, resp.Request.URL, string(jsonString))
-			} else {
-				result.Systemout = fmt.Sprintf("%s-----%s----->%s ", resp.Request.Method, resp.Request.URL, result.Body)
-			}
+			result.Systemout = buildResultInfo(&result, resp)
 		}
 	}
 
@@ -487,4 +478,26 @@ func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error
 	}
 
 	return opts, nil
+}
+
+func buildResultInfo(result *Result, resp *http.Response) string {
+	var body string
+	if result.BodyJSON != nil {
+		jsonString, err := json.Marshal(result.BodyJSON)
+		if err != nil {
+			return fmt.Sprintf("Error marshaling JSON: %s", err.Error())
+		}
+		body = string(jsonString)
+	} else {
+		body = result.Body
+	}
+
+	return fmt.Sprintf(`===== Result Info =====
+		Method:     %s
+		URL:        %s
+		Body:       %s
+		======================`,
+		resp.Request.Method,
+		resp.Request.URL,
+		body)
 }
