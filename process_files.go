@@ -119,10 +119,11 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 		}
 
 		ts := TestSuite{
-			Name:      testSuiteInput.Name,
-			TestCases: make([]TestCase, len(testSuiteInput.TestCases)),
-			Vars:      testSuiteInput.Vars,
-			Secrets:   testSuiteInput.Secrets,
+			Name:        testSuiteInput.Name,
+			Description: testSuiteInput.Description,
+			TestCases:   make([]TestCase, len(testSuiteInput.TestCases)),
+			Vars:        testSuiteInput.Vars,
+			Secrets:     testSuiteInput.Secrets,
 		}
 		for i := range testSuiteInput.TestCases {
 			ts.TestCases[i] = TestCase{
