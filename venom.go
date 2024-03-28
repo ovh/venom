@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	//Version is set with -ldflags "-X github.com/ovh/venom/venom.Version=$(VERSION)"
+	// Version is set with -ldflags "-X github.com/ovh/venom/venom.Version=$(VERSION)"
 	Version = "snapshot"
 	IsTest  = ""
 )
@@ -126,7 +126,8 @@ func (v *Venom) RegisterExecutorUser(name string, e Executor) {
 func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (context.Context, ExecutorRunner, error) {
 	name, _ := ts.StringValue("type")
 	script, _ := ts.StringValue("script")
-	if name == "" && script != "" {
+	command, _ := ts.StringSliceValue("command")
+	if name == "" && (script != "" || len(command) != 0) {
 		name = "exec"
 	}
 	retry, err := ts.IntValue("retry")
@@ -346,7 +347,7 @@ func AllVarsFromCtx(ctx context.Context) H {
 }
 
 func JSONUnmarshal(btes []byte, i interface{}) error {
-	var d = json.NewDecoder(bytes.NewReader(btes))
+	d := json.NewDecoder(bytes.NewReader(btes))
 	d.UseNumber()
 	return d.Decode(i)
 }
