@@ -55,3 +55,9 @@ testcases:
     script: cat
     assertions:
     - result.systemoutjson.foo ShouldContainSubstring bar
+
+- name: command
+  steps:
+  - command: ["echo", "{{.cat-json.json}}"]
+    assertions:
+    - result.systemoutjson.foo ShouldContainSubstring bar

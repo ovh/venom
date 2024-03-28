@@ -28,8 +28,9 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Stdin  *string `json:"stdin,omitempty" yaml:"stdin,omitempty"`
-	Script *string `json:"script,omitempty" yaml:"script,omitempty"`
+	Command []string `json:"command,omitempty" yaml:"command,omitempty"`
+	Stdin   *string  `json:"stdin,omitempty" yaml:"stdin,omitempty"`
+	Script  *string  `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
 // Result represents a step result
@@ -60,75 +61,92 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, err
 	}
 
-	if e.Script != nil && *e.Script == "" {
+	if (e.Script == nil || *e.Script == "") && (len(e.Command) == 0) {
 		return nil, fmt.Errorf("Invalid command")
 	}
-
-	scriptContent := *e.Script
-
-	// Default shell is sh
-	shell := "/bin/sh"
-	var opts []string
-
-	// If user wants a specific shell, use it
-	if strings.HasPrefix(scriptContent, "#!") {
-		t := strings.SplitN(scriptContent, "\n", 2)
-		shell = strings.TrimPrefix(t[0], "#!")
-		shell = strings.TrimRight(shell, " \t\r\n")
+	if e.Script != nil && *e.Script != "" && len(e.Command) != 0 {
+		return nil, fmt.Errorf("Cannot use both 'script' and 'command'")
 	}
 
-	// except on windows where it's powershell
-	if runtime.GOOS == "windows" {
-		shell = "PowerShell"
-		opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
-	}
+	var (
+		command string
+		opts    []string
+	)
 
-	// Create a tmp file
-	tmpscript, err := os.CreateTemp(os.TempDir(), "venom-")
-	if err != nil {
-		return nil, fmt.Errorf("cannot create tmp file: %s", err)
+	if len(e.Command) != 0 {
+		command = e.Command[0]
+		if len(e.Command) > 1 {
+			opts = e.Command[1:]
+		}
 	}
+	if e.Script != nil && *e.Script != "" {
+		scriptContent := *e.Script
 
-	// Put script in file
-	venom.Debug(ctx, "work with tmp file %s", tmpscript.Name())
-	n, err := tmpscript.Write([]byte(scriptContent))
-	if err != nil || n != len(scriptContent) {
+		// Default shell is sh
+		shell := "/bin/sh"
+
+		// If user wants a specific shell, use it
+		if strings.HasPrefix(scriptContent, "#!") {
+			t := strings.SplitN(scriptContent, "\n", 2)
+			shell = strings.TrimPrefix(t[0], "#!")
+			shell = strings.TrimRight(shell, " \t\r\n")
+		}
+
+		// except on windows where it's powershell
+		if runtime.GOOS == "windows" {
+			shell = "PowerShell"
+			opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
+		}
+
+		// Create a tmp file
+		tmpscript, err := os.CreateTemp(os.TempDir(), "venom-")
 		if err != nil {
-			return nil, fmt.Errorf("cannot write script: %s", err)
+			return nil, fmt.Errorf("cannot create tmp file: %s", err)
 		}
-		return nil, fmt.Errorf("cannot write all script: %d/%d", n, len(scriptContent))
-	}
 
-	oldPath := tmpscript.Name()
-	tmpscript.Close()
-	var scriptPath string
-	if runtime.GOOS == "windows" {
-		// Remove all .txt Extensions, there is not always a .txt extension
-		newPath := strings.ReplaceAll(oldPath, ".txt", "")
-		// and add .PS1 extension
-		newPath += ".PS1"
-		if err := os.Rename(oldPath, newPath); err != nil {
-			return nil, fmt.Errorf("cannot rename script to add powershell extension, aborting")
+		// Put script in file
+		venom.Debug(ctx, "work with tmp file %s", tmpscript.Name())
+		n, err := tmpscript.Write([]byte(scriptContent))
+		if err != nil || n != len(scriptContent) {
+			if err != nil {
+				return nil, fmt.Errorf("cannot write script: %s", err)
+			}
+			return nil, fmt.Errorf("cannot write all script: %d/%d", n, len(scriptContent))
 		}
-		// This aims to stop a the very first error and return the right exit code
-		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
-		scriptPath = newPath
-		opts = append(opts, psCommand)
-	} else {
-		scriptPath = oldPath
-		opts = append(opts, scriptPath)
-	}
-	defer os.Remove(scriptPath)
 
-	// Chmod file
-	if err := os.Chmod(scriptPath, 0o700); err != nil {
-		return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, err)
+		oldPath := tmpscript.Name()
+		tmpscript.Close()
+		var scriptPath string
+		if runtime.GOOS == "windows" {
+			// Remove all .txt Extensions, there is not always a .txt extension
+			newPath := strings.ReplaceAll(oldPath, ".txt", "")
+			// and add .PS1 extension
+			newPath += ".PS1"
+			if err := os.Rename(oldPath, newPath); err != nil {
+				return nil, fmt.Errorf("cannot rename script to add powershell extension, aborting")
+			}
+			// This aims to stop a the very first error and return the right exit code
+			psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
+			scriptPath = newPath
+			opts = append(opts, psCommand)
+		} else {
+			scriptPath = oldPath
+			opts = append(opts, scriptPath)
+		}
+		defer os.Remove(scriptPath)
+
+		// Chmod file
+		if err := os.Chmod(scriptPath, 0o700); err != nil {
+			return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, err)
+		}
+
+		command = shell
 	}
 
 	start := time.Now()
 
-	cmd := exec.CommandContext(ctx, shell, opts...)
-	venom.Debug(ctx, "teststep exec '%s %s'", shell, strings.Join(opts, " "))
+	cmd := exec.CommandContext(ctx, command, opts...)
+	venom.Debug(ctx, "teststep exec '%s %s'", command, strings.Join(opts, " "))
 	cmd.Dir = venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 	if e.Stdin != nil {
 		cmd.Stdin = strings.NewReader(*e.Stdin)

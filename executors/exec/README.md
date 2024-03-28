@@ -46,6 +46,18 @@ testcases:
     script: cat
 ```
 
+Explicit command (no shell):
+
+```yaml
+name: Title of TestSuite
+testcases:
+- name: explicit command
+  steps:
+  - type: exec
+    stdin: "{\"foo\":\"bar\"}"
+    command: ["jq", ".foo"]
+```
+
 ## Output
 
 ```yaml
