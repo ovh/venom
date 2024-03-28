@@ -190,6 +190,14 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 			for _, testStepResult := range tc.TestStepResults {
 				if len(testStepResult.Errors) > 0 {
 					// break TestSuite
+					for i := range ts.TestCases {
+						tc := &ts.TestCases[i]
+						if tc.Status == "" {
+							tc.Status = StatusSkip
+							tc.IsEvaluated = true
+							tc.Skipped = append(tc.Skipped, Skipped{Value: "===== stop-on-failure: enabled ====="})
+						}
+					}
 					return
 				}
 			}
