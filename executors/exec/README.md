@@ -34,6 +34,18 @@ testcases:
             echo "Bar"
 ```
 
+Input:
+
+```yaml
+name: Title of TestSuite
+testcases:
+- name: with stdin
+  steps:
+  - type: exec
+    stdin: Foo
+    script: cat
+```
+
 ## Output
 
 ```yaml

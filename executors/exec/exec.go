@@ -28,6 +28,7 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
+	Stdin  *string `json:"stdin,omitempty" yaml:"stdin,omitempty"`
 	Script *string `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
@@ -120,7 +121,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	defer os.Remove(scriptPath)
 
 	// Chmod file
-	if err := os.Chmod(scriptPath, 0700); err != nil {
+	if err := os.Chmod(scriptPath, 0o700); err != nil {
 		return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, err)
 	}
 
@@ -129,6 +130,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	cmd := exec.CommandContext(ctx, shell, opts...)
 	venom.Debug(ctx, "teststep exec '%s %s'", shell, strings.Join(opts, " "))
 	cmd.Dir = venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+	if e.Stdin != nil {
+		cmd.Stdin = strings.NewReader(*e.Stdin)
+	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("runScriptAction: Cannot get stdout pipe: %s", err)

@@ -40,9 +40,18 @@ testcases:
       bar:
         from: result.systemoutjson.notexisting
         default: "test"
+      json:
+        from: result.systemoutjson
 
 - name: verify default
   steps:
   - script: echo "{{.cat-json.foo}} {{.cat-json.bar}}"
     assertions:
     - result.systemout ShouldEqual "bar test"
+
+- name: stdin
+  steps:
+  - stdin: "{{.cat-json.json}}"
+    script: cat
+    assertions:
+    - result.systemoutjson.foo ShouldContainSubstring bar
