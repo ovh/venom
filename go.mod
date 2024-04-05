@@ -12,10 +12,10 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/fsamin/go-dump v1.8.0
 	github.com/fullstorydev/grpcurl v1.8.8
-	github.com/garyburd/redigo v1.6.4
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/go-testfixtures/testfixtures/v3 v3.9.0
 	github.com/golang/protobuf v1.5.3
+	github.com/gomodule/redigo v1.9.2
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/gosimple/slug v1.13.1
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
