@@ -12,7 +12,7 @@ import (
 func New() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "venom",
-		Short: "Venom aim to create, manage and run your integration tests with efficiency",
+		Short: "Venom aims to create, manage and run your integration tests with efficiency",
 	}
 	addCommands(rootCmd)
 	return rootCmd
