@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -87,9 +88,21 @@ func ShouldBeArray(actual interface{}, expected ...interface{}) error {
 	if err := need(0, expected); err != nil {
 		return err
 	}
+	t := []interface{}{}
 	_, err := cast.ToSliceE(actual)
 	if err != nil {
+		strValue := fmt.Sprintf("%v", actual)
+		err2 := json.Unmarshal([]byte(strValue), &t)
+		if err2 != nil {
+			return fmt.Errorf("expected: %v to be an array but was not", actual)
+		}
+		x := bytes.TrimLeft([]byte(strValue), " \t\r\n")
+		isArray := len(x) > 0 && x[0] == '['
+		if isArray {
+			return nil
+		}
 		return fmt.Errorf("expected: %v to be an array but was not", actual)
+
 	}
 	return nil
 }
@@ -99,8 +112,19 @@ func ShouldBeMap(actual interface{}, expected ...interface{}) error {
 		return err
 	}
 	_, err := cast.ToStringMapE(actual)
+	t := map[string]interface{}{}
 	if err != nil {
-		return fmt.Errorf("expected: %v to be a map but was not", actual)
+		strValue := fmt.Sprintf("%v", actual)
+		err2 := json.Unmarshal([]byte(strValue), &t)
+		if err2 != nil {
+			return fmt.Errorf("expected: %v to be a map but was not", actual)
+		}
+		x := bytes.TrimLeft([]byte(strValue), " \t\r\n")
+		isObject := len(x) > 0 && x[0] == '{'
+		if isObject {
+			return nil
+		}
+		return fmt.Errorf("expected: %v to be an map but was not", actual)
 	}
 	return nil
 }
@@ -245,10 +269,8 @@ func ShouldBeNil(actual interface{}, expected ...interface{}) error {
 
 // ShouldNotExist receives a single parameter and ensures that it is nil, blank or zero value
 func ShouldNotExist(actual interface{}, expected ...interface{}) error {
-	if ShouldBeNil(actual) != nil ||
-		ShouldBeBlank(actual) != nil ||
-		ShouldBeZeroValue(actual) != nil {
-		return fmt.Errorf("expected not exist but it was")
+	if ShouldBeNil(actual) != nil && ShouldBeBlank(actual) != nil && ShouldBeZeroValue(actual) != nil {
+		return fmt.Errorf("expected to be empty but it was not")
 	}
 	return nil
 }
