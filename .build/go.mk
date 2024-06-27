@@ -48,9 +48,12 @@ mk_go_build_clean:
 
 $(CROSS_COMPILED_BINARIES): $(GOFILES) $(TARGET_DIST)
 	$(info *** compiling $@)
-	@GOOS=$(call get_os_from_binary_file,$@) \
+	@os=$(call get_os_from_binary_file,$@); \
+	filename=$@ ; \
+	if [[ $${os} == 'windows' ]]; then filename=$@.exe; fi; \
+	GOOS=$${os} \
 	GOARCH=$(call get_arch_from_binary_file,$@) \
-	$(GO_BUILD) $(BUILD_MODE) $(LDFLAGS) -o $@;
+	$(GO_BUILD) $(BUILD_MODE) $(LDFLAGS) -o $${filename};
 
 ##### =====> Compile Tests <===== #####
 
