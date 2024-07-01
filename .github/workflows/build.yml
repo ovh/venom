@@ -29,11 +29,11 @@ jobs:
           name: Release ${{ github.sha }}
           draft: false
           prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
 
       - name: Upload binary1 to Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: dist/venom.darwin-amd64,dist/venom.darwin-arm64,dist/venom.linux-amd64,dist/venom.windows-amd64
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
           tag: ${{ github.sha }}
