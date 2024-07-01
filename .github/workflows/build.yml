@@ -1,0 +1,39 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    branches:
+      - feature/soca-custom-main3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.18'
+
+      - name: Build using Makefile
+        run: make build
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.sha }}
+          name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload binary1 to Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: dist/venom.darwin-amd64,dist/venom.darwin-arm64,dist/venom.linux-amd64,dist/venom.windows-amd64
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.sha }}
