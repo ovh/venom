@@ -243,11 +243,9 @@ func ShouldBeNil(actual interface{}, expected ...interface{}) error {
 	return fmt.Errorf("expected: Nil but is wasn't")
 }
 
-// ShouldNotExist receives a single parameter and ensures that it is nil, blank or zero value
+// ShouldNotExist receives a single parameter and ensures that it is nil
 func ShouldNotExist(actual interface{}, expected ...interface{}) error {
-	if ShouldBeNil(actual) != nil ||
-		ShouldBeBlank(actual) != nil ||
-		ShouldBeZeroValue(actual) != nil {
+	if ShouldBeNil(actual) != nil {
 		return fmt.Errorf("expected not exist but it was")
 	}
 	return nil
