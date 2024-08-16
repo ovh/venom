@@ -847,7 +847,8 @@ testcases:
 
 ```
 
-A `skip` statement may also be placed at steps level to partially execute a testcase.
+A `skip` statement may also be placed at steps level to partially execute a testcase. If one condition from the skip block is not true, it's skipped.
+
 If all steps from a testcase are skipped, the testcase itself will also be treated as "skipped" rather than "passed"/"failed".
 
 ```yaml
