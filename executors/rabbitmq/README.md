@@ -1,6 +1,11 @@
 # Venom - Executor RabbitMQ
 
-Step to use publish / subscribe on a RabbitMQ
+Three types of execution are supported:
+- **publisher**: publish a message to a queue or to an exchange.
+- **subscriber**: bind to a queue or an exchange (using routing key) and wait for message(s) to be consumed.
+- **client**: publish a message to a queue or to an exchange and wait for the response message to be received on the [reply-to](https://www.rabbitmq.com/docs/direct-reply-to) queue.
+
+Steps to use publish / subscribe on a RabbitMQ:
 
 ## Input
 In your yaml file, you can use:
@@ -12,7 +17,7 @@ In your yaml file, you can use:
   - user optional         (default guest)
   - password optional     (default guest)
 
-  - clientType mandatory (publisher or subscriber)
+  - clientType mandatory (publisher, subscriber or client)
 
   # RabbitMQ Q configuration
   - qName mandatory
@@ -22,10 +27,10 @@ In your yaml file, you can use:
   - exchangeType optional  (default "fanout")
   - exchange optional     (default "")
 
-  # For subscriber only
+  # For subscriber and client only
   - messageLimit optional (default 1)
 
-  # For publisher only
+  # For publisher and client only
   - messages
     - durable optional      (true or false) (default false)
     - contentType optional  
@@ -139,4 +144,35 @@ vars:
           - result.headers.headers0.mycustomheader2 ShouldEqual value2
           - result.messages.messages0.contentencoding ShouldEqual utf8
           - result.messages.messages0.contenttype ShouldEqual application/json
+```
+
+### Client (pubsub RPC)
+```yaml
+name: TestSuite RabbitMQ
+vars:
+  addrs: 'amqp://localhost:5672'
+  user: 
+  password: 
+testcases:
+  - name: RabbitMQ request/reply
+    steps:
+      - type: rabbitmq
+        addrs: "{{.addrs}}"
+        user: "{{.user}}"
+        password: "{{.password}}"
+        clientType: client
+        exchange: exchange_test
+        routingKey: pubsub_test
+        messages: 
+          - value: '{"a": "b"}'
+            contentType: application/json
+            contentEncoding: utf8
+            persistent: false
+            headers: 
+              myCustomHeader: value
+              myCustomHeader2: value2
+        messageLimit: 1
+        assertions: 
+          - result.bodyjson.bodyjson0 ShouldContainKey Status
+          - result.bodyjson.bodyjson0.Status ShouldEqual Succeeded
 ```
