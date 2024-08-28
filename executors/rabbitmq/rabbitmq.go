@@ -158,7 +158,7 @@ func (e Executor) publishMessages(ctx context.Context, workdir string, connectio
 	var err error
 	if connection == nil || channel == nil {
 		var conn *amqp.Connection
-		ch, conn, err = e.openChannel(ctx)
+		conn, ch, err = e.openChannel(ctx)
 		if err != nil {
 			return err
 		}
