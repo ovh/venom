@@ -431,7 +431,10 @@ func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error
 	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 
 	if e.TLSRootCA != "" {
-		TLSRootCAFilepath := filepath.Join(workdir, e.TLSRootCA)
+		TLSRootCAFilepath := e.TLSRootCA
+		if !filepath.IsAbs(e.TLSRootCA) {
+			TLSRootCAFilepath = filepath.Join(workdir, e.TLSRootCA)
+		}
 		var TLSRootCA []byte
 		if _, err := os.Stat(TLSRootCAFilepath); err == nil {
 			TLSRootCA, err = os.ReadFile(TLSRootCAFilepath)
