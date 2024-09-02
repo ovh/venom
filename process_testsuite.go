@@ -61,9 +61,10 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
-		totalSteps += len(tc.testSteps)
+		totalSteps += len(tc.RawTestSteps)
 	}
 
+	ts.Vars.Add(("venom.testsuite.totalSteps"), totalSteps)
 	ts.Status = StatusRun
 	Info(ctx, "With secrets in testsuite")
 	for _, v := range ts.Secrets {
@@ -218,7 +219,7 @@ func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
 		tc.originalName = tc.Name
-		tc.number = i
+		tc.number = i + 1
 		tc.Name = slug.Make(tc.Name)
 		tc.Vars = ts.Vars.Clone()
 		tc.Vars.Add("venom.testcase", tc.Name)
