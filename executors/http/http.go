@@ -446,7 +446,10 @@ func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error
 
 	var TLSClientCert, TLSClientKey []byte
 	if e.TLSClientCert != "" {
-		TLSClientCertFilepath := filepath.Join(workdir, e.TLSClientCert)
+		TLSClientCertFilepath := e.TLSClientCert
+		if !filepath.IsAbs(e.TLSClientCert) {
+			TLSClientCertFilepath = filepath.Join(workdir, e.TLSClientCert)
+		}
 		if _, err := os.Stat(TLSClientCertFilepath); err == nil {
 			TLSClientCert, err = os.ReadFile(TLSClientCertFilepath)
 			if err != nil {
@@ -458,7 +461,10 @@ func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error
 	}
 
 	if e.TLSClientKey != "" {
-		TLSClientKeyFilepath := filepath.Join(workdir, e.TLSClientKey)
+		TLSClientKeyFilepath := e.TLSClientKey
+		if !filepath.IsAbs(e.TLSClientKey) {
+			TLSClientKeyFilepath = filepath.Join(workdir, e.TLSClientKey)
+		}
 		if _, err := os.Stat(TLSClientKeyFilepath); err == nil {
 			TLSClientKey, err = os.ReadFile(TLSClientKeyFilepath)
 			if err != nil {
