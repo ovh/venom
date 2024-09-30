@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/interpolate"
 )
 
 // Name of executor

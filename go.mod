@@ -1,6 +1,8 @@
 module github.com/ovh/venom
 
-go 1.21
+go 1.22
+
+toolchain go1.22.4
 
 require (
 	github.com/Azure/go-amqp v1.0.2
@@ -30,7 +32,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
-	github.com/ovh/cds/sdk/interpolate v0.0.0-20231019155847-e738a974db8f
 	github.com/ovh/go-ovh v1.4.3
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/yaml v0.4.0
@@ -53,11 +54,13 @@ require (
 	modernc.org/sqlite v1.26.0
 )
 
+require github.com/brianvoe/gofakeit/v7 v7.0.4
+
 require (
 	github.com/ClickHouse/ch-go v0.55.0 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.9.1 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/aokoli/goutils v1.1.1 // indirect
+	github.com/aokoli/goutils v1.1.1
 	github.com/bufbuild/protocompile v0.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -75,7 +78,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
-	github.com/huandu/xstrings v1.4.0 // indirect
+	github.com/huandu/xstrings v1.4.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gosimple/slug"
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
 )

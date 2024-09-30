@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/mattn/go-zglob"
+	"github.com/ovh/venom/interpolate"
+
 	"github.com/rockbears/yaml"
 
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
 )
 
