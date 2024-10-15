@@ -573,8 +573,8 @@ testcases:
 - name: testA
   steps:
   - type: exec
-    script: echo '{{.venom.testsuite}} {{.venom.testsuite.filename}} {{.venom.testcase}} {{.venom.teststep.number}} {{.venom.datetime}} {{.venom.timestamp}}'
-    # will display something as: MyTestSuite MyTestSuiteWithVenomBuiltinVar.yml testA 0 2018-08-05T21:38:24+02:00 1533497904
+    script: echo '{{.venom.testsuite}} {{.venom.testsuite.filename}} {{.venom.testcase}} {{.venom.teststep.number}} {{.venom.datetime}} {{.venom.timestamp}} {{.venom.testcase.totalSteps}} {{.venom.testsuite.totalSteps}}'
+    # will display something as: MyTestSuite MyTestSuiteWithVenomBuiltinVar.yml testA 0 2018-08-05T21:38:24+02:00 1533497904 3 5
 
 ```
 
@@ -585,6 +585,7 @@ Builtin variables:
 * {{.venom.libdir}}
 * {{.venom.outputdir}}
 * {{.venom.testcase}}
+* {{.venom.testcase.totalSteps}}
 * {{.venom.teststep.number}}
 * {{.venom.testsuite.name}}
 * {{.venom.testsuite.filename}}
@@ -592,6 +593,7 @@ Builtin variables:
 * {{.venom.testsuite.shortName}}
 * {{.venom.testsuite.workdir}}
 * {{.venom.testsuite}}
+* {{.venom.testsuite.totalSteps}}
 * {{.venom.timestamp}}
 
 
