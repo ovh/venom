@@ -16,6 +16,17 @@ testcases:
           timestamp:
             - "{{.venom.timestamp}}"
 
+  - name: NATS subscribe testcase
+    steps:
+    - type: nats
+      command: subscribe
+      subject: "{{.baseSubject}}.>"
+      messageLimit: 1
+      deadline: 10
+      assertions:
+        - result.error ShouldBeEmpty
+        - result.messages.__Len__ ShouldEqual 1
+
   - name: NATS subscribe testcase with deadline
     steps:
       - type: nats
