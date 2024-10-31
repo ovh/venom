@@ -43,7 +43,8 @@ testcases:
     steps:
       - type: nats
         url: "{{.url}}"
-        command: request
+        command: publish
+        request: true
         subject: "{{.baseSubject}}.request"
         replySubject: "{{.baseSubject}}.reply"
         payload: '{{.message}}'

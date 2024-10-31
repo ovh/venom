@@ -33,6 +33,7 @@ type Executor struct {
 	MessageLimit int                 `json:"message_limit,omitempty" yaml:"messageLimit,omitempty"`
 	Deadline     int                 `json:"deadline,omitempty" yaml:"deadline,omitempty"`
 	ReplySubject string              `json:"reply_subject,omitempty" yaml:"replySubject,omitempty"`
+	Request      bool                `json:"request,omitempty" yaml:"request,omitempty"`
 }
 
 type Message struct {
@@ -61,12 +62,14 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	result := Result{}
 
-	var cmdErr error
 	switch e.Command {
 	case "publish":
-		_, cmdErr = e.publish(ctx, session, false)
+		reply, cmdErr := e.publish(ctx, session)
 		if cmdErr != nil {
 			result.Error = cmdErr.Error()
+		} else {
+			result.Messages = []Message{*reply}
+			venom.Debug(ctx, "Received reply message %+v", result.Messages)
 		}
 	case "subscribe":
 		msgs, cmdErr := e.subscribe(ctx, session)
@@ -74,14 +77,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			result.Error = cmdErr.Error()
 		} else {
 			result.Messages = msgs
-		}
-	case "request":
-		reply, cmdErr := e.publish(ctx, session, true)
-		if cmdErr != nil {
-			result.Error = cmdErr.Error()
-		} else {
-			result.Messages = []Message{*reply}
-			venom.Debug(ctx, "Received reply message %+v", result.Messages)
 		}
 	}
 
@@ -120,7 +115,7 @@ func (e Executor) session(ctx context.Context) (*nats.Conn, error) {
 	return nc, nil
 }
 
-func (e Executor) publish(ctx context.Context, session *nats.Conn, isRequest bool) (*Message, error) {
+func (e Executor) publish(ctx context.Context, session *nats.Conn) (*Message, error) {
 	if e.Subject == "" {
 		return nil, fmt.Errorf("subject is required")
 	}
@@ -134,7 +129,7 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn, isRequest boo
 	}
 
 	var result Message
-	if isRequest {
+	if e.Request {
 		if e.ReplySubject == "" {
 			return nil, fmt.Errorf("reply subject is required for request command")
 		}
