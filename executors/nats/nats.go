@@ -18,11 +18,8 @@ const (
 	defaultConnectTimeout = 5 * time.Second
 	defaultReconnectTime  = 1 * time.Second
 	defaultClientName     = "Venom"
-)
-
-const (
-	defaultMessageLimit = 1
-	defaultDeadline     = 5
+	defaultMessageLimit   = 1
+	defaultDeadline       = 5
 )
 
 type JetstreamOptions struct {
@@ -108,15 +105,11 @@ func New() venom.Executor {
 	return &Executor{
 		MessageLimit: defaultMessageLimit,
 		Deadline:     defaultDeadline,
+		Url:          defaultUrl,
 	}
 }
 
 func (e Executor) session(ctx context.Context) (*nats.Conn, error) {
-	if e.Url == "" {
-		venom.Warning(ctx, "No URL provided, using default %q", defaultUrl)
-		e.Url = defaultUrl
-	}
-
 	opts := []nats.Option{
 		nats.Timeout(defaultConnectTimeout),
 		nats.Name(defaultClientName),
