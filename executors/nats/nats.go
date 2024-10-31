@@ -227,20 +227,21 @@ func (e Executor) subscribe(ctx context.Context, session *nats.Conn) ([]Message,
 	}
 }
 
-func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([]Message, error) {
-	if e.Jetstream.Stream == "" {
-		return nil, fmt.Errorf("jetstream stream name is required")
-	}
-
+func (e Executor) jetstreamSession(session *nats.Conn) (jetstream.JetStream, error) {
 	js, err := jetstream.New(session)
 	if err != nil {
 		return nil, err
 	}
+	return js, err
+}
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Deadline)*time.Second)
-	defer cancel()
+func (e Executor) getConsumer(ctx context.Context, session *nats.Conn) (jetstream.Consumer, error) {
+	js, err := e.jetstreamSession(session)
+	if err != nil {
+		return nil, err
+	}
 
-	stream, err := js.Stream(ctxWithTimeout, e.Jetstream.Stream)
+	stream, err := js.Stream(ctx, e.Jetstream.Stream)
 	if err != nil {
 		return nil, err
 	}
@@ -248,12 +249,12 @@ func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([
 	var consumer jetstream.Consumer
 	var consErr error
 	if e.Jetstream.Consumer != "" {
-		consumer, consErr = stream.Consumer(ctxWithTimeout, e.Jetstream.Consumer)
+		consumer, consErr = stream.Consumer(ctx, e.Jetstream.Consumer)
 		if consErr != nil {
 			return nil, err
 		}
 	} else {
-		consumer, consErr = stream.CreateConsumer(ctxWithTimeout, jetstream.ConsumerConfig{
+		consumer, consErr = stream.CreateConsumer(ctx, jetstream.ConsumerConfig{
 			FilterSubjects: e.Jetstream.FilterSubjects,
 			AckPolicy:      jetstream.AckAllPolicy,
 		})
@@ -262,10 +263,26 @@ func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([
 		}
 	}
 
-	results := make([]Message, e.MessageLimit)
+	return consumer, nil
+}
 
+func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([]Message, error) {
+	if e.Jetstream.Stream == "" {
+		return nil, fmt.Errorf("jetstream stream name is required")
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Deadline)*time.Second)
+	defer cancel()
+
+	consumer, err := e.getConsumer(ctx, session)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]Message, e.MessageLimit)
 	msgCount := 0
 	done := make(chan struct{})
+
 	cc, err := consumer.Consume(func(msg jetstream.Msg) {
 		venom.Debug(ctx, "received message from %s[%s]: %+v", consumer.CachedInfo().Stream, msg.Subject(), string(msg.Data()))
 		results[msgCount] = Message{
