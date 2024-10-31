@@ -1,0 +1,41 @@
+name: NATS testsuite
+vars:
+  url: 'nats://localhost:4222'
+  baseSubject: "nats.test"
+  message: '{"message": "hello world"}'
+
+testcases:
+  - name: NATS publish testcase
+    steps:
+      - type: nats
+        url: "{{.url}}"
+        command: publish
+        subject: "{{.baseSubject}}.publish"
+        payload: '{{.message}}'
+        headers:
+          timestamp:
+            - "{{.venom.timestamp}}"
+
+  - name: NATS subscribe testcase with deadline
+    steps:
+      - type: nats
+        url: "{{.url}}"
+        command: subscribe
+        subject: "{{.baseSubject}}.>"
+        messageLimit: 1
+        deadline: 1
+        assertions:
+          - result.error ShouldNotBeEmpty
+          - result.error ShouldContainSubstring "timeout reached"
+
+  - name: NATS request/reply testcase
+    steps:
+      - type: nats
+        url: "{{.url}}"
+        command: request
+        subject: "{{.baseSubject}}.request"
+        replySubject: "{{.baseSubject}}.reply"
+        payload: '{{.message}}'
+        assertions:
+          - result.error ShouldBeEmpty
+          - result.messages.__Len__ ShouldEqual 1
