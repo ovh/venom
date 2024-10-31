@@ -7,6 +7,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/ovh/venom"
 )
 
@@ -24,6 +25,13 @@ const (
 	defaultDeadline     = 5
 )
 
+type JetstreamOptions struct {
+	Enabled        bool     `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Stream         string   `json:"stream,omitempty" yaml:"stream,omitempty"`
+	Consumer       string   `json:"consumer,omitempty" yaml:"consumer,omitempty"` // if set search for a durable consumer, otherwise use an ephemeral one
+	FilterSubjects []string `json:"filterSubjects,omitempty" yaml:"filterSubjects,omitempty"`
+}
+
 type Executor struct {
 	Command      string              `json:"command,omitempty" yaml:"command,omitempty"`
 	Url          string              `json:"url,omitempty" yaml:"url,omitempty"`
@@ -34,6 +42,7 @@ type Executor struct {
 	Deadline     int                 `json:"deadline,omitempty" yaml:"deadline,omitempty"`
 	ReplySubject string              `json:"reply_subject,omitempty" yaml:"replySubject,omitempty"`
 	Request      bool                `json:"request,omitempty" yaml:"request,omitempty"`
+	Jetstream    JetstreamOptions    `json:"jetstream,omitempty" yaml:"jetstream,omitempty"`
 }
 
 type Message struct {
@@ -46,6 +55,10 @@ type Message struct {
 type Result struct {
 	Messages []Message `json:"messages,omitempty" yaml:"messages,omitempty"`
 	Error    string    `json:"error,omitempty" yaml:"error,omitempty"`
+}
+
+func (Executor) ZeroValueMessage() Message {
+	return Message{}
 }
 
 func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
@@ -68,11 +81,19 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		if cmdErr != nil {
 			result.Error = cmdErr.Error()
 		} else {
-			result.Messages = []Message{*reply}
+			result.Messages = []Message{reply}
 			venom.Debug(ctx, "Received reply message %+v", result.Messages)
 		}
 	case "subscribe":
-		msgs, cmdErr := e.subscribe(ctx, session)
+		var msgs []Message
+		var cmdErr error
+
+		if e.Jetstream.Enabled {
+			msgs, cmdErr = e.subscribeJetstream(ctx, session)
+		} else {
+			msgs, cmdErr = e.subscribe(ctx, session)
+		}
+
 		if cmdErr != nil {
 			result.Error = cmdErr.Error()
 		} else {
@@ -115,9 +136,9 @@ func (e Executor) session(ctx context.Context) (*nats.Conn, error) {
 	return nc, nil
 }
 
-func (e Executor) publish(ctx context.Context, session *nats.Conn) (*Message, error) {
+func (e Executor) publish(ctx context.Context, session *nats.Conn) (Message, error) {
 	if e.Subject == "" {
-		return nil, fmt.Errorf("subject is required")
+		return e.ZeroValueMessage(), fmt.Errorf("subject is required")
 	}
 
 	venom.Debug(ctx, "Publishing message to subject %q with payload %q", e.Subject, e.Payload)
@@ -131,13 +152,13 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn) (*Message, er
 	var result Message
 	if e.Request {
 		if e.ReplySubject == "" {
-			return nil, fmt.Errorf("reply subject is required for request command")
+			return e.ZeroValueMessage(), fmt.Errorf("reply subject is required for request command")
 		}
 		msg.Reply = e.ReplySubject
 
 		replyMsg, err := session.RequestMsg(&msg, time.Duration(5)*time.Second)
 		if err != nil {
-			return nil, err
+			return e.ZeroValueMessage(), err
 		}
 
 		result = Message{
@@ -149,13 +170,13 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn) (*Message, er
 	} else {
 		err := session.PublishMsg(&msg)
 		if err != nil {
-			return nil, err
+			return e.ZeroValueMessage(), err
 		}
 	}
 
 	venom.Debug(ctx, "Message published to subject %q", e.Subject)
 
-	return &result, nil
+	return result, nil
 }
 
 func (e Executor) subscribe(ctx context.Context, session *nats.Conn) ([]Message, error) {
@@ -202,6 +223,72 @@ func (e Executor) subscribe(ctx context.Context, session *nats.Conn) ([]Message,
 		case <-ctxWithTimeout.Done():
 			_ = sub.Unsubscribe() // even it if fails, we are done anyway
 			return nil, fmt.Errorf("timeout reached while waiting for message #%d from subject %q", msgCount, e.Subject)
+		}
+	}
+}
+
+func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([]Message, error) {
+	if e.Jetstream.Stream == "" {
+		return nil, fmt.Errorf("jetstream stream name is required")
+	}
+
+	js, err := jetstream.New(session)
+	if err != nil {
+		return nil, err
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Deadline)*time.Second)
+	defer cancel()
+
+	stream, err := js.Stream(ctxWithTimeout, e.Jetstream.Stream)
+	if err != nil {
+		return nil, err
+	}
+
+	var consumer jetstream.Consumer
+	var consErr error
+	if e.Jetstream.Consumer != "" {
+		consumer, consErr = stream.Consumer(ctxWithTimeout, e.Jetstream.Consumer)
+		if consErr != nil {
+			return nil, err
+		}
+	} else {
+		consumer, consErr = stream.CreateConsumer(ctxWithTimeout, jetstream.ConsumerConfig{
+			FilterSubjects: e.Jetstream.FilterSubjects,
+			AckPolicy:      jetstream.AckAllPolicy,
+		})
+		if consErr != nil {
+			return nil, err
+		}
+	}
+
+	results := make([]Message, e.MessageLimit)
+
+	msgCount := 0
+	done := make(chan struct{})
+	cc, err := consumer.Consume(func(msg jetstream.Msg) {
+		venom.Debug(ctx, "received message from %s[%s]: %+v", consumer.CachedInfo().Stream, msg.Subject(), string(msg.Data()))
+		results[msgCount] = Message{
+			Data:         string(msg.Data()),
+			Header:       msg.Headers(),
+			Subject:      msg.Subject(),
+			ReplySubject: msg.Reply(),
+		}
+		msgCount++
+		if msgCount == e.MessageLimit {
+			done <- struct{}{}
+		}
+	}, jetstream.PullMaxMessages(e.MessageLimit))
+
+	defer cc.Drain()
+	defer cc.Stop()
+
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return nil, fmt.Errorf("timeout reached while waiting for message #%d from subjects %v", msgCount, e.Jetstream.FilterSubjects)
+		case <-done:
+			return results, nil
 		}
 	}
 }

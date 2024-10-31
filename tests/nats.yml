@@ -5,6 +5,7 @@ vars:
   message: '{"message": "hello world"}'
 
 testcases:
+
   - name: NATS publish testcase
     steps:
       - type: nats
@@ -15,6 +16,36 @@ testcases:
         headers:
           timestamp:
             - "{{.venom.timestamp}}"
+
+  - name: NATS subscribe Jetstream consumer testcase
+    steps:
+    - type: exec
+      script: |
+        nats stream create TEST --subjects "nats.test.js.>" --defaults
+
+    - type: exec
+      script: |
+        nats pub "{{.baseSubject}}.js.hello" '{{.message}}'
+        nats pub --count 3 "{{.baseSubject}}.js.world" '{{.message}}'
+    
+    - type: nats
+      command: subscribe
+      subject: "{{.baseSubject}}.>"
+      messageLimit: 2
+      deadline: 10
+      jetstream:
+        enabled: true
+        stream: TEST
+        filterSubjects:
+          - "{{.baseSubject}}.js.hello"
+          - "{{.baseSubject}}.js.world"
+      assertions:
+        - result.error ShouldBeEmpty
+        - result.messages.__Len__ ShouldEqual 2
+
+    - type: exec
+      script: |
+        nats stream rm TEST -f
 
   - name: NATS subscribe testcase
     steps:
