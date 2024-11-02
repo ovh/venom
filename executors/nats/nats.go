@@ -88,7 +88,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			result.Error = cmdErr.Error()
 		} else {
 			result.Messages = []Message{reply}
-			venom.Debug(ctx, "Received reply message %+v", result.Messages)
 		}
 	case "subscribe":
 		var msgs []Message
@@ -169,6 +168,8 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn) (Message, err
 			Subject:      msg.Subject,
 			ReplySubject: replyMsg.Subject,
 		}
+
+		venom.Debug(ctx, "Received reply message %+v", result)
 	} else {
 		err := session.PublishMsg(&msg)
 		if err != nil {
@@ -309,6 +310,8 @@ func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([
 	if err != nil {
 		return nil, err
 	}
+
+	venom.Debug(ctx, "got consumer for %s%v", consumer.CachedInfo().Stream, consumer.CachedInfo().Config.FilterSubjects)
 
 	results := make([]Message, e.MessageLimit)
 	msgCount := 0
