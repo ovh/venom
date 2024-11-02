@@ -130,3 +130,16 @@ testcases:
         assertions:
           - result.error ShouldNotBeEmpty
           - result.error ShouldContainSubstring "timeout reached"
+
+  - name: NATS request/reply testcase
+    steps:
+      - type: nats
+        url: "{{.url}}"
+        command: publish
+        request: true
+        subject: "{{.baseSubject}}.request"
+        replySubject: "{{.baseSubject}}.reply"
+        payload: '{{.message}}'
+        assertions:
+          - result.error ShouldBeEmpty
+          - result.messages.__Len__ ShouldEqual 1
