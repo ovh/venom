@@ -119,13 +119,54 @@ testcases:
       script: |
         nats stream rm TEST -f
 
-  - name: NATS subscribe testcase with deadline
+  - name: NATS subscribe Jetstream consumer testcase with deadline
+    steps:
+    - type: exec
+      script: |
+        nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+   
+    - type: exec
+      script: |
+        nats pub "{{.baseSubject}}.js.hello" '{{.message}}'
+        nats pub --count 1 "{{.baseSubject}}.js.world" '{{.message}}'
+    
+    - type: nats
+      command: subscribe
+      subject: "{{.baseSubject}}.>"
+      messageLimit: 10
+      deadline: 1
+      jetstream:
+        enabled: true
+        stream: TEST
+        filterSubjects:
+          - "{{.baseSubject}}.js.hello"
+          - "{{.baseSubject}}.js.world"
+      assertions:
+        - result.error ShouldNotBeEmpty
+
+    - type: exec
+      script: |
+        nats stream rm TEST -f
+
+  - name: NATS subscribe testcase
     steps:
       - type: nats
         url: "{{.url}}"
         command: subscribe
         subject: "{{.baseSubject}}.>"
         messageLimit: 1
+        deadline: 1
+        assertions:
+          - result.error ShouldBeEmpty
+          - result.messages.__Len__ ShouldEqual 1
+
+  - name: NATS subscribe testcase with deadline
+    steps:
+      - type: nats
+        url: "{{.url}}"
+        command: subscribe
+        subject: "{{.baseSubject}}.>"
+        messageLimit: 1000
         deadline: 1
         assertions:
           - result.error ShouldNotBeEmpty
