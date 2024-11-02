@@ -8,6 +8,7 @@ define docker_run
 endef
 
 docker-network := venom-test-net
+nats-network := venom-nats-network
 
 COVER_FILES = $(shell find . -name "*.coverprofile")
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/venom | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
@@ -53,8 +54,15 @@ venom-qpid.cid:
 venom-grpc.cid:
 	docker build -t venom-grpc-greeter ./grpc
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
+
+nats-server-name := nats-server
+nats-server-addr := -s nats://venom-$(nats-server-name):4222
+nats-msg-body := {"hello": "world"}
 venom-nats.cid:
-	$(call docker_run,nats,nats,-p 4222:4222 -v $(shell realpath nats/nats.conf):/nats-server.conf:ro)
+	docker network create --driver bridge $(nats-network)
+	$(call docker_run,nats:2.10,$(nats-server-name),--network $(nats-network) -p 4222:4222 -v $(shell realpath nats/nats.conf):/nats-server.conf:ro)
+	$(call docker_run,natsio/nats-box,nats-replier,--network $(nats-network), nats $(nats-server-addr) reply nats.test.request --echo)
+	$(call docker_run,natsio/nats-box,nats-publisher,--network $(nats-network), nats $(nats-server-addr) pub --count=1_000_000 --sleep=1s nats.test.message '$(nats-msg-body)')
 
 start-test-stack: venom-nats.cid
 start-test-stack: venom-postgres.cid
@@ -71,7 +79,7 @@ start-test-stack: $(PKI_DIR)
 start-test-stack: venom-grpc.cid
 
 stop-test-stack:
-	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
+	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network); docker network rm $(nats-network)
 
 build-test-binary:
 	cd ../cmd/venom; \
