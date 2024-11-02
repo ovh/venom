@@ -4,7 +4,7 @@ PKI_VAR_FILE = ./pki_variables.yml
 include ./pki.mk
 
 define docker_run
-	docker run --name venom-$(2) -d $(3) $(1) > venom-$2.cid
+	docker run --name venom-$(2) -d $(3) $(1) $(4) > venom-$2.cid
 endef
 
 docker-network := venom-test-net
