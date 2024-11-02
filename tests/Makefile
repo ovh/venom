@@ -53,7 +53,10 @@ venom-qpid.cid:
 venom-grpc.cid:
 	docker build -t venom-grpc-greeter ./grpc
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
+venom-nats.cid:
+	$(call docker_run,nats,nats,-p 4222:4222 -v $(shell realpath nats/nats.conf):/nats-server.conf:ro)
 
+start-test-stack: venom-nats.cid
 start-test-stack: venom-postgres.cid
 start-test-stack: venom-mysql.cid
 start-test-stack: venom-mongo.cid
