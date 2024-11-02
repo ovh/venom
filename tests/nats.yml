@@ -16,6 +16,62 @@ testcases:
         headers:
           timestamp:
             - "{{.venom.timestamp}}"
+  - name: NATS publish Jetstream testcase
+    steps:
+      - type: exec
+        script: |
+          nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+
+      - type: nats
+        command: publish
+        subject: "{{.baseSubject}}.js.hello"
+        deadline: 2
+        jetstream:
+          enabled: true
+        assertions:
+          - result.error ShouldBeEmpty
+
+      - type: exec
+        script: |
+          nats stream rm TEST -f
+
+  - name: NATS publish Jetstream non-stream subject testcase
+    steps:
+      - type: exec
+        script: |
+          nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+
+      - type: nats
+        command: publish
+        subject: "some.other.subject"
+        deadline: 2
+        jetstream:
+          enabled: true
+        assertions:
+          - result.error ShouldNotBeEmpty
+
+      - type: exec
+        script: |
+          nats stream rm TEST -f
+
+  - name: NATS publish Jetstream empty subject testcase
+    steps:
+      - type: exec
+        script: |
+          nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+
+      - type: nats
+        command: publish
+        subject: ""
+        deadline: 2
+        jetstream:
+          enabled: true
+        assertions:
+          - result.error ShouldNotBeEmpty
+
+      - type: exec
+        script: |
+          nats stream rm TEST -f
 
   - name: NATS subscribe Jetstream consumer testcase
     steps:

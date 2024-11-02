@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -74,7 +75,15 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	switch e.Command {
 	case "publish":
-		reply, cmdErr := e.publish(ctx, session)
+		var cmdErr error
+		var reply Message
+
+		if e.Jetstream.Enabled {
+			cmdErr = e.publishJetstream(ctx, session)
+		} else {
+			reply, cmdErr = e.publish(ctx, session)
+		}
+
 		if cmdErr != nil {
 			result.Error = cmdErr.Error()
 		} else {
@@ -170,6 +179,35 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn) (Message, err
 	venom.Debug(ctx, "Message published to subject %q", e.Subject)
 
 	return result, nil
+}
+
+func (e Executor) publishJetstream(ctx context.Context, session *nats.Conn) error {
+	if e.Subject == "" {
+		return fmt.Errorf("subject is required")
+	}
+
+	js, err := e.jetstreamSession(session)
+	if err != nil {
+		return err
+	}
+
+	msg := nats.Msg{
+		Subject: e.Subject,
+		Data:    []byte(e.Payload),
+		Header:  e.Header,
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Deadline)*time.Second)
+	defer cancel()
+
+	_, err = js.PublishMsg(ctxWithTimeout, &msg)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("timeout reached while waiting for ACK from NATS server")
+		}
+		return err
+	}
+	return nil
 }
 
 func (e Executor) subscribe(ctx context.Context, session *nats.Conn) ([]Message, error) {
