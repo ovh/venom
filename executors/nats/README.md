@@ -2,6 +2,11 @@
 
 Step to publish and subscribe to NATS subjects.
 
+Currently two commands are supported:
+
+- `publish`
+- `subscribe`
+
 ## Input
 
 ### Defaults
@@ -31,9 +36,9 @@ Enable `selfSigned` only if the NATS server uses self-signed certificates. If en
 
 Enable `serverVerify` only if the NATS server verifies the client certificates. If enabled `certificatePath` and `keyPath` are mandatory.
 
-### publish
+### publish command
 
-The publish command allows to publish a payload to a specific NATS subject. Optionally it can wait for a reply.
+The `publish` command allows to publish a payload to a specific NATS subject. Optionally it can wait for a reply.
 
 Full configuration example:
 
@@ -80,9 +85,9 @@ It is possible to publish to a Jetstream stream by declaring `jetstream: true` i
     - result.error ShouldNotBeEmpty
 ```
 
-### subscribe
+### subscribe command
 
-The subscribe command allows to receive messages from a subject or a stream.
+The `subscribe` command allows to receive messages from a subject or a stream.
 
 Full configuration example:
 
