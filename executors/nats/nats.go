@@ -23,6 +23,15 @@ const (
 	defaultDeadline       = 5
 )
 
+// TlsOptions describes TLS authentication options to the NATS server.
+type TlsOptions struct {
+	SelfSigned      bool   `json:"self_signed,omitempty" yaml:"selfSigned"`     // Set to true if the NATS server uses self-signed certificates. Ca certificate is required if enabled.
+	ServerVerify    bool   `json:"server_verify,omitempty" yaml:"serverVerify"` // Set to true if the NATS server verifies the client identity. Certificate and Key are required if enabled.
+	CertificatePath string `json:"certificate_path,omitempty" yaml:"certificatePath"`
+	KeyPath         string `json:"key_path,omitempty" yaml:"keyPath"`
+	CaPath          string `json:"ca_certificate_path,omitempty" yaml:"caPath"`
+}
+
 type JetstreamOptions struct {
 	Enabled        bool     `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Stream         string   `json:"stream,omitempty" yaml:"stream,omitempty"`     // Stream must exist before the command execution
@@ -41,6 +50,7 @@ type Executor struct {
 	ReplySubject string              `json:"reply_subject,omitempty" yaml:"replySubject,omitempty"`
 	Request      bool                `json:"request,omitempty" yaml:"request,omitempty"` // Describe that the publish command expects a reply from the NATS server
 	Jetstream    JetstreamOptions    `json:"jetstream,omitempty" yaml:"jetstream,omitempty"`
+	Tls          *TlsOptions         `json:"tls,omitempty" yaml:"tls"`
 }
 
 // Message describes a NATS message received from a consumer or a request publisher
@@ -119,12 +129,43 @@ func New() venom.Executor {
 	}
 }
 
+func (tls TlsOptions) getTlsOptions() ([]nats.Option, error) {
+	opts := make([]nats.Option, 1, 2)
+
+	if tls.SelfSigned {
+		if len(tls.CaPath) == 0 {
+			return nil, fmt.Errorf("TLS CA certificate is required if NATS server uses self signed CA")
+		}
+		opts = append(opts, nats.RootCAs(tls.CaPath))
+	}
+
+	if tls.ServerVerify {
+		if len(tls.CertificatePath) == 0 {
+			return nil, fmt.Errorf("TLS certificate is required if NATS server verifies clients")
+		}
+		if len(tls.KeyPath) == 0 {
+			return nil, fmt.Errorf("TLS key is required if NATS server vertifies clients")
+		}
+		opts = append(opts, nats.ClientCert(tls.CertificatePath, tls.KeyPath))
+	}
+
+	return opts, nil
+}
+
 func (e Executor) session(ctx context.Context) (*nats.Conn, error) {
 	opts := []nats.Option{
 		nats.Timeout(defaultConnectTimeout),
 		nats.Name(defaultClientName),
 		nats.MaxReconnects(-1),
 		nats.ReconnectWait(defaultReconnectTime),
+	}
+
+	if e.Tls != nil {
+		tlsOpts, err := e.Tls.getTlsOptions()
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, tlsOpts...)
 	}
 
 	venom.Debug(ctx, "Connecting to NATS server %q", e.Url)
