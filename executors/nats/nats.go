@@ -25,24 +25,25 @@ const (
 
 type JetstreamOptions struct {
 	Enabled        bool     `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Stream         string   `json:"stream,omitempty" yaml:"stream,omitempty"`
-	Consumer       string   `json:"consumer,omitempty" yaml:"consumer,omitempty"` // if set search for a durable consumer, otherwise use an ephemeral one
+	Stream         string   `json:"stream,omitempty" yaml:"stream,omitempty"`     // Stream must exist before the command execution
+	Consumer       string   `json:"consumer,omitempty" yaml:"consumer,omitempty"` // If set search for a durable consumer, otherwise use an ephemeral one
 	FilterSubjects []string `json:"filterSubjects,omitempty" yaml:"filterSubjects,omitempty"`
 }
 
 type Executor struct {
-	Command      string              `json:"command,omitempty" yaml:"command,omitempty"`
+	Command      string              `json:"command,omitempty" yaml:"command,omitempty"` // Must be publish or subscribe
 	Url          string              `json:"url,omitempty" yaml:"url,omitempty"`
 	Subject      string              `json:"subject,omitempty" yaml:"subject,omitempty"`
 	Payload      string              `json:"payload,omitempty" yaml:"payload,omitempty"`
 	Header       map[string][]string `json:"header,omitempty" yaml:"header,omitempty"`
 	MessageLimit int                 `json:"message_limit,omitempty" yaml:"messageLimit,omitempty"`
-	Deadline     int                 `json:"deadline,omitempty" yaml:"deadline,omitempty"`
+	Deadline     int                 `json:"deadline,omitempty" yaml:"deadline,omitempty"` // Describes the deadline in seconds from the start of the command
 	ReplySubject string              `json:"reply_subject,omitempty" yaml:"replySubject,omitempty"`
-	Request      bool                `json:"request,omitempty" yaml:"request,omitempty"`
+	Request      bool                `json:"request,omitempty" yaml:"request,omitempty"` // Describe that the publish command expects a reply from the NATS server
 	Jetstream    JetstreamOptions    `json:"jetstream,omitempty" yaml:"jetstream,omitempty"`
 }
 
+// Message describes a NATS message received from a consumer or a request publisher
 type Message struct {
 	Data         interface{}         `json:"data,omitempty" yaml:"data,omitempty"`
 	Header       map[string][]string `json:"header,omitempty" yaml:"header,omitempty"`
@@ -50,6 +51,7 @@ type Message struct {
 	ReplySubject string              `json:"reply_subject,omitempty" yaml:"replySubject,omitempty"`
 }
 
+// Resuts describes a command result
 type Result struct {
 	Messages []Message `json:"messages,omitempty" yaml:"messages,omitempty"`
 	Error    string    `json:"error,omitempty" yaml:"error,omitempty"`
@@ -142,8 +144,6 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn) (Message, err
 		return e.ZeroValueMessage(), fmt.Errorf("subject is required")
 	}
 
-	venom.Debug(ctx, "Publishing message to subject %q with payload %q", e.Subject, e.Payload)
-
 	msg := nats.Msg{
 		Subject: e.Subject,
 		Data:    []byte(e.Payload),
@@ -177,7 +177,7 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn) (Message, err
 		}
 	}
 
-	venom.Debug(ctx, "Message published to subject %q", e.Subject)
+	venom.Debug(ctx, "Published message to subject %q with payload %q", e.Subject, e.Payload)
 
 	return result, nil
 }
@@ -187,7 +187,7 @@ func (e Executor) publishJetstream(ctx context.Context, session *nats.Conn) erro
 		return fmt.Errorf("subject is required")
 	}
 
-	js, err := e.jetstreamSession(session)
+	js, err := e.jetstreamSession(ctx, session)
 	if err != nil {
 		return err
 	}
@@ -208,6 +208,9 @@ func (e Executor) publishJetstream(ctx context.Context, session *nats.Conn) erro
 		}
 		return err
 	}
+
+	venom.Debug(ctx, "Published message to subject %q with payload %q", e.Subject, e.Payload)
+
 	return nil
 }
 
@@ -259,16 +262,17 @@ func (e Executor) subscribe(ctx context.Context, session *nats.Conn) ([]Message,
 	}
 }
 
-func (e Executor) jetstreamSession(session *nats.Conn) (jetstream.JetStream, error) {
+func (e Executor) jetstreamSession(ctx context.Context, session *nats.Conn) (jetstream.JetStream, error) {
 	js, err := jetstream.New(session)
 	if err != nil {
 		return nil, err
 	}
+	venom.Debug(ctx, "Jetstream session created")
 	return js, err
 }
 
 func (e Executor) getConsumer(ctx context.Context, session *nats.Conn) (jetstream.Consumer, error) {
-	js, err := e.jetstreamSession(session)
+	js, err := e.jetstreamSession(ctx, session)
 	if err != nil {
 		return nil, err
 	}
@@ -278,6 +282,10 @@ func (e Executor) getConsumer(ctx context.Context, session *nats.Conn) (jetstrea
 		return nil, err
 	}
 
+	streamName := stream.CachedInfo().Config.Name
+
+	venom.Debug(ctx, "Found stream %q", streamName)
+
 	var consumer jetstream.Consumer
 	var consErr error
 	if e.Jetstream.Consumer != "" {
@@ -285,6 +293,7 @@ func (e Executor) getConsumer(ctx context.Context, session *nats.Conn) (jetstrea
 		if consErr != nil {
 			return nil, err
 		}
+		venom.Debug(ctx, "Found existing consumer %s[%s]", streamName, e.Jetstream.Consumer)
 	} else {
 		consumer, consErr = stream.CreateConsumer(ctx, jetstream.ConsumerConfig{
 			FilterSubjects: e.Jetstream.FilterSubjects,
@@ -293,6 +302,7 @@ func (e Executor) getConsumer(ctx context.Context, session *nats.Conn) (jetstrea
 		if consErr != nil {
 			return nil, err
 		}
+		venom.Warn(ctx, "Consumer %s[%s] not found. Created ephemeral consumer", streamName, e.Jetstream.Consumer)
 	}
 
 	return consumer, nil
@@ -310,8 +320,6 @@ func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([
 	if err != nil {
 		return nil, err
 	}
-
-	venom.Debug(ctx, "got consumer for %s%v", consumer.CachedInfo().Stream, consumer.CachedInfo().Config.FilterSubjects)
 
 	results := make([]Message, e.MessageLimit)
 	msgCount := 0
