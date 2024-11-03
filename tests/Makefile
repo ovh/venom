@@ -1,7 +1,10 @@
 PKI_DIR := ./grpc/pki
 PKI_VAR_FILE = ./pki_variables.yml
 
+NATS_PKI_DIR := ./nats/pki
+
 include ./pki.mk
+include ./nats/pki.mk
 
 define docker_run
 	docker run --name venom-$(2) -d $(3) $(1) $(4) > venom-$2.cid
@@ -56,14 +59,28 @@ venom-grpc.cid:
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
 
 nats-server-name := nats-server
-nats-server-addr := -s nats://venom-$(nats-server-name):4222
+nats-server-addr := -s nats://venom-$(nats-server-name):4222 --tlscert=/pki/client.crt --tlskey=/pki/client.key --tlsca=/pki/ca.crt
 nats-msg-body := {"hello": "world"}
 venom-nats.cid:
 	docker network create --driver bridge $(nats-network)
-	$(call docker_run,nats:2.10,$(nats-server-name),--network $(nats-network) -p 4222:4222 -v $(shell realpath nats/nats.conf):/nats-server.conf:ro)
-	$(call docker_run,natsio/nats-box,nats-replier,--network $(nats-network), nats $(nats-server-addr) reply nats.test.request --echo)
-	$(call docker_run,natsio/nats-box,nats-publisher,--network $(nats-network), nats $(nats-server-addr) pub --count=1_000_000 --sleep=1s nats.test.message '$(nats-msg-body)')
+	$(call docker_run,nats:2.10,$(nats-server-name),\
+		--network $(nats-network)\
+		-p 4222:4222\
+		-v $(shell realpath nats/nats.conf):/nats-server.conf:ro\
+		-v $(shell realpath nats/pki):/pki:ro\
+	)
+	$(call docker_run,natsio/nats-box,nats-replier,\
+		--network $(nats-network)\
+		-v $(shell realpath nats/pki):/pki:ro,\
+		nats $(nats-server-addr) reply nats.test.request --echo\
+	)
+	$(call docker_run,natsio/nats-box,nats-publisher,\
+		--network $(nats-network)\
+		-v $(shell realpath nats/pki):/pki:ro,\
+		nats $(nats-server-addr) pub --count=1_000_000 --sleep=1s nats.test.message '$(nats-msg-body)'\
+	)
 
+start-test-stack: $(NATS_PKI_DIR)
 start-test-stack: venom-nats.cid
 start-test-stack: venom-postgres.cid
 start-test-stack: venom-mysql.cid
@@ -100,7 +117,7 @@ wait-for-kafka:
 	until curl --retry 30 --retry-connrefused --retry-max-time 100 --connect-timeout 10 -s http://localhost:8081/config/ -o /dev/null; do sleep 2; done ; \
 	echo "\n\033[0;32mdone\033[0m"
 
-clean:
+clean: clean-nats-pki
 	@rm -f *.prof *.html *.xml *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
 
 merge-coverage:

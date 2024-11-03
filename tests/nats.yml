@@ -3,6 +3,10 @@ vars:
   url: 'nats://localhost:4222'
   baseSubject: "nats.test"
   message: '{"message": "hello world"}'
+  certificatePath: "./nats/pki/client.crt"
+  keyPath: "./nats/pki/client.key"
+  caPath: "./nats/pki/ca.crt"
+  natsTlsConfig: "--tlscert {{.certificatePath}} --tlskey {{.keyPath}} --tlsca {{.caPath}}"
 
 testcases:
 
@@ -10,6 +14,12 @@ testcases:
     steps:
       - type: nats
         url: "{{.url}}"
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         command: publish
         subject: "{{.baseSubject}}.publish"
         payload: '{{.message}}'
@@ -23,6 +33,12 @@ testcases:
     steps:
       - type: nats
         url: "{{.url}}"
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         command: publish
         subject: ""
         payload: '{{.message}}'
@@ -36,10 +52,16 @@ testcases:
     steps:
       - type: exec
         script: |
-          nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+          nats {{.natsTlsConfig}} stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
 
       - type: nats
         command: publish
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         subject: "{{.baseSubject}}.js.hello"
         deadline: 2
         jetstream:
@@ -49,16 +71,22 @@ testcases:
 
       - type: exec
         script: |
-          nats stream rm TEST -f
+          nats {{.natsTlsConfig}} stream rm TEST -f
 
   - name: NATS publish Jetstream non-stream subject testcase
     steps:
       - type: exec
         script: |
-          nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+          nats {{.natsTlsConfig}} stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
 
       - type: nats
         command: publish
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         subject: "some.other.subject"
         deadline: 2
         jetstream:
@@ -68,16 +96,22 @@ testcases:
 
       - type: exec
         script: |
-          nats stream rm TEST -f
+          nats {{.natsTlsConfig}} stream rm TEST -f
 
   - name: NATS publish Jetstream empty subject testcase
     steps:
       - type: exec
         script: |
-          nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+          nats {{.natsTlsConfig}} stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
 
       - type: nats
         command: publish
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         subject: ""
         deadline: 2
         jetstream:
@@ -87,21 +121,27 @@ testcases:
 
       - type: exec
         script: |
-          nats stream rm TEST -f
+          nats {{.natsTlsConfig}} stream rm TEST -f
 
   - name: NATS subscribe Jetstream consumer testcase
     steps:
     - type: exec
       script: |
-        nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+        nats {{.natsTlsConfig}} stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
    
     - type: exec
       script: |
-        nats pub "{{.baseSubject}}.js.hello" '{{.message}}'
-        nats pub --count 3 "{{.baseSubject}}.js.world" '{{.message}}'
+        nats {{.natsTlsConfig}} pub "{{.baseSubject}}.js.hello" '{{.message}}'
+        nats {{.natsTlsConfig}} pub --count 3 "{{.baseSubject}}.js.world" '{{.message}}'
     
     - type: nats
       command: subscribe
+      tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
       subject: "{{.baseSubject}}.>"
       messageLimit: 2
       deadline: 10
@@ -117,21 +157,27 @@ testcases:
 
     - type: exec
       script: |
-        nats stream rm TEST -f
+        nats {{.natsTlsConfig}} stream rm TEST -f
 
   - name: NATS subscribe Jetstream consumer testcase with deadline
     steps:
     - type: exec
       script: |
-        nats stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
+        nats {{.natsTlsConfig}} stream create TEST --subjects "{{.baseSubject}}.js.>" --defaults
    
     - type: exec
       script: |
-        nats pub "{{.baseSubject}}.js.hello" '{{.message}}'
-        nats pub --count 1 "{{.baseSubject}}.js.world" '{{.message}}'
+        nats {{.natsTlsConfig}} pub "{{.baseSubject}}.js.hello" '{{.message}}'
+        nats {{.natsTlsConfig}} pub --count 1 "{{.baseSubject}}.js.world" '{{.message}}'
     
     - type: nats
       command: subscribe
+      tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
       subject: "{{.baseSubject}}.>"
       messageLimit: 10
       deadline: 1
@@ -146,13 +192,19 @@ testcases:
 
     - type: exec
       script: |
-        nats stream rm TEST -f
+        nats {{.natsTlsConfig}} stream rm TEST -f
 
   - name: NATS subscribe testcase
     steps:
       - type: nats
         url: "{{.url}}"
         command: subscribe
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         subject: "{{.baseSubject}}.>"
         messageLimit: 1
         deadline: 1
@@ -165,6 +217,12 @@ testcases:
       - type: nats
         url: "{{.url}}"
         command: subscribe
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         subject: "{{.baseSubject}}.>"
         messageLimit: 1000
         deadline: 1
@@ -177,6 +235,12 @@ testcases:
       - type: nats
         url: "{{.url}}"
         command: publish
+        tls:
+          selfSigned: true
+          serverVerify: true
+          certificatePath: "{{.certificatePath}}"
+          keyPath: "{{.keyPath}}"
+          caPath: "{{.caPath}}"
         request: true
         subject: "{{.baseSubject}}.request"
         replySubject: "{{.baseSubject}}.reply"
