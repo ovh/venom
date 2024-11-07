@@ -2,9 +2,14 @@ name: Build and Release Binaries
 
 on:
   push:
-    branches:
-      - feature/soca-custom-main3
-
+    branches: [ main, internal/** ]
+  pull_request:
+      branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Release version'
+        required: false
 jobs:
   build:
     runs-on: ubuntu-latest
