@@ -154,6 +154,8 @@ testcases:
       assertions:
         - result.error ShouldBeEmpty
         - result.messages.__Len__ ShouldEqual 2
+        - result.messages.messages0.datajson ShouldContainKey message
+        - result.messages.messages0.datajson.message ShouldEqual "hello world"
 
     - type: exec
       script: |
@@ -211,6 +213,8 @@ testcases:
         assertions:
           - result.error ShouldBeEmpty
           - result.messages.__Len__ ShouldEqual 1
+          - result.messages.messages0.datajson ShouldContainKey message
+          - result.messages.messages0.datajson.message ShouldEqual "hello world"
 
   - name: NATS subscribe testcase with deadline
     steps:
@@ -248,3 +252,5 @@ testcases:
         assertions:
           - result.error ShouldBeEmpty
           - result.messages.__Len__ ShouldEqual 1
+          - result.messages.messages0.datajson ShouldContainKey message
+          - result.messages.messages0.datajson.message ShouldEqual "hello world"

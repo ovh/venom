@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -55,16 +56,29 @@ type Executor struct {
 
 // Message describes a NATS message received from a consumer or a request publisher
 type Message struct {
-	Data         interface{}         `json:"data,omitempty" yaml:"data,omitempty"`
-	Header       map[string][]string `json:"header,omitempty" yaml:"header,omitempty"`
-	Subject      string              `json:"subject,omitempty" yaml:"subject,omitempty"`
-	ReplySubject string              `json:"reply_subject,omitempty" yaml:"replySubject,omitempty"`
+	Data         string                 `json:"data,omitempty" yaml:"data,omitempty"`
+	DataJson     map[string]interface{} `json:"datajson,omitempty" yaml:"dataJson,omitempty"`
+	Header       map[string][]string    `json:"header,omitempty" yaml:"header,omitempty"`
+	Subject      string                 `json:"subject,omitempty" yaml:"subject,omitempty"`
+	ReplySubject string                 `json:"replysubject,omitempty" yaml:"replySubject,omitempty"`
 }
 
-// Resuts describes a command result
+// Result describes a command result
 type Result struct {
 	Messages []Message `json:"messages,omitempty" yaml:"messages,omitempty"`
 	Error    string    `json:"error,omitempty" yaml:"error,omitempty"`
+}
+
+func tryDecodeToJSON(data []byte) (map[string]interface{}, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty data")
+	}
+	var result map[string]interface{}
+	err := json.Unmarshal(data, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (Executor) ZeroValueMessage() Message {
@@ -203,8 +217,14 @@ func (e Executor) publish(ctx context.Context, session *nats.Conn) (Message, err
 			return e.ZeroValueMessage(), err
 		}
 
+		dataJson, err := tryDecodeToJSON(replyMsg.Data)
+		if err != nil {
+			venom.Debug(ctx, "data %s is not valid JSON ", replyMsg.Data)
+		}
+
 		result = Message{
 			Data:         string(replyMsg.Data),
+			DataJson:     dataJson,
 			Header:       replyMsg.Header,
 			Subject:      msg.Subject,
 			ReplySubject: replyMsg.Subject,
@@ -279,12 +299,19 @@ func (e Executor) subscribe(ctx context.Context, session *nats.Conn) ([]Message,
 	for {
 		select {
 		case msg := <-ch:
-			venom.Debug(ctx, "Received message #%d from subject %q with data %q", msgCount, e.Subject, string(msg.Data))
+			msgData := msg.Data
+			venom.Debug(ctx, "Received message #%d from subject %q with data %q", msgCount, e.Subject, string(msgData))
+
+			dataJson, err := tryDecodeToJSON(msgData)
+			if err != nil {
+				venom.Debug(ctx, "data %s is not valid JSON ", msgData)
+			}
 
 			results[msgCount] = Message{
-				Data:    string(msg.Data),
-				Header:  msg.Header,
-				Subject: msg.Subject,
+				Data:     string(msgData),
+				DataJson: dataJson,
+				Header:   msg.Header,
+				Subject:  msg.Subject,
 			}
 
 			msgCount++
@@ -367,9 +394,17 @@ func (e Executor) subscribeJetstream(ctx context.Context, session *nats.Conn) ([
 	done := make(chan struct{})
 
 	cc, err := consumer.Consume(func(msg jetstream.Msg) {
-		venom.Debug(ctx, "received message from %s[%s]: %+v", consumer.CachedInfo().Stream, msg.Subject(), string(msg.Data()))
+		msgData := msg.Data()
+		venom.Debug(ctx, "received message from %s[%s]: %+v", consumer.CachedInfo().Stream, msg.Subject(), string(msgData))
+
+		dataJson, err := tryDecodeToJSON(msgData)
+		if err != nil {
+			venom.Debug(ctx, "data %s is not valid JSON ", msgData)
+		}
+
 		results[msgCount] = Message{
-			Data:         string(msg.Data()),
+			Data:         string(msgData),
+			DataJson:     dataJson,
 			Header:       msg.Headers(),
 			Subject:      msg.Subject(),
 			ReplySubject: msg.Reply(),

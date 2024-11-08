@@ -60,7 +60,7 @@ venom-grpc.cid:
 
 nats-server-name := nats-server
 nats-server-addr := -s nats://venom-$(nats-server-name):4222 --tlscert=/pki/client.crt --tlskey=/pki/client.key --tlsca=/pki/ca.crt
-nats-msg-body := {"hello": "world"}
+nats-msg-body := {"message": "hello world"}
 venom-nats.cid:
 	docker network create --driver bridge $(nats-network)
 	$(call docker_run,nats:2.10,$(nats-server-name),\
