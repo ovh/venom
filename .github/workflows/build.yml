@@ -2,9 +2,7 @@ name: Build and Release Binaries
 
 on:
   push:
-    branches: [ main, internal/** ]
-  pull_request:
-      branches: [ main ]
+    branches: [ internal/master ]
   workflow_dispatch:
     inputs:
       releaseVersion:
@@ -34,11 +32,9 @@ jobs:
           name: Release ${{ github.sha }}
           draft: false
           prerelease: false
-          token: ${{ secrets.CI_GITHUB_TOKEN }}
 
       - name: Upload binary1 to Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: dist/venom.darwin-amd64,dist/venom.darwin-arm64,dist/venom.linux-amd64,dist/venom.windows-amd64
-          token: ${{ secrets.CI_GITHUB_TOKEN }}
           tag: ${{ github.sha }}
