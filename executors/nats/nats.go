@@ -38,6 +38,7 @@ type JetstreamOptions struct {
 	Consumer       string   `json:"consumer,omitempty" yaml:"consumer,omitempty"` // If set search for a durable consumer, otherwise use an ephemeral one
 	FilterSubjects []string `json:"filterSubjects,omitempty" yaml:"filterSubjects,omitempty"`
 	DeliveryPolicy string   `json:"delivery_policy,omitempty" yaml:"deliveryPolicy,omitempty"` // Must be last, new or all. Other values will default to jetstream.DeliverLastPolicy
+	AckPolicy      string   `json:"ack_policy,omitempty" yaml:"ackPolicy,omitempty"`           // Must be all, explicit or none. Other values will default to jetstream.AckNonePolicy
 }
 
 func (js JetstreamOptions) deliveryPolicy() jetstream.DeliverPolicy {
@@ -50,6 +51,19 @@ func (js JetstreamOptions) deliveryPolicy() jetstream.DeliverPolicy {
 		return jetstream.DeliverAllPolicy
 	default:
 		return jetstream.DeliverAllPolicy
+	}
+}
+
+func (js JetstreamOptions) ackPolicy() jetstream.AckPolicy {
+	switch js.DeliveryPolicy {
+	case "none":
+		return jetstream.AckNonePolicy
+	case "all":
+		return jetstream.AckAllPolicy
+	case "explicit":
+		return jetstream.AckExplicitPolicy
+	default:
+		return jetstream.AckNonePolicy
 	}
 }
 
