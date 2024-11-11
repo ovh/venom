@@ -34,14 +34,13 @@ type TlsOptions struct {
 }
 
 type JetstreamOptions struct {
-	Enabled        bool     `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Stream         string   `json:"stream,omitempty" yaml:"stream,omitempty"`     // Stream must exist before the command execution
 	Consumer       string   `json:"consumer,omitempty" yaml:"consumer,omitempty"` // If set search for a durable consumer, otherwise use an ephemeral one
 	FilterSubjects []string `json:"filterSubjects,omitempty" yaml:"filterSubjects,omitempty"`
 }
 
 type Executor struct {
-	Command      string              `json:"command,omitempty" yaml:"command,omitempty"` // Must be publish or subscribe
+	Command      string              `json:"command,omitempty" yaml:"command,omitempty"` // Must be `publish` or `subscribe`
 	Url          string              `json:"url,omitempty" yaml:"url,omitempty"`
 	Subject      string              `json:"subject,omitempty" yaml:"subject,omitempty"`
 	Payload      string              `json:"payload,omitempty" yaml:"payload,omitempty"`
@@ -50,7 +49,7 @@ type Executor struct {
 	Deadline     int                 `json:"deadline,omitempty" yaml:"deadline,omitempty"` // Describes the deadline in seconds from the start of the command
 	ReplySubject string              `json:"reply_subject,omitempty" yaml:"replySubject,omitempty"`
 	Request      bool                `json:"request,omitempty" yaml:"request,omitempty"` // Describe that the publish command expects a reply from the NATS server
-	Jetstream    JetstreamOptions    `json:"jetstream,omitempty" yaml:"jetstream,omitempty"`
+	Jetstream    *JetstreamOptions   `json:"jetstream,omitempty" yaml:"jetstream,omitempty"`
 	Tls          *TlsOptions         `json:"tls,omitempty" yaml:"tls"`
 }
 
@@ -104,7 +103,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		var cmdErr error
 		var reply Message
 
-		if e.Jetstream.Enabled {
+		if e.Jetstream != nil {
 			cmdErr = e.publishJetstream(ctx, session)
 		} else {
 			reply, cmdErr = e.publish(ctx, session)
@@ -119,7 +118,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		var msgs []Message
 		var cmdErr error
 
-		if e.Jetstream.Enabled {
+		if e.Jetstream != nil {
 			msgs, cmdErr = e.subscribeJetstream(ctx, session)
 		} else {
 			msgs, cmdErr = e.subscribe(ctx, session)
