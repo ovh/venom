@@ -37,6 +37,20 @@ type JetstreamOptions struct {
 	Stream         string   `json:"stream,omitempty" yaml:"stream,omitempty"`     // Stream must exist before the command execution
 	Consumer       string   `json:"consumer,omitempty" yaml:"consumer,omitempty"` // If set search for a durable consumer, otherwise use an ephemeral one
 	FilterSubjects []string `json:"filterSubjects,omitempty" yaml:"filterSubjects,omitempty"`
+	DeliveryPolicy string   `json:"delivery_policy,omitempty" yaml:"deliveryPolicy,omitempty"` // Must be last, new or all. Other values will default to jetstream.DeliverLastPolicy
+}
+
+func (js JetstreamOptions) deliveryPolicy() jetstream.DeliverPolicy {
+	switch js.DeliveryPolicy {
+	case "last":
+		return jetstream.DeliverLastPolicy
+	case "new":
+		return jetstream.DeliverNewPolicy
+	case "all":
+		return jetstream.DeliverAllPolicy
+	default:
+		return jetstream.DeliverAllPolicy
+	}
 }
 
 type Executor struct {
@@ -365,6 +379,7 @@ func (e Executor) getConsumer(ctx context.Context, session *nats.Conn) (jetstrea
 		consumer, consErr = stream.CreateConsumer(ctx, jetstream.ConsumerConfig{
 			FilterSubjects: e.Jetstream.FilterSubjects,
 			AckPolicy:      jetstream.AckAllPolicy,
+			DeliverPolicy:  e.Jetstream.deliveryPolicy(),
 		})
 		if consErr != nil {
 			return nil, err
