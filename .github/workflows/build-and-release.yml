@@ -42,7 +42,7 @@ jobs:
         id: create_release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.ref }}
+          tag: 'v0.0.1'
           name: Release ${{ github.ref }}
           draft: false
           prerelease: false
