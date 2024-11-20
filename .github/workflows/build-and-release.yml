@@ -39,8 +39,8 @@ jobs:
         with:
           tag: 'v0.0.3'  # Dynamically use the tag that triggered the workflow
           name: Release ${{ github.ref_name }}  # Set release name based on the tag
-          overwrite: true  # Allows overwriting an existing release if needed
+          allowUpdates: true  # Allows overwriting an existing release if needed
           draft: false
           prerelease: false
           generateReleaseNotes: true
-          files: dist/*
+          artifacts: dist/*
