@@ -1,14 +1,12 @@
 name: CI Build and Test
 
 on:
-  push:
-    branches: [ main, internal/** ]
   pull_request:
-    branches: [ main ]
+    branches: [ internal/** ]
   workflow_dispatch:
     inputs:
-      releaseVersion:
-        description: 'Release version'
+      test:
+        description: 'test'
         required: false
 jobs:
   build:
@@ -22,6 +20,13 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.20'
+          cache: true
 
       - name: Build using Makefile
         run: make build
+
+      - name: Run Linter
+        run: |
+          go fmt
+          go vet
+          golint
