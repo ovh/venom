@@ -42,7 +42,7 @@ jobs:
         id: create_release
         uses: ncipollo/release-action@v1
         with:
-          tag: 'v0.0.1'
+          tag: 'v0.0.2'
           name: Release ${{ github.ref }}
           draft: false
           prerelease: false
@@ -52,4 +52,4 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: dist/*
-          tag: 'v0.0.1'
+          tag: 'v0.0.2'
