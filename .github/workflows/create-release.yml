@@ -36,6 +36,7 @@ jobs:
       - name: Create pull request into master
         uses: thomaseizinger/create-pull-request@1.0.0
         with:
+          github_token: ''
           head: release/${{ github.event.inputs.releaseVersion }}
           base: internal/master
           title: ${{ github.event.inputs.releaseVersion }} into internal/master
@@ -48,10 +49,10 @@ jobs:
       - name: Create pull request into develop
         uses: thomaseizinger/create-pull-request@1.0.0
         with:
-          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          github_token: ''
           head: release/${{ github.event.inputs.releaseVersion }}
-          base: develop
-          title: ${{ github.event.inputs.releaseVersion }} into develop
+          base: internal/develop
+          title: ${{ github.event.inputs.releaseVersion }} into internal/develop
           reviewers: ${{ github.event.issue.user.login }}
           body: |
             This PR created in response of Create Release Workflow.
