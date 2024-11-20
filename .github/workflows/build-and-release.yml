@@ -14,10 +14,20 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    outputs:
+      release_version: ${{ steps.outputs.outputs.release_version }}
+
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Initialize mandatory git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -36,7 +46,7 @@ jobs:
           name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generateReleaseNotes: true
 
       - name: Upload binary1 to Release
         uses: ncipollo/release-action@v1
