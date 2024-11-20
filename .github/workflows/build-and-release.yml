@@ -37,7 +37,7 @@ jobs:
       - name: Create GitHub Release and Upload Artifacts
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.ref_name }}  # Dynamically use the tag that triggered the workflow
+          tag: 'v0.0.3'  # Dynamically use the tag that triggered the workflow
           name: Release ${{ github.ref_name }}  # Set release name based on the tag
           overwrite: true  # Allows overwriting an existing release if needed
           draft: false
