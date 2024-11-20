@@ -34,7 +34,7 @@ jobs:
       - name: Push the branch
         run: git push origin release/${{ github.event.inputs.releaseVersion }}
       - name: Create pull request into master
-        uses: thomaseizinger/create-pull-request@1.0.0
+        uses: thomaseizinger/create-pull-request@1.4.0
         with:
           github_token: ''
           head: release/${{ github.event.inputs.releaseVersion }}
@@ -47,7 +47,7 @@ jobs:
             Approving this PR will trigger new tag using version number from VERSION file
 
       - name: Create pull request into develop
-        uses: thomaseizinger/create-pull-request@1.0.0
+        uses: thomaseizinger/create-pull-request@1.4.0
         with:
           github_token: ''
           head: release/${{ github.event.inputs.releaseVersion }}
