@@ -1,0 +1,62 @@
+name: Build and Release
+
+# Trigger the workflow on push of a new tag
+on:
+  push:
+    tags:
+      - 'v*'  # Matches tags starting with 'v', e.g., v1.0.0
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.20
+          cache: true  # Caches Go modules
+
+      - name: Build Project
+        run: |
+          make build 
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      # 7. Upload Release Artifacts
+      - name: Upload Release Artifacts
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist*
+          asset_name: linux_amd64_myapp.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload Release Artifacts (Windows)
+        if: matrix.os == 'windows'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./windows_amd64_myapp.zip
+          asset_name: windows_amd64_myapp.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Artifacts (macOS)
+        if: matrix.os == 'darwin'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./darwin_amd64_myapp.tar.gz
+          asset_name: darwin_amd64_myapp.tar.gz
+          asset_content_type: application/gzip
