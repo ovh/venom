@@ -1,13 +1,11 @@
 name: CI Build and Test
 
 on:
+  push:
+    branches: [ feature/* ]
   pull_request:
-    branches: [ internal/** ]
-  workflow_dispatch:
-    inputs:
-      test:
-        description: 'test'
-        required: false
+    branches: [ feature/* ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,7 +21,10 @@ jobs:
           cache: true
 
       - name: Build using Makefile
-        run: make build
+        run: make build OS=linux ARCH=amd64
+
+      - name: Test using Makefile
+        run: make test
 
       - name: Run Linter
         run: |

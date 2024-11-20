@@ -1,0 +1,38 @@
+name: Tag release
+on:
+  push:
+    branches: [internal/master]
+
+jobs:
+  tag_release:
+    runs-on: feature-branch.yml
+    outputs:
+      release_version: ${{ steps.outputs.outputs.release_version }}
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Initialize mandatory git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: true
+      - name: Extract and setup release information
+        run: |
+          releaseVersion=`cat VERSION`
+          export RELEASE_VERSION=$releaseVersion
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
+      - name: Build using Makefile
+        run: make build
+      - name: Create GitHub Release and Upload Artifacts
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.RELEASE_VERSION }}
+          name: Release ${{ env.RELEASE_VERSION }}
+          draft: false
+          prerelease: false
+          generateReleaseNotes: true
+          artifacts: dist/*
