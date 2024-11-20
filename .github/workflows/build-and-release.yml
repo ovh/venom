@@ -1,15 +1,11 @@
 name: Build and Release
 
-# Trigger the workflow on push of a new tag
 on:
-  push:
-    tags:
-      - 'v*'  # Matches tags starting with 'v', e.g., v1.0.0
   workflow_dispatch:
     inputs:
-      test:
-        description: 'test'
-        required: false
+      releaseVersion:
+        description: 'Release version'
+        required: true
 
 jobs:
   build-and-release:
@@ -38,18 +34,13 @@ jobs:
       - name: Build using Makefile
         run: make build
 
-      - name: Create GitHub Release
-        id: create_release
+      - name: Create GitHub Release and Upload Artifacts
         uses: ncipollo/release-action@v1
         with:
-          tag: 'v0.0.2'
-          name: Release ${{ github.ref }}
+          tag: ${{ github.ref_name }}  # Dynamically use the tag that triggered the workflow
+          name: Release ${{ github.ref_name }}  # Set release name based on the tag
+          overwrite: true  # Allows overwriting an existing release if needed
           draft: false
           prerelease: false
           generateReleaseNotes: true
-
-      - name: Upload binary1 to Release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: dist/*
-          tag: 'v0.0.2'
+          files: dist/*
