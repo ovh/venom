@@ -6,6 +6,9 @@ on:
 jobs:
   tag_release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     outputs:
       release_version: ${{ steps.outputs.outputs.release_version }}
     steps:
