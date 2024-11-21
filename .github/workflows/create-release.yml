@@ -36,7 +36,7 @@ jobs:
       - name: Create pull request into master
         uses: thomaseizinger/create-pull-request@1.4.0
         with:
-          github_token: ''
+          github_token: ${{ secrets.CI_GH_TOKEN}}
           head: release/${{ github.event.inputs.releaseVersion }}
           base: internal/master
           title: ${{ github.event.inputs.releaseVersion }} into internal/master
@@ -49,7 +49,7 @@ jobs:
       - name: Create pull request into develop
         uses: thomaseizinger/create-pull-request@1.4.0
         with:
-          github_token: ''
+          github_token: ${{ secrets.CI_GH_TOKEN}}
           head: release/${{ github.event.inputs.releaseVersion }}
           base: internal/develop
           title: ${{ github.event.inputs.releaseVersion }} into internal/develop
