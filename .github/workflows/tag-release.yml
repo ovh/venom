@@ -5,7 +5,7 @@ on:
 
 jobs:
   tag_release:
-    runs-on: feature-branch.yml
+    runs-on: ubuntu-latest
     outputs:
       release_version: ${{ steps.outputs.outputs.release_version }}
     steps:
