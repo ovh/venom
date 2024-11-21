@@ -224,7 +224,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map
 	}
 
 	for _, f := range executorsPath {
-		Info(ctx, "Reading %v", f)
+		Debug(ctx, "Reading %v", f)
 		btes, ok := v.executorFileCache[f]
 		if !ok {
 			btes, err = os.ReadFile(f)

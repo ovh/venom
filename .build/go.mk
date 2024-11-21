@@ -7,6 +7,7 @@ TEST_RUN_ARGS 		= -test.v -test.timeout 600s -test.coverprofile=profile.coverpro
 CURRENT_PACKAGE 	= $(shell $(GO_LIST))
 TARGET_DIST 		:= ./dist
 TARGET_RESULTS 		:= ./results
+GOPATH := $(shell go env GOPATH)
 
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/venom | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
@@ -79,7 +80,7 @@ TESTPKGS_RESULTS = $(foreach PKG, $(TESTPKGS), $(TESTPKGS_RESULTS_LOG_FILE))
 $(HOME)/.richstyle.yml:
 	echo "leaveTestPrefix: true" > $(HOME)/.richstyle.yml
 
-GO_RICHGO = ${GOPATH}/bin/richgo
+GO_RICHGO := $(GOPATH)/bin/richgo
 $(GO_RICHGO): $(HOME)/.richstyle.yml
 	go install github.com/kyoh86/richgo@latest
 
@@ -88,19 +89,19 @@ $(TESTPKGS_RESULTS): $(GOFILES) $(TESTPKGS_C) $(GO_RICHGO)
 	$(info *** executing tests in $(dir $@))
 	@-cd $(dir $@) && ./bin.test $(TEST_RUN_ARGS) | tee tests.log | richgo testfilter ;
 
-GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
+GO_COV_MERGE := $(GOPATH)/bin/gocovmerge
 $(GO_COV_MERGE):
 	go install github.com/wadey/gocovmerge@latest
 
-GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
+GO_GOJUNIT := $(GOPATH)/bin/go-junit-report
 $(GO_GOJUNIT):
 	go install github.com/jstemmer/go-junit-report@latest
 
-GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
+GO_COBERTURA := $(GOPATH)/bin/gocover-cobertura
 $(GO_COBERTURA):
 	go install github.com/t-yuki/gocover-cobertura@latest
 
-GO_XUTOOLS = ${GOPATH}/bin/xutools
+GO_XUTOOLS := $(GOPATH)/bin/xutools
 $(GO_XUTOOLS):
 	go install github.com/richardlt/xutools@latest
 
