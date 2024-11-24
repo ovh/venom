@@ -100,7 +100,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 }
 
 func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
-	verboseReport := v.Verbose >= 1
+	verboseReport := v.Verbose > 1
 
 	v.Println(" • %s (%s)", ts.Name, ts.Filepath)
 
