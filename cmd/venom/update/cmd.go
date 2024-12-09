@@ -28,7 +28,7 @@ var Cmd = &cobra.Command{
 
 func getURLArtifactFromGithub() string {
 	client := github.NewClient(nil)
-	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "ovh", "venom")
+	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "socotra", "venom")
 	if err != nil {
 		cmd.Exit("Repositories.GetLatestRelease returned error: %v\n%v", err, resp.Body)
 	}
@@ -48,7 +48,7 @@ func getURLArtifactFromGithub() string {
 	}
 
 	text := "Invalid Artifacts on latest release. Please try again in few minutes.\n"
-	text += "If the problem persists, please open an issue on https://github.com/ovh/venom/issues\n"
+	text += "If the problem persists, please open an issue on https://github.com/socotra/venom/issues\n"
 	cmd.Exit(text)
 	return ""
 }
