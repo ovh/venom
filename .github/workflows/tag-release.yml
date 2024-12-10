@@ -29,7 +29,7 @@ jobs:
           export RELEASE_VERSION=$releaseVersion
           echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
       - name: Build using Makefile
-        run: make build
+        run: make build GIT_DESCRIBE=${{ env.RELEASE_VERSION }}
       - name: Create GitHub Release and Upload Artifacts
         uses: ncipollo/release-action@v1
         with:
