@@ -8,6 +8,7 @@ import (
 	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
 	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/reporting"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
 	"github.com/spf13/cast"
@@ -355,8 +356,8 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 func (v *Venom) GenerateOpenApiReport() error {
 	pattern := v.variables["openapi-report-pattern"]
 	strPattern := fmt.Sprintf("%v", pattern)
-	var files []FileEntry
-	// Get all directories matching the pattern
+
+	var files []reporting.FileEntry
 	dirs, err := filepath.Glob(strPattern)
 	if err != nil {
 		fmt.Printf("Error finding directories with pattern %q: %v\n", strPattern, err)
@@ -368,6 +369,7 @@ func (v *Venom) GenerateOpenApiReport() error {
 		return nil
 	}
 
+	// Collect JSON (OpenAPI specs) and XML (JUnit results)
 	for _, dir := range dirs {
 		err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 			if err != nil {
@@ -376,7 +378,7 @@ func (v *Venom) GenerateOpenApiReport() error {
 			if !d.IsDir() {
 				ext := filepath.Ext(d.Name())
 				if ext == ".json" || ext == ".xml" {
-					files = append(files, FileEntry{Path: path, Entry: d})
+					files = append(files, reporting.FileEntry{Path: path, Entry: d})
 				}
 			}
 			return nil
@@ -387,49 +389,74 @@ func (v *Venom) GenerateOpenApiReport() error {
 		}
 	}
 
-	openAPIEndpoints := make(map[string]int)
+	var openAPIs []*reporting.OpenAPI
 
 	for _, file := range files {
-		// Load OpenAPI specification if it's a JSON file
 		if strings.HasSuffix(file.Entry.Name(), ".json") && !strings.Contains(file.Entry.Name(), "dump") {
-			openAPI, err := LoadOpenAPISpec(file.Path)
+			tmpOpenAPI, err := reporting.LoadOpenAPISpec(file.Path)
 			if err != nil {
 				fmt.Println("Error:", err)
 				continue
 			}
+			openAPIs = append(openAPIs, tmpOpenAPI)
+		}
+	}
 
-			// Get all endpoints with HTTP methods
-			endpoints := GetAllEndpoints(openAPI)
+	if len(openAPIs) == 0 {
+		return errors.Errorf("No OpenAPI Spec file found")
+	}
 
-			// Store endpoints in the map
-			for p, methods := range endpoints {
-				for _, method := range methods {
-					s := []string{method, p}
-					endpointToStore := strings.Join(s, " ")
-					openAPIEndpoints[endpointToStore] = 0
-				}
-			}
+	openAPIEndpoints := make(map[string]int)
+
+	// Merge all endpoints from each spec into openAPIEndpoints
+	for _, oapi := range openAPIs {
+		endpoints := getAllEndpointsFromTyped(oapi)
+		for _, ec := range endpoints {
+			key := ec.Method + " " + ec.Path
+			openAPIEndpoints[key] = 0
 		}
 	}
 
 	if len(openAPIEndpoints) == 0 {
-		return errors.Errorf("%s", "OpenAPI Spec file not found")
+		return errors.Errorf("No endpoints found in the provided OpenAPI Specs")
 	}
+
+	// Combine all OpenAPI specs into a single typed spec, so coverage can be done on it
+	combinedOpenAPI := &reporting.OpenAPI{
+		Paths: make(map[string]*reporting.PathItem),
+	}
+
+	// Merge logic: If two specs have the same path, we merge method definitions
+	for _, oapi := range openAPIs {
+		for pathKey, pathItem := range oapi.Paths {
+			if existing, ok := combinedOpenAPI.Paths[pathKey]; ok {
+				mergePathItems(existing, pathItem)
+			} else {
+				combinedOpenAPI.Paths[pathKey] = pathItem
+			}
+		}
+	}
+
+	var allCoverages []reporting.EndpointCoverage
+	bigTestSuites := reporting.TestSuites{}
+
 	for _, file := range files {
 		if strings.HasSuffix(file.Entry.Name(), ".xml") {
-			testsuites, err := LoadJUnitXML(file.Path)
+			testsuites, err := reporting.LoadJUnitXML(file.Path)
 			if err != nil {
 				fmt.Println("Error:", err)
 				continue
 			}
+			bigTestSuites.Testsuites = append(bigTestSuites.Testsuites, testsuites.Testsuites...)
 
-			for _, testsuite := range testsuites.TestSuites {
-				httpMethod, endpoint := ExtractHttpEndpoint(testsuite.Name)
+			allCoverages = reporting.CalculateCoverage(combinedOpenAPI, &bigTestSuites)
+
+			for _, testsuite := range testsuites.Testsuites {
+				httpMethod, endpoint := reporting.ExtractHttpEndpoint(testsuite.Name)
 				if httpMethod != "" {
-					s := []string{httpMethod, endpoint}
-					endpointToCheck := strings.Join(s, " ")
-					if count, ok := openAPIEndpoints[endpointToCheck]; ok {
-						openAPIEndpoints[endpointToCheck] = count + 1
+					key := httpMethod + " " + endpoint
+					if count, ok := openAPIEndpoints[key]; ok {
+						openAPIEndpoints[key] = count + 1
 					}
 				}
 			}
@@ -447,7 +474,18 @@ func (v *Venom) GenerateOpenApiReport() error {
 	}
 
 	if v.HtmlReport && len(htmlData) > 0 {
-		v.GetOpenApiHtmlReport(htmlData)
+
+		data, err := reporting.OpenApiOutputHtml(allCoverages)
+		if err != nil {
+			return errors.Wrapf(err, "Error: cannot format output html")
+		}
+		var filenameHTML = filepath.Join(v.OutputDir, computeOutputFilename("open_api_report.html"))
+		v.PrintFunc("Writing html file %s\n", filenameHTML)
+		if err := os.WriteFile(filenameHTML, data, 0600); err != nil {
+			return errors.Wrapf(err, "Error while creating file %s", filenameHTML)
+		}
+
+		v.PrintFunc("Open HTML report written to %s\n", filenameHTML)
 	}
 
 	if err := os.WriteFile(filename, data, 0644); err != nil {
@@ -457,153 +495,68 @@ func (v *Venom) GenerateOpenApiReport() error {
 	return nil
 }
 
-func (v *Venom) GetOpenApiHtmlReport(openAPIEndpoints map[string]int) {
-	filename := filepath.Join(v.OutputDir, "open_api_report.html")
+func getAllEndpointsFromTyped(oapi *reporting.OpenAPI) []reporting.EndpointCoverage {
+	var endpoints []reporting.EndpointCoverage
+	for p, pathItem := range oapi.Paths {
+		if pathItem.Get != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "GET", Path: p})
+		}
+		if pathItem.Post != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "POST", Path: p})
+		}
+		if pathItem.Put != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "PUT", Path: p})
+		}
+		if pathItem.Patch != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "PATCH", Path: p})
+		}
+		if pathItem.Delete != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "DELETE", Path: p})
+		}
+		if pathItem.Head != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "HEAD", Path: p})
+		}
+		if pathItem.Options != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "OPTIONS", Path: p})
+		}
+		if pathItem.Trace != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "TRACE", Path: p})
+		}
+	}
+	return endpoints
+}
 
-	var sb strings.Builder
-	sb.WriteString(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenAPI Report</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f7f7f7;
-            color: #333;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-        h1 {
-            text-align: center;
-            color: #007bff;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            user-select: none;
-        }
-        th:hover {
-            background-color: #0056b3;
-        }
-        th.sort-asc::after {
-            content: " ▲";
-        }
-        th.sort-desc::after {
-            content: " ▼";
-        }
-        td {
-            background-color: #f9f9f9;
-        }
-        .toggle-button {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .toggle-button:hover {
-            background-color: #0056b3;
-        }
-        .light-mode {
-            background-color: white;
-            color: black;
-        }
-        .dark-mode {
-            background-color: #2c2c2c;
-            color: white;
-        }
-        .dark-mode table {
-            color: white;
-        }
-        .dark-mode th {
-            background-color: #444;
-        }
-        .dark-mode th:hover {
-            background-color: #666;
-        }
-        .dark-mode td {
-            background-color: #333;
-        }
-    </style>
-</head>
-<body class="light-mode">
-    <div class="container">
-        <h1>OpenAPI Endpoints Report</h1>
-        <button class="toggle-button" onclick="toggleMode()">Toggle Dark/Light Mode</button>
-        <table id="reportTable">
-            <thead>
-                <tr>
-                    <th onclick="sortTable(0)">Endpoint</th>
-                    <th onclick="sortTable(1)">Count</th>
-                </tr>
-            </thead>`)
-
-	for endpoint, count := range openAPIEndpoints {
-		line := fmt.Sprintf("<tr><td>%s</td><td>%d</td></tr>", endpoint, count)
-		sb.WriteString(line)
+func mergePathItems(dst, src *reporting.PathItem) *reporting.PathItem {
+	if dst == nil {
+		return src
+	}
+	if src == nil {
+		return dst
+	}
+	if src.Get != nil {
+		dst.Get = src.Get
+	}
+	if src.Post != nil {
+		dst.Post = src.Post
+	}
+	if src.Put != nil {
+		dst.Put = src.Put
+	}
+	if src.Patch != nil {
+		dst.Patch = src.Patch
+	}
+	if src.Delete != nil {
+		dst.Delete = src.Delete
+	}
+	if src.Head != nil {
+		dst.Head = src.Head
+	}
+	if src.Options != nil {
+		dst.Options = src.Options
+	}
+	if src.Trace != nil {
+		dst.Trace = src.Trace
 	}
 
-	sb.WriteString(`</table>
-    </div>
-    <script>
-        function toggleMode() {
-            document.body.classList.toggle('dark-mode');
-        }
-
-        function sortTable(columnIndex) {
-            const table = document.getElementById("reportTable");
-            const rows = Array.from(table.rows).slice(1);
-            const isAscending = table.querySelectorAll("th")[columnIndex].classList.toggle('sort-asc');
-            table.querySelectorAll("th")[columnIndex].classList.toggle('sort-desc', !isAscending);
-
-            rows.sort((row1, row2) => {
-                const cell1 = row1.cells[columnIndex].innerText.toLowerCase();
-                const cell2 = row2.cells[columnIndex].innerText.toLowerCase();
-
-                if (!isNaN(cell1) && !isNaN(cell2)) {
-                    return isAscending ? cell1 - cell2 : cell2 - cell1;
-                }
-
-                return isAscending ? cell1.localeCompare(cell2) : cell2.localeCompare(cell1);
-            });
-
-            rows.forEach(row => table.appendChild(row));
-        }
-    </script>
-</body>
-</html>`)
-
-	err := os.WriteFile(filename, []byte(sb.String()), 0600)
-	if err != nil {
-		fmt.Printf("Error while creating file %s: %v\n", filename, err)
-		return
-	}
-
-	v.PrintFunc("Open HTML report written to %s\n", filename)
+	return dst
 }
