@@ -3,7 +3,6 @@ package reporting
 import (
 	"bytes"
 	_ "embed"
-	"fmt"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -33,7 +32,6 @@ func OpenApiOutputHtml(coverageData []EndpointCoverage) ([]byte, error) {
 	// Summarize coverage data for top-level stats
 	var countFull, countPartial, countEmpty int
 	for _, c := range coverageData {
-		fmt.Printf("Coverage: %+v\n", c.CoverageType, c.TotalTests)
 		switch c.CoverageType {
 		case "full":
 			countFull++
