@@ -95,7 +95,7 @@ func WithFormatterLowerFirstKey() dump.KeyFormatterFunc {
 	return func(s string, level int) string {
 		if level == 0 && strings.Contains(s, ".") {
 			pos := strings.Index(s, ".")
-			return strings.ToLower(s[0:pos])+s[pos:]
+			return strings.ToLower(s[0:pos]) + s[pos:]
 		}
 		if level == 0 {
 			return strings.ToLower(f(s, level))

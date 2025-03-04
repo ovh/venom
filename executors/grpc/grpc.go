@@ -265,7 +265,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	// invoke the gRPC
 	err = grpcurl.InvokeRPC(ctx, descSource, cc, e.Service+"/"+e.Method, headers, &handle, rf.Next)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("grpcurl.InvokeRPC() failed.\nUrl: %q\nService: %q\nMethod: %q\nData:%v: %v", e.URL, e.Service, e.Method, e.Data, err)
 	}
 
 	elapsed := time.Since(start)
