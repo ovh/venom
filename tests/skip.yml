@@ -1,6 +1,7 @@
 name: "Skip testsuite"
 vars:
   foo: bar
+  set_var_exit_code: 2
 
 testcases:
 - name: init
@@ -53,3 +54,30 @@ testcases:
     - result.code ShouldEqual 0
     skip:
     - foo ShouldBeEmpty
+
+- name: skip-test-step-same-test-case
+  steps:
+  - name: set-var
+    type: exec
+    script: exit 0
+    assertions:
+    - result.code ShouldEqual 0
+    vars:
+      set_var_exit_code:
+        from: result.code
+  - name: dont-skip-step
+    type: exec
+    script: echo set_var_exit_code={{.skip-test-step-same-test-case.exit_step_code}}
+    skip:
+      - skip-test-step-same-test-case.set_var_exit_code ShouldEqual 0
+  - name: skip-step
+    type: exec
+    script: echo set_var_exit_code={{.skip-test-step-same-test-case.exit_step_code}}
+    skip:
+      - skip-test-step-same-test-case.set_var_exit_code ShouldNotBeNil
+      - skip-test-step-same-test-case.set_var_exit_code ShouldEqual 1
+  - name: dont-skip-step
+    type: exec
+    script: echo set_var_exit_code={{.skip-test-step-same-test-case.exit_step_code}}
+    skip:
+      - set_var_exit_code ShouldEqual 2
