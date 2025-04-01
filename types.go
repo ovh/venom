@@ -155,6 +155,7 @@ type TestCaseInput struct {
 	Skip         []string          `json:"skip" yaml:"skip"`
 	RawTestSteps []json.RawMessage `json:"steps" yaml:"steps"`
 	ID           string            `json:"id" yaml:"id"`
+	Tags         []string          `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
 type TestCase struct {

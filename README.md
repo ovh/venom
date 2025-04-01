@@ -36,9 +36,11 @@ Venom is a CLI (Command Line Interface) that aims to create, manage and run your
       * [`Must` Keywords](#must-keywords)
     * [Using logical operators](#using-logical-operators)
 * [Write and run your first test suite](#write-and-run-your-first-test-suite)
+* [Include and/or exclude tests cases from execution](#include-exclude-test-cases)
 * [Export tests report](#export-tests-report)
 * [Advanced usage](#advanced-usage)
   * [Debug your testsuites](#debug-your-testsuites)
+  * [Anchors](#anchors)
   * [Skip testcase and teststeps](#skip-testcase-and-teststeps)
   * [Iterating over data](#iterating-over-data)
 * [FAQ](#faq)
@@ -750,6 +752,22 @@ $ venom run
 
 You wrote and executed your first testsuite with the HTTP executor! :)
 
+# Include and/or exclude tests cases from execution
+
+You might want to execute only a subsets or tests to split your testing job into several or gather tests by their functional purpose.
+To do so, you can use the flag `--include-tags` to include only tests matching provided tags and/or the flag `--exclude-tags` to exclude only tests matching provided tags.
+The test case you want to include/exclude must have tags array attribute :
+```
+- name: sleep 1
+  tags: ["@sleep"]
+  steps:
+  - type: exec
+    script: sleep 1
+```
+
+The venom command to include tag @smoke and exclude tag @sleep would be the following:
+`venom run ../tests/tags.yml --exclude-tags @sleep --include-tags @smoke --output-dir ./tmp/venom`
+
 # Export tests report
 
 You can export your testsuite results as a report in several available formats: xUnit (XML), JSON, YAML, TAP.
@@ -810,6 +828,29 @@ $ venom run test.yml
   • cat json SUCCESS
     [info] the value of result.systemoutjson is map[foo:bar] (exec.yml:34)
 ```
+
+## Anchors
+
+If you have some code that is common to several test cases within your test suite, you might consider using YAML anchors to avoid duplicating the same code through all your test cases.
+Here's how you can reuse a block of code using anchors and be more specific afterwards:
+
+```
+default-settings: &default
+  timeout: 60
+  retries: 3
+  logging: verbose
+
+server1:
+  <<: *default
+  host: server1.example.com
+
+server2:
+  <<: *default
+  host: server2.example.com
+  retries: 5  # Overrides the default retries
+```
+
+Note that the anchor is declared with `&` char and refered to with alias `<<: *${anchor-declared-name}`.
 
 ## Skip testcase and teststeps
 

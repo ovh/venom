@@ -1,0 +1,32 @@
+name: Exec testsuite
+testcases:
+- name: testA
+  tags: ["@negative"]
+  steps:
+  - type: exec
+    script: echo 'foo with a bar here'
+    info:
+      - this a first info
+      - and a second...
+    assertions:
+    - result.code ShouldEqual 0
+    - result.timeseconds ShouldBeLessThan 1
+    vars:
+      myvariable:
+        from: result.systemout
+        regex: foo with a ([a-z]+) here
+
+- name: testB
+  tags: ["@negative", "@smoke"]
+  steps:
+  - type: exec
+    script: echo {{.testA.myvariable}}
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring bar
+
+- name: sleep 1
+  tags: ["@sleep"]
+  steps:
+  - type: exec
+    script: sleep 1

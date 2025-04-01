@@ -162,7 +162,33 @@ func (v *Venom) processSecrets(ctx context.Context, ts *TestSuite, tc *TestCase)
 	return context.WithValue(ctx, ContextKey("secrets"), computedSecrets)
 }
 
+func testHasAnyTag(tc *TestCase, requestedTags []string) bool {
+    for _, testTag := range tc.Tags {
+        for _, requestedTag := range requestedTags {
+            if testTag == requestedTag {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+
 func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepResult) {
+    if len(v.IncludedTags) > 0 {
+         if !testHasAnyTag(tc, v.IncludedTags) {
+             tc.Status = StatusSkip
+             return
+         }
+    }
+
+    if len(v.ExcludedTags) > 0 {
+         if testHasAnyTag(tc, v.ExcludedTags) {
+             tc.Status = StatusSkip
+             return
+         }
+    }
+
 	results, err := testConditionalStatement(ctx, tc, tc.Skip, tc.Vars, "skipping testcase %q: %v")
 	if err != nil {
 		Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
