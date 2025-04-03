@@ -352,7 +352,7 @@ loopRawTestSteps:
 			var isRequired bool
 
 			if tsResult.Status != StatusFail {
-				Warn(ctx, "Step %q result is %q", tsResult.Name, tsResult.Status)
+				Info(ctx, "Step %q result is %q", tsResult.Name, tsResult.Status)
 			}
 
 			if tsResult.Status == StatusFail {
@@ -362,6 +362,12 @@ loopRawTestSteps:
 					Error(ctx, "%v", e)
 					isRequired = isRequired || e.AssertionRequired || v.StopOnFailure
 				}
+
+				redactedOutputVars := make(map[string]string)
+				for k, v := range tsResult.ComputedVars {
+					redactedOutputVars[k] = HideSensitive(ctx, v)
+				}
+				Error(ctx, "teststep output vars are: %v", redactedOutputVars)
 
 				if isRequired {
 					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", errors.New("At least one required assertion failed, skipping remaining steps"))
