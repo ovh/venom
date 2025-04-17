@@ -12,12 +12,10 @@ name: Playwright testsuite
 testcases:
 - name: Check the title
   steps:
-  - type: playwright
-    url: https://parrotanything.com
-    auto-install: true
-    browser: chrome # options are: chromium|chrome|firefox
-    assertions:
-    - page.body ShouldContainSubstring NNDI
-    - page.body.$(".h1:first") ShouldEqual Parrot
+    - type: playwright
+      url: https://news.ycombinator.com
+      assertions:
+        - result.page.body ShouldContainSubstring Hacker News
+        - result.document.body ShouldContainSubstring Hacker News
 
 ```
