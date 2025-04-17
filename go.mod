@@ -1,6 +1,8 @@
 module github.com/ovh/venom
 
-go 1.21
+go 1.22
+
+toolchain go1.24.1
 
 require (
 	github.com/Azure/go-amqp v1.0.2
@@ -33,6 +35,7 @@ require (
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20231019155847-e738a974db8f
 	github.com/ovh/go-ovh v1.4.3
 	github.com/pkg/errors v0.9.1
+	github.com/playwright-community/playwright-go v0.5101.0
 	github.com/rockbears/yaml v0.4.0
 	github.com/rubenv/sql-migrate v1.5.2
 	github.com/sijms/go-ora v1.3.2
@@ -51,6 +54,12 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.26.0
+)
+
+require (
+	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
+	github.com/go-stack/stack v1.8.1 // indirect
 )
 
 require (

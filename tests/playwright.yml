@@ -1,0 +1,9 @@
+name: Playwright testsuite
+testcases:
+  - name: testA
+    steps:
+      - type: playwright
+        url: https://news.ycombinator.com
+        assertions:
+          - result.page.body ShouldContainSubstring Hacker News
+          - result.document.body ShouldContainSubstring Hacker News
