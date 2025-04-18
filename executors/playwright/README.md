@@ -13,9 +13,16 @@ testcases:
 - name: Check the title
   steps:
     - type: playwright
-      url: https://news.ycombinator.com
+      url: http://localhost:5173/
+      headless: true
+      actions:
+        - Fill "#email" "change@example.com"
+        - Fill "#email" "zikani@example.com"
+        - Fill "#password" "zikani123"
+        - Click "#loginButton"
+        - WaitFor ".second-dashboard-user-name"
       assertions:
-        - result.page.body ShouldContainSubstring Hacker News
-        - result.document.body ShouldContainSubstring Hacker News
-
+        - result.page.body ShouldContainSubstring Parrot
+        - result.document.body ShouldContainSubstring Hello,&nbsp;Zikani
+        - result.document.body ShouldContainSubstring Logout
 ```

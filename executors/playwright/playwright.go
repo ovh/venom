@@ -5,21 +5,26 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
-	"github.com/playwright-community/playwright-go"
+	playwrightgo "github.com/playwright-community/playwright-go"
 )
 
 const Name = "playwright"
 
 type Executor struct {
-	URL     string `json:"url" yaml:"url"`
-	Browser string `json:"browser" yaml:"browser"`
+	URL      string   `json:"url" yaml:"url"`
+	Browser  string   `json:"browser" yaml:"browser"`
+	Actions  []string `json:"actions" yaml:"actions"`
+	Headless bool     `json:"headless" yaml:"headless"`
 }
 
 func New() venom.Executor {
-	return &Executor{}
+	return &Executor{
+		Headless: true,
+	}
 }
 
 type Result struct {
@@ -67,19 +72,19 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	} else {
 		browsers = append(browsers, "chromium")
 	}
-	err = playwright.Install(&playwright.RunOptions{
+	err = playwrightgo.Install(&playwrightgo.RunOptions{
 		Browsers: browsers,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not launch playwright: %w", err)
 	}
 
-	pw, err := playwright.Run()
+	pw, err := playwrightgo.Run()
 	if err != nil {
 		return nil, fmt.Errorf("could not launch playwright: %w", err)
 	}
-	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
-		Headless: playwright.Bool(true), // should we expose this option?
+	browser, err := pw.Chromium.Launch(playwrightgo.BrowserTypeLaunchOptions{
+		Headless: playwrightgo.Bool(e.Headless), // should we expose this option?
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not launch Chromium: %w", err)
@@ -93,12 +98,17 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, fmt.Errorf("could not create page: %w", err)
 	}
 
-	res, err := page.Goto(e.URL)
+	_, err = page.Goto(e.URL)
 	if err != nil {
 		return nil, fmt.Errorf("could not goto: %w", err)
 	}
 
-	pageBodyBytes, err := res.Body()
+	err = performActions(page, e.Actions)
+	if err != nil {
+		return nil, err
+	}
+
+	pageBodyBytes, err := page.Content()
 	if err != nil {
 		return nil, fmt.Errorf("could not goto: %w", err)
 	}
@@ -123,4 +133,28 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		Page:     pageResult,
 		Document: pageResult,
 	}, nil
+}
+
+func performActions(page playwrightgo.Page, actions []string) error {
+	for _, action := range actions {
+		fmt.Println("perform action step", action)
+		parts := strings.SplitN(strings.TrimSpace(action), " ", 2)
+		actionName, arguments := parts[0], parts[1]
+		actionFunc, ok := actionMap[actionName]
+		if !ok {
+			return fmt.Errorf("invalid or unsupported action specified '%s'", actionName)
+		}
+		selectorAndArgs := strings.SplitN(strings.TrimSpace(arguments), " ", 2)
+		selector := removeQuotes(selectorAndArgs[0])
+		var err error
+		if len(selectorAndArgs) <= 1 {
+			err = actionFunc(page, selector, nil)
+		} else {
+			err = actionFunc(page, selector, removeQuotes(selectorAndArgs[1]))
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
