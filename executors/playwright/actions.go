@@ -13,6 +13,7 @@ type ActionFunc func(page playwrightgo.Page, element string, target ...any) erro
 var actionMap = map[string]ActionFunc{
 	"Click":             ClickAction,
 	"DoubleClick":       DoubleClickAction,
+	"Doubleclick":       DoubleClickAction,
 	"Tap":               TapAction,
 	"Focus":             FocusAction,
 	"Blur":              BlurAction,

@@ -103,7 +103,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, fmt.Errorf("could not goto: %w", err)
 	}
 
-	err = performActions(page, e.Actions)
+	err = performActions(ctx, page, e.Actions)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,6 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	if err != nil {
 		return nil, fmt.Errorf("could not goto: %w", err)
 	}
-	// TODO: run the assertions in here ...
 
 	err = browser.Close()
 	if err != nil {
@@ -135,25 +134,44 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}, nil
 }
 
-func performActions(page playwrightgo.Page, actions []string) error {
+// parseActionLine parses a line containing an Action expression and returns
+// the actionName, the arguments (rest of the line), the actionFunc or an error
+func parseActionLine(actionLine string) (string, string, ActionFunc, error) {
+	if actionLine == "" {
+		return "", "", nil, fmt.Errorf("action line MUST not be empty")
+	}
+	parts := strings.SplitN(strings.TrimSpace(actionLine), " ", 2)
+	if len(parts) < 2 {
+		return "", "", nil, fmt.Errorf("action line MUST have atleast two arguments: ACTION <selector>")
+	}
+	actionName, arguments := parts[0], parts[1]
+	actionFunc, ok := actionMap[actionName]
+	if !ok {
+		return "", "", nil, fmt.Errorf("invalid or unsupported action specified '%s'", actionName)
+	}
+	return actionName, arguments, actionFunc, nil
+}
+
+func performActions(ctx context.Context, page playwrightgo.Page, actions []string) error {
 	for _, action := range actions {
-		fmt.Println("perform action step", action)
-		parts := strings.SplitN(strings.TrimSpace(action), " ", 2)
-		actionName, arguments := parts[0], parts[1]
-		actionFunc, ok := actionMap[actionName]
-		if !ok {
-			return fmt.Errorf("invalid or unsupported action specified '%s'", actionName)
-		}
-		selectorAndArgs := strings.SplitN(strings.TrimSpace(arguments), " ", 2)
-		selector := removeQuotes(selectorAndArgs[0])
-		var err error
-		if len(selectorAndArgs) <= 1 {
-			err = actionFunc(page, selector, nil)
-		} else {
-			err = actionFunc(page, selector, removeQuotes(selectorAndArgs[1]))
-		}
+		actionName, arguments, actionFunc, err := parseActionLine(action)
 		if err != nil {
 			return err
+		}
+
+		venom.Debug(ctx, fmt.Sprintf("perform action '%s' with arguments '%v'\n", actionName, arguments))
+
+		selectorAndArgs := strings.SplitN(strings.TrimSpace(arguments), " ", 2)
+		selector := removeQuotes(selectorAndArgs[0])
+
+		var actErr error
+		if len(selectorAndArgs) <= 1 {
+			actErr = actionFunc(page, selector, nil)
+		} else {
+			actErr = actionFunc(page, selector, removeQuotes(selectorAndArgs[1]))
+		}
+		if actErr != nil {
+			return actErr
 		}
 	}
 	return nil
