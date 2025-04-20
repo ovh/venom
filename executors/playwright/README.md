@@ -26,3 +26,22 @@ testcases:
         - result.document.body ShouldContainSubstring Hello,&nbsp;Zikani
         - result.document.body ShouldContainSubstring Logout
 ```
+
+
+## Available actions
+
+|Action|Arguments|Example|
+|------|---------|-------|
+|Click                 |**querySelector**| Click "#element" |
+|DoubleClick           |**querySelector**| DoubleClick "#element" |
+|Tap                   |**querySelector**| Tap "#element" |
+|Fill                  |**querySelector** TEXT| Fill "#element" "my input text" |
+|Check                 |**querySelector**| Check "#element" |
+|Uncheck               |**querySelector**| Uncheck "#element" |
+|FillCheckbox          |**querySelector**| FillCheckbox "#element" |
+|Press                 |**querySelector** TEXT| Press "#element" "some text"|
+|PressSequentially     |**querySelector** TEXT | PressSequentially "#element" "some input"|
+|Type                  |**querySelector** TEXT | Type "#element" |
+|WaitFor               |**querySelector**| WaitFor "#element" |
+|WaitForSelector       |**querySelector**| WaitForSelector "#element" |
+|WaitForURL            |**REGEX**| WaitForURL "^some-page" |

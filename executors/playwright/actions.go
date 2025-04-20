@@ -11,12 +11,19 @@ import (
 type ActionFunc func(page playwrightgo.Page, element string, target ...any) error
 
 var actionMap = map[string]ActionFunc{
-	"Click":           ClickAction,
-	"Fill":            FillAction,
-	"Press":           PressAction,
-	"WaitFor":         WaitForSelectorAction,
-	"WaitForSelector": WaitForSelectorAction,
-	"WaitForURL":      WaitForURLAction,
+	"Click":             ClickAction,
+	"DoubleClick":       DoubleClickAction,
+	"Tap":               TapAction,
+	"Fill":              FillAction,
+	"Check":             CheckAction,
+	"Uncheck":           UncheckAction,
+	"FillCheckbox":      CheckAction, // alias for Check
+	"Press":             PressAction,
+	"PressSequentially": PressSequentiallyAction,
+	"Type":              PressSequentiallyAction, // alias for PressSequentially
+	"WaitFor":           WaitForSelectorAction,
+	"WaitForSelector":   WaitForSelectorAction,
+	"WaitForURL":        WaitForURLAction,
 }
 
 func removeQuotes(selector string) string {
@@ -55,4 +62,43 @@ func PressAction(page playwrightgo.Page, element string, target ...any) error {
 		return fmt.Errorf("need key to press on '%s'", element)
 	}
 	return page.Locator(element).First().Press(cast.ToString(target[0]))
+}
+
+func PressSequentiallyAction(page playwrightgo.Page, element string, target ...any) error {
+	if target == nil {
+		return fmt.Errorf("need key to press on '%s'", element)
+	}
+	return page.Locator(element).First().PressSequentially(cast.ToString(target[0]))
+}
+
+func DoubleClickAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need element to double click on")
+	}
+	// TODO: support passing double click options
+	return page.Locator(element).First().Dblclick()
+}
+
+func TapAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need element to tap on")
+	}
+	// TODO: support passing Tap options
+	return page.Locator(element).First().Tap()
+}
+
+func CheckAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need element to check on")
+	}
+	// TODO: support passing Check options
+	return page.Locator(element).First().Check()
+}
+
+func UncheckAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need element to uncheck on")
+	}
+	// TODO: support passing Uncheck options
+	return page.Locator(element).First().Uncheck()
 }
