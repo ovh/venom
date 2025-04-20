@@ -14,6 +14,9 @@ var actionMap = map[string]ActionFunc{
 	"Click":             ClickAction,
 	"DoubleClick":       DoubleClickAction,
 	"Tap":               TapAction,
+	"Focus":             FocusAction,
+	"Blur":              BlurAction,
+	"Clear":             ClearAction,
 	"Fill":              FillAction,
 	"Check":             CheckAction,
 	"Uncheck":           UncheckAction,
@@ -85,6 +88,30 @@ func TapAction(page playwrightgo.Page, element string, target ...any) error {
 	}
 	// TODO: support passing Tap options
 	return page.Locator(element).First().Tap()
+}
+
+func FocusAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need element to focus on")
+	}
+	// TODO: support passing Focus options
+	return page.Locator(element).First().Focus()
+}
+
+func BlurAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need element to blur")
+	}
+	// TODO: support passing Blur options
+	return page.Locator(element).First().Blur()
+}
+
+func ClearAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need element to blur")
+	}
+	// TODO: support passing Clear options
+	return page.Locator(element).First().Clear()
 }
 
 func CheckAction(page playwrightgo.Page, element string, target ...any) error {
