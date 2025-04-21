@@ -12,24 +12,27 @@ import (
 type ActionFunc func(page playwrightgo.Page, element string, target ...any) error
 
 var actionMap = map[string]ActionFunc{
-	"Click":             ClickAction,
-	"DoubleClick":       DoubleClickAction,
-	"Doubleclick":       DoubleClickAction,
-	"Tap":               TapAction,
-	"Focus":             FocusAction,
-	"Blur":              BlurAction,
-	"Clear":             ClearAction,
-	"Fill":              FillAction,
-	"Check":             CheckAction,
-	"Uncheck":           UncheckAction,
-	"FillCheckbox":      CheckAction, // alias for Check
-	"Press":             PressAction,
-	"PressSequentially": PressSequentiallyAction,
-	"Type":              PressSequentiallyAction, // alias for PressSequentially
-	"WaitFor":           WaitForSelectorAction,
-	"WaitForSelector":   WaitForSelectorAction,
-	"WaitForURL":        WaitForURLAction,
-	"Goto":              GotoAction,
+	"Click":                 ClickAction,
+	"DoubleClick":           DoubleClickAction,
+	"Doubleclick":           DoubleClickAction,
+	"Tap":                   TapAction,
+	"Focus":                 FocusAction,
+	"Blur":                  BlurAction,
+	"Clear":                 ClearAction,
+	"Fill":                  FillAction,
+	"Check":                 CheckAction,
+	"Uncheck":               UncheckAction,
+	"FillCheckbox":          CheckAction, // alias for Check
+	"Press":                 PressAction,
+	"PressSequentially":     PressSequentiallyAction,
+	"Select":                SelectOptionAction, // alias for SelectOption
+	"SelectOption":          SelectOptionAction,
+	"SelectMultipleOptions": SelectMultipleOptionsAction,
+	"Type":                  PressSequentiallyAction, // alias for PressSequentially
+	"WaitFor":               WaitForSelectorAction,
+	"WaitForSelector":       WaitForSelectorAction,
+	"WaitForURL":            WaitForURLAction,
+	"Goto":                  GotoAction,
 }
 
 func removeQuotes(selector string) string {
@@ -150,6 +153,46 @@ func GotoAction(page playwrightgo.Page, urlPattern string, target ...any) error 
 	_, err := page.Goto(finalURL, playwrightgo.PageGotoOptions{
 		Timeout:   &timeout,
 		WaitUntil: playwrightgo.WaitUntilStateCommit,
+	})
+	return err
+}
+
+func SelectOptionAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need a <select> element to select option on")
+	}
+	if target == nil || len(target) < 1 {
+		return fmt.Errorf("need a <select> element to select option on")
+	}
+	valuesOrLabels := make([]string, 0)
+	valuesOrLabels = append(valuesOrLabels, cast.ToString(target[0]))
+
+	_, err := page.Locator(element).First().SelectOption(playwrightgo.SelectOptionValues{
+		ValuesOrLabels: &valuesOrLabels,
+	})
+	return err
+}
+
+func SelectMultipleOptionsAction(page playwrightgo.Page, element string, target ...any) error {
+	if element == "" {
+		return fmt.Errorf("need a <select> element to select option on")
+	}
+	if target == nil || len(target) <= 1 {
+		return fmt.Errorf("need multiple elements to select from the element")
+	}
+	valuesOrLabels := make([]string, 0)
+	// typically target comes to us a single string, so we may need to treat it as
+	// a CSV to support selecting multiple options
+
+	for _, item := range strings.Split(cast.ToString(target[0]), ",") {
+		if item == "" {
+			return fmt.Errorf("need a <select> element to select option on")
+		}
+		valuesOrLabels = append(valuesOrLabels, cast.ToString(item))
+	}
+
+	_, err := page.Locator(element).First().SelectOption(playwrightgo.SelectOptionValues{
+		ValuesOrLabels: &valuesOrLabels,
 	})
 	return err
 }

@@ -45,6 +45,9 @@ testcases:
 |Press                 |**querySelector** TEXT| Press "#element" "some text"|
 |PressSequentially     |**querySelector** TEXT | PressSequentially "#element" "some input"|
 |Type                  |**querySelector** TEXT | Type "#element" |
+|Select                |**querySelector** TEXT | Select "#someSelect" "Value or Label"|
+|SelectOption          |**querySelector** TEXT | Select "#someSelect" "Value or Label"|
+|SelectMultipleOptions |**querySelector** TEXT | SelectMultipleOptions "#someSelect" "Value or Label 1,Value or Label 2,..., Value or Label N"|
 |WaitFor               |**querySelector**| WaitFor "#element" |
 |WaitForSelector       |**querySelector**| WaitForSelector "#element" |
 |Goto                  |**REGEX**| Goto "^some-page" |
