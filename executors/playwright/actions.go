@@ -2,6 +2,7 @@ package playwright
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	playwrightgo "github.com/playwright-community/playwright-go"
@@ -28,6 +29,7 @@ var actionMap = map[string]ActionFunc{
 	"WaitFor":           WaitForSelectorAction,
 	"WaitForSelector":   WaitForSelectorAction,
 	"WaitForURL":        WaitForURLAction,
+	"Goto":              GotoAction,
 }
 
 func removeQuotes(selector string) string {
@@ -129,4 +131,25 @@ func UncheckAction(page playwrightgo.Page, element string, target ...any) error 
 	}
 	// TODO: support passing Uncheck options
 	return page.Locator(element).First().Uncheck()
+}
+
+func GotoAction(page playwrightgo.Page, urlPattern string, target ...any) error {
+	timeout := 10_000.00
+	finalURL := urlPattern
+	if strings.HasPrefix(urlPattern, "/") { // relative url
+		parsedURL, err := url.Parse(page.URL())
+		if err != nil {
+			return err
+		}
+		u, err := parsedURL.Parse(urlPattern)
+		if err != nil {
+			return err
+		}
+		finalURL = u.String()
+	}
+	_, err := page.Goto(finalURL, playwrightgo.PageGotoOptions{
+		Timeout:   &timeout,
+		WaitUntil: playwrightgo.WaitUntilStateCommit,
+	})
+	return err
 }

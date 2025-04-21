@@ -47,4 +47,5 @@ testcases:
 |Type                  |**querySelector** TEXT | Type "#element" |
 |WaitFor               |**querySelector**| WaitFor "#element" |
 |WaitForSelector       |**querySelector**| WaitForSelector "#element" |
+|Goto                  |**REGEX**| Goto "^some-page" |
 |WaitForURL            |**REGEX**| WaitForURL "^some-page" |
