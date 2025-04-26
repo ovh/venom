@@ -33,6 +33,9 @@ var actionMap = map[string]ActionFunc{
 	"WaitForSelector":       WaitForSelectorAction,
 	"WaitForURL":            WaitForURLAction,
 	"Goto":                  GotoAction,
+	"GoBack":                GoBackAction,
+	"GoForward":             GoForwardAction,
+	"Refresh":               RefreshAction,
 }
 
 func removeQuotes(selector string) string {
@@ -136,6 +139,21 @@ func UncheckAction(page playwrightgo.Page, element string, target ...any) error 
 	return page.Locator(element).First().Uncheck()
 }
 
+func RefreshAction(page playwrightgo.Page, element string, target ...any) error {
+	_, err := page.Reload()
+	return err
+}
+
+func GoBackAction(page playwrightgo.Page, element string, target ...any) error {
+	_, err := page.GoBack()
+	return err
+}
+
+func GoForwardAction(page playwrightgo.Page, element string, target ...any) error {
+	_, err := page.GoForward()
+	return err
+}
+
 func GotoAction(page playwrightgo.Page, urlPattern string, target ...any) error {
 	timeout := 10_000.00
 	finalURL := urlPattern
@@ -183,7 +201,6 @@ func SelectMultipleOptionsAction(page playwrightgo.Page, element string, target 
 	valuesOrLabels := make([]string, 0)
 	// typically target comes to us a single string, so we may need to treat it as
 	// a CSV to support selecting multiple options
-
 	for _, item := range strings.Split(cast.ToString(target[0]), ",") {
 		if item == "" {
 			return fmt.Errorf("need a <select> element to select option on")
