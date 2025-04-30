@@ -17,7 +17,7 @@ import (
 var varRegEx = regexp.MustCompile("{{.*}}")
 
 // Parse the testcase to find unreplaced and extracted variables
-func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
+func (v *Venom) parseTestCase(_ *TestSuite, tc *TestCase) ([]string, []string, error) {
 	dvars, err := DumpStringPreserveCase(tc.Vars)
 	if err != nil {
 		return nil, nil, err
@@ -173,9 +173,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 	}
 	if len(results) > 0 {
 		tc.Status = StatusSkip
-		for _, s := range results {
-			tc.Skipped = append(tc.Skipped, Skipped{Value: s})
-			Warn(ctx, s)
+		for i := range results {
+			tc.Skipped = append(tc.Skipped, Skipped{Value: results[i]})
+			Warn(ctx, results[i], nil)
 		}
 		return
 	}
@@ -270,7 +270,7 @@ loopRawTestSteps:
 			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to parse step #%d: %v", stepNumber, err)
-				Error(ctx, content)
+				Error(ctx, content, nil)
 				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 				break loopRawTestSteps
 			}
@@ -457,9 +457,9 @@ func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []
 			return false, err
 		}
 		if len(results) > 0 {
-			for _, s := range results {
-				ts.Skipped = append(ts.Skipped, Skipped{Value: s})
-				Warn(ctx, s)
+			for i := range results {
+				ts.Skipped = append(ts.Skipped, Skipped{Value: results[i]})
+				Warn(ctx, results[i], nil)
 			}
 			return true, nil
 		}
@@ -576,11 +576,6 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars H, ra
 
 	if len(stepAssignment.Assignments) == 0 {
 		return nil, false, nil
-	}
-
-	var tcVarsKeys []string
-	for k := range tcVars {
-		tcVarsKeys = append(tcVarsKeys, k)
 	}
 
 	for varname, assignment := range stepAssignment.Assignments {

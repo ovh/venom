@@ -92,10 +92,6 @@ func (a *commandAppendArgs) initFrom(args map[string]any) {
 	}
 }
 
-func (a *commandAppendArgs) isAnyMandatoryFieldEmpty() bool {
-	return a.mailbox == "" || a.from == ""
-}
-
 // commandCreateArgs represents the arguments to the create command
 type commandCreateArgs struct {
 	// The name of the mailbox to create
@@ -106,10 +102,6 @@ func (a *commandCreateArgs) initFrom(args map[string]any) {
 	if v, ok := args["mailbox"]; ok {
 		a.mailbox = v.(string)
 	}
-}
-
-func (a *commandCreateArgs) isAnyMandatoryFieldEmpty() bool {
-	return a.mailbox == ""
 }
 
 // commandClearArgs represents the arguments to the clear command
@@ -187,10 +179,6 @@ func (a *commandMoveArgs) initFrom(args map[string]any) {
 	if v, ok := args["mailbox"]; ok {
 		a.mailbox = v.(string)
 	}
-}
-
-func (a *commandMoveArgs) isAnyMandatoryFieldEmpty() bool {
-	return a.mailbox == ""
 }
 
 // SearchCriteria represents the search criteria to fetch mails through FETCH command (https://www.rfc-editor.org/rfc/rfc3501#section-6.4.5)
@@ -317,7 +305,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	c, err := e.connect(e.Auth.Host, e.Auth.Port, e.Auth.User, e.Auth.Password)
 	if err != nil {
-		return nil, fmt.Errorf("Error while connecting: %w", err)
+		return nil, fmt.Errorf("error while connecting: %w", err)
 	}
 	defer c.Logout(imapClientTimeout) // nolint
 	client := &Client{c}
@@ -361,7 +349,7 @@ func (e Executor) handleCommands(ctx context.Context, c *Client) []CommandResult
 			results[i].Err = "unknown command"
 		}
 		if results[i].Err != "" {
-			venom.Debug(ctx, fmt.Sprintf("Failed to handle command %s: %s", command.Name, results[i].Err))
+			venom.Debug(ctx, "Failed to handle command %s: %s", command.Name, results[i].Err)
 		}
 	}
 	return results
@@ -469,7 +457,7 @@ func (c *Client) appendMail(ctx context.Context, args commandAppendArgs) Command
 	})
 	if err != nil {
 		result.Err = fmt.Sprintf("Error while retrieving mail after append command was executed: %v", err)
-		venom.Error(ctx, result.Err)
+		venom.Error(ctx, result.Err, nil)
 	} else {
 		venom.Debug(ctx, "Mail was retrieved: append command successfully completed")
 		result.Mail = mail
@@ -701,11 +689,11 @@ func (c *Client) deleteMail(ctx context.Context, mailToFind SearchCriteria) Comm
 		venom.Debug(ctx, "Mail was successfully deleted: delete command successfully completed!")
 	} else if err == nil {
 		result.Err = "Supposedly deleted mail was found after delete command was executed"
-		venom.Error(ctx, result.Err)
+		venom.Error(ctx, result.Err, nil)
 		result.Mail = mail
 	} else {
 		result.Err = fmt.Sprintf("Error while trying to confirm mail was deleted: %v", err)
-		venom.Warn(ctx, result.Err)
+		venom.Warn(ctx, result.Err, nil)
 	}
 
 	result.TimeSeconds = time.Since(start).Seconds()
@@ -740,7 +728,7 @@ func (c *Client) moveMail(ctx context.Context, mailToFind SearchCriteria, args c
 	mail, err = c.getFirstFoundMail(ctx, mailToFind)
 	if err != nil {
 		result.Err = fmt.Sprintf("Error while trying to confirm mail was moved: %v", err)
-		venom.Warn(ctx, result.Err)
+		venom.Warn(ctx, result.Err, nil)
 	}
 	result.Mail = mail
 	venom.Debug(ctx, "Mail was successfully moved: move command successfully completed!")
@@ -806,8 +794,7 @@ func (c *Client) getFirstFoundMail(ctx context.Context, mailToFind SearchCriteri
 		return Mail{}, errEmptyMailbox
 	}
 
-	messages := make([]imap.Response, 0, count)
-	messages, err = c.fetchMails(ctx, mailToFind.Mailbox)
+	messages, err := c.fetchMails(ctx, mailToFind.Mailbox)
 	if err != nil {
 		return Mail{}, fmt.Errorf("error while fetching messages in mailbox %q: %v", mailToFind.Mailbox, err)
 	}

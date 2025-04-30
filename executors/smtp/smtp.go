@@ -74,10 +74,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 func (e *Executor) sendEmail(ctx context.Context) error {
 	if e.To == "" {
-		return fmt.Errorf("Invalid To")
+		return fmt.Errorf("invalid To")
 	}
 	if e.From == "" {
-		return fmt.Errorf("Invalid From")
+		return fmt.Errorf("invalid From")
 	}
 
 	mailFrom := mail.Address{
