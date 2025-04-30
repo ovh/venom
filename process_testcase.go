@@ -139,6 +139,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)
+	tc.Vars.Add("venom.testcase.totalSteps", len(tc.RawTestSteps))
 	tc.computedVars = H{}
 
 	ctx = v.processSecrets(ctx, ts, tc)
@@ -185,10 +186,13 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 	fromUserExecutor := tsIn != nil
 
 loopRawTestSteps:
-	for stepNumber, rawStep := range tc.RawTestSteps {
+	for stepIndex, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
 		stepVars.AddAll(previousStepVars)
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
+
+		// Use stepNumber as a 1-based index
+		stepNumber := stepIndex + 1
 		stepVars.Add("venom.teststep.number", stepNumber)
 
 		ranged, err := parseRanged(ctx, rawStep, stepVars)
@@ -417,7 +421,7 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 				v.Println(" \t\t  %s", Yellow(f.Value))
 			}
 			if mustAssertionFailed {
-				skipped := len(tc.RawTestSteps) - stepNumber - 1
+				skipped := len(tc.RawTestSteps) - stepNumber
 				if skipped == 1 {
 					v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other step was skipped", skipped)))
 				} else {
