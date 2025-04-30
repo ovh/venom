@@ -62,10 +62,10 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	if (e.Script == nil || *e.Script == "") && (len(e.Command) == 0) {
-		return nil, fmt.Errorf("Invalid command")
+		return nil, fmt.Errorf("invalid command")
 	}
 	if e.Script != nil && *e.Script != "" && len(e.Command) != 0 {
-		return nil, fmt.Errorf("Cannot use both 'script' and 'command'")
+		return nil, fmt.Errorf("cannot use both 'script' and 'command'")
 	}
 
 	var (
@@ -178,7 +178,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 				return
 			}
 			result.Systemout += line
-			venom.Debug(ctx, venom.HideSensitive(ctx, line))
+			venom.Debug(ctx, venom.HideSensitive(ctx, line), nil)
 		}
 	}()
 
@@ -195,14 +195,14 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 				return
 			}
 			result.Systemerr += line
-			venom.Debug(ctx, venom.HideSensitive(ctx, line))
+			venom.Debug(ctx, venom.HideSensitive(ctx, line), nil)
 		}
 	}()
 
 	if err := cmd.Start(); err != nil {
 		result.Err = err.Error()
 		result.Code = "127"
-		venom.Debug(ctx, err.Error())
+		venom.Debug(ctx, "error on cmd.Start: %v", err.Error())
 		return dump.ToMap(e, dump.WithDefaultLowerCaseFormatter())
 	}
 
