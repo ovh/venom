@@ -421,7 +421,7 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 				v.Println(" \t\t  %s", Yellow(f.Value))
 			}
 			if mustAssertionFailed {
-				skipped := len(tc.RawTestSteps) - stepNumber - 1
+				skipped := len(tc.RawTestSteps) - stepNumber
 				if skipped == 1 {
 					v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other step was skipped", skipped)))
 				} else {
