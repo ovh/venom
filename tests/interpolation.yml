@@ -17,19 +17,9 @@ testcases:
 
   - name: UseVar
     steps:
-      - type: http
-        method: GET
-        url: "http://example.com"
-        headers:
-          test: "{{ .GetVar.accept }}"
+      - type: exec
+        info: "{{ .GetVar.accept }}"
+        script: echo "{{ .GetVar.accept }}"
         assertions:
-          - result.statuscode ShouldEqual 200
-          - result.headers.X-Cache ShouldEqual "HIT"
-      - type: http
-        method: HEAD
-        url: "http://example.com"
-        headers:
-          test: "{{ .GetVar.accept }}"
-        assertions:
-          - result.statuscode ShouldEqual 200
-          - result.headers.Accept-Ranges ShouldEqual "bytes"
+          - result.code ShouldEqual 0
+          - result.systemout ShouldContainSubstring text/html
