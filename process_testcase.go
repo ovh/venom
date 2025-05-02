@@ -352,7 +352,7 @@ loopRawTestSteps:
 			var isRequired bool
 
 			if tsResult.Status != StatusFail {
-				Warn(ctx, "Step %q result is %q", tsResult.Name, tsResult.Status)
+				Info(ctx, "Step %q result is %q", tsResult.Name, tsResult.Status)
 			}
 
 			if tsResult.Status == StatusFail {
