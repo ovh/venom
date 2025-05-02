@@ -325,7 +325,9 @@ loopRawTestSteps:
 			}
 
 			// ##### RUN Test Step Here
-			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber)
+			skipVars := tc.Vars.Clone()
+			skipVars.AddAllWithPrefix(tc.Name, previousStepVars)
+			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber, skipVars)
 			if err != nil {
 				tsResult.appendError(err)
 				tsResult.Status = StatusFail
@@ -444,7 +446,7 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 }
 
 // Parse and format skip conditional
-func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []byte, stepNumber int) (bool, error) {
+func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []byte, stepNumber int, vars H) (bool, error) {
 	// Load "skip" attribute from step
 	var assertions struct {
 		Skip []string `yaml:"skip"`
@@ -455,7 +457,7 @@ func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []
 
 	// Evaluate skip assertions
 	if len(assertions.Skip) > 0 {
-		results, err := testConditionalStatement(ctx, tc, assertions.Skip, tc.Vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
+		results, err := testConditionalStatement(ctx, tc, assertions.Skip, vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
 		if err != nil {
 			Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
 			return false, err
