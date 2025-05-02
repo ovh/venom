@@ -104,7 +104,7 @@ build-test-binary:
 	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -ldflags "-X github.com/ovh/venom.IsTest=true" -tags testbincover;
 
 build-test-binary-docker:
-	docker run -v `pwd`/..:/workspace golang:1.22 sh -c "cd /workspace/tests && make build-test-binary"	
+	docker run -v `pwd`/..:/workspace golang:1.24 sh -c "cd /workspace/tests && make build-test-binary"	
 
 run-test: generate-venom-pki
 	VENOM_VAR_MY_ENVAR=foo  ./venom_wrapper.sh run \
@@ -121,7 +121,7 @@ clean: clean-nats-pki
 	@rm -f *.prof *.html *.xml *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
 
 merge-coverage:
-	@docker run -v `pwd`:/workspace golang:1.22 sh -c "\
+	@docker run -v `pwd`:/workspace golang:1.24 sh -c "\
 			go install github.com/wadey/gocovmerge@latest && \
 			cd /workspace && \
     gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \

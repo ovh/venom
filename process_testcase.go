@@ -17,7 +17,7 @@ import (
 var varRegEx = regexp.MustCompile("{{.*}}")
 
 // Parse the testcase to find unreplaced and extracted variables
-func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
+func (v *Venom) parseTestCase(_ *TestSuite, tc *TestCase) ([]string, []string, error) {
 	dvars, err := DumpStringPreserveCase(tc.Vars)
 	if err != nil {
 		return nil, nil, err
@@ -139,6 +139,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)
+	tc.Vars.Add("venom.testcase.totalSteps", len(tc.RawTestSteps))
 	tc.computedVars = H{}
 
 	ctx = v.processSecrets(ctx, ts, tc)
@@ -173,9 +174,9 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 	}
 	if len(results) > 0 {
 		tc.Status = StatusSkip
-		for _, s := range results {
-			tc.Skipped = append(tc.Skipped, Skipped{Value: s})
-			Warn(ctx, s)
+		for i := range results {
+			tc.Skipped = append(tc.Skipped, Skipped{Value: results[i]})
+			Warn(ctx, results[i], nil)
 		}
 		return
 	}
@@ -185,10 +186,13 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 	fromUserExecutor := tsIn != nil
 
 loopRawTestSteps:
-	for stepNumber, rawStep := range tc.RawTestSteps {
+	for stepIndex, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
 		stepVars.AddAll(previousStepVars)
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
+
+		// Use stepNumber as a 1-based index
+		stepNumber := stepIndex + 1
 		stepVars.Add("venom.teststep.number", stepNumber)
 
 		ranged, err := parseRanged(ctx, rawStep, stepVars)
@@ -270,7 +274,7 @@ loopRawTestSteps:
 			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to parse step #%d: %v", stepNumber, err)
-				Error(ctx, content)
+				Error(ctx, content, nil)
 				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 				break loopRawTestSteps
 			}
@@ -321,7 +325,9 @@ loopRawTestSteps:
 			}
 
 			// ##### RUN Test Step Here
-			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber)
+			skipVars := tc.Vars.Clone()
+			skipVars.AddAllWithPrefix(tc.Name, previousStepVars)
+			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber, skipVars)
 			if err != nil {
 				tsResult.appendError(err)
 				tsResult.Status = StatusFail
@@ -417,7 +423,7 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 				v.Println(" \t\t  %s", Yellow(f.Value))
 			}
 			if mustAssertionFailed {
-				skipped := len(tc.RawTestSteps) - stepNumber - 1
+				skipped := len(tc.RawTestSteps) - stepNumber
 				if skipped == 1 {
 					v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other step was skipped", skipped)))
 				} else {
@@ -440,7 +446,7 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 }
 
 // Parse and format skip conditional
-func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []byte, stepNumber int) (bool, error) {
+func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []byte, stepNumber int, vars H) (bool, error) {
 	// Load "skip" attribute from step
 	var assertions struct {
 		Skip []string `yaml:"skip"`
@@ -451,15 +457,15 @@ func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []
 
 	// Evaluate skip assertions
 	if len(assertions.Skip) > 0 {
-		results, err := testConditionalStatement(ctx, tc, assertions.Skip, tc.Vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
+		results, err := testConditionalStatement(ctx, tc, assertions.Skip, vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
 		if err != nil {
 			Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
 			return false, err
 		}
 		if len(results) > 0 {
-			for _, s := range results {
-				ts.Skipped = append(ts.Skipped, Skipped{Value: s})
-				Warn(ctx, s)
+			for i := range results {
+				ts.Skipped = append(ts.Skipped, Skipped{Value: results[i]})
+				Warn(ctx, results[i], nil)
 			}
 			return true, nil
 		}
@@ -576,11 +582,6 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars H, ra
 
 	if len(stepAssignment.Assignments) == 0 {
 		return nil, false, nil
-	}
-
-	var tcVarsKeys []string
-	for k := range tcVars {
-		tcVarsKeys = append(tcVarsKeys, k)
 	}
 
 	for varname, assignment := range stepAssignment.Assignments {

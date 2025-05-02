@@ -91,7 +91,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 					info += fmt.Sprintf(" (%s:%d)", filename, lineNumber)
 				}
 			}
-			Info(ctx, info)
+			Info(ctx, info, nil)
 			tsResult.ComputedInfo = append(tsResult.ComputedInfo, info)
 		}
 
