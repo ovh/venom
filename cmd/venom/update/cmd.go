@@ -34,7 +34,7 @@ func getURLArtifactFromGithub() string {
 	}
 
 	if *release.TagName == venom.Version {
-		cmd.Exit(fmt.Sprintf("you already have the latest release: %s", *release.TagName))
+		cmd.Exit("you already have the latest release: %s", *release.TagName)
 	}
 
 	if len(release.Assets) > 0 {
@@ -47,8 +47,9 @@ func getURLArtifactFromGithub() string {
 		}
 	}
 
-	text := "Invalid Artifacts on latest release. Please try again in few minutes.\n"
-	text += "If the problem persists, please open an issue on https://github.com/ovh/venom/issues\n"
+	const text = `Invalid Artifacts on latest release. Please try again in few minutes.
+If the problem persists, please open an issue on https://github.com/ovh/venom/issues
+`
 	cmd.Exit(text)
 	return ""
 }
