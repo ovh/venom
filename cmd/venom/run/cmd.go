@@ -280,7 +280,7 @@ func initFromEnv(environ []string) ([]string, error) {
 		verbose = v2
 	}
 
-	var cast = func(vS string) interface{} {
+	cast := func(vS string) interface{} {
 		var v interface{}
 		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
 		return v
@@ -372,7 +372,7 @@ var Cmd = &cobra.Command{
 			displayArg(context.Background())
 		}
 
-		var readers = []io.Reader{}
+		readers := []io.Reader{}
 		for _, f := range varFiles {
 			if f == "" {
 				continue
@@ -420,16 +420,16 @@ var Cmd = &cobra.Command{
 }
 
 func readInitialVariables(ctx context.Context, argsVars []string, argVarsFiles []io.Reader, environ []string) (map[string]interface{}, error) {
-	var cast = func(vS string) interface{} {
+	cast := func(vS string) interface{} {
 		var v interface{}
 		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
 		return v
 	}
 
-	var result = map[string]interface{}{}
+	result := map[string]interface{}{}
 
 	for _, r := range argVarsFiles {
-		var tmpResult = map[string]interface{}{}
+		tmpResult := map[string]interface{}{}
 		btes, err := io.ReadAll(r)
 		if err != nil {
 			return nil, err

@@ -111,7 +111,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		v.Print(" \t• %s", tc.Name)
 		var hasFailure bool
 		var hasRanged bool
-		var hasSkipped = len(tc.Skipped) > 0
+		hasSkipped := len(tc.Skipped) > 0
 		if !hasSkipped {
 			start := time.Now()
 			tc.Start = start
@@ -141,7 +141,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		if hasFailure {
 			tc.Status = StatusFail
 		} else if skippedSteps == len(tc.TestStepResults) {
-			//If all test steps were skipped, consider the test case as skipped
+			// If all test steps were skipped, consider the test case as skipped
 			tc.Status = StatusSkip
 		} else if tc.Status != StatusSkip {
 			tc.Status = StatusPass

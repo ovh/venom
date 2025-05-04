@@ -14,8 +14,8 @@ import (
 func getUserExecutorInputYML(ctx context.Context, btesIn []byte) (H, error) {
 	btes := readPartialYML(btesIn, "input")
 
-	var result = map[string]interface{}{}
-	var tmpResult = map[string]interface{}{}
+	result := map[string]interface{}{}
+	tmpResult := map[string]interface{}{}
 
 	if len(btes) > 0 {
 		if err := yaml.Unmarshal([]byte(btes), &tmpResult); err != nil {

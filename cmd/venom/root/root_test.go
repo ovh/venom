@@ -31,5 +31,4 @@ func TestRunCmd(t *testing.T) {
 	err := rootCmd.Execute()
 	assert.NoError(t, err)
 	rootCmd.Execute()
-
 }

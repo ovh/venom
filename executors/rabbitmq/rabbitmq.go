@@ -117,14 +117,14 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			return nil, err
 		}
 	case "client":
-		var conn, ch, err = e.openChannel(ctx)
+		conn, ch, err := e.openChannel(ctx)
 		if err != nil {
 			result.Err = err.Error()
 			return nil, err
 		}
 		defer ch.Close()
 		defer conn.Close()
-		var delivery, consumererr = ch.Consume("amq.rabbitmq.reply-to", "", true, false, false, false, nil)
+		delivery, consumererr := ch.Consume("amq.rabbitmq.reply-to", "", true, false, false, false, nil)
 		if consumererr != nil {
 			return nil, consumererr
 		}
@@ -137,7 +137,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			return nil, err
 		}
 
-		var d = <-delivery
+		d := <-delivery
 		body := []string{}
 		bodyJSON := []interface{}{}
 		body, bodyJSON = e.processMessage(ctx, d, true, body, bodyJSON)
@@ -225,7 +225,6 @@ func (e Executor) publishMessages(ctx context.Context, workdir string, connectio
 				Body:            []byte(e.Messages[i].Value),
 				Headers:         e.Messages[i].Headers,
 			})
-
 		if err != nil {
 			return err
 		}

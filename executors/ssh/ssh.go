@@ -3,9 +3,6 @@ package ssh
 import (
 	"context"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"os"
 	"os/user"
@@ -14,11 +11,17 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/ovh/venom"
+	"golang.org/x/crypto/ssh"
 )
 
 // Name for test ssh
-const Name = "ssh"
-const sudoprompt = "sudo_venom"
+const (
+	Name       = "ssh"
+	sudoprompt = "sudo_venom"
+)
 
 // New returns a new Test Exec
 func New() venom.Executor {
@@ -140,7 +143,7 @@ func handleSudo(in io.Writer, out *Buffer, quit chan bool, password string) {
 }
 
 func connectToHost(u, pass, key, host, sudo string) (*ssh.Client, *ssh.Session, error) {
-	//Default user is current username
+	// Default user is current username
 	if u == "" {
 		osUser, err := user.Current()
 		if err != nil {
@@ -149,12 +152,12 @@ func connectToHost(u, pass, key, host, sudo string) (*ssh.Client, *ssh.Session, 
 		u = osUser.Username
 	}
 
-	//If password is set, and we don't have key use it
+	// If password is set, and we don't have key use it
 	var auth []ssh.AuthMethod
 	if pass != "" && key == "" {
 		auth = []ssh.AuthMethod{ssh.Password(pass)}
 	} else {
-		//Load the the private key
+		// Load the the private key
 		key, err := privateKey(key)
 		if err != nil {
 			return nil, nil, err
@@ -168,18 +171,18 @@ func connectToHost(u, pass, key, host, sudo string) (*ssh.Client, *ssh.Session, 
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	//If host doen't contain port, set the default port
+	// If host doen't contain port, set the default port
 	if !strings.Contains(host, ":") {
 		host += ":22"
 	}
 
-	//Open the tcp connection
+	// Open the tcp connection
 	client, err := ssh.Dial("tcp", host, sshConfig)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	//New ssh session
+	// New ssh session
 	session, err := client.NewSession()
 	if err != nil {
 		client.Close()
@@ -202,7 +205,7 @@ func connectToHost(u, pass, key, host, sudo string) (*ssh.Client, *ssh.Session, 
 }
 
 func privateKey(file string) (key ssh.Signer, err error) {
-	//Default private key is $HOME/.ssh/id_rsa
+	// Default private key is $HOME/.ssh/id_rsa
 	if file == "" {
 		usr, err := user.Current()
 		if err != nil {
@@ -213,12 +216,12 @@ func privateKey(file string) (key ssh.Signer, err error) {
 		file = os.ExpandEnv(file)
 	}
 
-	//Read the file
+	// Read the file
 	buf, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
-	//Parse it
+	// Parse it
 	key, err = ssh.ParsePrivateKey(buf)
 	if err != nil {
 		return nil, err
