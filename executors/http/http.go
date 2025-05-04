@@ -20,6 +20,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/cds/sdk/interpolate"
+
 	"github.com/ovh/venom"
 )
 

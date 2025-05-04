@@ -8,8 +8,9 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/ovh/venom"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/venom"
 )
 
 func generateClientFile(t *testing.T) (string, string) {

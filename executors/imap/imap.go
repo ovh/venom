@@ -11,9 +11,10 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"github.com/pkg/errors"
 	"github.com/yesnault/go-imap/imap"
+
+	"github.com/ovh/venom"
 )
 
 const (

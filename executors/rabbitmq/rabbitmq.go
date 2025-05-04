@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/ovh/venom"
 
 	"github.com/streadway/amqp"

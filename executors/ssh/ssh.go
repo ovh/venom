@@ -13,8 +13,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/ovh/venom"
 )
 
 // Name for test ssh

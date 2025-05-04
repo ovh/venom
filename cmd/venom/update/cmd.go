@@ -9,9 +9,10 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/inconshreveable/go-update"
+	"github.com/spf13/cobra"
+
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/cmd"
-	"github.com/spf13/cobra"
 )
 
 var urlGitubReleases = "https://github.com/ovh/venom/releases"

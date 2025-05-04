@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/venom"
 )
 
 // getTopLevelFolder returns the top level folder of the project

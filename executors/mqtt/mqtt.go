@@ -7,8 +7,9 @@ import (
 
 	mq "github.com/eclipse/paho.mqtt.golang"
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"github.com/pkg/errors"
+
+	"github.com/ovh/venom"
 )
 
 // Name of executor
