@@ -207,7 +207,7 @@ func (e Executor) publishMessages(ctx context.Context) error {
 }
 
 // consumeMessages is a step to consume messages from mqtt broker using client connection
-func (e Executor) consumeMessages(ctx context.Context) (messages []interface{}, messagesJSON []interface{}, topics []string, err error) {
+func (e Executor) consumeMessages(ctx context.Context) (messages, messagesJSON []interface{}, topics []string, err error) {
 	ch := make(chan mq.Message, 1)
 	defer close(ch)
 	subscriber := newSubscriber(ctx, ch)

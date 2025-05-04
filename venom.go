@@ -90,7 +90,7 @@ func (v *Venom) PrintlnTrace(s string) {
 	v.PrintlnIndentedTrace(s, "")
 }
 
-func (v *Venom) PrintlnIndentedTrace(s string, indent string) {
+func (v *Venom) PrintlnIndentedTrace(s, indent string) {
 	v.Println("\t  %s%s %s", indent, trace("[trac]"), trace(s)) // nolint
 }
 

@@ -65,7 +65,7 @@ func areSameTypes(i, j interface{}) bool {
 	)
 }
 
-func handleJSONNumber(actual interface{}, expected interface{}) (interface{}, interface{}, error) {
+func handleJSONNumber(actual, expected interface{}) (interface{}, interface{}, error) {
 	jsNumber, is := actual.(json.Number)
 	if !is {
 		return actual, expected, nil

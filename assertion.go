@@ -28,7 +28,7 @@ type AssertionApplied struct {
 	IsOK      bool      `json:"isOK" yml:"-"`
 }
 
-func applyAssertions(ctx context.Context, r interface{}, tc TestCase, stepNumber int, rangedIndex int, step TestStep, defaultAssertions *StepAssertions) AssertionsApplied {
+func applyAssertions(ctx context.Context, r interface{}, tc TestCase, stepNumber, rangedIndex int, step TestStep, defaultAssertions *StepAssertions) AssertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var systemerr, systemout string
@@ -127,7 +127,7 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 }
 
 // check selects the correct assertion function to call depending on typing provided by user
-func check(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion Assertion, r interface{}) *Failure {
+func check(ctx context.Context, tc TestCase, stepNumber, rangedIndex int, assertion Assertion, r interface{}) *Failure {
 	var errs *Failure
 	switch t := assertion.(type) {
 	case string:
@@ -142,7 +142,7 @@ func check(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, as
 
 // checkString evaluate a complex assertion containing logical operators
 // it recursively calls checkAssertion for each operand
-func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, branch map[string]interface{}, r interface{}) *Failure {
+func checkBranch(ctx context.Context, tc TestCase, stepNumber, rangedIndex int, branch map[string]interface{}, r interface{}) *Failure {
 	// Extract logical operator
 	if len(branch) != 1 {
 		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch)))
@@ -211,7 +211,7 @@ func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex i
 }
 
 // checkString evaluate a single string assertion
-func checkString(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion string, r interface{}) *Failure {
+func checkString(ctx context.Context, tc TestCase, stepNumber, rangedIndex int, assertion string, r interface{}) *Failure {
 	assert, err := parseAssertions(context.Background(), assertion, r)
 	if err != nil {
 		return newFailure(ctx, tc, stepNumber, rangedIndex, assertion, err)
