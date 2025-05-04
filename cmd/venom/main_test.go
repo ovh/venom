@@ -1,4 +1,4 @@
-// +build testbincover
+//go:build testbincover
 
 package main
 
