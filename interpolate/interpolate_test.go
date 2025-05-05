@@ -452,7 +452,7 @@ func TestDo(t *testing.T) {
 				input: "my value {{.cds.app.value | sub 1}} {{ sub 5 1 }}",
 				vars:  map[string]string{"cds.app.value": "5"},
 			},
-			want:   "my value 4 4",
+			want:   "my value -4 4",
 			enable: true,
 		},
 		{
@@ -467,10 +467,10 @@ func TestDo(t *testing.T) {
 		{
 			name: "div",
 			args: args{
-				input: "my value {{.cds.app.value | div 2}} {{ div 8 2 }}",
-				vars:  map[string]string{"cds.app.value": "8"},
+				input: "my value {{.cds.app.value | div 10}} {{ div 8 2 }}",
+				vars:  map[string]string{"cds.app.value": "2"},
 			},
-			want:   "my value 4 4",
+			want:   "my value 5 4",
 			enable: true,
 		},
 		{
@@ -479,7 +479,7 @@ func TestDo(t *testing.T) {
 				input: "my value {{.cds.app.value | mod 6}} {{ mod 10 6 }}",
 				vars:  map[string]string{"cds.app.value": "10"},
 			},
-			want:   "my value 4 4",
+			want:   "my value 6 4",
 			enable: true,
 		},
 		{
