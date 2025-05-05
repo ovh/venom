@@ -10,3 +10,4 @@ testcases:
 - name: mytc
   steps:
   - type: userExecutorA
+    foo: {{.foo}}

@@ -11,24 +11,6 @@ import (
 	"github.com/rockbears/yaml"
 )
 
-func getUserExecutorInputYML(ctx context.Context, btesIn []byte) (H, error) {
-	btes := readPartialYML(btesIn, "input")
-
-	result := map[string]interface{}{}
-	tmpResult := map[string]interface{}{}
-
-	if len(btes) > 0 {
-		if err := yaml.Unmarshal([]byte(btes), &tmpResult); err != nil {
-			return nil, err
-		}
-	}
-	for k, v := range tmpResult {
-		result[k] = v
-	}
-
-	return result, nil
-}
-
 func getVarFromPartialYML(ctx context.Context, btesIn []byte) (H, error) {
 	btes := readPartialYML(btesIn, "vars")
 	type partialVars struct {
@@ -52,6 +34,9 @@ func readPartialYML(btes []byte, attribute string) string {
 	var record bool
 	for scanner.Scan() {
 		line := scanner.Text()
+		line = strings.TrimFunc(line, func(r rune) bool {
+			return !unicode.IsGraphic(r)
+		})
 		if strings.HasPrefix(line, attribute+":") {
 			record = true
 		} else if len(line) > 0 {

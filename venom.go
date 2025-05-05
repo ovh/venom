@@ -10,14 +10,13 @@ import (
 	"path"
 	"path/filepath"
 	"plugin"
+	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/pkg/errors"
-	"github.com/rockbears/yaml"
 	"github.com/spf13/cast"
 )
 
@@ -42,15 +41,14 @@ type ContextKey string
 // New instantiates a new venom on venom run cmd
 func New() *Venom {
 	v := &Venom{
-		LogOutput:         os.Stdout,
-		PrintFunc:         fmt.Printf,
-		executorsBuiltin:  map[string]Executor{},
-		executorsPlugin:   map[string]Executor{},
-		executorsUser:     map[string]Executor{},
-		executorFileCache: map[string][]byte{},
-		variables:         map[string]interface{}{},
-		secrets:           map[string]interface{}{},
-		OutputFormat:      "xml",
+		LogOutput:        os.Stdout,
+		PrintFunc:        fmt.Printf,
+		executorsBuiltin: map[string]Executor{},
+		executorsPlugin:  map[string]Executor{},
+		executorsUser:    map[string]Executor{},
+		variables:        map[string]interface{}{},
+		secrets:          map[string]interface{}{},
+		OutputFormat:     "xml",
 	}
 	return v
 }
@@ -58,11 +56,10 @@ func New() *Venom {
 type Venom struct {
 	LogOutput io.Writer
 
-	PrintFunc         func(format string, a ...interface{}) (n int, err error)
-	executorsBuiltin  map[string]Executor
-	executorsPlugin   map[string]Executor
-	executorsUser     map[string]Executor
-	executorFileCache map[string][]byte
+	PrintFunc        func(format string, a ...interface{}) (n int, err error)
+	executorsBuiltin map[string]Executor
+	executorsPlugin  map[string]Executor
+	executorsUser    map[string]Executor
 
 	Tests     Tests
 	variables H
@@ -116,13 +113,18 @@ func (v *Venom) RegisterExecutorPlugin(name string, e Executor) {
 	v.executorsPlugin[name] = e
 }
 
-// RegisterExecutorUser register User sxecutors
-func (v *Venom) RegisterExecutorUser(name string, e Executor) {
+// RegisterExecutorUser registers an user executor
+func (v *Venom) RegisterExecutorUser(name string, e Executor) error {
+	if existing, ok := v.executorsUser[name]; ok {
+		return fmt.Errorf("executor %q already exists (from file %q)", name, existing.(UserExecutor).Filename)
+	}
+
 	v.executorsUser[name] = e
+	return nil
 }
 
-// GetExecutorRunner initializes a test by name
-// no type -> exec is default
+// GetExecutorRunner initializes a test according to its type
+// if no type is provided, exec is default
 func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (context.Context, ExecutorRunner, error) {
 	name, _ := ts.StringValue("type")
 	script, _ := ts.StringValue("script")
@@ -168,10 +170,6 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 		return ctx, newExecutorRunner(ex, name, "builtin", retry, retryIf, delay, timeout, info), nil
 	}
 
-	if err := v.registerUserExecutors(ctx, name, vars); err != nil {
-		Debug(ctx, "executor %q is not implemented as user executor - err:%v", name, err)
-	}
-
 	if ex, ok := v.executorsUser[name]; ok {
 		return ctx, newExecutorRunner(ex, name, "user", retry, retryIf, delay, timeout, info), nil
 	}
@@ -181,13 +179,13 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	}
 
 	// then add the executor plugin to the map to not have to load it on each step
-	if ex, ok := v.executorsUser[name]; ok {
+	if ex, ok := v.executorsPlugin[name]; ok {
 		return ctx, newExecutorRunner(ex, name, "plugin", retry, retryIf, delay, timeout, info), nil
 	}
-	return ctx, nil, fmt.Errorf("executor %q is not implemented", name)
+	return ctx, nil, fmt.Errorf("user executor %q not found - loaded executors are: %v", name, reflect.ValueOf(v.executorsUser).MapKeys())
 }
 
-func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []string, err error) {
+func (v *Venom) getUserExecutorFilesPath(ctx context.Context, vars map[string]string) []string {
 	var libpaths []string
 	if v.LibDir != "" {
 		p := strings.Split(v.LibDir, string(os.PathListSeparator))
@@ -195,86 +193,77 @@ func (v *Venom) getUserExecutorFilesPath(vars map[string]string) (filePaths []st
 	}
 	libpaths = append(libpaths, path.Join(vars["venom.testsuite.workdir"], "lib"))
 
+	//use a map to avoid duplicates
+	filepaths := make(map[string]bool)
+
 	for _, p := range libpaths {
 		p = strings.TrimSpace(p)
 
-		err = filepath.Walk(p, func(fp string, f os.FileInfo, err error) error {
+		err := filepath.Walk(p, func(fp string, f os.FileInfo, err error) error {
 			switch ext := filepath.Ext(fp); ext {
 			case ".yml", ".yaml":
-				filePaths = append(filePaths, fp)
+				filepaths[fp] = true
 			}
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			Warn(ctx, "Unable to list files in lib directory %q: %v", p, err)
 		}
 	}
 
-	sort.Strings(filePaths)
-	if len(filePaths) == 0 {
-		return nil, fmt.Errorf("no user executor yml file selected")
+	userExecutorFiles := make([]string, len(filepaths))
+	i := 0
+	for p := range filepaths {
+		userExecutorFiles[i] = p
+		i++
 	}
-	return filePaths, nil
+
+	sort.Strings(userExecutorFiles)
+	if len(userExecutorFiles) == 0 {
+		Warn(ctx, "no user executor yml file selected")
+	}
+	return userExecutorFiles
 }
 
-func (v *Venom) registerUserExecutors(ctx context.Context, name string, vars map[string]string) error {
-	executorsPath, err := v.getUserExecutorFilesPath(vars)
+func (v *Venom) registerUserExecutors(ctx context.Context) error {
+	vars, err := DumpStringPreserveCase(v.variables)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to parse variables")
 	}
+
+	executorsPath := v.getUserExecutorFilesPath(ctx, vars)
 
 	for _, f := range executorsPath {
 		Info(ctx, "Reading %v", f)
-		btes, ok := v.executorFileCache[f]
-		if !ok {
-			btes, err = os.ReadFile(f)
-			if err != nil {
-				return errors.Wrapf(err, "unable to read file %q", f)
-			}
-			v.executorFileCache[f] = btes
-		}
-
-		varsFromInput, err := getUserExecutorInputYML(ctx, btes)
+		content, err := os.ReadFile(f)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "unable to read file %q", f)
 		}
 
-		// varsFromInput contains the default vars from the executor
-		var varsFromInputMap map[string]string
-		if len(varsFromInput) > 0 {
-			varsFromInputMap, err = DumpStringPreserveCase(varsFromInput)
-			if err != nil {
-				return errors.Wrapf(err, "unable to parse variables")
-			}
+		ex := readPartialYML(content, "executor")
+		if len(ex) == 0 {
+			return errors.Errorf("missing key 'executor' in %q", f)
 		}
 
-		varsComputed := map[string]string{}
-		for k, v := range vars {
-			varsComputed[k] = v
-		}
-		for k, v := range varsFromInputMap {
-			// we only take vars from varsFromInputMap if it's not already exist in vars from teststep vars
-			if _, ok := vars[k]; !ok {
-				varsComputed[k] = v
-			}
+		name := strings.Replace(ex, "executor:", "", 1)
+		name = strings.TrimSpace(name)
+
+		inputs := readPartialYML(content, "input")
+
+		ux := UserExecutor{
+			Filename:  f,
+			Executor:  name,
+			RawInputs: []byte(inputs),
+			Raw:       content,
 		}
 
-		content, err := interpolate.Do(string(btes), varsComputed)
+		err = v.RegisterExecutorUser(ux.Executor, ux)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "unable to register user executor %q from file %q", ux.Executor, f)
 		}
-
-		ux := UserExecutor{Filename: f}
-		if err := yaml.Unmarshal([]byte(content), &ux); err != nil {
-			return errors.Wrapf(err, "unable to parse file %q with content %v", f, content)
-		}
-
-		for k, vr := range varsComputed {
-			ux.Input.Add(k, vr)
-		}
-
-		v.RegisterExecutorUser(ux.Executor, ux)
+		Info(ctx, "User executor %q registered", ux.Executor)
 	}
+
 	return nil
 }
 
