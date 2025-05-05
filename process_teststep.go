@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 )
 
 type dumpFile struct {

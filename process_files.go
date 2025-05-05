@@ -12,7 +12,7 @@ import (
 	"github.com/mattn/go-zglob"
 	"github.com/rockbears/yaml"
 
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 )
 

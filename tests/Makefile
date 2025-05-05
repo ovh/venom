@@ -42,6 +42,10 @@ venom-kafka.cid:
 		-e SCHEMA_REGISTRY_HOST_NAME=venom-kafka-schema-registry \
 		-e SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=venom-kafka-broker:29092 \
 	)
+venom-httpbin.cid:
+	docker pull kennethreitz/httpbin
+	docker tag kennethreitz/httpbin httpbin 
+	$(call docker_run,httpbin,httpbin,-p 9280:80)
 venom-rabbit.cid:
 	$(call docker_run,rabbitmq,rabbitmq,-p 5672:5672 -p 15672:15672)
 venom-sshd.cid:
@@ -69,6 +73,7 @@ start-test-stack: venom-sshd.cid
 start-test-stack: venom-mqtt.cid
 start-test-stack: venom-qpid.cid
 start-test-stack: $(PKI_DIR)
+start-test-stack: venom-httpbin.cid
 start-test-stack: venom-grpc.cid
 start-test-stack: venom-couchbase.cid
 
