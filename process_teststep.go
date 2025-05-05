@@ -19,7 +19,7 @@ type dumpFile struct {
 }
 
 // RunTestStep executes a venom testcase is a venom context
-func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, tsResult *TestStepResult, stepNumber, rangedIndex int, step TestStep) {
+func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase, tsResult *TestStepResult, stepNumber int, rangedIndex int, step TestStep) {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
 	var assertRes AssertionsApplied

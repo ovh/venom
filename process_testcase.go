@@ -410,7 +410,7 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 }
 
 // Print a single step result (if verbosity is enabled)
-func (v *Venom) printTestStepResult(tc *TestCase, ts, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
+func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
 	if tsIn != nil {
 		tsIn.appendFailure(ts.Errors...)
 	} else if v.Verbose >= 1 {

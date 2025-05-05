@@ -285,7 +285,7 @@ type FailureXML struct {
 	Message string `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
 }
 
-func newFailure(ctx context.Context, tc TestCase, stepNumber, rangedIndex int, assertion string, err error) *Failure {
+func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion string, err error) *Failure {
 	filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
 	lineNumber := findLineNumber(filename, tc.originalName, stepNumber, assertion, -1)
 	var value string
