@@ -104,10 +104,6 @@ GO_XUTOOLS = ${GOPATH}/bin/xutools
 $(GO_XUTOOLS):
 	go install github.com/richardlt/xutools@latest
 
-GO_GOFUMPT = ${GOPATH}/bin/gofumpt
-$(GO_GOFUMPT):
-	go install mvdan.cc/gofumpt@latest
-
 GO_GOIMPORTS = ${GOPATH}/bin/goimports
 $(GO_GOIMPORTS):
 	go install golang.org/x/tools/cmd/goimports@latest
@@ -217,16 +213,12 @@ mk_go_lint: $(GOLANG_CI_LINT) # run golangci lint
 gofmt:
 	gofmt -e -l -s -w .
 
-.PHONY: gofumpt
-gofumpt: $(GO_GOFUMPT)
-	$(GO_GOFUMPT) -l -w  -extra .
-
 .PHONY: goimports
 goimports:
 	$(GO_GOIMPORTS) -e -l -w -local github.com/ovh/venom .
 
 .PHONY: fmt
-fmt: gofmt gofumpt goimports
+fmt: gofmt goimports
 
 ##### =====> Internals <===== #####
 
