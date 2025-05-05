@@ -1003,8 +1003,6 @@ github.com/montanaflynn/stats v0.7.1 h1:etflOAAHORrCC44V+aR6Ftzort912ZU+YLiSTuV8
 github.com/montanaflynn/stats v0.7.1/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
 github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d h1:+DgqA2tuWi/8VU+gVgBAa7+WZrnFbPKhQWbKBB54cVs=
 github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d/go.mod h1:xacC5qXZnL/ooiitVoe3BtI1OotFTqi5zICBs9J5Fyk=
-github.com/ovh/cds/sdk/interpolate v0.0.0-20231019155847-e738a974db8f h1:EVG6OeiGCWtvDOD9ALqz6T0T5UcNWZ0vU2qGqLSbHT8=
-github.com/ovh/cds/sdk/interpolate v0.0.0-20231019155847-e738a974db8f/go.mod h1:sHqEJq74yP3ylfc/aX5f7S0HX7NNsHnl8LSgiNX3sc8=
 github.com/ovh/go-ovh v1.4.3 h1:Gs3V823zwTFpzgGLZNI6ILS4rmxZgJwJCz54Er9LwD0=
 github.com/ovh/go-ovh v1.4.3/go.mod h1:AkPXVtgwB6xlKblMjRKJJmjRp+ogrE7fz2lVgcQY8SY=
 github.com/paulmach/orb v0.11.1 h1:3koVegMC4X/WeiXYz9iswopaTwMem53NzTJuTF20JzU=

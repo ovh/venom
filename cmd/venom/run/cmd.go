@@ -16,9 +16,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/executors"
+	"github.com/ovh/venom/interpolate"
 )
 
 var (
