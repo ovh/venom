@@ -22,7 +22,7 @@ var (
 )
 
 func fieldsFromContext(ctx context.Context, keys ...string) logrus.Fields {
-	var fields = logrus.Fields{}
+	fields := logrus.Fields{}
 	if ctx == nil {
 		return fields
 	}

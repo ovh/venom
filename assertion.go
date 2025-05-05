@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/ovh/venom/assertions"
 )
 

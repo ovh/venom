@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/venom"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/venom"
 )
 
 func Test_readInitialVariables(t *testing.T) {

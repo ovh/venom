@@ -104,6 +104,10 @@ GO_XUTOOLS = ${GOPATH}/bin/xutools
 $(GO_XUTOOLS):
 	go install github.com/richardlt/xutools@latest
 
+GO_GOIMPORTS = ${GOPATH}/bin/goimports
+$(GO_GOIMPORTS):
+	go install golang.org/x/tools/cmd/goimports@latest
+
 mk_go_test: $(GO_COV_MERGE) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS)# Run tests
 	@echo "Generating unit tests coverage..."
 	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_RESULTS)/cover.out
@@ -204,6 +208,17 @@ $(LINT_BIN):
 mk_go_lint: $(GOLANG_CI_LINT) # run golangci lint
 	$(info *** running lint)
 	$(LINT_CMD)
+
+.PHONY: gofmt
+gofmt:
+	gofmt -e -l -s -w .
+
+.PHONY: goimports
+goimports:
+	$(GO_GOIMPORTS) -e -l -w -local github.com/ovh/venom .
+
+.PHONY: fmt
+fmt: gofmt goimports
 
 ##### =====> Internals <===== #####
 
