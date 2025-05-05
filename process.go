@@ -89,6 +89,11 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 		return err
 	}
 
+	err = v.registerUserExecutors(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "unable to register user executors")
+	}
+
 	missingVars := []string{}
 	extractedVars := []string{}
 	for i := range v.Tests.TestSuites {

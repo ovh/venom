@@ -1,7 +1,6 @@
 package exec
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -161,42 +160,50 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		return nil, fmt.Errorf("runScriptAction: Cannot get stderr pipe: %s", err)
 	}
 
-	stdoutreader := bufio.NewReader(stdout)
-	stderrreader := bufio.NewReader(stderr)
-
 	result := Result{}
 	outchan := make(chan bool)
+
 	go func() {
+		var sb strings.Builder
+		sb.Grow(1024 * 1024) // Pre-allocate 1MB
+
+		// For efficiency, read in larger chunks
+		buf := make([]byte, 64*1024) // 64KB buffer
 		for {
-			line, errs := stdoutreader.ReadString('\n')
-			if errs != nil {
-				// ReadString returns what has been read even though an error was encountered
-				// ie. capture outputs with no '\n' at the end
-				result.Systemout += line
-				stdout.Close()
-				close(outchan)
-				return
+			n, err := stdout.Read(buf)
+			if n > 0 {
+				sb.Write(buf[:n])
 			}
-			result.Systemout += line
-			venom.Debug(ctx, venom.HideSensitive(ctx, line), nil)
+			if err != nil {
+				break
+			}
 		}
+
+		result.Systemout = sb.String()
+		close(outchan)
 	}()
 
 	errchan := make(chan bool)
 	go func() {
+		var sb strings.Builder
+		sb.Grow(64 * 1024) // Pre-allocate 64KB for stderr
+
+		buf := make([]byte, 8*1024) // 8KB buffer for stderr
 		for {
-			line, errs := stderrreader.ReadString('\n')
-			if errs != nil {
-				// ReadString returns what has been read even though an error was encountered
-				// ie. capture outputs with no '\n' at the end
-				result.Systemerr += line
-				stderr.Close()
-				close(errchan)
-				return
+			n, err := stderr.Read(buf)
+			if n > 0 {
+				chunk := buf[:n]
+				sb.Write(chunk)
+				venom.Debug(ctx, venom.HideSensitive(ctx, string(chunk)))
 			}
-			result.Systemerr += line
-			venom.Debug(ctx, venom.HideSensitive(ctx, line), nil)
+			if err != nil {
+				break
+			}
 		}
+
+		result.Systemerr = sb.String()
+		stderr.Close()
+		close(errchan)
 	}()
 
 	if err := cmd.Start(); err != nil {
