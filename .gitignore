@@ -27,3 +27,4 @@ tests/pki_variables.yml
 *.xml
 test_results*.html
 !venom_output.html
+tests/nats/pki

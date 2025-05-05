@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/venom/executors/kafka"
 	"github.com/ovh/venom/executors/mongo"
 	"github.com/ovh/venom/executors/mqtt"
+	"github.com/ovh/venom/executors/nats"
 	"github.com/ovh/venom/executors/ovhapi"
 	"github.com/ovh/venom/executors/rabbitmq"
 	"github.com/ovh/venom/executors/readfile"
@@ -42,4 +43,5 @@ var Registry map[string]Constructor = map[string]Constructor{
 	ssh.Name:        ssh.New,
 	mongo.Name:      mongo.New,
 	web.Name:        web.New,
+	nats.Name:       nats.New,
 }

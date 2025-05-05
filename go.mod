@@ -56,6 +56,8 @@ require (
 require github.com/rogpeppe/go-internal v1.13.1 // indirect
 
 require (
+	github.com/nats-io/nkeys v0.4.7 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/ClickHouse/ch-go v0.65.1 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.34.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
@@ -91,6 +93,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
+	github.com/nats-io/nats.go v1.37.0
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
