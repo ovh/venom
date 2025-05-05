@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 	"unicode"
@@ -25,9 +26,7 @@ const (
 type H map[string]interface{}
 
 func (h H) Clone() H {
-	var h2 = make(H, len(h))
-	h2.AddAll(h)
-	return h2
+	return maps.Clone(h)
 }
 
 func (h *H) Add(k string, v interface{}) {
