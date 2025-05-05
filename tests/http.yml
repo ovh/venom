@@ -101,7 +101,7 @@ testcases:
   steps:
   - type: http
     method: GET
-    url: https://httpbin.org/get
+    url: http://localhost:9280/get
     query_parameters:
       a: " b"
     assertions:
