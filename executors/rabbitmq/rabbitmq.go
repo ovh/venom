@@ -52,11 +52,11 @@ type Executor struct {
 	// ExchangeType represents the type of exchange (fanout, etc..)
 	RoutingKey string `json:"routing_key" yaml:"routingKey"`
 
-	// Represents the limit of message will be read. After limit, consumer stop read message
+	// Represents the limit of messages that will be read. After limit, consumer stops reading messages
 	MessageLimit int `json:"message_limit" yaml:"messageLimit"`
 
 	// Used when ClientType is producer
-	// Messages represents the message sended by producer
+	// Messages represents the message sent by producer
 	Messages []Message `json:"messages" yaml:"messages"`
 }
 
@@ -103,15 +103,14 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	switch e.ClientType {
 	case "publisher":
-		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
-		err := e.publishMessages(ctx, workdir, nil, nil, false)
+		err := e.publishMessages(ctx, nil, nil, false)
 		if err != nil {
 			result.Err = err.Error()
 			return nil, err
 		}
 	case "subscriber":
 		var err error
-		result.Body, result.BodyJSON, result.Messages, result.Headers, err = e.consumeMessages(ctx)
+		result.Body, result.BodyJSON, result.Messages, result.Headers, err = e.consumeMessages(ctx, false)
 		if err != nil {
 			result.Err = err.Error()
 			return nil, err
@@ -130,8 +129,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		}
 		venom.Info(ctx, "Reply consumer started.")
 
-		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
-		err = e.publishMessages(ctx, workdir, conn, ch, true)
+		err = e.publishMessages(ctx, conn, ch, true)
 		if err != nil {
 			result.Err = err.Error()
 			return nil, err
@@ -143,8 +141,15 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		body, bodyJSON = e.processMessage(ctx, d, true, body, bodyJSON)
 		result.Body = body
 		result.BodyJSON = bodyJSON
+	case "server":
+		var err error
+		result.Body, result.BodyJSON, result.Messages, result.Headers, err = e.consumeMessages(ctx, true)
+		if err != nil {
+			result.Err = err.Error()
+			return nil, err
+		}
 	default:
-		return nil, fmt.Errorf("clientType %q must be publisher or subscriber or client", e.ClientType)
+		return nil, fmt.Errorf("clientType %q must be publisher or subscriber or client or server", e.ClientType)
 	}
 
 	elapsed := time.Since(start)
@@ -153,7 +158,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	return result, nil
 }
 
-func (e Executor) publishMessages(ctx context.Context, workdir string, connection *amqp.Connection, channel *amqp.Channel, rpc bool) error {
+func (e Executor) publishMessages(ctx context.Context, connection *amqp.Connection, channel *amqp.Channel, rpc bool) error {
 	var ch *amqp.Channel
 	var err error
 	if connection == nil || channel == nil {
@@ -204,33 +209,47 @@ func (e Executor) publishMessages(ctx context.Context, workdir string, connectio
 
 	venom.Debug(ctx, "%d message to send", len(e.Messages))
 	for i := range e.Messages {
-		deliveryMode := amqp.Persistent
-		if !e.Messages[i].Persistent {
-			deliveryMode = amqp.Transient
-		}
-		var replyTo string = e.Messages[i].ReplyTo
-		if rpc {
-			replyTo = "amq.rabbitmq.reply-to"
-		}
-		err = ch.Publish(
-			e.Exchange, // exchange
-			routingKey, // routing key
-			false,      // mandatory
-			false,      // immediate
-			amqp.Publishing{
-				DeliveryMode:    deliveryMode,
-				ContentType:     e.Messages[i].ContentType,
-				ContentEncoding: e.Messages[i].ContentEncoding,
-				ReplyTo:         replyTo,
-				Body:            []byte(e.Messages[i].Value),
-				Headers:         e.Messages[i].Headers,
-			})
-
+		err = e.publishMessage(e.Messages[i], ctx, ch, routingKey, rpc, false)
 		if err != nil {
 			return err
 		}
-		venom.Debug(ctx, "Message %q sent (exchange: %q, routing key: %q)", e.Messages[i].Value, e.Exchange, routingKey)
 	}
+
+	return nil
+}
+
+func (e Executor) publishMessage(message Message, ctx context.Context, ch *amqp.Channel, routingKey string, request bool, reply bool) error {
+	var err error
+	deliveryMode := amqp.Persistent
+	if !message.Persistent {
+		deliveryMode = amqp.Transient
+	}
+	var replyTo string = message.ReplyTo
+	if request {
+		replyTo = "amq.rabbitmq.reply-to"
+	}
+	exchange := e.Exchange
+	if reply {
+		exchange = ""
+	}
+	err = ch.Publish(
+		exchange,   // exchange
+		routingKey, // routing key
+		false,      // mandatory
+		false,      // immediate
+		amqp.Publishing{
+			DeliveryMode:    deliveryMode,
+			ContentType:     message.ContentType,
+			ContentEncoding: message.ContentEncoding,
+			ReplyTo:         replyTo,
+			Body:            []byte(message.Value),
+			Headers:         message.Headers,
+		})
+
+	if err != nil {
+		return err
+	}
+	venom.Info(ctx, "Message %q sent (exchange: %q, routing key: %q)", message.Value, exchange, routingKey)
 
 	return nil
 }
@@ -274,7 +293,7 @@ func (e Executor) processMessage(ctx context.Context, msg amqp.Delivery, ok bool
 	return body, bodyJSON
 }
 
-func (e Executor) consumeMessages(ctx context.Context) ([]string, []interface{}, []interface{}, []amqp.Table, error) {
+func (e Executor) consumeMessages(ctx context.Context, sendReply bool) ([]string, []interface{}, []interface{}, []amqp.Table, error) {
 	conn, ch, err := e.openChannel(ctx)
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -328,19 +347,39 @@ func (e Executor) consumeMessages(ctx context.Context) ([]string, []interface{},
 	bodyJSON := []interface{}{}
 	messages := []interface{}{}
 	headers := []amqp.Table{}
+	ticker := time.NewTicker(1 * time.Second)
+	i := 0
 
-	for i := 0; i < e.MessageLimit; i++ {
-		venom.Debug(ctx, "Read message n° %d", i)
+	for i < e.MessageLimit {
+		select {
+		case <-ticker.C:
+			msg, ok, err := ch.Get(q.Name, true) // Read one message from RabbitMQ
+			if err != nil {
+				ticker.Stop()
+				return nil, nil, nil, nil, err
+			}
+			if ok {
+				venom.Info(ctx, "Received message from the queue.")
 
-		msg, ok, err := ch.Get(q.Name, true) // Read one message from RabbitMQ
-		if err != nil {
-			return nil, nil, nil, nil, err
+				headers = append(headers, msg.Headers)
+				messages = append(messages, msg)
+				body, bodyJSON = e.processMessage(ctx, msg, ok, body, bodyJSON)
+				if sendReply {
+					if msg.ReplyTo == "" {
+						venom.Error(ctx, "Received message does not contain a reply address. Verify it has been published with a ReplyTo property. Skipping...")
+						continue
+					}
+					if e.Messages[i].Headers == nil {
+						e.Messages[i].Headers = make(map[string]interface{})
+					}
+					e.Messages[i].Headers["x-request-messageid"] = msg.MessageId
+					e.publishMessage(e.Messages[i], ctx, ch, msg.ReplyTo, false, true)
+				}
+				i++
+			}
 		}
-
-		headers = append(headers, msg.Headers)
-		messages = append(messages, msg)
-		body, bodyJSON = e.processMessage(ctx, msg, ok, body, bodyJSON)
 	}
 
+	ticker.Stop()
 	return body, bodyJSON, messages, headers, err
 }

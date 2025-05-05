@@ -1,9 +1,10 @@
 # Venom - Executor RabbitMQ
 
-Three types of execution are supported:
+Four types of execution are supported:
 - **publisher**: publish a message to a queue or to an exchange.
 - **subscriber**: bind to a queue or an exchange (using routing key) and wait for message(s) to be consumed.
-- **client**: publish a message to a queue or to an exchange and wait for the response message to be received on the [reply-to](https://www.rabbitmq.com/docs/direct-reply-to) queue.
+- **client**: publish a request message to a queue or to an exchange and wait for the reply to be received on the [reply-to](https://www.rabbitmq.com/docs/direct-reply-to) queue.
+- **server**: bind to a queue or an exchange (using routing key) and send a reply over the [reply-to](https://www.rabbitmq.com/docs/direct-reply-to) queue when a request is received.
 
 Steps to use publish / subscribe on a RabbitMQ:
 
@@ -128,6 +129,8 @@ vars:
   addrs: 'amqp://localhost:5672'
   user: 
   password: 
+  qName: 'consumer-queue'
+testcases:  
   - name: RabbitMQ subscribe testcase
     steps:
       - type: rabbitmq
@@ -136,6 +139,9 @@ vars:
         password: "{{.password}}"
         clientType: subscriber
         exchange: exchange_test
+        exchangeType: direct
+        durable: true
+        qName: "{{.qName}}"
         routingKey: pubsub_test
         messageLimit: 1
         assertions: 
@@ -162,9 +168,11 @@ testcases:
         password: "{{.password}}"
         clientType: client
         exchange: exchange_test
-        routingKey: pubsub_test
+        exchangeType: direct
+        durable: true
+        routingKey: order-query
         messages: 
-          - value: '{"a": "b"}'
+          - value: '{"OrderId": "ORDER-12345"}'
             contentType: application/json
             contentEncoding: utf8
             persistent: false
@@ -173,6 +181,43 @@ testcases:
               myCustomHeader2: value2
         messageLimit: 1
         assertions: 
-          - result.bodyjson.bodyjson0 ShouldContainKey Status
-          - result.bodyjson.bodyjson0.Status ShouldEqual Succeeded
+          - result.bodyjson.bodyjson0 ShouldContainKey OrderStatus
+          - result.bodyjson.bodyjson0.OrderStatus ShouldEqual Pending
+```
+
+### Server (pubsub RPC)
+Use the _assertions_ to validate the request. Note the reply will be sent regardless of validation result.
+Use the _messages_ to define reply payload(s).
+For convenience, each reply message includes an _x-request-messageid_ header populated with the _MessageId_ property of the request message.
+```yaml
+name: TestSuite RabbitMQ
+vars:
+  addrs: 'amqp://localhost:5672'
+  user: 
+  password: 
+  qName: 'order-query-handler'
+testcases:
+  - name: RabbitMQ request/reply
+    steps:
+      - type: rabbitmq
+        addrs: "{{.addrs}}"
+        user: "{{.user}}"
+        password: "{{.password}}"
+        qName: "{{.qName}}"
+        clientType: server
+        exchange: exchange_test
+        exchangeType: direct
+        durable: true
+        routingKey: order-query
+        messages: 
+          - value: '{"Status": "OK", "OrderDate": "2024/11/07", "OrderStatus": "Pending"}'
+            contentType: application/json
+            contentEncoding: utf8
+            persistent: false
+            headers: 
+              myCustomHeader: value
+              myCustomHeader2: value2
+        messageLimit: 1
+        assertions: 
+          - result.bodyjson.bodyjson0 ShouldContainKey OrderId
 ```
