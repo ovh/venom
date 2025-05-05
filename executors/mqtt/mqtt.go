@@ -7,17 +7,20 @@ import (
 
 	mq "github.com/eclipse/paho.mqtt.golang"
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"github.com/pkg/errors"
+
+	"github.com/ovh/venom"
 )
 
 // Name of executor
 const Name = "mqtt"
 
-const disconnectTimeoutMs = 500
-const defaultExecutorTimeoutMs = 5000
-const defaultConnectTimeoutMs = 5000
-const mqttV311 = 4
+const (
+	disconnectTimeoutMs      = 500
+	defaultExecutorTimeoutMs = 5000
+	defaultConnectTimeoutMs  = 5000
+	mqttV311                 = 4
+)
 
 // New returns a new Executor
 func New() venom.Executor {

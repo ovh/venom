@@ -181,8 +181,8 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 		return
 	}
 
-	var knowExecutors = map[string]struct{}{}
-	var previousStepVars = H{}
+	knowExecutors := map[string]struct{}{}
+	previousStepVars := H{}
 	fromUserExecutor := tsIn != nil
 
 loopRawTestSteps:
@@ -475,8 +475,7 @@ func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []
 
 // Parse and format range data to allow iterations over user data
 func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error) {
-
-	//Load "range" attribute and perform actions depending on its typing
+	// Load "range" attribute and perform actions depending on its typing
 	var ranged Range
 	if err := json.Unmarshal(rawStep, &ranged); err != nil {
 		return ranged, fmt.Errorf("unable to parse range expression: %v", err)
@@ -484,12 +483,12 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 
 	switch ranged.RawContent.(type) {
 
-	//Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
+	// Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
 	case nil:
 		ranged.Items = append(ranged.Items, RangeData{})
 		return ranged, nil
 
-	//String needs to be parsed and possibly templated
+	// String needs to be parsed and possibly templated
 	case string:
 		Debug(ctx, "attempting to parse range expression")
 		rawString := ranged.RawContent.(string)
@@ -501,7 +500,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 		err := json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
 		// ... or fallback
 		if err != nil {
-			//Try templating and escaping data
+			// Try templating and escaping data
 			Debug(ctx, "attempting to template range expression and parse it again")
 			vars, err := DumpStringPreserveCase(stepVars)
 			if err != nil {
@@ -517,7 +516,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 				break
 			}
 
-			//Try parsing data
+			// Try parsing data
 			err = json.Unmarshal([]byte(content), &ranged)
 			if err != nil {
 				Warn(ctx, "failed to parse range expression when parsing data into raw string: %v", err)
@@ -535,10 +534,10 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 		}
 	}
 
-	//Format data
+	// Format data
 	switch t := ranged.RawContent.(type) {
 
-	//Array-like data
+	// Array-like data
 	case []interface{}:
 		Debug(ctx, "\"range\" data is array-like")
 		for index, value := range ranged.RawContent.([]interface{}) {
@@ -546,7 +545,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 			ranged.Items = append(ranged.Items, RangeData{key, value})
 		}
 
-	//Number data
+	// Number data
 	case float64:
 		Debug(ctx, "\"range\" data is number-like")
 		upperBound := int(ranged.RawContent.(float64))
@@ -555,14 +554,14 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 			ranged.Items = append(ranged.Items, RangeData{key, i})
 		}
 
-	//Map-like data
+	// Map-like data
 	case map[string]interface{}:
 		Debug(ctx, "\"range\" data is map-like")
 		for key, value := range ranged.RawContent.(map[string]interface{}) {
 			ranged.Items = append(ranged.Items, RangeData{key, value})
 		}
 
-	//Unsupported data format
+	// Unsupported data format
 	default:
 		return ranged, fmt.Errorf("\"range\" was provided an unsupported type %T", t)
 	}
@@ -574,7 +573,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 
 func processVariableAssignments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
 	var stepAssignment AssignStep
-	var result = make(H)
+	result := make(H)
 	if err := yaml.Unmarshal(rawStep, &stepAssignment); err != nil {
 		Error(ctx, "unable to parse assignments (%s): %v", string(rawStep), err)
 		return nil, false, err

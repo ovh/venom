@@ -12,8 +12,9 @@ import (
 	"net/mail"
 	"strings"
 
-	"github.com/ovh/venom"
 	"github.com/yesnault/go-imap/imap"
+
+	"github.com/ovh/venom"
 )
 
 func decodeHeader(msg *mail.Message, headerName string) (string, error) {

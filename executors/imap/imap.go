@@ -11,9 +11,10 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"github.com/pkg/errors"
 	"github.com/yesnault/go-imap/imap"
+
+	"github.com/ovh/venom"
 )
 
 const (
@@ -318,7 +319,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 // handleCommands executes every Command from Executor and returns their result
 func (e Executor) handleCommands(ctx context.Context, c *Client) []CommandResult {
-	var results = make([]CommandResult, len(e.Commands))
+	results := make([]CommandResult, len(e.Commands))
 	for i, command := range e.Commands {
 		switch command.Name {
 		case CommandAppend:

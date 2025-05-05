@@ -11,8 +11,9 @@ import (
 	"github.com/gomodule/redigo/redis"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"github.com/pkg/errors"
+
+	"github.com/ovh/venom"
 )
 
 // Name of executor

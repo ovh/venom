@@ -34,9 +34,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var (
-	port = 50051
-)
+var port = 50051
 
 const (
 	caCertLocation     = "./pki/ca.crt"
