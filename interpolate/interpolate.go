@@ -152,7 +152,7 @@ func Do(input string, vars map[string]string) (string, error) {
 
 				if !defaultIsUsed && (len(unknownVariables) > 0 || len(unknownHelpers) > 0) {
 					for _, s := range quotedStuff {
-						q := strings.Replace(sm[i][1], `"`+s+`"`, `\"`+s+`\"`, -1)
+						q := strconv.Quote(s)
 						input = strings.Replace(input, sm[i][1], q, 1)
 						sm[i][1] = q
 					}
