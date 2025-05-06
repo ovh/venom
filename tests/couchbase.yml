@@ -9,7 +9,8 @@ testcases:
       - type: couchbase
         cluster:
           dsn: "{{.couchbase_dsn}}"
-          username: Administrator
+          username: venom
+          password: password
           wait_until_ready: true
         bucket:
           name: "${{.couchbase_bucket}}"

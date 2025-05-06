@@ -88,12 +88,31 @@ func (b *Bucket) New(ctx context.Context, cluster *gocb.Cluster) (*gocb.Bucket, 
 func (b *Bucket) tryCreateBucketIfNotExists(ctx context.Context, cluster *gocb.Cluster) error {
 	b.coerceValues()
 
-	err := cluster.Buckets().CreateBucket(gocb.CreateBucketSettings{
+	mgmg, err := gocb.Connect("couchbase://localhost:11210", gocb.ClusterOptions{
+		Username: "venom",
+		Password: "password",
+	})
+	if err != nil {
+		return fmt.Errorf("unable to connect to management port: %w", err)
+	}
+
+	err = mgmg.WaitUntilReady(5*time.Second,
+		&gocb.WaitUntilReadyOptions{
+			DesiredState: gocb.ClusterStateOnline,
+			ServiceTypes: []gocb.ServiceType{gocb.ServiceTypeManagement},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("management cluster not ready: %w", err)
+	}
+
+	err = mgmg.Buckets().CreateBucket(gocb.CreateBucketSettings{
 		BucketSettings: gocb.BucketSettings{
 			Name:         b.Name,
 			FlushEnabled: b.FlushEnabled,
 			RAMQuotaMB:   b.Quota,
 			NumReplicas:  b.NumReplicas,
+			BucketType:   gocb.CouchbaseBucketType,
 		},
 	}, nil)
 	if err != nil && !errors.Is(err, gocb.ErrBucketExists) {
@@ -101,12 +120,6 @@ func (b *Bucket) tryCreateBucketIfNotExists(ctx context.Context, cluster *gocb.C
 	}
 
 	venom.Error(ctx, "does not need to create bucket err=%v", err)
-
-	allBucketSettings, err := cluster.Buckets().GetAllBuckets(&gocb.GetAllBucketsOptions{
-		Timeout: 1 * time.Minute,
-	})
-
-	venom.Error(ctx, "get all buckets=%v, err=%v", allBucketSettings, err)
 
 	if !b.QueryPrimaryIndex {
 		return nil

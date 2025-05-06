@@ -4,7 +4,8 @@ PKI_VAR_FILE = ./pki_variables.yml
 include ./pki.mk
 
 define docker_run
-	docker run --name venom-$(2) -d $(3) $(1) > venom-$2.cid
+	docker run --name venom-$(2) -d $(3) $(1) | tee venom-$2.cid
+	echo "docker exit code $?"
 endef
 
 docker-network := venom-test-net
@@ -54,7 +55,13 @@ venom-grpc.cid:
 	docker build -t venom-grpc-greeter ./grpc
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
 venom-couchbase.cid:
-	$(call docker_run,couchbase:community-7.1.1,couchbase,-p 8091-8096:8091-8096 -p 11210-11211:11210-11211)
+	$(call docker_run,couchbase:community-7.1.1,couchbase,\
+		-v ${PWD}/testdata/configure-server.sh:/opt/couchbase/configure-server.sh \
+		-e CLUSTER_NAME=couchbase \
+		-e COUCHBASE_ADMINISTRATOR_USERNAME=venom \
+		-e COUCHBASE_ADMINISTRATOR_PASSWORD=password \
+		-p 8091-8096:8091-8096 -p 11210-11211:11210-11211 \
+	)
 
 start-test-stack: venom-postgres.cid
 start-test-stack: venom-mysql.cid

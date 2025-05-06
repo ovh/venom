@@ -48,10 +48,10 @@ func (e *Executor) SetDefaults() {
 
 func decodeStructure(input, output any) error {
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		DecodeHook: mapstructure.StringToTimeDurationHookFunc(),
-		ZeroFields: false,
-		// WeaklyTypedInput: true,
-		Result: &output,
+		DecodeHook:       mapstructure.StringToTimeDurationHookFunc(),
+		ZeroFields:       false,
+		WeaklyTypedInput: true,
+		Result:           &output,
 	})
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func (e *Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, e
 				} else {
 					docOut, err = collection.Get(id, &gocb.GetOptions{
 						WithExpiry: true,
-						Timeout:    5 * time.Second,
+						// Timeout:    5 * time.Second,
 					})
 				}
 
