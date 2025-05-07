@@ -55,13 +55,8 @@ venom-grpc.cid:
 	docker build -t venom-grpc-greeter ./grpc
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
 venom-couchbase.cid:
-	$(call docker_run,couchbase:community-7.1.1,couchbase,\
-		-v ${PWD}/testdata/configure-server.sh:/opt/couchbase/configure-server.sh \
-		-e CLUSTER_NAME=couchbase \
-		-e COUCHBASE_ADMINISTRATOR_USERNAME=venom \
-		-e COUCHBASE_ADMINISTRATOR_PASSWORD=password \
-		-p 8091-8096:8091-8096 -p 11210-11211:11210-11211 \
-	)
+	$(call docker_run,couchbase/server-sandbox:7.1.1,couchbase,-p 8091-8096:8091-8096 -p 11210:11210)
+	@echo "must wait 30 to 60 seconds to be sure couchbase is ready"
 
 start-test-stack: venom-postgres.cid
 start-test-stack: venom-mysql.cid
