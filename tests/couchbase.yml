@@ -1,16 +1,17 @@
 name: Couchbase Test Suite
 vars:
   couchbase_dsn: "couchbase://localhost"
-  couchbase_bucket: "travel-sample"
+  couchbase_username: "Administrator"
+  couchbase_password: "password"
 
 testcases:
-  - name: Insert some data
+  - name: Verify couchbase CRUD
     steps:
       - type: couchbase
         dsn:  "{{ .couchbase_dsn }}"
-        username: "Administrator"
-        password: "password"
-        bucket: "{{ .couchbase_bucket }}"
+        username: "{{ .couchbase_username }}"
+        password: "{{ .couchbase_password }}"
+        bucket: "travel-sample"
         actions:
           - type: delete
             ids: ["airline_01"]
@@ -51,5 +52,5 @@ testcases:
           - result.actions.actions3.airline_01.upserted ShouldBeTrue
           - result.actions.actions4.airline_01.found ShouldBeTrue
           - result.actions.actions4.airline_01.data.country ShouldEqual Latveria
-          - result.actions.actions5.airline_01.insered ShouldBeFalse
+          - result.actions.actions5.airline_01.inserted ShouldBeFalse
           - result.actions.actions6.airline_01.replaced ShouldBeTrue
