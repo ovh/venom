@@ -1,6 +1,7 @@
 package couchbase
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -15,9 +16,10 @@ const (
 	// Name of executor
 	Name = "couchbase"
 
-	defaultMustPingService              = false
-	defaultWaitUntilReady               = false
-	defaultWaitUntilReadyTimeoutSeconds = 10
+	defaultDSN        = "couchbase://localhost"
+	defaultTranscoder = "legacy"
+
+	defaultWaitUntilReadyTimeout = 5 * time.Second
 )
 
 // New returns a new Executor
@@ -27,263 +29,98 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Cluster         Cluster `json:"cluster"                     yaml:"cluster"                     mapstructure:"cluster"`
-	Bucket          Bucket  `json:"bucket"                      yaml:"bucket"                      mapstructure:"bucket"`
-	Scope           string  `json:"scope,omitempty"             yaml:"scope,omitempty"             mapstructure:"scope"`
-	Collection      string  `json:"collection,omitempty"        yaml:"collection,omitempty"        mapstructure:"collection"`
-	MustPingService bool    `json:"must_ping_service,omitempty" yaml:"must_ping_service,omitempty" mapstructure:"must_ping_service"`
+	DSN        string   `json:"dsn"                  yaml:"dsn"                  mapstructure:"dsn"`
+	Username   string   `json:"username,omitempty"   yaml:"username,omitempty"   mapstructure:"username"`
+	Password   string   `json:"password,omitempty"   yaml:"password,omitempty"   mapstructure:"password"`
+	Bucket     string   `json:"bucket"               yaml:"bucket"               mapstructure:"bucket"`
+	Scope      string   `json:"scope,omitempty"      yaml:"scope,omitempty"      mapstructure:"scope"`
+	Collection string   `json:"collection,omitempty" yaml:"collection,omitempty" mapstructure:"collection"`
+	Transcoder string   `json:"transcoder,omitempty" yaml:"transcoder,omitempty" mapstructure:"transcoder"`
+	Expiry     *float64 `json:"expiry,omitempty"     yaml:"expiry,omitempty"     mapstructure:"expiry"`
+
+	WaitUntilReadyTimeout float64 `json:"wait_until_ready_timeout,omitempty" yaml:"wait_until_ready_timeout,omitempty" mapstructure:"wait_until_ready_timeout"`
+
+	ProfileWanDevelopment bool `json:"profile_wan_development,omitempty" yaml:"profile_wan_development,omitempty" mapstructure:"profile_wan_development"`
 
 	Actions []map[string]any `json:"actions,omitempty" yaml:"actions,omitempty" mapstructure:"actions"`
-}
 
-type Result struct {
-	Actions []map[string]any `json:"actions,omitempty" yaml:"actions,omitempty"`
+	buckets map[string]*gocb.Bucket
 }
 
 func (e *Executor) SetDefaults() {
-	e.Cluster.SetDefaults()
-	e.Bucket.SetDefaults()
-	e.MustPingService = defaultMustPingService
+	e.DSN = defaultDSN
+	e.Transcoder = defaultTranscoder
+	e.WaitUntilReadyTimeout = defaultWaitUntilReadyTimeout.Seconds()
 }
 
-func decodeStructure(input, output any) error {
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		DecodeHook:       mapstructure.StringToTimeDurationHookFunc(),
-		ZeroFields:       false,
-		WeaklyTypedInput: true,
-		Result:           &output,
-	})
-	if err != nil {
-		return err
-	}
-
-	return decoder.Decode(input)
+type Result struct {
+	Actions []any `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
 // Run execute TestStep
 func (e *Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, error) {
-	if err := decodeStructure(step, &e); err != nil {
+	e.SetDefaults()
+
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
-	venom.Error(ctx, "executor: %v", e)
-
-	collection, done, err := e.getCollection(ctx)
+	cluster, err := e.getCluster(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	defer done()
+	defer cluster.Close(&gocb.ClusterCloseOptions{})
 
-	results := make([]map[string]any, len(e.Actions))
+	defer e.clearCache()
+
+	results := make([]any, len(e.Actions))
 
 	for index, action := range e.Actions {
 		actionType := fmt.Sprintf("%v", action["type"])
 
 		switch actionType {
+		case "touch":
+			results[index], err = e.doTouch(ctx, action, cluster)
+			if err != nil {
+				return nil, err
+			}
+
 		case "exists":
-			var existsAction ExistsAction
-
-			if err := decodeStructure(action, &existsAction); err != nil {
+			results[index], err = e.doExists(ctx, action, cluster)
+			if err != nil {
 				return nil, err
 			}
-
-			existsResults := make([]map[string]any, 0, len(existsAction.IDs))
-
-			for _, id := range existsAction.IDs {
-				docOut, err := collection.Exists(id, nil)
-				if err != nil {
-					return nil, err
-				}
-
-				existsResults = append(existsResults, map[string]any{
-					"id":    id,
-					"found": docOut.Exists(),
-				})
-			}
-
-			results[index] = map[string]any{"results": existsResults}
-
-		case "get":
-			var getAction GetAction
-
-			if err := decodeStructure(action, &getAction); err != nil {
-				return nil, err
-			}
-
-			getResults := make([]map[string]any, 0, len(getAction.IDs))
-
-			opts := &gocb.GetOptions{WithExpiry: true}
-
-			for _, id := range getAction.IDs {
-				var docOut interface {
-					Content(any) error
-					Expiry() *time.Duration
-				}
-
-				if expiry := getAction.Expiration; expiry != nil && *expiry > time.Duration(0) {
-					docOut, err = collection.GetAndTouch(id, *expiry, nil)
-				} else {
-					docOut, err = collection.Get(id, &gocb.GetOptions{
-						WithExpiry: true,
-						// Timeout:    5 * time.Second,
-					})
-				}
-
-				docOut, err := collection.Get(id, opts)
-				if errors.Is(err, gocb.ErrDocumentNotFound) {
-					getResults = append(getResults, map[string]any{
-						"id":    id,
-						"found": false,
-					})
-				} else if err != nil {
-					return nil, fmt.Errorf("unable to get document id %q: %w", id, err)
-				} else {
-					var value any
-					if cerr := docOut.Content(&value); cerr != nil {
-						return nil, fmt.Errorf("unable to decode document id %q: %w", id, err)
-					}
-					getResult := map[string]any{
-						"id":    id,
-						"found": true,
-						"value": value,
-					}
-
-					if expiry := docOut.Expiry(); expiry != nil {
-						getResult["expiry"] = *expiry
-					}
-
-					getResults = append(getResults, getResult)
-				}
-			}
-
-			results[index] = map[string]any{"results": getResults}
-
-		case "insert":
-			var insertAction InsertAction
-
-			if err := decodeStructure(action, &insertAction); err != nil {
-				return nil, err
-			}
-
-			insertResults := make([]map[string]any, 0, len(insertAction.Documents))
-
-			var opts *gocb.InsertOptions
-			// if insertAction.Expiration != nil {
-			// 	opts = &gocb.InsertOptions{Expiry: *insertAction.Expiration}
-			// }
-
-			opts = &gocb.InsertOptions{
-				Timeout: 5 * time.Second,
-			}
-
-			for id, val := range insertAction.Documents {
-				_, err := collection.Insert(id, val, opts)
-				if errors.Is(err, gocb.ErrDocumentExists) {
-					insertResults = append(insertResults, map[string]any{
-						"id":       id,
-						"inserted": false,
-					})
-				} else if err != nil {
-					return nil, fmt.Errorf("unable to insert document id %q: %w", id, err)
-				} else {
-					insertResults = append(insertResults, map[string]any{
-						"id":       id,
-						"inserted": true,
-					})
-				}
-			}
-
-			results[index] = map[string]any{"results": insertResults}
-
-		case "update":
-			var updateAction UpdateAction
-
-			if err := decodeStructure(action, &updateAction); err != nil {
-				return nil, err
-			}
-
-			updateResults := make([]map[string]any, 0, len(updateAction.Documents))
-
-			var opts *gocb.ReplaceOptions
-			if updateAction.Expiration != nil {
-				opts = &gocb.ReplaceOptions{Expiry: *updateAction.Expiration}
-			}
-
-			for id, val := range updateAction.Documents {
-				_, err := collection.Replace(id, val, opts)
-				if errors.Is(err, gocb.ErrDocumentNotFound) {
-					updateResults = append(updateResults, map[string]any{
-						"id":      id,
-						"updated": false,
-					})
-				} else if err != nil {
-					return nil, fmt.Errorf("unable to update document id %q: %w", id, err)
-				} else {
-					updateResults = append(updateResults, map[string]any{
-						"id":      id,
-						"updated": true,
-					})
-				}
-			}
-
-			results[index] = map[string]any{"results": updateResults}
-
-		case "upsert":
-			var upsertAction UpsertAction
-
-			if err := decodeStructure(action, &upsertAction); err != nil {
-				return nil, err
-			}
-
-			upsertResults := make([]map[string]any, 0, len(upsertAction.Documents))
-
-			var opts *gocb.UpsertOptions
-			if upsertAction.Expiration != nil {
-				opts = &gocb.UpsertOptions{Expiry: *upsertAction.Expiration}
-			}
-
-			for id, val := range upsertAction.Documents {
-				_, err := collection.Upsert(id, val, opts)
-				if err != nil {
-					return nil, fmt.Errorf("unable to update document id %q: %w", id, err)
-				} else {
-					upsertResults = append(upsertResults, map[string]any{
-						"id":       id,
-						"upserted": true,
-					})
-				}
-			}
-
-			results[index] = map[string]any{"results": upsertResults}
 
 		case "delete":
-			var removeAction RemoveAction
-
-			if err := decodeStructure(action, &removeAction); err != nil {
+			results[index], err = e.doDelete(ctx, action, cluster)
+			if err != nil {
 				return nil, err
 			}
 
-			removeResults := make([]map[string]any, 0, len(removeAction.IDs))
-
-			for _, id := range removeAction.IDs {
-				_, err := collection.Remove(id, nil)
-				if errors.Is(err, gocb.ErrDocumentNotFound) {
-					removeResults = append(removeResults, map[string]any{
-						"id":      id,
-						"deleted": false,
-					})
-				} else if err != nil {
-					return nil, fmt.Errorf("unable to delete document id %q: %w", id, err)
-				} else {
-					removeResults = append(removeResults, map[string]any{
-						"id":      id,
-						"deleted": true,
-					})
-				}
+		case "get":
+			results[index], err = e.doGet(ctx, action, cluster)
+			if err != nil {
+				return nil, err
 			}
 
-			results[index] = map[string]any{"results": removeResults}
+		case "upsert":
+			results[index], err = e.doUpsert(ctx, action, cluster)
+			if err != nil {
+				return nil, err
+			}
+
+		case "insert":
+			results[index], err = e.doInsert(ctx, action, cluster)
+			if err != nil {
+				return nil, err
+			}
+
+		case "replace":
+			results[index], err = e.doReplace(ctx, action, cluster)
+			if err != nil {
+				return nil, err
+			}
 
 		default:
 			return nil, fmt.Errorf("action type %q not supported", actionType)
@@ -295,53 +132,503 @@ func (e *Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, e
 	}, nil
 }
 
-// Action basic structure.
-type Action struct {
-	Type string `json:"type" yaml:"type" mapstructure:"type"`
+func (e *Executor) clearCache() {
+	clear(e.buckets)
 }
 
-// ExistsAction represents an exists in couchbase
-type ExistsAction struct {
-	Action
+var (
+	errMissingCouchbaseDSN = errors.New("missing couchbase dsn")
+	errMissingBucketName   = errors.New("missing couchbase bucket name")
+)
+
+func (e *Executor) getCluster(ctx context.Context) (*gocb.Cluster, error) {
+	if e.DSN == "" {
+		return nil, errMissingCouchbaseDSN
+	}
+
+	opts := gocb.ClusterOptions{}
+
+	if e.Username != "" {
+		opts.Username = e.Username
+		opts.Password = e.Password
+	}
+
+	switch e.Transcoder {
+	case "json":
+		opts.Transcoder = gocb.NewJSONTranscoder()
+	case "raw":
+		opts.Transcoder = gocb.NewRawBinaryTranscoder()
+	case "rawjson":
+		opts.Transcoder = gocb.NewRawJSONTranscoder()
+	case "rawstring":
+		opts.Transcoder = gocb.NewRawStringTranscoder()
+	case "legacy":
+		opts.Transcoder = gocb.NewLegacyTranscoder()
+	default:
+		return nil, fmt.Errorf("invalid couchbase transcoder %q (valid values are %v)",
+			e.Transcoder, []string{"json", "raw", "rawjson", "rawstring", "legacy"})
+	}
+
+	venom.Debug(ctx, "setting couchbase transcoder %q", e.Transcoder)
+
+	if e.ProfileWanDevelopment {
+		venom.Debug(ctx, "will connect to cluster using config profile wan development")
+
+		opts.ApplyProfile(gocb.ClusterConfigProfileWanDevelopment)
+	}
+
+	cluster, err := gocb.Connect(e.DSN, opts)
+	if err != nil {
+		return nil, fmt.Errorf("unable to connect to couchbase cluster %q: %w", e.DSN, err)
+	}
+
+	return cluster, nil
+}
+
+func (e *Executor) getBucket(ctx context.Context,
+	cluster *gocb.Cluster,
+	bucketName string,
+) (*gocb.Bucket, error) {
+	bucketName = cmp.Or(bucketName, e.Bucket)
+
+	if bucketName == "" {
+		return nil, errMissingBucketName
+	}
+
+	bucket, found := e.buckets[bucketName]
+	if found {
+		venom.Debug(ctx, "return bucket %q from cache", bucketName)
+
+		return bucket, nil
+	}
+
+	bucket = cluster.Bucket(bucketName)
+
+	if e.buckets == nil {
+		e.buckets = map[string]*gocb.Bucket{}
+	}
+
+	e.buckets[bucketName] = bucket
+
+	if e.WaitUntilReadyTimeout == 0.0 {
+		venom.Debug(ctx, "skip wait until bucket ready")
+
+		return bucket, nil
+	}
+
+	waitUntilReadyTimeout := float64ToDuration(e.WaitUntilReadyTimeout)
+	err := bucket.WaitUntilReady(waitUntilReadyTimeout, nil)
+	if err != nil {
+		delete(e.buckets, bucketName)
+
+		return nil, fmt.Errorf("couchbase bucket %q not ready: %w", bucketName, err)
+	}
+
+	return bucket, nil
+}
+
+func (e *Executor) getCollection(ctx context.Context,
+	cluster *gocb.Cluster,
+	bucketName string,
+	collectionName string,
+	scopeName string,
+) (
+	collection *gocb.Collection,
+	err error,
+) {
+	bucket, err := e.getBucket(ctx, cluster, bucketName)
+	if err != nil {
+		return nil, err
+	}
+
+	collectionName = cmp.Or(collectionName, e.Collection)
+	scopeName = cmp.Or(scopeName, e.Scope)
+
+	collection = bucket.DefaultCollection()
+	if collectionName != "" {
+		scope := bucket.DefaultScope()
+		if scopeName != "" {
+			scope = bucket.Scope(scopeName)
+		}
+
+		collection = scope.Collection(collectionName)
+	}
+
+	venom.Debug(ctx, "return collection %q scope %q from bucket %q",
+		collection.Name(), collection.ScopeName(), collection.Bucket().Name())
+
+	return collection, nil
+}
+
+// baseAction basic structure.
+type baseAction struct {
+	Type       string `json:"type"                 yaml:"type"                 mapstructure:"type"`
+	Bucket     string `json:"bucket,omitempty"     yaml:"bucket,omitempty"     mapstructure:"bucket"`
+	Scope      string `json:"scope,omitempty"      yaml:"scope,omitempty"      mapstructure:"scope"`
+	Collection string `json:"collection,omitempty" yaml:"collection,omitempty" mapstructure:"collection"`
+}
+
+// touchAction represents an exists in couchbase
+type touchAction struct {
+	baseAction
+
+	Expiry float64  `json:"expiry" yaml:"expiry" mapstructure:"expiry"`
+	IDs    []string `json:"ids"    yaml:"ids"    mapstructure:"ids"`
+}
+
+func (e *Executor) doTouch(ctx context.Context,
+	rawAction any,
+	cluster *gocb.Cluster,
+) (any, error) {
+	var action touchAction
+
+	if err := mapstructure.Decode(rawAction, &action); err != nil {
+		return nil, fmt.Errorf("unable to decode exists action: %w", err)
+	}
+
+	collection, err := e.getCollection(ctx, cluster,
+		action.Bucket, action.Collection, action.Scope)
+	if err != nil {
+		return nil, err
+	}
+
+	results := map[string]map[string]any{}
+
+	expiry := float64ToDuration(action.Expiry)
+
+	for _, id := range action.IDs {
+		found := false
+		_, err := collection.Touch(id, expiry, nil)
+		if errors.Is(err, gocb.ErrDocumentNotFound) {
+			found = false
+		} else if err != nil {
+			return nil, err
+		}
+
+		results[id] = map[string]any{
+			"found": found,
+		}
+	}
+
+	return results, nil
+}
+
+// existsAction represents an exists in couchbase
+type existsAction struct {
+	baseAction
 
 	IDs []string `json:"ids" yaml:"ids" mapstructure:"ids"`
 }
 
-// GetAction represent an get/fetch in couchbase
-type GetAction struct {
-	Action
+func (e *Executor) doExists(ctx context.Context,
+	rawAction any,
+	cluster *gocb.Cluster,
+) (any, error) {
+	var action existsAction
 
-	Expiration *time.Duration `json:"expiration,omitempty" yaml:"expiration,omitempty" mapstructure:"expiration"`
-	IDs        []string       `json:"ids"                   yaml:"ids"                   mapstructure:"ids"`
+	if err := mapstructure.Decode(rawAction, &action); err != nil {
+		return nil, fmt.Errorf("unable to decode exists action: %w", err)
+	}
+
+	collection, err := e.getCollection(ctx, cluster,
+		action.Bucket, action.Collection, action.Scope)
+	if err != nil {
+		return nil, err
+	}
+
+	results := map[string]map[string]any{}
+
+	for _, id := range action.IDs {
+		docOut, err := collection.Exists(id, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		results[id] = map[string]any{
+			"found": docOut.Exists(),
+		}
+	}
+
+	return results, nil
 }
 
-// RemoveAction represents an remove/delete in couchbase
-type RemoveAction struct {
-	Action
+// deleteAction represents a delete/remove in couchbase
+type deleteAction struct {
+	baseAction
 
 	IDs []string `json:"ids" yaml:"ids" mapstructure:"ids"`
 }
 
-// InsertAction represents an insert/creation in couchbase.
-type InsertAction struct {
-	Action
+func (e *Executor) doDelete(ctx context.Context,
+	rawAction any,
+	cluster *gocb.Cluster,
+) (any, error) {
+	var action deleteAction
 
-	// Expiration *time.Duration `json:"expiration,omitempty" yaml:"expiration,omitempty" mapstructure:"expiration"`
-	Documents map[string]any `json:"documents"            yaml:"documents"            mapstructure:"documents"`
+	if err := mapstructure.Decode(rawAction, &action); err != nil {
+		return nil, fmt.Errorf("unable to decode exists action: %w", err)
+	}
+
+	collection, err := e.getCollection(ctx, cluster,
+		action.Bucket, action.Collection, action.Scope)
+	if err != nil {
+		return nil, err
+	}
+
+	results := map[string]map[string]any{}
+
+	for _, id := range action.IDs {
+		found := true
+
+		_, err := collection.Remove(id, nil)
+		if errors.Is(err, gocb.ErrDocumentNotFound) {
+			found = false
+		} else if err != nil {
+			return nil, err
+		}
+
+		results[id] = map[string]any{
+			"found": found,
+		}
+	}
+
+	return results, nil
 }
 
-// UpdateAction represents an update/replace in couchbase.
-type UpdateAction struct {
-	Action
+// getAction represents a get/fetch in couchbase
+type getAction struct {
+	baseAction
 
-	Expiration *time.Duration `json:"expiration,omitempty" yaml:"expiration,omitempty" mapstructure:"expiration"`
-	Documents  map[string]any `json:"documents"            yaml:"documents"            mapstructure:"documents"`
+	WithExpiry bool     `json:"with_expiry,omitempty" yaml:"with_expiry,omitempty" mapstructure:"with_expiry"`
+	Expiry     *float64 `json:"expiry,omitempty"      yaml:"expiry,omitempty"      mapstructure:"expiry"`
+	IDs        []string `json:"ids"                   yaml:"ids"                   mapstructure:"ids"`
 }
 
-// UpsertAction represents an upsert/insert or replace in couchbase.
-type UpsertAction struct {
-	Action
+func (e *Executor) doGet(ctx context.Context,
+	rawAction any,
+	cluster *gocb.Cluster,
+) (any, error) {
+	var action getAction
 
-	Expiration *time.Duration `json:"expiration,omitempty" yaml:"expiration,omitempty" mapstructure:"expiration"`
-	Documents  map[string]any `json:"documents"            yaml:"documents"            mapstructure:"documents"`
+	if err := mapstructure.Decode(rawAction, &action); err != nil {
+		return nil, fmt.Errorf("unable to decode exists action: %w", err)
+	}
+
+	collection, err := e.getCollection(ctx, cluster,
+		action.Bucket, action.Collection, action.Scope)
+	if err != nil {
+		return nil, err
+	}
+
+	results := map[string]map[string]any{}
+
+	opts := &gocb.GetOptions{
+		WithExpiry: action.WithExpiry,
+	}
+
+	for _, id := range action.IDs {
+		var (
+			data   any
+			found  = true
+			docOut *gocb.GetResult
+			err    error
+		)
+
+		if action.Expiry != nil && *action.Expiry > 0 {
+			docOut, err = collection.GetAndTouch(id, float64ToDuration(*action.Expiry), nil)
+		} else {
+			docOut, err = collection.Get(id, opts)
+		}
+
+		if errors.Is(err, gocb.ErrDocumentNotFound) {
+			found = false
+		} else if err != nil {
+			return nil, err
+		} else {
+			if terr := docOut.Content(&data); terr != nil {
+				return nil, fmt.Errorf("error while transcoding content of entry id=%q: %w", id, terr)
+			}
+		}
+
+		getResult := map[string]any{
+			"found": found,
+			"data":  data,
+		}
+
+		if docOut != nil {
+			if expiry := docOut.Expiry(); expiry != nil {
+				getResult["expiry"] = *expiry
+			}
+		}
+
+		results[id] = getResult
+	}
+
+	return results, nil
+}
+
+// upsertAction represents a upsert/insert or update in couchbase
+type upsertAction struct {
+	baseAction
+
+	PreserveExpiry bool           `json:"preserve_expiry,omitempty" yaml:"preserve_expiry,omitempty" mapstructure:"preserve_expiry"`
+	Expiry         *float64       `json:"expiry,omitempty"          yaml:"expiry,omitempty"          mapstructure:"expiry"`
+	Entries        map[string]any `json:"entries"                   yaml:"entries"                   mapstructure:"entries"`
+}
+
+func (e *Executor) doUpsert(ctx context.Context,
+	rawAction any,
+	cluster *gocb.Cluster,
+) (any, error) {
+	var action upsertAction
+
+	if err := mapstructure.Decode(rawAction, &action); err != nil {
+		return nil, fmt.Errorf("unable to decode exists action: %w", err)
+	}
+
+	collection, err := e.getCollection(ctx, cluster,
+		action.Bucket, action.Collection, action.Scope)
+	if err != nil {
+		return nil, err
+	}
+
+	results := map[string]map[string]any{}
+
+	var opts *gocb.UpsertOptions
+
+	if action.Expiry != nil && *action.Expiry > 0.0 {
+		opts = &gocb.UpsertOptions{
+			Expiry: float64ToDuration(*action.Expiry),
+		}
+	} else if action.PreserveExpiry {
+		opts = &gocb.UpsertOptions{
+			PreserveExpiry: true,
+		}
+	}
+
+	for id, val := range action.Entries {
+		_, err := collection.Upsert(id, val, opts)
+		if err != nil {
+			return nil, err
+		}
+
+		results[id] = map[string]any{
+			"upserted": true,
+		}
+	}
+
+	return results, nil
+}
+
+// insertAction represents an insert in couchbase
+type insertAction struct {
+	baseAction
+
+	Expiry  *float64       `json:"expiry,omitempty" yaml:"expiry,omitempty" mapstructure:"expiry"`
+	Entries map[string]any `json:"entries"          yaml:"entries"          mapstructure:"entries"`
+}
+
+func (e *Executor) doInsert(ctx context.Context,
+	rawAction any,
+	cluster *gocb.Cluster,
+) (any, error) {
+	var action insertAction
+
+	if err := mapstructure.Decode(rawAction, &action); err != nil {
+		return nil, fmt.Errorf("unable to decode exists action: %w", err)
+	}
+
+	collection, err := e.getCollection(ctx, cluster,
+		action.Bucket, action.Collection, action.Scope)
+	if err != nil {
+		return nil, err
+	}
+
+	results := map[string]map[string]any{}
+
+	var opts *gocb.InsertOptions
+
+	if action.Expiry != nil && *action.Expiry > 0.0 {
+		opts = &gocb.InsertOptions{
+			Expiry: float64ToDuration(*action.Expiry),
+		}
+	}
+
+	for id, val := range action.Entries {
+		inserted := true
+
+		_, err := collection.Insert(id, val, opts)
+		if errors.Is(err, gocb.ErrDocumentExists) {
+			inserted = false
+		} else if err != nil {
+			return nil, err
+		}
+
+		results[id] = map[string]any{
+			"inserted": inserted,
+		}
+	}
+
+	return results, nil
+}
+
+// replaceAction represents a replace in couchbase
+type replaceAction struct {
+	baseAction
+
+	PreserveExpiry bool           `json:"preserve_expiry,omitempty" yaml:"preserve_expiry,omitempty" mapstructure:"preserve_expiry"`
+	Expiry         *float64       `json:"expiry,omitempty"          yaml:"expiry,omitempty"          mapstructure:"expiry"`
+	Entries        map[string]any `json:"entries"                   yaml:"entries"                   mapstructure:"entries"`
+}
+
+func (e *Executor) doReplace(ctx context.Context,
+	rawAction any,
+	cluster *gocb.Cluster,
+) (any, error) {
+	var action replaceAction
+
+	if err := mapstructure.Decode(rawAction, &action); err != nil {
+		return nil, fmt.Errorf("unable to decode exists action: %w", err)
+	}
+
+	collection, err := e.getCollection(ctx, cluster,
+		action.Bucket, action.Collection, action.Scope)
+	if err != nil {
+		return nil, err
+	}
+
+	results := map[string]map[string]any{}
+
+	var opts *gocb.ReplaceOptions
+
+	if action.Expiry != nil && *action.Expiry > 0.0 {
+		opts = &gocb.ReplaceOptions{
+			Expiry: float64ToDuration(*action.Expiry),
+		}
+	} else if action.PreserveExpiry {
+		opts = &gocb.ReplaceOptions{
+			PreserveExpiry: true,
+		}
+	}
+
+	for id, val := range action.Entries {
+		replaced := true
+
+		_, err := collection.Replace(id, val, opts)
+		if errors.Is(err, gocb.ErrDocumentNotFound) {
+			replaced = false
+		} else if err != nil {
+			return nil, err
+		}
+
+		results[id] = map[string]any{
+			"replaced": replaced,
+		}
+	}
+
+	return results, nil
+}
+
+func float64ToDuration(seconds float64) time.Duration {
+	return time.Duration(seconds * float64(time.Second))
 }
