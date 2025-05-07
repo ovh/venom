@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"time"
 
 	"github.com/couchbase/gocb/v2"
@@ -272,7 +274,7 @@ type baseAction struct {
 type touchAction struct {
 	baseAction
 
-	Expiry float64  `json:"expiry" yaml:"expiry" mapstructure:"expiry"`
+	Expiry *float64 `json:"expiry" yaml:"expiry" mapstructure:"expiry"`
 	IDs    []string `json:"ids"    yaml:"ids"    mapstructure:"ids"`
 }
 
@@ -294,19 +296,22 @@ func (e *Executor) doTouch(ctx context.Context,
 
 	results := map[string]map[string]any{}
 
-	expiry := float64ToDuration(action.Expiry)
+	expiry, ok := e.tryGetExpiry(action.Expiry)
+	if !ok {
+		return nil, errors.New("unable to perform touch operation: missing 'expiry'")
+	}
 
 	for _, id := range action.IDs {
-		found := false
+		touched := false
 		_, err := collection.Touch(id, expiry, nil)
 		if errors.Is(err, gocb.ErrDocumentNotFound) {
-			found = false
+			touched = false
 		} else if err != nil {
 			return nil, err
 		}
 
 		results[id] = map[string]any{
-			"found": found,
+			"touched": touched,
 		}
 	}
 
@@ -378,17 +383,17 @@ func (e *Executor) doDelete(ctx context.Context,
 	results := map[string]map[string]any{}
 
 	for _, id := range action.IDs {
-		found := true
+		deleted := true
 
 		_, err := collection.Remove(id, nil)
 		if errors.Is(err, gocb.ErrDocumentNotFound) {
-			found = false
+			deleted = false
 		} else if err != nil {
 			return nil, err
 		}
 
 		results[id] = map[string]any{
-			"found": found,
+			"deleted": deleted,
 		}
 	}
 
@@ -402,6 +407,22 @@ type getAction struct {
 	WithExpiry bool     `json:"with_expiry,omitempty" yaml:"with_expiry,omitempty" mapstructure:"with_expiry"`
 	Expiry     *float64 `json:"expiry,omitempty"      yaml:"expiry,omitempty"      mapstructure:"expiry"`
 	IDs        []string `json:"ids"                   yaml:"ids"                   mapstructure:"ids"`
+}
+
+func (e *Executor) tryGetExpiry(actionExpiry *float64) (time.Duration, bool) {
+	expiry := cmp.Or(actionExpiry, e.Expiry)
+
+	if expiry != nil {
+		return float64ToDuration(*expiry), true
+	}
+
+	return time.Duration(0), false
+}
+
+func (e *Executor) getExpiry(actionExpiry *float64) time.Duration {
+	expiry, _ := e.tryGetExpiry(actionExpiry)
+
+	return expiry
 }
 
 func (e *Executor) doGet(ctx context.Context,
@@ -434,8 +455,8 @@ func (e *Executor) doGet(ctx context.Context,
 			err    error
 		)
 
-		if action.Expiry != nil && *action.Expiry > 0 {
-			docOut, err = collection.GetAndTouch(id, float64ToDuration(*action.Expiry), nil)
+		if expiry, ok := e.tryGetExpiry(action.Expiry); ok {
+			docOut, err = collection.GetAndTouch(id, expiry, nil)
 		} else {
 			docOut, err = collection.Get(id, opts)
 		}
@@ -494,19 +515,20 @@ func (e *Executor) doUpsert(ctx context.Context,
 
 	results := map[string]map[string]any{}
 
-	var opts *gocb.UpsertOptions
+	opts := &gocb.UpsertOptions{
+		PreserveExpiry: action.PreserveExpiry,
+	}
 
-	if action.Expiry != nil && *action.Expiry > 0.0 {
+	if expiry, ok := e.tryGetExpiry(action.Expiry); ok {
 		opts = &gocb.UpsertOptions{
-			Expiry: float64ToDuration(*action.Expiry),
-		}
-	} else if action.PreserveExpiry {
-		opts = &gocb.UpsertOptions{
-			PreserveExpiry: true,
+			Expiry: expiry,
 		}
 	}
 
-	for id, val := range action.Entries {
+	ids := slices.Sorted(maps.Keys(action.Entries))
+	for _, id := range ids {
+		val := action.Entries[id]
+
 		_, err := collection.Upsert(id, val, opts)
 		if err != nil {
 			return nil, err
@@ -548,13 +570,15 @@ func (e *Executor) doInsert(ctx context.Context,
 
 	var opts *gocb.InsertOptions
 
-	if action.Expiry != nil && *action.Expiry > 0.0 {
+	if expiry, ok := e.tryGetExpiry(action.Expiry); ok {
 		opts = &gocb.InsertOptions{
-			Expiry: float64ToDuration(*action.Expiry),
+			Expiry: expiry,
 		}
 	}
 
-	for id, val := range action.Entries {
+	ids := slices.Sorted(maps.Keys(action.Entries))
+	for _, id := range ids {
+		val := action.Entries[id]
 		inserted := true
 
 		_, err := collection.Insert(id, val, opts)
@@ -599,19 +623,19 @@ func (e *Executor) doReplace(ctx context.Context,
 
 	results := map[string]map[string]any{}
 
-	var opts *gocb.ReplaceOptions
+	opts := &gocb.ReplaceOptions{
+		PreserveExpiry: action.PreserveExpiry,
+	}
 
-	if action.Expiry != nil && *action.Expiry > 0.0 {
+	if expiry, ok := e.tryGetExpiry(action.Expiry); ok {
 		opts = &gocb.ReplaceOptions{
-			Expiry: float64ToDuration(*action.Expiry),
-		}
-	} else if action.PreserveExpiry {
-		opts = &gocb.ReplaceOptions{
-			PreserveExpiry: true,
+			Expiry: expiry,
 		}
 	}
 
-	for id, val := range action.Entries {
+	ids := slices.Sorted(maps.Keys(action.Entries))
+	for _, id := range ids {
+		val := action.Entries[id]
 		replaced := true
 
 		_, err := collection.Replace(id, val, opts)
