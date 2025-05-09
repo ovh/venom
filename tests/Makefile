@@ -4,7 +4,8 @@ PKI_VAR_FILE = ./pki_variables.yml
 include ./pki.mk
 
 define docker_run
-	docker run --name venom-$(2) -d $(3) $(1) > venom-$2.cid
+	docker run --name venom-$(2) -d $(3) $(1) | tee venom-$2.cid
+	echo "docker exit code $?"
 endef
 
 docker-network := venom-test-net
@@ -57,6 +58,9 @@ venom-qpid.cid:
 venom-grpc.cid:
 	docker build -t venom-grpc-greeter ./grpc
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
+venom-couchbase.cid:
+	$(call docker_run,couchbase/server-sandbox:7.1.1,couchbase,-p 8091-8096:8091-8096 -p 11210:11210)
+	@echo "must wait 30 to 60 seconds to be sure couchbase is ready"
 
 start-test-stack: venom-postgres.cid
 start-test-stack: venom-mysql.cid
@@ -71,6 +75,7 @@ start-test-stack: venom-qpid.cid
 start-test-stack: $(PKI_DIR)
 start-test-stack: venom-httpbin.cid
 start-test-stack: venom-grpc.cid
+start-test-stack: venom-couchbase.cid
 
 stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)

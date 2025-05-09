@@ -8,6 +8,7 @@ require (
 	github.com/alexbrainman/odbc v0.0.0-20230814102256-1421b829acc9
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/confluentinc/bincover v0.2.0
+	github.com/couchbase/gocb/v2 v2.10.0
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/fatih/color v1.15.0
 	github.com/fsamin/go-dump v1.8.0
@@ -52,7 +53,20 @@ require (
 	modernc.org/sqlite v1.26.0
 )
 
-require github.com/rogpeppe/go-internal v1.13.1 // indirect
+require (
+	github.com/couchbase/gocbcore/v10 v10.7.0 // indirect
+	github.com/couchbase/gocbcoreps v0.1.3 // indirect
+	github.com/couchbase/goprotostellar v1.0.2 // indirect
+	github.com/couchbaselabs/gocbconnstr/v2 v2.0.0-20240607131231-fb385523de28 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // indirect
+	go.opentelemetry.io/otel/metric v1.35.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
+)
 
 require (
 	github.com/ClickHouse/ch-go v0.65.1 // indirect
@@ -71,7 +85,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
