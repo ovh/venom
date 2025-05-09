@@ -345,6 +345,7 @@ testcases:
 ## Executors
 
 * **amqp**: https://github.com/ovh/venom/tree/master/executors/amqp
+* **couchbase**: https://github.com/ovh/venom/tree/master/executors/couchbase
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
 * **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
