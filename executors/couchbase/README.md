@@ -115,9 +115,9 @@ An expiration, in seconds, can be defined via field `expiry` to override the _de
 
 ### Replace documents
 
-Replace will update documents by id. If the id does not exists the operation is not executed and the flag `replaced` will be false.
+Replace will update documents by id. If the id does not exist the operation is not executed and the flag `replaced` will be false.
 
-It is possible preserve the original expiration via boolean field `preserve_expiry`.
+It is possible to preserve the original expiration via boolean field `preserve_expiry`.
 An expiration, in seconds, can be defined via field `expiry` to override the _default_ `expiry` (if any).
 
 ```yaml
@@ -142,7 +142,7 @@ An expiration, in seconds, can be defined via field `expiry` to override the _de
 
 Upsert will insert or documents by id. It will set the flag `upserted` to true
 
-It is possible preserve the original expiration (if any) via boolean field `preserve_expiry`.
+It is possible to preserve the original expiration (if any) via boolean field `preserve_expiry`.
 
 ```yaml
 - type: couchbase
