@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
@@ -15,10 +14,21 @@ import (
 const Name = "playwright"
 
 type Executor struct {
-	URL      string   `json:"url" yaml:"url"`
-	Browser  string   `json:"browser" yaml:"browser"`
-	Actions  []string `json:"actions" yaml:"actions"`
-	Headless bool     `json:"headless" yaml:"headless"`
+	URL      string           `json:"url" yaml:"url"`
+	Browser  string           `json:"browser" yaml:"browser"`
+	Actions  []ExecutorAction `json:"actions" yaml:"actions"`
+	Headless bool             `json:"headless" yaml:"headless"`
+}
+
+type ExecutorAction struct {
+	Action   string `json:"action"`                           // The action to perform, must be a valid/supported action
+	Selector string `json:"selector" yaml:"selector"`         // DOM selector or expression
+	Content  string `json:"content,omitempty" yaml:"content"` // Content for actions that require it
+	Options  any    `json:"options,omitempty" yaml:"options"` // Options applicable to the given action
+}
+
+func (a ExecutorAction) String() string {
+	return fmt.Sprintf("action: %s selector: %s content: %s, options: %v", a.Action, a.Selector, a.Content, a.Options)
 }
 
 func New() venom.Executor {
@@ -134,41 +144,28 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}, nil
 }
 
-// parseActionLine parses a line containing an Action expression and returns
-// the actionName, the arguments (rest of the line), the actionFunc or an error
-func parseActionLine(actionLine string) (string, string, ActionFunc, error) {
-	if actionLine == "" {
-		return "", "", nil, fmt.Errorf("action line MUST not be empty")
-	}
-	parts := strings.SplitN(strings.TrimSpace(actionLine), " ", 2)
-	if len(parts) < 2 {
-		return "", "", nil, fmt.Errorf("action line MUST have atleast two arguments: ACTION <selector>")
-	}
-	actionName, arguments := parts[0], parts[1]
-	actionFunc, ok := actionMap[actionName]
-	if !ok {
-		return "", "", nil, fmt.Errorf("invalid or unsupported action specified '%s'", actionName)
-	}
-	return actionName, arguments, actionFunc, nil
-}
-
-func performActions(ctx context.Context, page playwrightgo.Page, actions []string) error {
+func performActions(ctx context.Context, page playwrightgo.Page, actions []ExecutorAction) error {
 	for _, action := range actions {
-		actionName, arguments, actionFunc, err := parseActionLine(action)
-		if err != nil {
-			return err
+		if action.Action == "" {
+			return fmt.Errorf("action cannot be empty, please specify an action")
+		}
+		if action.Selector == "" {
+			return fmt.Errorf("selector cannot be empty, please specify a selector")
 		}
 
-		venom.Debug(ctx, fmt.Sprintf("perform action '%s' with arguments '%v'\n", actionName, arguments))
+		actionName := action.Action
+		actionFunc, ok := actionMap[actionName]
+		if !ok {
+			return fmt.Errorf("invalid or unsupported action: '%s'", actionName)
+		}
 
-		selectorAndArgs := strings.SplitN(strings.TrimSpace(arguments), " ", 2)
-		selector := removeQuotes(selectorAndArgs[0])
+		venom.Debug(ctx, fmt.Sprintf("performing action '%s'", action))
 
 		var actErr error
-		if len(selectorAndArgs) <= 1 {
-			actErr = actionFunc(page, selector, nil)
+		if len(action.Content) <= 1 {
+			actErr = actionFunc(page, &action)
 		} else {
-			actErr = actionFunc(page, selector, removeQuotes(selectorAndArgs[1]))
+			actErr = actionFunc(page, &action)
 		}
 		if actErr != nil {
 			return actErr

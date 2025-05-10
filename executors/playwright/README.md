@@ -16,11 +16,18 @@ testcases:
       url: http://localhost:5173/
       headless: true
       actions:
-        - Fill "#email" "change@example.com"
-        - Fill "#email" "zikani@example.com"
-        - Fill "#password" "zikani123"
-        - Click "#loginButton"
-        - WaitFor ".second-dashboard-user-name"
+        - action: Fill
+          selector: "#email"
+          content: "change@example.com"
+        # you can write the expression in one line like this, if you want
+        - { action: Fill, selector: "#email", content: "zikani@example.com" }
+        - action: Fill
+          selector: "#password"
+          content: "zikani123"
+        - action: Click
+          selector: "#loginButton"
+        - action: WaitFor
+          selector: ".second-dashboard-user-name"
       assertions:
         - result.page.body ShouldContainSubstring Parrot
         - result.document.body ShouldContainSubstring Hello,&nbsp;Zikani
