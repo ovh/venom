@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime/pprof"
 	"time"
 
@@ -14,12 +15,8 @@ import (
 
 func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	if v.Verbose == 3 {
-		var filename, filenameCPU, filenameMem string
-		if v.OutputDir != "" {
-			filename = v.OutputDir + "/"
-		}
-		filenameCPU = filename + "pprof_cpu_profile_" + ts.Filename + ".prof"
-		filenameMem = filename + "pprof_mem_profile_" + ts.Filename + ".prof"
+		filenameCPU := filepath.Join(v.OutputDir, "pprof_cpu_profile_"+ts.Filename+".prof")
+		filenameMem := filepath.Join(v.OutputDir, "pprof_mem_profile_"+ts.Filename+".prof")
 		fCPU, errCPU := os.Create(filenameCPU)
 		fMem, errMem := os.Create(filenameMem)
 		if errCPU != nil || errMem != nil {

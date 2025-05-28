@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -109,9 +108,8 @@ func (v *Venom) OutputResult() error {
 			return errors.New("Error: you have to use the --html-report flag")
 		}
 
-		fname := strings.TrimSuffix(ts.Filepath, filepath.Ext(ts.Filepath))
-		fname = strings.ReplaceAll(fname, "/", "_")
-		filename := path.Join(v.OutputDir, "test_results_"+fname+"."+v.OutputFormat)
+		fname := strings.TrimSuffix(filepath.Base(ts.Filepath), filepath.Ext(ts.Filepath))
+		filename := filepath.Join(v.OutputDir, "test_results_"+fname+"."+v.OutputFormat)
 		if err := os.WriteFile(filename, data, 0o600); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
 		}

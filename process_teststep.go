@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/gosimple/slug"
@@ -57,11 +57,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 				Error(ctx, "unable to marshal result: %v", err)
 			}
 
-			oDir := v.OutputDir
-			if oDir == "" {
-				oDir = "."
-			}
-			filename := path.Join(oDir, fmt.Sprintf("%s.%s.testcase.%d.step.%d.%d.dump.json", slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), tc.number, stepNumber, rangedIndex))
+			filename := filepath.Join(v.OutputDir, fmt.Sprintf("%s.%s.testcase.%d.step.%d.%d.dump.json", slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), tc.number, stepNumber, rangedIndex))
 
 			if err := os.WriteFile(filename, []byte(HideSensitive(ctx, string(output))), 0o644); err != nil {
 				Error(ctx, "Error while creating file %s: %v", filename, err)
