@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 )
 
@@ -61,9 +61,10 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
-		totalSteps += len(tc.testSteps)
+		totalSteps += len(tc.RawTestSteps)
 	}
 
+	ts.Vars.Add(("venom.testsuite.totalSteps"), totalSteps)
 	ts.Status = StatusRun
 	Info(ctx, "With secrets in testsuite")
 	for _, v := range ts.Secrets {
@@ -110,7 +111,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		v.Print(" \t• %s", tc.Name)
 		var hasFailure bool
 		var hasRanged bool
-		var hasSkipped = len(tc.Skipped) > 0
+		hasSkipped := len(tc.Skipped) > 0
 		if !hasSkipped {
 			start := time.Now()
 			tc.Start = start
@@ -140,7 +141,7 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		if hasFailure {
 			tc.Status = StatusFail
 		} else if skippedSteps == len(tc.TestStepResults) {
-			//If all test steps were skipped, consider the test case as skipped
+			// If all test steps were skipped, consider the test case as skipped
 			tc.Status = StatusSkip
 		} else if tc.Status != StatusSkip {
 			tc.Status = StatusPass
@@ -218,7 +219,7 @@ func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
 		tc.originalName = tc.Name
-		tc.number = i
+		tc.number = i + 1
 		tc.Name = slug.Make(tc.Name)
 		tc.Vars = ts.Vars.Clone()
 		tc.Vars.Add("venom.testcase", tc.Name)

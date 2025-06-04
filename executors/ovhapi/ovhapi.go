@@ -106,8 +106,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		e.TLSRootCA = venom.StringVarFromCtx(ctx, "ovh.tlsRootCA")
 	}
 
-	var headers = venom.StringMapStringVarFromCtx(ctx, "ovh.headers")
-	var workdir = venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+	headers := venom.StringMapStringVarFromCtx(ctx, "ovh.headers")
+	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 
 	// set default values
 	if e.Method == "" {

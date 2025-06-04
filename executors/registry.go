@@ -3,6 +3,7 @@ package executors
 import (
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/executors/amqp"
+	"github.com/ovh/venom/executors/couchbase"
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/grpc"
@@ -42,4 +43,5 @@ var Registry map[string]Constructor = map[string]Constructor{
 	ssh.Name:        ssh.New,
 	mongo.Name:      mongo.New,
 	web.Name:        web.New,
+	couchbase.Name:  couchbase.New,
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/kevinramage/venomWeb/common"
 	venomWeb "github.com/kevinramage/venomWeb/wrapper"
+
 	"github.com/ovh/venom"
 )
 
@@ -62,14 +63,14 @@ func (Executor) ZeroValueResult() interface{} {
 func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error) {
 	venom.Info(ctx, "Setup")
 	var webCtx WebContext
-	var driver = venom.StringVarFromCtx(ctx, "web.driver") // Possible values: chrome, gecko
-	var args = venom.StringSliceVarFromCtx(ctx, "web.args")
-	var prefs = venom.StringMapInterfaceVarFromCtx(ctx, "web.prefs")
+	driver := venom.StringVarFromCtx(ctx, "web.driver") // Possible values: chrome, gecko
+	args := venom.StringSliceVarFromCtx(ctx, "web.args")
+	prefs := venom.StringMapInterfaceVarFromCtx(ctx, "web.prefs")
 
 	// Binary
-	var binaryPath = venom.StringVarFromCtx(ctx, "web.binaryPath")
-	var driverPath = venom.StringVarFromCtx(ctx, "web.driverPath")
-	var port = venom.StringVarFromCtx(ctx, "web.driverPort")
+	binaryPath := venom.StringVarFromCtx(ctx, "web.binaryPath")
+	driverPath := venom.StringVarFromCtx(ctx, "web.driverPath")
+	port := venom.StringVarFromCtx(ctx, "web.driverPort")
 
 	// Instanciate web driver (chrome by default)
 	switch driver {
@@ -111,8 +112,8 @@ func (Executor) Setup(ctx context.Context, vars venom.H) (context.Context, error
 	}
 
 	var resizePage bool
-	var width = venom.IntVarFromCtx(ctx, "web.width")
-	var height = venom.IntVarFromCtx(ctx, "web.height")
+	width := venom.IntVarFromCtx(ctx, "web.width")
+	height := venom.IntVarFromCtx(ctx, "web.height")
 	if width > 0 && height > 0 {
 		resizePage = true
 	}
@@ -362,7 +363,6 @@ func (e Executor) runAction(ctx context.Context, session venomWeb.Session) (*Res
 }
 
 func find(ctx context.Context, session venomWeb.Session, findElement interface{}, r *Result) ([]venomWeb.Element, error) {
-
 	// Identify selector and locator strategy
 	selector, locator, err := readFindElement(ctx, findElement)
 	if err != nil {
@@ -387,7 +387,6 @@ func find(ctx context.Context, session venomWeb.Session, findElement interface{}
 
 // Find element from a selector
 func findOne(ctx context.Context, session venomWeb.Session, findElement interface{}, syncTimeout int64) (venomWeb.Element, error) {
-
 	// Identify selector and locator strategy
 	selector, locator, err := readFindElement(ctx, findElement)
 	if err != nil {
@@ -434,5 +433,5 @@ func generateErrorHTMLFile(ctx context.Context, session venomWeb.Session, name s
 	}
 	filename := name + ".dump.html"
 	venom.Info(ctx, "Content of the HTML page is saved in %s", filename)
-	return os.WriteFile(filename, []byte(html), 0644)
+	return os.WriteFile(filename, []byte(html), 0o644)
 }

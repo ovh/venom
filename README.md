@@ -68,7 +68,7 @@ You can find latest binary release from: https://github.com/ovh/venom/releases/l
 Example for Linux:
 
 ```bash
-$ curl https://github.com/ovh/venom/releases/download/v1.1.0/venom.linux-amd64 -L -o /usr/local/bin/venom && chmod +x /usr/local/bin/venom
+$ curl https://github.com/ovh/venom/releases/download/v1.2.0/venom.linux-amd64 -L -o /usr/local/bin/venom && chmod +x /usr/local/bin/venom
 $ venom -h
 ```
 
@@ -83,8 +83,8 @@ $ venom update
 The `venom update` command will download the latest version and replace the current binary:
 
 ```bash
-Url to update venom: https://github.com/ovh/venom/releases/download/v1.1.0/venom.darwin-amd64
-Getting latest release from: https://github.com/ovh/venom/releases/download/v1.1.0/venom.darwin-amd64 ...
+Url to update venom: https://github.com/ovh/venom/releases/download/v1.2.0/venom.darwin-amd64
+Getting latest release from: https://github.com/ovh/venom/releases/download/v1.2.0/venom.darwin-amd64 ...
 Update done.
 ```
 
@@ -92,7 +92,7 @@ Check the new version with `venom version` command:
 
 ```bash
 $ venom version
-Version venom: v1.1.0 
+Version venom: v1.2.0 
 ```
 
 # Docker image
@@ -345,6 +345,7 @@ testcases:
 ## Executors
 
 * **amqp**: https://github.com/ovh/venom/tree/master/executors/amqp
+* **couchbase**: https://github.com/ovh/venom/tree/master/executors/couchbase
 * **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
 * **grpc**: https://github.com/ovh/venom/tree/master/executors/grpc
@@ -573,8 +574,8 @@ testcases:
 - name: testA
   steps:
   - type: exec
-    script: echo '{{.venom.testsuite}} {{.venom.testsuite.filename}} {{.venom.testcase}} {{.venom.teststep.number}} {{.venom.datetime}} {{.venom.timestamp}}'
-    # will display something as: MyTestSuite MyTestSuiteWithVenomBuiltinVar.yml testA 0 2018-08-05T21:38:24+02:00 1533497904
+    script: echo '{{.venom.testsuite}} {{.venom.testsuite.filename}} {{.venom.testcase}} {{.venom.teststep.number}} {{.venom.datetime}} {{.venom.timestamp}} {{.venom.testcase.totalSteps}} {{.venom.testsuite.totalSteps}}'
+    # will display something as: MyTestSuite MyTestSuiteWithVenomBuiltinVar.yml testA 0 2018-08-05T21:38:24+02:00 1533497904 3 5
 
 ```
 
@@ -585,6 +586,7 @@ Builtin variables:
 * {{.venom.libdir}}
 * {{.venom.outputdir}}
 * {{.venom.testcase}}
+* {{.venom.testcase.totalSteps}}
 * {{.venom.teststep.number}}
 * {{.venom.testsuite.name}}
 * {{.venom.testsuite.filename}}
@@ -592,6 +594,7 @@ Builtin variables:
 * {{.venom.testsuite.shortName}}
 * {{.venom.testsuite.workdir}}
 * {{.venom.testsuite}}
+* {{.venom.testsuite.totalSteps}}
 * {{.venom.timestamp}}
 
 

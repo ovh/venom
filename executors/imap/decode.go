@@ -12,8 +12,9 @@ import (
 	"net/mail"
 	"strings"
 
-	"github.com/ovh/venom"
 	"github.com/yesnault/go-imap/imap"
+
+	"github.com/ovh/venom"
 )
 
 func decodeHeader(msg *mail.Message, headerName string) (string, error) {
@@ -45,15 +46,15 @@ func extract(ctx context.Context, rsp imap.Response) (Mail, error) {
 		}
 		m.Subject, err = decodeHeader(msg, "Subject")
 		if err != nil {
-			return Mail{}, fmt.Errorf("Cannot decode Subject header: %s", err)
+			return Mail{}, fmt.Errorf("cannot decode Subject header: %s", err)
 		}
 		m.From, err = decodeHeader(msg, "From")
 		if err != nil {
-			return Mail{}, fmt.Errorf("Cannot decode From header: %s", err)
+			return Mail{}, fmt.Errorf("cannot decode From header: %s", err)
 		}
 		m.To, err = decodeHeader(msg, "To")
 		if err != nil {
-			return Mail{}, fmt.Errorf("Cannot decode To header: %s", err)
+			return Mail{}, fmt.Errorf("cannot decode To header: %s", err)
 		}
 	}
 
@@ -75,7 +76,7 @@ func extract(ctx context.Context, rsp imap.Response) (Mail, error) {
 		// Using strings.Contains because "mime: no media type" error is not defined in mime package
 		// and thus, cannot be used with errors.Is
 		if err != nil && !strings.Contains(err.Error(), "mime: no media type") {
-			return Mail{}, fmt.Errorf("Error while reading Content-Type:%s", err)
+			return Mail{}, fmt.Errorf("error while reading Content-Type:%s", err)
 		} else if err != nil && strings.Contains(err.Error(), "mime: no media type") {
 			// Error "mime: no media type" is not a blocking error (returns when no Content-Type header is present)
 			// But it means we cannot read body

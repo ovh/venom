@@ -8,8 +8,9 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/ovh/venom"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/venom"
 )
 
 func generateClientFile(t *testing.T) (string, string) {
@@ -68,7 +69,6 @@ func TestExecutor_TLSOptions_From_String(t *testing.T) {
 }
 
 func TestInterpolation_Of_String(t *testing.T) {
-
 	e := &Executor{
 		Method:           "",
 		URL:              "http://example.com",
@@ -102,7 +102,6 @@ func TestInterpolation_Of_String(t *testing.T) {
 }
 
 func TestInterpolation_without_match_Of_String(t *testing.T) {
-
 	e := &Executor{
 		Method:           "",
 		URL:              "http://example.com",
@@ -123,5 +122,4 @@ func TestInterpolation_without_match_Of_String(t *testing.T) {
 
 	_, err := e.getRequest(ctx, "../../")
 	require.Errorf(t, err, "unable to interpolate file due to unresolved variables {{.name}}")
-
 }

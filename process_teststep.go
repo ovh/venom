@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 )
 
 type dumpFile struct {
@@ -63,7 +63,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			}
 			filename := path.Join(oDir, fmt.Sprintf("%s.%s.testcase.%d.step.%d.%d.dump.json", slug.Make(StringVarFromCtx(ctx, "venom.testsuite.shortName")), slug.Make(tc.Name), tc.number, stepNumber, rangedIndex))
 
-			if err := os.WriteFile(filename, []byte(HideSensitive(ctx, string(output))), 0644); err != nil {
+			if err := os.WriteFile(filename, []byte(HideSensitive(ctx, string(output))), 0o644); err != nil {
 				Error(ctx, "Error while creating file %s: %v", filename, err)
 				return
 			}
@@ -91,7 +91,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 					info += fmt.Sprintf(" (%s:%d)", filename, lineNumber)
 				}
 			}
-			Info(ctx, info)
+			Info(ctx, info, nil)
 			tsResult.ComputedInfo = append(tsResult.ComputedInfo, info)
 		}
 

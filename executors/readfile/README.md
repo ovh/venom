@@ -114,7 +114,7 @@ testcases:
       - result.contentjson.contentjson0.foo2 ShouldEqual bar2
 
   - type: readfile
-    path: test.txt
+    path: testa.txt
     assertions:
       - result.content ShouldContainSubstring multilines
 ```

@@ -14,6 +14,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/ovh/venom"
 )
 

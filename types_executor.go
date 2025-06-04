@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/gosimple/slug"
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
 )
@@ -168,11 +169,13 @@ func GetExecutorResult(r interface{}) map[string]interface{} {
 }
 
 type UserExecutor struct {
-	Executor     string            `json:"executor" yaml:"executor"`
-	Input        H                 `json:"input" yaml:"input"`
-	RawTestSteps []json.RawMessage `json:"steps" yaml:"steps"`
-	Output       json.RawMessage   `json:"output" yaml:"output"`
-	Filename     string            `json:"-" yaml:"-"`
+	Executor  string
+	Input     H                 `json:"input" yaml:"input"`
+	TestSteps []json.RawMessage `json:"steps" yaml:"steps"`
+	Raw       []byte            `json:"-" yaml:"-"` // the raw file content of the executor
+	RawInputs []byte            `json:"-" yaml:"-"`
+	Filename  string            `json:"-" yaml:"-"`
+	Output    json.RawMessage   `json:"output" yaml:"output"`
 }
 
 // Run is not implemented on user executor
@@ -202,34 +205,66 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 
 func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, tsIn *TestStepResult, step TestStep) (interface{}, error) {
 	vrs := tcIn.TestSuiteVars.Clone()
-	uxIn := runner.GetExecutor().(UserExecutor)
+	ux := runner.GetExecutor().(UserExecutor)
+	var tsVars map[string]string
+	newUX := UserExecutor{}
+	var err error
 
-	for k, va := range uxIn.Input {
-		if strings.HasPrefix(k, "input.") {
-			// do not reinject input.vars from parent user executor if exists
-			continue
-		} else if !strings.HasPrefix(k, "venom") {
-			if vl, ok := step[k]; ok && vl != "" { // value from step
-				vrs.AddWithPrefix("input", k, vl)
-			} else { // default value from executor
-				vrs.AddWithPrefix("input", k, va)
+	// process inputs
+	if len(ux.RawInputs) != 0 {
+		tsVars, err = DumpString(vrs)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error processing executor inputs: unable to dump testsuite vars")
+		}
+
+		interpolatedInput, err := interpolate.Do(string(ux.RawInputs), tsVars)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to interpolate executor inputs %q", ux.Executor)
+		}
+
+		err = yaml.Unmarshal([]byte(interpolatedInput), &newUX)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to unmarshal inputs for executor %q - raw interpolated:\n%v", ux.Executor, string(interpolatedInput))
+		}
+
+		for k, va := range newUX.Input {
+			if strings.HasPrefix(k, "input.") {
+				// do not reinject input.vars from parent user executor if exists
+				continue
+			} else if !strings.HasPrefix(k, "venom") {
+				if vl, ok := step[k]; ok && vl != "" { // value from step
+					vrs.AddWithPrefix("input", k, vl)
+				} else { // default value from executor
+					vrs.AddWithPrefix("input", k, va)
+				}
+			} else {
+				vrs.Add(k, va)
 			}
-		} else {
-			vrs.Add(k, va)
+		}
+		tsVars, err = DumpString(vrs)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error processing executor inputs: unable to dump testsuite vars")
 		}
 	}
-	// reload the user executor with the interpolated vars
-	_, exe, err := v.GetExecutorRunner(ctx, step, vrs)
+
+	interpolatedFull, err := interpolate.Do(string(ux.Raw), tsVars)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to reload executor")
+		return nil, errors.Wrapf(err, "unable to interpolate executor %q", ux.Executor)
 	}
-	ux := exe.GetExecutor().(UserExecutor)
+	// quote any remaining template expressions to ensure proper YAML parsing
+	sanitized := quoteTemplateExpressions([]byte(interpolatedFull))
+
+	err = yaml.Unmarshal([]byte(sanitized), &newUX)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to unmarshal executor %q - raw interpolated :\n%v", ux.Executor, string(sanitized))
+	}
+	ux.Output = newUX.Output
 
 	tc := &TestCase{
 		TestCaseInput: TestCaseInput{
 			Name:         ux.Executor,
-			RawTestSteps: ux.RawTestSteps,
 			Vars:         vrs,
+			RawTestSteps: newUX.TestSteps,
 		},
 		number:          tcIn.number,
 		TestSuiteVars:   tcIn.TestSuiteVars,
@@ -282,10 +317,6 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, errors.Wrapf(err, "unable to unmarshal")
 	}
 
-	if len(tsIn.Errors) > 0 {
-		return outputResult, fmt.Errorf("failed")
-	}
-
 	// here, we have the user executor results.
 	// and for each key in output, we try to add the json version
 	// this will allow user to use json version of output (map, etc...)
@@ -298,6 +329,11 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 	result, err := Dump(outputResult)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to compute result")
+	}
+
+	if len(tsIn.Errors) > 0 {
+		Error(ctx, "user executor %q failed - raw interpolated:\n%v\n", ux.Executor, string(sanitized))
+		return outputResult, fmt.Errorf("executor %q failed", ux.Executor)
 	}
 
 	for k, v := range result {
@@ -331,4 +367,16 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		}
 	}
 	return result, nil
+}
+
+// quoteTemplateExpressions adds double quotes around template expressions in YAML content.
+// It specifically targets expressions that follow a colon and whitespace like 'key: {{.variable}}'
+// and are not already enclosed in quotes. This ensures proper YAML parsing of template variables.
+func quoteTemplateExpressions(content []byte) []byte {
+	// First capture group matches everything up to the colon, checking the last non-whitespace
+	// character isn't a quote (to skip JSON keys)
+	re := regexp.MustCompile(`(?m)(^.*[^"\s][\s]*)(:\s+)({{.*?}})(.*?)(?:\s*)$`)
+
+	// Put quotes around the template expression and what follows it
+	return re.ReplaceAll(content, []byte(`$1$2"$3$4"`))
 }

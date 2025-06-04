@@ -51,7 +51,7 @@ $(CROSS_COMPILED_BINARIES): $(GOFILES) $(TARGET_DIST)
 	$(info *** compiling $@)
 	@os=$(call get_os_from_binary_file,$@); \
 	filename=$@ ; \
-	if [[ $${os} == 'windows' ]]; then filename=$@.exe; fi; \
+	if test "$${os}" = "windows"; then filename=$@.exe; fi; \
 	GOOS=$${os} \
 	GOARCH=$(call get_arch_from_binary_file,$@) \
 	$(GO_BUILD) $(BUILD_MODE) $(LDFLAGS) -o $${filename};
@@ -104,6 +104,10 @@ $(GO_COBERTURA):
 GO_XUTOOLS := $(GOPATH)/bin/xutools
 $(GO_XUTOOLS):
 	go install github.com/richardlt/xutools@latest
+
+GO_GOIMPORTS = ${GOPATH}/bin/goimports
+$(GO_GOIMPORTS):
+	go install golang.org/x/tools/cmd/goimports@latest
 
 mk_go_test: $(GO_COV_MERGE) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS)# Run tests
 	@echo "Generating unit tests coverage..."
@@ -205,6 +209,17 @@ $(LINT_BIN):
 mk_go_lint: $(GOLANG_CI_LINT) # run golangci lint
 	$(info *** running lint)
 	$(LINT_CMD)
+
+.PHONY: gofmt
+gofmt:
+	gofmt -e -l -s -w .
+
+.PHONY: goimports
+goimports:
+	$(GO_GOIMPORTS) -e -l -w -local github.com/ovh/venom .
+
+.PHONY: fmt
+fmt: gofmt goimports
 
 ##### =====> Internals <===== #####
 
