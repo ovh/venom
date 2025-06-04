@@ -242,7 +242,6 @@ func TestMail_hasSameFlags(t *testing.T) {
 		args   args
 		want   bool
 	}{
-
 		{
 			name: "Does not contain flags",
 			fields: fields{

@@ -63,6 +63,6 @@ func (c client) GetLatestSchema(subject string) (int, string, error) {
 	if err != nil {
 		return 0, "", fmt.Errorf("failed to get latest schema ID: %w", err)
 	}
-	
+
 	return schema.ID, schema.Schema, nil
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/mattn/go-zglob"
 	"github.com/rockbears/yaml"
 
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 )
 
@@ -26,7 +26,7 @@ func getFilesPath(path []string) ([]string, error) {
 		// if we put ./test/*.yml, it will fail and it's normal
 		fileInfo, _ := os.Stat(p)
 		if fileInfo != nil && fileInfo.IsDir() {
-			//check if *.yml or *.yaml files exists in the path
+			// check if *.yml or *.yaml files exists in the path
 			p = p + string(os.PathSeparator) + "*.y*ml"
 		}
 

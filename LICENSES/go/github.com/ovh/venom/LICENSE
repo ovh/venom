@@ -1,0 +1,422 @@
+== github.com/ovh/venom ==
+
+Copyright 2016-2023 ClickHouse, Inc.
+Copyright [yyyy] [name of copyright owner]
+Copyright (c) 2013 Shopify
+Copyright (c) 2023 IBM Corporation
+Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
+Copyright (c) 2018 Anton Fisher
+Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
+Copyright (c) 2005-2008  Dustin Sallings <dustin@spy.net>
+Copyright (c) 2014 Evan Huus
+Copyright (c) 2016 Evan Huus
+Copyright (c) 2013 Fatih Arslan
+Copyright (c) 2017 Fullstory, Inc
+Copyright (c) 2018 tenfy
+Copyright (c) 2009 The Go Authors. All rights reserved.
+Copyright (c) 2012 James Cooper <james@bitmechanic.com>
+Copyright (c) 2016 Andrey Nering
+Copyright 2009 The Go Authors.
+Copyright 2010 The Go Authors.  All rights reserved.
+Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
+Copyright (c) 2013 The go-github AUTHORS. All rights reserved.
+Copyright (c) 2013 Google. All rights reserved.
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
+Copyright 2014 Rainy Cape S.L. <hello@rainycape.com>
+Copyright (c) 2014 HashiCorp, Inc.
+Copyright (c) 2015 HashiCorp, Inc.
+Copyright (c) 2015 Huan Du
+Copyright 2015 Alan Shreve
+Copyright 2012 Keith Rarick
+Copyright (c) 2012 The Go Authors. All rights reserved.
+Copyright 2016, Jonathan Turner <jt@jtnet.co.uk>
+Copyright (c) 2019 Klaus Post. All rights reserved.
+Copyright (c) 2015 Klaus Post
+Copyright 2016 The filepathx Authors
+Copyright (c) 2015, Pierre Curto
+Copyright (c) 2023 Klaus Post
+Copyright (c) 2016 Caleb Spare
+Copyright (c) 2011-2013, 'pq' Contributors
+Copyright 2017 LinkedIn Corp. Licensed under the Apache License,
+Copyright (c) 2016 Yasuhiro Matsumoto
+Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
+Copyright (c) 2017 Yasuhiro Matsumoto
+Copyright (c) 2014 Yasuhiro Matsumoto
+Copyright (c) 2013 Mitchell Hashimoto
+Copyright (c) 2014-2023 Montana Flynn (https://montanaflynn.com)
+Copyright (c) 2013-2024, OVH SAS
+Copyright (c) 2020 The Go Authors. All rights reserved.
+Copyright (c) 2016 The Gitea Authors
+Copyright (c) 2014 The Gogs Authors
+Copyright (c) 2013 Dario Castañé. All rights reserved.
+Copyright (c) OWASP Foundation
+Copyright (c) 2015 Microsoft
+Copyright (c) 2012-2022, The Go Authors
+Copyright (c) 2012-2022, Martin Angers, Yuki Okushi & Contributors
+Copyright (c) 2015 Alexander Scheel, Joel May, Matthew Burket
+Copyright (c) 2015 Andy Grunwald
+Copyright (c) 2012-2023 The ANTLR Project. All rights reserved.
+Copyright (c) 2013 HashiCorp, Inc.
+Copyright 2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2014-2015 Stripe, Inc.
+Copyright (C) 2013 Blake Mizerany
+Copyright (c) 2014 Benedikt Lang <github at benediktlang.de>
+Copyright (c) 2016 Leonid Bugaev
+Copyright (c) 2015 Chzyer
+Copyright (c) 2019 Cloudflare. All rights reserved.
+Copyright (c) 2018, Brendan McMillion. All rights reserved.
+Copyright (c) 2023 urfave/cli maintainers
+Copyright 2014 CoreOS, Inc
+Copyright 2018 CoreOS, Inc
+Copyright 2012-2017 Docker, Inc.
+Copyright (c) 2015 John Howard (Microsoft)
+Copyright © 2015 Docker, Inc.
+Copyright © 2015, Joe Tsai and The Go Authors. All rights reserved.
+Copyright (c) 2012,2013 Ernest Micklei
+Copyright (c) 2015, Emir Pasic
+Copyright (c) 2017 Benjamin Scher Purcell <benjapurcell@gmail.com>
+Copyright (c) 2016 Felix Geisendörfer (felix@debuggable.com)
+Copyright (c) 2021 Vladislav Gukasov
+Copyright (c) 2012 Dave Grijalva
+Copyright © 2012 The Go Authors. All rights reserved.
+Copyright © fsnotify Authors. All rights reserved.
+Copyright (c) 2016 FUJIWARA Shunichiro
+Copyright (c) 2014 Sam Ghods
+Copyright (c) 2012 Péter Surányi. Portions Copyright (c) 2009 The Go
+Copyright (c) 2021 Go kit
+Copyright (c) 2014 Simon Eskildsen
+Copyright (c) 2015 go-logfmt
+Copyright (c) 2013 The github.com/redis/go-redis Authors.
+Copyright (c) 2013, The GoGo Authors. All rights reserved.
+Copyright 2010 The Go Authors.
+Copyright (c) 2021 golang-jwt maintainers
+Copyright 2017-2020, Google LLC.
+Copyright (c) 2017 The Go Authors. All rights reserved.
+Copyright 2016, Google Inc.
+Copyright (c) 2016 inhere
+Copyright 2012-2013 Rackspace, Inc.
+Copyright Gophercloud authors
+Copyright (c) 2023 The Gorilla Authors. All rights reserved.
+Copyright © 2014-2018 HashiCorp, Inc.
+Copyright (c) 2020 HashiCorp, Inc.
+Copyright (c) 2015 Toru Nagashima
+Copyright (c) 2016 Ciena Corporation.
+Copyright (c) 2017 HashiCorp, Inc.
+Copyright (c) 2016 HashiCorp, Inc.
+Copyright (c) 2015 Andrew Smith
+Copyright (c) 2021 Taishi Kasuga
+Copyright (c) 2017 Ian Coleman
+Copyright (c) 2014 Juan Batiz-Benet
+Copyright (c) 2018 jedib0t
+Copyright 2015 James Saryerwinnie
+Copyright (c) 2012-2018 Mat Ryer and Tyler Bunnell
+Copyright (c) 2019 Josh Bleecher Snyder
+Copyright (c) 2016 json-iterator
+Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+Copyright (C) 2014 Kevin Ballard
+Copyright (c) 2017 Kevin Burke.
+Copyright (c) 2013 - 2017 Thomas Pelletier, Eric Anderton
+Copyright (c) 2013, Georg Reinke (<guelfey at gmail dot com>), Google
+Copyright (c) 2014 Klaus Post
+Copyright (c) 2015 Ryan Hileman
+Copyright (c) 2013-2020, Frank Schroeder
+Copyright (c) 2016 Mail.Ru Group
+Copyright (c) 2017, Arigato Machine Inc.
+Copyright 2012 Matt T. Proud (matt.proud@gmail.com)
+Copyright (c) 2014 Máximo Cuadros
+Copyright (c) 2013 Mario L. Gutierrez
+Copyright (c) 2013 Mario Gutierrez mario@mgutz.com
+Copyright (c) 2016 Matthew Holt
+Copyright (c) 2017-2019 The Miscreant Developers. The canonical list of project
+Copyright (c) 2017-2019 [The Miscreant Developers][AUTHORS].
+Copyright (c) 2016 Mitchell Hashimoto
+Copyright (c) 2011, Open Knowledge Foundation Ltd.
+Copyright (c) Nathan Button
+Copyright (C) 2012 termbox-go authors
+Copyright (c) 2015, Nicholas Waples
+Copyright (C) 2014 by Oleku Konko
+Copyright © 2012-2015 Oliver Eilhard
+Copyright (c) 2013 Joshua Tacoma
+Copyright © 2019, 2020 OCI Contributors
+Copyright © 2016 Docker, Inc.
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+Copyright (c) 2013-2022, OVH SAS
+Copyright (c) 2018, OVH SAS.
+Copyright (c) 2012-2019 Patrick Mylund Nielsen and the go-cache contributors
+Copyright (c) 2021 - 2023 Thomas Pelletier
+Copyright 2017 Marc Stevens <marc@marc-stevens.nl>
+Copyright (c) 2014, Dave Cheney <dave@cheney.net>
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+Copyright (c) 2013, Patrick Mezard
+Copyright 2012-2015 The Prometheus Authors
+Copyright 2013-2015 Blake Mizerany, Björn Rabenstein
+Copyright 2010 The Go Authors
+Copyright 2013 Matt T. Proud
+Copyright 2015 The Prometheus Authors
+Copyright 2014-2015 The Prometheus Authors
+Copyright 2013-2015 The Prometheus Authors
+Copyright (c) 2012-2014 Dave Collins <dave@davec.name>
+Copyright 2012 Richard Crowley. All rights reserved.
+Copyright (c) 2019 Oliver Kuederle
+Copyright (C) 2014-2021 by Ruben Vermeersch <ruben@rocketeer.be>
+Copyright (C) 2014-2017 by Ruben Vermeersch <ruben@rocketeer.be>
+Copyright (C) 2012-2014 by Liam Staskawicz
+Copyright (c) 2014 Ryan Uber
+Copyright (c) 2014 XOR Data Exchange, Inc.
+Copyright (c) 2012-2016 The go-diff Authors. All rights reserved.
+Copyright (c) 2018-2023, Steven Guiheux
+Copyright (c) 2017 VMware, Inc. All Rights Reserved. 
+Copyright 2023 Skeema LLC and the Skeema Knownhosts authors
+Copyright (c) 2014 Steve Francia
+Copyright (c) 2012 Alex Ogier. All rights reserved.
+Copyright (c) 2012-2019, Sean Treadway, SoundCloud Ltd.
+Copyright (c) 2012-2020 Mat Ryer, Tyler Bunnell and contributors.
+Copyright (c) 2013 Alif Rachmawadi
+Copyright (c) 2016 Tevin Zhang
+Copyright (c) 2014-2022  Ulrich Kunitz
+Copyright (c) 2020 Will Maier
+Copyright (c) 2016 Anmol Sethi
+Copyright (c) 2013 Jordan Wright
+Copyright (c) 2015 Keybase
+Copyright (c) 2017 Yusuke Inuzuka
+Copyright (c) 2015 Yusuke Inuzuka
+Copyright (c) 2016 Uber Technologies, Inc.
+Copyright (c) 2017-2021 Uber Technologies, Inc.
+Copyright (c) 2016-2017 Uber Technologies, Inc.
+Copyright (c) 2011 Google Inc. All rights reserved.
+Copyright (c) 2013 Joshua Tacoma. All rights reserved.
+Copyright 2014 gRPC authors.
+Copyright (c) 2018 The Go Authors. All rights reserved.
+Copyright (c) 2018 Alec Aivazis
+Copyright (c) 2014 Takashi Kokubun
+Copyright (c) 2011-2015 Michael Mitton (mmitton@gmail.com)
+Copyright (C) 2017 Space Monkey, Inc.
+Copyright (c) 2016 Péter Surányi.
+Copyright (c) 2006-2010 Kirill Simonov
+Copyright (c) 2006-2011 Kirill Simonov
+Copyright (c) 2011-2019 Canonical Ltd
+Copyright 2011-2016 Canonical Ltd.
+Copyright (c) 2013-2019, OVH SAS
+Copyright (c) 2015-2025, OVH SAS
+Copyright (c) 2015-2023, OVH SAS
+Copyright (c) 2020 Samy Sultan
+Copyright 2021 by David A. Golden. All rights reserved.
+Copyright 2018 by David A. Golden. All rights reserved.
+Copyright (c) 2013 The Go-IMAP Authors. All rights reserved.
+Copyright (c) 2014 youmark
+Copyright (c) 2017 The Libc Authors. All rights reserved.
+Copyright (c) 2012 Dominik Honnef
+Copyright (c) 2014 The mathutil Authors. All rights reserved.
+Copyright (c) 2014 The mersenne Authors. All rights reserved.
+Copyright (c) 2017 The Memory Authors. All rights reserved.
+Copyright (c) 2017 The Sqlite Authors. All rights reserved.
+Copyright 2022 OVH SAS
+Copyright (c) 2017 Paul Mach
+Copyright 2023 Segment
+Copyright (c) 2015 Spring, Inc.
+Copyright (c) 2013 Oguz Bilgic
+Copyright (c) 2019 TJ Holowaychuk tj@tjholowaychuk.com
+
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+"License" shall mean the terms and conditions for use, reproduction,
+and distribution as defined by Sections 1 through 9 of this document.
+
+"Licensor" shall mean the copyright owner or entity authorized by
+the copyright owner that is granting the License.
+
+"Legal Entity" shall mean the union of the acting entity and all
+other entities that control, are controlled by, or are under common
+control with that entity. For the purposes of this definition,
+"control" means (i) the power, direct or indirect, to cause the
+direction or management of such entity, whether by contract or
+otherwise, or (ii) ownership of fifty percent (50%) or more of the
+outstanding shares, or (iii) beneficial ownership of such entity.
+
+"You" (or "Your") shall mean an individual or Legal Entity
+exercising permissions granted by this License.
+
+"Source" form shall mean the preferred form for making modifications,
+including but not limited to software source code, documentation
+source, and configuration files.
+
+"Object" form shall mean any form resulting from mechanical
+transformation or translation of a Source form, including but
+not limited to compiled object code, generated documentation,
+and conversions to other media types.
+
+"Work" shall mean the work of authorship, whether in Source or
+Object form, made available under the License, as indicated by a
+copyright notice that is included in or attached to the work
+(an example is provided in the Appendix below).
+
+"Derivative Works" shall mean any work, whether in Source or Object
+form, that is based on (or derived from) the Work and for which the
+editorial revisions, annotations, elaborations, or other modifications
+represent, as a whole, an original work of authorship. For the purposes
+of this License, Derivative Works shall not include works that remain
+separable from, or merely link (or bind by name) to the interfaces of,
+the Work and Derivative Works thereof.
+
+"Contribution" shall mean any work of authorship, including
+the original version of the Work and any modifications or additions
+to that Work or Derivative Works thereof, that is intentionally
+submitted to Licensor for inclusion in the Work by the copyright owner
+or by an individual or Legal Entity authorized to submit on behalf of
+the copyright owner. For the purposes of this definition, "submitted"
+means any form of electronic, verbal, or written communication sent
+to the Licensor or its representatives, including but not limited to
+communication on electronic mailing lists, source code control systems,
+and issue tracking systems that are managed by, or on behalf of, the
+Licensor for the purpose of discussing and improving the Work, but
+excluding communication that is conspicuously marked or otherwise
+designated in writing by the copyright owner as "Not a Contribution."
+
+"Contributor" shall mean Licensor and any individual or Legal Entity
+on behalf of whom a Contribution has been received by Licensor and
+subsequently incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of
+this License, each Contributor hereby grants to You a perpetual,
+worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+copyright license to reproduce, prepare Derivative Works of,
+publicly display, publicly perform, sublicense, and distribute the
+Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of
+this License, each Contributor hereby grants to You a perpetual,
+worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+(except as stated in this section) patent license to make, have made,
+use, offer to sell, sell, import, and otherwise transfer the Work,
+where such license applies only to those patent claims licensable
+by such Contributor that are necessarily infringed by their
+Contribution(s) alone or by combination of their Contribution(s)
+with the Work to which such Contribution(s) was submitted. If You
+institute patent litigation against any entity (including a
+cross-claim or counterclaim in a lawsuit) alleging that the Work
+or a Contribution incorporated within the Work constitutes direct
+or contributory patent infringement, then any patent licenses
+granted to You under this License for that Work shall terminate
+as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the
+Work or Derivative Works thereof in any medium, with or without
+modifications, and in Source or Object form, provided that You
+meet the following conditions:
+
+(a) You must give any other recipients of the Work or
+Derivative Works a copy of this License; and
+
+(b) You must cause any modified files to carry prominent notices
+stating that You changed the files; and
+
+(c) You must retain, in the Source form of any Derivative Works
+that You distribute, all copyright, patent, trademark, and
+attribution notices from the Source form of the Work,
+excluding those notices that do not pertain to any part of
+the Derivative Works; and
+
+(d) If the Work includes a "NOTICE" text file as part of its
+distribution, then any Derivative Works that You distribute must
+include a readable copy of the attribution notices contained
+within such NOTICE file, excluding those notices that do not
+pertain to any part of the Derivative Works, in at least one
+of the following places: within a NOTICE text file distributed
+as part of the Derivative Works; within the Source form or
+documentation, if provided along with the Derivative Works; or,
+within a display generated by the Derivative Works, if and
+wherever such third-party notices normally appear. The contents
+of the NOTICE file are for informational purposes only and
+do not modify the License. You may add Your own attribution
+notices within Derivative Works that You distribute, alongside
+or as an addendum to the NOTICE text from the Work, provided
+that such additional attribution notices cannot be construed
+as modifying the License.
+
+You may add Your own copyright statement to Your modifications and
+may provide additional or different license terms and conditions
+for use, reproduction, or distribution of Your modifications, or
+for any such Derivative Works as a whole, provided Your use,
+reproduction, and distribution of the Work otherwise complies with
+the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+any Contribution intentionally submitted for inclusion in the Work
+by You to the Licensor shall be under the terms and conditions of
+this License, without any additional terms or conditions.
+Notwithstanding the above, nothing herein shall supersede or modify
+the terms of any separate license agreement you may have executed
+with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade
+names, trademarks, service marks, or product names of the Licensor,
+except as required for reasonable and customary use in describing the
+origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or
+agreed to in writing, Licensor provides the Work (and each
+Contributor provides its Contributions) on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied, including, without limitation, any warranties or conditions
+of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+PARTICULAR PURPOSE. You are solely responsible for determining the
+appropriateness of using or redistributing the Work and assume any
+risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory,
+whether in tort (including negligence), contract, or otherwise,
+unless required by applicable law (such as deliberate and grossly
+negligent acts) or agreed to in writing, shall any Contributor be
+liable to You for damages, including any direct, indirect, special,
+incidental, or consequential damages of any character arising as a
+result of this License or out of the use or inability to use the
+Work (including but not limited to damages for loss of goodwill,
+work stoppage, computer failure or malfunction, or any and all
+other commercial damages or losses), even if such Contributor
+has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing
+the Work or Derivative Works thereof, You may choose to offer,
+and charge a fee for, acceptance of support, warranty, indemnity,
+or other liability obligations and/or rights consistent with this
+License. However, in accepting such obligations, You may act only
+on Your own behalf and on Your sole responsibility, not on behalf
+of any other Contributor, and only if You agree to indemnify,
+defend, and hold each Contributor harmless for any liability
+incurred by, or claims asserted against, such Contributor by reason
+of your accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work.
+
+To apply the Apache License to your work, attach the following
+boilerplate notice, with the fields enclosed by brackets "[]"
+replaced with your own identifying information. (Don't include
+the brackets!)  The text should be enclosed in the appropriate
+comment syntax for the file format. We also recommend that a
+file or class name and description of purpose be included on the
+same "printed page" as the copyright notice for easier
+identification within third-party archives.
+
+Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+

@@ -28,14 +28,14 @@ func (v *Venom) InitLogger() error {
 	}
 
 	if v.OutputDir != "" {
-		if err := os.MkdirAll(v.OutputDir, os.FileMode(0755)); err != nil {
+		if err := os.MkdirAll(v.OutputDir, os.FileMode(0o755)); err != nil {
 			return errors.Wrapf(err, "unable to create output dir")
 		}
 	}
 
 	var err error
-	var logFile = filepath.Join(v.OutputDir, computeOutputFilename("venom.log"))
-	v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+	logFile := filepath.Join(v.OutputDir, computeOutputFilename("venom.log"))
+	v.LogOutput, err = os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, os.FileMode(0o644))
 	if err != nil {
 		return errors.Wrapf(err, "unable to write log file")
 	}
@@ -87,6 +87,11 @@ func (v *Venom) Parse(ctx context.Context, path []string) error {
 
 	if err := v.readFiles(ctx, filesPath); err != nil {
 		return err
+	}
+
+	err = v.registerUserExecutors(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "unable to register user executors")
 	}
 
 	missingVars := []string{}

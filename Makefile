@@ -10,7 +10,7 @@ DOCKER_IMAGE_TAG 	= $(shell echo $(DOCKER_IMAGE) | cut -d ':' -f 2)
 
 include ./.build/core.mk
 
-ifneq (,$(strip $(filter build dist run lint clean test test-xunit,$(MAKECMDGOALS))))
+ifneq (,$(strip $(filter build dist run fmt lint clean test test-xunit,$(MAKECMDGOALS))))
 include ./.build/go.mk
 endif
 

@@ -10,11 +10,12 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/yaml.v3"
+
+	"github.com/ovh/venom"
 )
 
 const Name = "mongo"

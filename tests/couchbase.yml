@@ -1,0 +1,56 @@
+name: Couchbase Test Suite
+vars:
+  couchbase_dsn: "couchbase://localhost"
+  couchbase_username: "Administrator"
+  couchbase_password: "password"
+
+testcases:
+  - name: Verify couchbase CRUD
+    steps:
+      - type: couchbase
+        dsn:  "{{ .couchbase_dsn }}"
+        username: "{{ .couchbase_username }}"
+        password: "{{ .couchbase_password }}"
+        bucket: "travel-sample"
+        actions:
+          - type: delete
+            ids: ["airline_01"]
+          - type: exists
+            ids: ["airline_10","airline_01"]
+          - type: get
+            with_expiry: true
+            ids: ["airline_10","airline_01"]
+          - type: upsert
+            entries:
+              airline_01:
+                "id": 1
+                "type": "airline"
+                "name": "first airline"
+                "country": "Latveria"
+          - type: get
+            ids: ["airline_01"]
+          - type: insert
+            entries:
+              airline_01: {"foo":"bar"}
+          - type: replace
+            entries:
+              airline_01:
+                "id": 1
+                "type": "airline"
+                "name": "last airline"
+                "country": "Latveria" 
+        info: "{{ .result.actions }}"
+        assertions:
+          - result.actions.actions0.airline_01 ShouldNotBeNil
+          - result.actions.actions1.airline_10.found ShouldBeTrue
+          - result.actions.actions1.airline_01.found ShouldBeFalse
+          - result.actions.actions2.airline_10.found ShouldBeTrue
+          - result.actions.actions2.airline_10.expiry ShouldBeZeroValue
+          - result.actions.actions2.airline_10.data ShouldJSONEqual {"id":10,"type":"airline","name":"40-Mile Air","iata":"Q5","icao":"MLA","callsign":"MILE-AIR","country":"United States"}
+          - result.actions.actions2.airline_01 ShouldNotBeNil
+          - result.actions.actions2.airline_01.found ShouldBeFalse
+          - result.actions.actions3.airline_01.upserted ShouldBeTrue
+          - result.actions.actions4.airline_01.found ShouldBeTrue
+          - result.actions.actions4.airline_01.data.country ShouldEqual Latveria
+          - result.actions.actions5.airline_01.inserted ShouldBeFalse
+          - result.actions.actions6.airline_01.replaced ShouldBeTrue

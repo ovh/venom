@@ -132,7 +132,6 @@ func loadFixtures(ctx context.Context, db *sql.DB, files []string, folder string
 			fixtures.Database(db),
 			fixtures.Directory(path.Join(workdir, folder)),
 			dialect)
-
 		if err != nil {
 			return errors.Wrapf(err, "failed to create folder loader")
 		}
@@ -153,7 +152,6 @@ func loadFixtures(ctx context.Context, db *sql.DB, files []string, folder string
 			fixtures.Database(db),
 			fixtures.Files(files...),
 			dialect)
-
 		if err != nil {
 			return errors.Wrapf(err, "failed to create files loader")
 		}
