@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
 )
@@ -17,7 +17,7 @@ import (
 var varRegEx = regexp.MustCompile("{{.*}}")
 
 // Parse the testcase to find unreplaced and extracted variables
-func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, error) {
+func (v *Venom) parseTestCase(_ *TestSuite, tc *TestCase) ([]string, []string, error) {
 	dvars, err := DumpStringPreserveCase(tc.Vars)
 	if err != nil {
 		return nil, nil, err
@@ -139,6 +139,7 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 	tc.Vars = ts.Vars.Clone()
 	tc.Vars.Add("venom.testcase", tc.Name)
 	tc.Vars.AddAll(ts.ComputedVars)
+	tc.Vars.Add("venom.testcase.totalSteps", len(tc.RawTestSteps))
 	tc.computedVars = H{}
 
 	ctx = v.processSecrets(ctx, ts, tc)
@@ -173,22 +174,25 @@ func (v *Venom) runTestSteps(ctx context.Context, tc *TestCase, tsIn *TestStepRe
 	}
 	if len(results) > 0 {
 		tc.Status = StatusSkip
-		for _, s := range results {
-			tc.Skipped = append(tc.Skipped, Skipped{Value: s})
-			Warn(ctx, s)
+		for i := range results {
+			tc.Skipped = append(tc.Skipped, Skipped{Value: results[i]})
+			Warn(ctx, results[i], nil)
 		}
 		return
 	}
 
-	var knowExecutors = map[string]struct{}{}
-	var previousStepVars = H{}
+	knowExecutors := map[string]struct{}{}
+	previousStepVars := H{}
 	fromUserExecutor := tsIn != nil
 
 loopRawTestSteps:
-	for stepNumber, rawStep := range tc.RawTestSteps {
+	for stepIndex, rawStep := range tc.RawTestSteps {
 		stepVars := tc.Vars.Clone()
 		stepVars.AddAll(previousStepVars)
 		stepVars.AddAllWithPrefix(tc.Name, tc.computedVars)
+
+		// Use stepNumber as a 1-based index
+		stepNumber := stepIndex + 1
 		stepVars.Add("venom.teststep.number", stepNumber)
 
 		ranged, err := parseRanged(ctx, rawStep, stepVars)
@@ -270,7 +274,7 @@ loopRawTestSteps:
 			if err := yaml.Unmarshal([]byte(content), &step); err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to parse step #%d: %v", stepNumber, err)
-				Error(ctx, content)
+				Error(ctx, content, nil)
 				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
 				break loopRawTestSteps
 			}
@@ -321,7 +325,9 @@ loopRawTestSteps:
 			}
 
 			// ##### RUN Test Step Here
-			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber)
+			skipVars := tc.Vars.Clone()
+			skipVars.AddAllWithPrefix(tc.Name, previousStepVars)
+			skip, err := parseSkip(ctx, tc, tsResult, rawStep, stepNumber, skipVars)
 			if err != nil {
 				tsResult.appendError(err)
 				tsResult.Status = StatusFail
@@ -356,6 +362,12 @@ loopRawTestSteps:
 					Error(ctx, "%v", e)
 					isRequired = isRequired || e.AssertionRequired || v.StopOnFailure
 				}
+
+				redactedOutputVars := make(map[string]string)
+				for k, v := range tsResult.ComputedVars {
+					redactedOutputVars[k] = HideSensitive(ctx, v)
+				}
+				Error(ctx, "teststep output vars are: %v", redactedOutputVars)
 
 				if isRequired {
 					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", errors.New("At least one required assertion failed, skipping remaining steps"))
@@ -405,8 +417,13 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 
 // Print a single step result (if verbosity is enabled)
 func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
-	if tsIn != nil {
-		tsIn.appendFailure(ts.Errors...)
+	fromUserExecutor := tsIn != nil
+	if fromUserExecutor {
+		// move back up user executor errors to parent test step for later logging
+		tsIn.Errors = append(tsIn.Errors, ts.Errors...)
+
+		// move back up user executor logs to parent test step for later logging
+		tsIn.ComputedInfo = append(tsIn.ComputedInfo, ts.ComputedInfo...)
 	} else if v.Verbose >= 1 {
 		if len(ts.Errors) > 0 {
 			v.Println(" %s", Red(StatusFail))
@@ -417,7 +434,7 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 				v.Println(" \t\t  %s", Yellow(f.Value))
 			}
 			if mustAssertionFailed {
-				skipped := len(tc.RawTestSteps) - stepNumber - 1
+				skipped := len(tc.RawTestSteps) - stepNumber
 				if skipped == 1 {
 					v.Println(" \t\t  %s", Gray(fmt.Sprintf("%d other step was skipped", skipped)))
 				} else {
@@ -440,7 +457,7 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 }
 
 // Parse and format skip conditional
-func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []byte, stepNumber int) (bool, error) {
+func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []byte, stepNumber int, vars H) (bool, error) {
 	// Load "skip" attribute from step
 	var assertions struct {
 		Skip []string `yaml:"skip"`
@@ -451,15 +468,15 @@ func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []
 
 	// Evaluate skip assertions
 	if len(assertions.Skip) > 0 {
-		results, err := testConditionalStatement(ctx, tc, assertions.Skip, tc.Vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
+		results, err := testConditionalStatement(ctx, tc, assertions.Skip, vars, fmt.Sprintf("skipping testcase %%q step #%d: %%v", stepNumber))
 		if err != nil {
 			Error(ctx, "unable to evaluate \"skip\" assertions: %v", err)
 			return false, err
 		}
 		if len(results) > 0 {
-			for _, s := range results {
-				ts.Skipped = append(ts.Skipped, Skipped{Value: s})
-				Warn(ctx, s)
+			for i := range results {
+				ts.Skipped = append(ts.Skipped, Skipped{Value: results[i]})
+				Warn(ctx, results[i], nil)
 			}
 			return true, nil
 		}
@@ -469,8 +486,7 @@ func parseSkip(ctx context.Context, tc *TestCase, ts *TestStepResult, rawStep []
 
 // Parse and format range data to allow iterations over user data
 func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error) {
-
-	//Load "range" attribute and perform actions depending on its typing
+	// Load "range" attribute and perform actions depending on its typing
 	var ranged Range
 	if err := json.Unmarshal(rawStep, &ranged); err != nil {
 		return ranged, fmt.Errorf("unable to parse range expression: %v", err)
@@ -478,12 +494,12 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 
 	switch ranged.RawContent.(type) {
 
-	//Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
+	// Nil means this is not a ranged data, append an empty item to force at least one iteration and exit
 	case nil:
 		ranged.Items = append(ranged.Items, RangeData{})
 		return ranged, nil
 
-	//String needs to be parsed and possibly templated
+	// String needs to be parsed and possibly templated
 	case string:
 		Debug(ctx, "attempting to parse range expression")
 		rawString := ranged.RawContent.(string)
@@ -495,7 +511,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 		err := json.Unmarshal([]byte("{\"range\":"+rawString+"}"), &ranged)
 		// ... or fallback
 		if err != nil {
-			//Try templating and escaping data
+			// Try templating and escaping data
 			Debug(ctx, "attempting to template range expression and parse it again")
 			vars, err := DumpStringPreserveCase(stepVars)
 			if err != nil {
@@ -511,7 +527,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 				break
 			}
 
-			//Try parsing data
+			// Try parsing data
 			err = json.Unmarshal([]byte(content), &ranged)
 			if err != nil {
 				Warn(ctx, "failed to parse range expression when parsing data into raw string: %v", err)
@@ -529,10 +545,10 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 		}
 	}
 
-	//Format data
+	// Format data
 	switch t := ranged.RawContent.(type) {
 
-	//Array-like data
+	// Array-like data
 	case []interface{}:
 		Debug(ctx, "\"range\" data is array-like")
 		for index, value := range ranged.RawContent.([]interface{}) {
@@ -540,7 +556,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 			ranged.Items = append(ranged.Items, RangeData{key, value})
 		}
 
-	//Number data
+	// Number data
 	case float64:
 		Debug(ctx, "\"range\" data is number-like")
 		upperBound := int(ranged.RawContent.(float64))
@@ -549,14 +565,14 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 			ranged.Items = append(ranged.Items, RangeData{key, i})
 		}
 
-	//Map-like data
+	// Map-like data
 	case map[string]interface{}:
 		Debug(ctx, "\"range\" data is map-like")
 		for key, value := range ranged.RawContent.(map[string]interface{}) {
 			ranged.Items = append(ranged.Items, RangeData{key, value})
 		}
 
-	//Unsupported data format
+	// Unsupported data format
 	default:
 		return ranged, fmt.Errorf("\"range\" was provided an unsupported type %T", t)
 	}
@@ -568,7 +584,7 @@ func parseRanged(ctx context.Context, rawStep []byte, stepVars H) (Range, error)
 
 func processVariableAssignments(ctx context.Context, tcName string, tcVars H, rawStep json.RawMessage) (H, bool, error) {
 	var stepAssignment AssignStep
-	var result = make(H)
+	result := make(H)
 	if err := yaml.Unmarshal(rawStep, &stepAssignment); err != nil {
 		Error(ctx, "unable to parse assignments (%s): %v", string(rawStep), err)
 		return nil, false, err
@@ -576,11 +592,6 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars H, ra
 
 	if len(stepAssignment.Assignments) == 0 {
 		return nil, false, nil
-	}
-
-	var tcVarsKeys []string
-	for k := range tcVars {
-		tcVarsKeys = append(tcVarsKeys, k)
 	}
 
 	for varname, assignment := range stepAssignment.Assignments {

@@ -4,7 +4,8 @@ PKI_VAR_FILE = ./pki_variables.yml
 include ./pki.mk
 
 define docker_run
-	docker run --name venom-$(2) -d $(3) $(1) > venom-$2.cid
+	docker run --name venom-$(2) -d $(3) $(1) | tee venom-$2.cid
+	echo "docker exit code $?"
 endef
 
 docker-network := venom-test-net
@@ -41,6 +42,10 @@ venom-kafka.cid:
 		-e SCHEMA_REGISTRY_HOST_NAME=venom-kafka-schema-registry \
 		-e SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=venom-kafka-broker:29092 \
 	)
+venom-httpbin.cid:
+	docker pull kennethreitz/httpbin
+	docker tag kennethreitz/httpbin httpbin 
+	$(call docker_run,httpbin,httpbin,-p 9280:80)
 venom-rabbit.cid:
 	$(call docker_run,rabbitmq,rabbitmq,-p 5672:5672 -p 15672:15672)
 venom-sshd.cid:
@@ -53,6 +58,9 @@ venom-qpid.cid:
 venom-grpc.cid:
 	docker build -t venom-grpc-greeter ./grpc
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
+venom-couchbase.cid:
+	$(call docker_run,couchbase/server-sandbox:7.1.1,couchbase,-p 8091-8096:8091-8096 -p 11210:11210)
+	@echo "must wait 30 to 60 seconds to be sure couchbase is ready"
 
 start-test-stack: venom-postgres.cid
 start-test-stack: venom-mysql.cid
@@ -65,7 +73,9 @@ start-test-stack: venom-sshd.cid
 start-test-stack: venom-mqtt.cid
 start-test-stack: venom-qpid.cid
 start-test-stack: $(PKI_DIR)
+start-test-stack: venom-httpbin.cid
 start-test-stack: venom-grpc.cid
+start-test-stack: venom-couchbase.cid
 
 stop-test-stack:
 	@for f in `ls -1 *.cid`; do docker stop `cat $${f}`; docker rm `cat $${f}`; done; rm -f *.cid; docker network rm $(docker-network)
@@ -76,7 +86,7 @@ build-test-binary:
 	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -ldflags "-X github.com/ovh/venom.IsTest=true" -tags testbincover;
 
 build-test-binary-docker:
-	docker run -v `pwd`/..:/workspace golang:1.22 sh -c "cd /workspace/tests && make build-test-binary"	
+	docker run -v `pwd`/..:/workspace golang:1.24 sh -c "cd /workspace/tests && make build-test-binary"	
 
 run-test: generate-venom-pki
 	VENOM_VAR_MY_ENVAR=foo  ./venom_wrapper.sh run \
@@ -93,7 +103,7 @@ clean:
 	@rm -f *.prof *.html *.xml *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
 
 merge-coverage:
-	@docker run -v `pwd`:/workspace golang:1.22 sh -c "\
+	@docker run -v `pwd`:/workspace golang:1.24 sh -c "\
 			go install github.com/wadey/gocovmerge@latest && \
 			cd /workspace && \
     gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \

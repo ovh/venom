@@ -11,8 +11,9 @@ import (
 	"github.com/gomodule/redigo/redis"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
 	"github.com/pkg/errors"
+
+	"github.com/ovh/venom"
 )
 
 // Name of executor
@@ -152,10 +153,10 @@ func file2lines(filePath string) ([]string, error) {
 	defer f.Close()
 
 	/*
-	Thanks to Mark Karamyar to write this blog post : https://devmarkpro.com/working-big-files-golang
-	"bufio package has a maximum token size which equals 64 * 1024 (~65.6kb).
-	So if one line of our lines is bigger than this size, we got this error token too long error."
-	To avoid this error, we will use Readline method and check isPrefix return value
+		Thanks to Mark Karamyar to write this blog post : https://devmarkpro.com/working-big-files-golang
+		"bufio package has a maximum token size which equals 64 * 1024 (~65.6kb).
+		So if one line of our lines is bigger than this size, we got this error token too long error."
+		To avoid this error, we will use Readline method and check isPrefix return value
 	*/
 	reader := bufio.NewReader(f)
 	for {

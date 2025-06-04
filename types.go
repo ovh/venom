@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 	"unicode"
@@ -25,9 +26,7 @@ const (
 type H map[string]interface{}
 
 func (h H) Clone() H {
-	var h2 = make(H, len(h))
-	h2.AddAll(h)
-	return h2
+	return maps.Clone(h)
 }
 
 func (h *H) Add(k string, v interface{}) {
@@ -52,7 +51,7 @@ func (h *H) AddAllWithPrefix(p string, h2 H) {
 		return
 	}
 	if h == nil {
-		var _h = H{}
+		_h := H{}
 		*h = _h
 	}
 	for k, v := range h2 {
@@ -241,7 +240,7 @@ func (t TestStep) StringSliceValue(name string) ([]string, error) {
 		}
 		return out, nil
 	}
-	//If string is empty, return an empty slice instead
+	// If string is empty, return an empty slice instead
 	if len(out) == 0 {
 		return []string{}, nil
 	}
@@ -287,7 +286,7 @@ type FailureXML struct {
 
 func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion string, err error) *Failure {
 	filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
-	var lineNumber = findLineNumber(filename, tc.originalName, stepNumber, assertion, -1)
+	lineNumber := findLineNumber(filename, tc.originalName, stepNumber, assertion, -1)
 	var value string
 	if assertion != "" {
 		value = fmt.Sprintf(`Testcase %q, step #%d-%d: Assertion %q failed. %s (%v:%d)`,
@@ -310,7 +309,7 @@ func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex in
 		)
 	}
 
-	var failure = Failure{
+	failure := Failure{
 		TestcaseClassname:  filename,
 		TestcaseName:       tc.Name,
 		TestcaseLineNumber: lineNumber,

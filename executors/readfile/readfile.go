@@ -6,12 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/rockbears/yaml"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/rockbears/yaml"
 
 	"github.com/mattn/go-zglob"
 	"github.com/mitchellh/mapstructure"

@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -109,10 +108,9 @@ func (v *Venom) OutputResult() error {
 			return errors.New("Error: you have to use the --html-report flag")
 		}
 
-		fname := strings.TrimSuffix(ts.Filepath, filepath.Ext(ts.Filepath))
-		fname = strings.ReplaceAll(fname, "/", "_")
-		filename := path.Join(v.OutputDir, "test_results_"+fname+"."+v.OutputFormat)
-		if err := os.WriteFile(filename, data, 0600); err != nil {
+		fname := strings.TrimSuffix(filepath.Base(ts.Filepath), filepath.Ext(ts.Filepath))
+		filename := filepath.Join(v.OutputDir, "test_results_"+fname+"."+v.OutputFormat)
+		if err := os.WriteFile(filename, data, 0o600); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
 		}
 		v.PrintFunc("Writing file %s\n", filename)
@@ -134,9 +132,9 @@ func (v *Venom) OutputResult() error {
 		if err != nil {
 			return errors.Wrapf(err, "Error: cannot format output html")
 		}
-		var filename = filepath.Join(v.OutputDir, computeOutputFilename("test_results.html"))
+		filename := filepath.Join(v.OutputDir, computeOutputFilename("test_results.html"))
 		v.PrintFunc("Writing html file %s\n", filename)
-		if err := os.WriteFile(filename, data, 0600); err != nil {
+		if err := os.WriteFile(filename, data, 0o600); err != nil {
 			return errors.Wrapf(err, "Error while creating file %s", filename)
 		}
 	}

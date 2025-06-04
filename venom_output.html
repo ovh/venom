@@ -446,15 +446,17 @@
               r += '</div>';
             }
             if (result.assertionsApplied && result.assertionsApplied.assertions && result.assertionsApplied.assertions.length > 0) {
-              r += '<div id="assertionsApplied-'+i+''+j+'" class="collapse multi-collapse p-3"><ul>';
+              r += '<div id="assertionsApplied-'+i+''+j+'" class="collapse multi-collapse p-3"><ul class="px-0">';
               for (var k = 0; k < result.assertionsApplied.assertions.length; k++) {
                 var assertionStatus = "PASS";
                 if (result.assertionsApplied.assertions[k].isOK !== true) {
                   assertionStatus = "FAIL";
                 }
-                r += '<li><span class="badge rounded-pill text-bg-'+colorStatus(assertionStatus)+'" title="'+colorStatus(assertionStatus)+'">'+assertionStatus+'</span>';
+                r += '<li class="d-flex gap-2"><span class="badge rounded-pill text-bg-'+colorStatus(assertionStatus)+'" title="'+colorStatus(assertionStatus)+'">'+assertionStatus+'</span>';
 
-                r += ' <code class="nt">'+result.assertionsApplied.assertions[k].assertion+'</code></li>'; 
+                r += '<pre class="nt">';
+                r += YAML.stringify(result.assertionsApplied.assertions[k].assertion); 
+                r += '</pre></li>';
               }
               r += '</ul></div>';
             }

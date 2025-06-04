@@ -12,7 +12,7 @@ $(PKI_DIR):
 		-keyout $(PKI_DIR)/ca.key \
 		-out $(PKI_DIR)/ca.crt
 
-	# create the server’s key
+	# create the server's key
 	openssl genrsa \
 		-out $(PKI_DIR)/server.key 2048
 

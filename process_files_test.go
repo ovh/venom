@@ -15,7 +15,7 @@ import (
 func tempDir(t *testing.T) (string, error) {
 	dir := os.TempDir()
 	name := path.Join(dir, randomString(5))
-	if err := os.MkdirAll(name, os.FileMode(0744)); err != nil {
+	if err := os.MkdirAll(name, os.FileMode(0o744)); err != nil {
 		return "", err
 	}
 	t.Logf("Creating directory %s", name)
@@ -23,7 +23,7 @@ func tempDir(t *testing.T) (string, error) {
 }
 
 func randomString(n int) string {
-	var letter = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	letter := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letter[rand.Intn(len(letter))]
@@ -58,7 +58,7 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				err = os.WriteFile(path.Join(dir, "d1.yml"), d1, 0644)
+				err = os.WriteFile(path.Join(dir, "d1.yml"), d1, 0o644)
 				return []string{dir}, err
 			},
 			want:    []string{"d1.yml"},
@@ -73,19 +73,19 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0o644); err != nil {
 					return nil, err
 				}
 
 				dir2 := path.Join(dir1, randomString(10))
 				t.Logf("Creating directory %s", dir2)
 
-				if err := os.Mkdir(dir2, 0744); err != nil {
+				if err := os.Mkdir(dir2, 0o744); err != nil {
 					return nil, err
 				}
 
 				d2 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0o644); err != nil {
 					return nil, err
 				}
 
@@ -103,43 +103,43 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0o644); err != nil {
 					return nil, err
 				}
 
 				dir2 := path.Join(dir1, randomString(10))
 				t.Logf("Creating directory %s", dir2)
 
-				if err := os.Mkdir(dir2, 0744); err != nil {
+				if err := os.Mkdir(dir2, 0o744); err != nil {
 					return nil, err
 				}
 
 				d2 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0o644); err != nil {
 					return nil, err
 				}
 
 				dir3 := path.Join(dir2, randomString(10))
 				t.Logf("Creating directory %s", dir3)
 
-				if err := os.Mkdir(dir3, 0744); err != nil {
+				if err := os.Mkdir(dir3, 0o744); err != nil {
 					return nil, err
 				}
 
 				d3 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d3.yml"), d3, 0o644); err != nil {
 					return nil, err
 				}
 
 				dir4 := path.Join(dir3, randomString(10))
 				t.Logf("Creating directory %s", dir3)
 
-				if err := os.Mkdir(dir4, 0744); err != nil {
+				if err := os.Mkdir(dir4, 0o744); err != nil {
 					return nil, err
 				}
 
 				d4 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir4, "d4.yml"), d4, 0o644); err != nil {
 					return nil, err
 				}
 
@@ -157,43 +157,43 @@ func Test_getFilesPath(t *testing.T) {
 				}
 
 				d1 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir1, "d1.yml"), d1, 0o644); err != nil {
 					return nil, err
 				}
 
 				dir2 := path.Join(dir1, randomString(10))
 				t.Logf("Creating directory %s", dir2)
 
-				if err := os.Mkdir(dir2, 0744); err != nil {
+				if err := os.Mkdir(dir2, 0o744); err != nil {
 					return nil, err
 				}
 
 				d2 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d2.yml"), d2, 0o644); err != nil {
 					return nil, err
 				}
 
 				dir3 := path.Join(dir2, randomString(10))
 				t.Logf("Creating directory %s", dir3)
 
-				if err := os.Mkdir(dir3, 0744); err != nil {
+				if err := os.Mkdir(dir3, 0o744); err != nil {
 					return nil, err
 				}
 
 				d3 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir2, "d3.yml"), d3, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir2, "d3.yml"), d3, 0o644); err != nil {
 					return nil, err
 				}
 
 				dir4 := path.Join(dir3, randomString(10))
 				t.Logf("Creating directory %s", dir3)
 
-				if err := os.Mkdir(dir4, 0744); err != nil {
+				if err := os.Mkdir(dir4, 0o744); err != nil {
 					return nil, err
 				}
 
 				d4 := []byte("hello")
-				if err = os.WriteFile(path.Join(dir4, "d4.yml"), d4, 0644); err != nil {
+				if err = os.WriteFile(path.Join(dir4, "d4.yml"), d4, 0o644); err != nil {
 					return nil, err
 				}
 
@@ -237,10 +237,10 @@ func Test_getFilesPath_files_order(t *testing.T) {
 	dir1, _ := tempDir(t)
 
 	d1 := []byte("hello")
-	os.WriteFile(path.Join(dir1, "a.yml"), d1, 0644)
+	os.WriteFile(path.Join(dir1, "a.yml"), d1, 0o644)
 
 	d2 := []byte("hello")
-	os.WriteFile(path.Join(dir1, "A.yml"), d2, 0644)
+	os.WriteFile(path.Join(dir1, "A.yml"), d2, 0o644)
 
 	input := []string{dir1 + "/a.yml", dir1 + "/A.yml"}
 

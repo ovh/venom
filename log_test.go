@@ -2,8 +2,9 @@ package venom
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHideSensitive(t *testing.T) {
