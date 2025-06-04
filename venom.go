@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom/reporting"
 	"github.com/pkg/errors"
-	"github.com/rockbears/yaml"
 	"github.com/spf13/cast"
 	"io"
 	"os"
@@ -20,11 +18,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-
-	"github.com/confluentinc/bincover"
-	"github.com/fatih/color"
-	"github.com/pkg/errors"
-	"github.com/spf13/cast"
 )
 
 var (

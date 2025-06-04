@@ -70,7 +70,6 @@ github.com/mitchellh/go-homedir; MIT
 github.com/mitchellh/mapstructure; MIT
 github.com/mndrix/tap-go; Unlicense
 github.com/montanaflynn/stats; MIT
-github.com/ovh/cds/sdk/interpolate; BSD-3-Clause
 github.com/ovh/go-ovh; BSD-3-Clause
 github.com/ovh/venom; Apache-2.0
 github.com/paulmach/orb; MIT
