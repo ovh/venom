@@ -76,7 +76,7 @@ result.timeseconds
 result.statuscode
 result.body
 result.bodyjson
-result.error
+result.err
 ```
 - result.timeseconds: execution duration
 - result.err: if exists, this field contains error
