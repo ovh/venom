@@ -128,7 +128,7 @@ func (v *Venom) OutputResult() error {
 			End:              v.Tests.End,
 		}
 
-		data, err := outputHTML(testsResult)
+		data, err := outputHTML(testsResult, v.HtmlReportVersion)
 		if err != nil {
 			return errors.Wrapf(err, "Error: cannot format output html")
 		}
