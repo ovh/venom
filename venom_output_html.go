@@ -16,13 +16,15 @@ var templateHTML1 string
 var templateHTML2 string
 
 type TestsHTML struct {
-	Tests     Tests  `json:"tests"`
-	JSONValue string `json:"jsonValue"`
+	Tests     Tests       `json:"tests"`
+	JSONValue template.JS `json:"jsonValue"`
 }
 
 func outputHTML(testsResult *Tests, version int) ([]byte, error) {
 	var buf bytes.Buffer
 	var html string
+
+	println(version)
 
 	switch version {
 	case 2:
@@ -38,7 +40,7 @@ func outputHTML(testsResult *Tests, version int) ([]byte, error) {
 
 	testsHTML := TestsHTML{
 		Tests:     *testsResult,
-		JSONValue: string(testJSON),
+		JSONValue: template.JS(testJSON),
 	}
 	tmpl := template.Must(template.New("reportHTML").Parse(html))
 	if err := tmpl.Execute(&buf, testsHTML); err != nil {
