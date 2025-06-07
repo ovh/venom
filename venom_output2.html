@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tailwind Template</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Showdown for Markdown (if needed) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand': '#3b82f6',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer components {
+      .pill-pass {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-green-100 text-green-800;
+      }
+      .pill-fail {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-red-100 text-red-800;
+      }
+      .pill-skip {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-gray-100 text-gray-800;
+      }
+      .pill-info {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-blue-100 text-gray-500;
+      }
+      .border-pass {
+        @apply border-green-500;
+      }
+      .border-fail {
+        @apply border-red-500;
+      }
+      .border-skip {
+        @apply border-gray-500;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 h-screen flex flex-col" x-data="methods">
+  <!-- Fixed Header -->
+  <header class="bg-white shadow-sm border-b px-4 flex-shrink-0" x-data="reportData">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex items-center">
+        <span class="text-2xl mr-3">🐍</span>
+        <h1 class="text-xl font-semibold text-gray-900">Venom Test Results</h1>
+        <div class="flex flex-wrap pl-2">
+          <span :class="`pill-${status.toLowerCase()}`" class="text-lg" x-text="status"></span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span x-text="formatDuration(duration)"></span>
+
+        <!-- Summary badges -->
+        <div class="flex flex-wrap gap-2">
+          <span class="pill-pass text-xs">
+            <span x-text="nbTestsuitesPass"></span> &nbsp; PASS
+          </span>
+          <span class="pill-fail text-xs">
+            <span x-text="nbTestsuitesFail"></span> &nbsp; FAIL
+          </span>
+          <span class="pill-skip text-xs">
+            <span x-text="nbTestsuitesSkip"></span> &nbsp; SKIP
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="flex flex-1 overflow-hidden bg-white border-r border-gray-200" x-data="reportData">
+    <!-- Left Sidebar Navigation -->
+    <nav class="w-64 overflow-y-auto">
+      <div class="flex items-center justify-between mb-2 p-4">
+        <h2 class="text-lg font-semibold text-gray-900">Test Suites</h2>
+        <span class="text-xs text-gray-500" x-text="`${test_suites.length} total`"></span>
+      </div>
+
+
+      <ul class="divide-y divide-gray-100">
+        <template x-for="(suite, index) in test_suites" :key="index">
+          <li>
+            <button @click="selectSuite(index)"
+              :class="{'bg-blue-50 border-l-4 border-blue-500': selectedSuite === index}"
+              class="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-150 relative group">
+              <div class="flex items-start justify-between">
+                <div x-text="index + 1" class="text-sm pr-1"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate" x-text="suite.name || 'Unnamed Suite'"></p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    <span x-text="formatDuration(suite.duration)"></span>
+                  </p>
+                </div>
+                <div class="ml-2 flex-shrink-0">
+                  <span :class="`pill-${suite.status.toLowerCase()}`" class="text-xs" x-text="suite.status"></span>
+                </div>
+              </div>
+            </button>
+          </li>
+
+          <!-- Summary badges -->
+          <div class="flex flex-wrap gap-2">
+            <span class="pill-pass text-xs">
+              <span x-text="suite.nbTestsuitesPass"></span> &nbsp; PASS
+            </span>
+            <span class="pill-fail text-xs">
+              <span x-text="suite.nbTestsuitesFail"></span> &nbsp; FAIL
+            </span>
+            <span class="pill-skip text-xs">
+              <span x-text="suite.nbTestsuitesSkip"></span> &nbsp; SKIP
+            </span>
+          </div>
+
+          <!-- Overall stats -->
+          <div class="mt-3 text-xs text-gray-600 space-y-1">
+            <div>Duration: <span class="font-mono text-gray-900" x-text="formatDuration(totalDuration)"></span></div>
+            <div>Start: <span class="font-mono text-gray-900" x-text="formatDate(startTime)"></span></div>
+            <div>End: <span class="font-mono text-gray-900" x-text="formatDate(endTime)"></span></div>
+          </div>
+
+        </template>
+      </ul>
+    </nav>
+
+    <!-- Center Content Area -->
+    <main class="flex-1 overflow-y-auto bg-white">
+      <div class="p-6">
+
+        <template x-if="selectedSuite !== null && test_suites[selectedSuite]">
+          <div>
+            <!-- Suite Header -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h2 class="text-2xl font-bold text-gray-900" x-text="test_suites[selectedSuite].name"></h2>
+                  <div class="mt-2 flex items-center gap-4 text-sm text-gray-600">
+                    <span>📁 <span x-text="test_suites[selectedSuite].filepath"></span></span>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <span class="pill-pass text-xs">
+                    <span x-text="test_suites[selectedSuite].nbTestcasesPass"></span> &nbsp; PASS
+                  </span>
+                  <span class="pill-fail text-xs">
+                    <span x-text="test_suites[selectedSuite].nbTestcasesFail"></span> &nbsp; FAIL
+                  </span>
+                  <span class="pill-skip text-xs">
+                    <span x-text="test_suites[selectedSuite].nbTestcasesSkip"></span> &nbsp; SKIP
+                  </span>
+                </div>
+              </div>
+
+              <!-- Suite Description -->
+              <div x-show="test_suites[selectedSuite].description"
+                x-html="renderMarkdown(test_suites[selectedSuite].description)" class="prose prose-sm max-w-none mb-4">
+              </div>
+
+              <!-- Suite Info -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="text-gray-500">Duration</div>
+                  <div class="font-mono font-medium" x-text="formatDuration(test_suites[selectedSuite].duration)">
+                  </div>
+                </div>
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="text-gray-500">Test Cases</div>
+                  <div class="font-mono font-medium" x-text="test_suites[selectedSuite].testcases?.length || 0"></div>
+                </div>
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="text-gray-500">Variables</div>
+                  <div class="font-mono font-medium">
+                    <button @click="toggleModal()" class="text-blue-600 hover:text-blue-800"
+                      x-text="Object.keys(test_suites[selectedSuite].vars || {}).length">
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="text-gray-500">Workdir</div>
+                  <div class="font-mono font-medium text-xs truncate" :title="test_suites[selectedSuite].workdir"
+                    x-text="test_suites[selectedSuite].workdir">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Test Cases -->
+            <div class="space-y-4">
+              <template x-for="(testcase, tcIndex) in test_suites[selectedSuite].testcases" :key="tcIndex">
+                <div :class="`border-${testcase.status.toLowerCase()}`"
+                  class="bg-white rounded-lg shadow-sm border-l-4 overflow-hidden">
+                  <div class="p-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between p-2">
+                      <h3 class="text-lg font-medium text-gray-900">
+                        Test Case: <span x-text="testcase.name"></span>
+                      </h3>
+                      <div class="flex flex-wrap pl-2">
+                        <span :class="`pill-${status.toLowerCase()}`" class="text-lg" x-text="status"></span>
+                      </div>
+                    </div>
+
+                    <!-- Test Steps -->
+                    <div class="divide-y divide-gray-200">
+                      <template x-for="(step, stepIndex) in testcase.results" :key="stepIndex">
+                        <div class="p-4" x-data="{ expanded: false }" :class="expanded ? 'bg-gray-50' : 'bg-white'">
+                          <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                              <span class="text-sm text-gray-500">Step <span x-text="step.number + 1"></span><span
+                                  x-show="step.rangedEnable" x-text="`:${step.rangedIndex}`"></span></span>
+                              <span class="font-medium text-gray-900" x-text="step.name"></span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                              <span x-show="step.retries > 0" class="pill-info text-sm"
+                                x-text="`Retries: ${step.retries}`"></span>
+                              <span class="text-sm text-gray-500 font-mono"
+                                x-text="formatDuration(step.duration)"></span>
+                              <span :class="`pill-${step.status.toLowerCase()}`" class="text-xs"
+                                x-text="step.status"></span>
+                              <button @click="expanded = !expanded" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5 transform transition-transform" :class="{'rotate-180': expanded}"
+                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+
+                          <!-- Step Details (Collapsible) -->
+                          <div x-show="expanded" x-collapse>
+                            <div class="mt-4 space-y-2">
+                              <!-- Tab buttons -->
+                              <div class="flex flex-wrap gap-2 mb-4" x-data="{ activeTab: 'info' }">
+                                <button @click="activeTab = activeTab === 'info' ? 'none' : 'info'"
+                                  :class="{'bg-red-100 text-blue-700': activeTab === 'info'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  Info
+                                </button>
+                                <button @click="activeTab = activeTab === 'errors' ? 'none' : 'errors'"
+                                  :class="{'bg-red-100 text-red-700': activeTab === 'errors'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  Errors
+                                </button>
+                                <button @click="activeTab = activeTab === 'raw' ? 'none' : 'raw'"
+                                  :class="{'bg-blue-100 text-blue-700': activeTab === 'raw'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  Raw
+                                </button>
+                                <button @click="activeTab = activeTab === 'interpolated' ? 'none' : 'interpolated'"
+                                  :class="{'bg-blue-100 text-blue-700': activeTab === 'interpolated'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  Raw Interpolated
+                                </button>
+                                <button @click="activeTab = activeTab === 'assertions' ? 'none' : 'assertions'"
+                                  :class="{'bg-green-100 text-green-700': activeTab === 'assertions'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  Assertions
+                                </button>
+                                <button @click="activeTab = activeTab === 'inputvars' ? 'none' : 'inputvars'"
+                                  :class="{'bg-green-100 text-green-700': activeTab === 'inputvars'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  Input Vars
+                                </button>
+                                <button @click="activeTab = activeTab === 'computedvars' ? 'none' : 'computedvars'"
+                                  :class="{'bg-green-100 text-green-700': activeTab === 'computedvars'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  Computed Vars
+                                </button>
+                                <button @click="activeTab = activeTab === 'systemout' ? 'none' : 'systemout'"
+                                  :class="{'bg-green-100 text-green-700': activeTab === 'systemout'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  System Out
+                                </button>
+                                <button @click="activeTab = activeTab === 'systemerr' ? 'none' : 'systemerr'"
+                                  :class="{'bg-green-100 text-green-700': activeTab === 'systemerr'}"
+                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                                  System Error
+                                </button>
+
+                                <!-- Tab content -->
+                                <div class="w-full mt-4">
+                                  <!-- Info -->
+                                  <div x-show="activeTab === 'info'" class="bg-blue-50 rounded-lg p-4">
+                                    <template x-for="info in step.computedInfos">
+                                      <div class="text-sm text-blue-800 font-mono" x-text="info"></div>
+                                    </template>
+                                  </div>
+
+                                  <!-- Errors -->
+                                  <div x-show="activeTab === 'errors'" class="bg-red-50 rounded-lg p-4">
+                                    <template x-for="error in step.errors">
+                                      <div class="text-sm text-red-700 font-mono" x-text="error.value"></div>
+                                    </template>
+                                  </div>
+
+                                  <!-- Raw -->
+                                  <div x-show="activeTab === 'raw'" class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                    <pre class="text-sm text-gray-300" x-text="atob(step.raw)"></pre>
+                                  </div>
+
+                                  <!-- Raw Intrerpolated -->
+                                  <div x-show="activeTab === 'interpolated'"
+                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                    <pre class="text-sm text-gray-300" x-text="atob(step.interpolated)"></pre>
+                                  </div>
+
+                                  <!-- Assertions -->
+                                  <div x-show="activeTab === 'assertions'" class="bg-gray-100 rounded-lg p-4 space-y-2">
+                                    <template x-for="assertion in step.assertionsApplied.assertions">
+                                      <div class="flex items-center space-x-2">
+                                        <span :class="assertion.isOK ? 'text-green-600' : 'text-red-600'">
+                                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path x-show="assertion.isOK" fill-rule="evenodd"
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clip-rule="evenodd"></path>
+                                            <path x-show="!assertion.isOK" fill-rule="evenodd"
+                                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                              clip-rule="evenodd"></path>
+                                          </svg>
+                                        </span>
+                                        <span class="text-sm font-mono" x-text="assertion.assertion"></span>
+                                      </div>
+                                    </template>
+                                  </div>
+
+                                  <!-- Input Vars  -->
+                                  <div x-show="activeTab === 'inputvars'"
+                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                    <pre class="text-sm text-gray-300" x-text="JSON.stringify(step.inputVars, null, 2)">
+                                    </pre>
+                                  </div>
+
+                                  <!-- Computed Vars -->
+                                  <div x-show="activeTab === 'computedvars'"
+                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                    <pre class="text-sm text-gray-300"
+                                      x-text="JSON.stringify(step.computedVars, null, 2)"></pre>
+                                  </div>
+
+                                  <!-- System Out -->
+                                  <div x-show="activeTab === 'systemout'"
+                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                    <pre class="text-sm text-gray-300" x-text="step.systemout"></pre>
+                                  </div>
+
+                                  <!-- System Error -->
+                                  <div x-show="activeTab === 'systemerr'"
+                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                    <pre class="text-sm text-gray-300" x-text="step.systemerr"></pre>
+                                  </div>
+
+                                  <div class="mt-2 px-4 py-3 bg-gray-50 text-sm text-gray-600">
+                                    <div class="flex items-center ">
+                                      <span class="font-mono" x-text="formatDate(step.start)"></span>
+                                      <div class="flex-grow mx-2 h-px bg-gray-400"></div>
+                                      <span class="font-mono" x-text="formatDuration(step.duration)"></span>
+                                      <div class="flex-grow mx-2 h-px bg-gray-400"></div>
+                                      <span class="font-mono" x-text="formatDate(step.end)"></span>
+                                    </div>
+                                  </div>
+
+                                </div> <!-- end Tab Content -->
+
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+
+                    <!-- Test Case Footer -->
+                    <div class="px-4 py-3 bg-gray-50 text-sm text-gray-600">
+                      <div class="flex items-center ">
+                        <span class="font-mono" x-text="formatDate(testcase.start)"></span>
+                        <div class="flex-grow mx-2 h-px bg-gray-400"></div>
+                        <span class="font-mono" x-text="formatDuration(testcase.duration)"></span>
+                        <div class="flex-grow mx-2 h-px bg-gray-400"></div>
+                        <span class="font-mono" x-text="formatDate(testcase.end)"></span>
+                      </div>
+                    </div>
+
+                  </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- Empty State -->
+        <template x-if="selectedSuite === null">
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                </path>
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No test suite selected</h3>
+              <p class="mt-1 text-sm text-gray-500">Select a test suite from the sidebar to view details.</p>
+            </div>
+          </div>
+        </template>
+
+      </div>
+    </main>
+
+    <!-- Right Drawer -->
+    <div x-show="isModalOpen" x-on:click.away="toggleModal()" class="relative z-10" aria-labelledby="drawer-title"
+      role="dialog" aria-modal="true" x-transition x-cloak>
+      <!-- Background backdrop, show/hide based on slide-over state. -->
+      <div class="fixed inset-0"></div>
+
+      <div class="fixed inset-0 overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden">
+          <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10 sm:pl-16">
+            <!-- Slide-over
+                panel, show/hide based on slide-over state.
+                Entering: "transform transition ease-in-out duration-500 sm:duration-700" From: "translate-x-full"
+                To: "translate-x-0" Leaving: "transform transition ease-in-out duration-500 sm:duration-700"
+                From: "translate-x-0" To: "translate-x-full" 
+              -->
+            <div class="pointer-events-auto w-screen max-w-3xl">
+              <div class="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
+                <div class="px-4 sm:px-6">
+                  <div class="flex items-start justify-between">
+                    <h2 class="text-base font-semibold text-gray-900" id="drawer-title">Variables</h2>
+                    <div class="ml-3 flex h-7 items-center">
+                      <button type="button" @click="isModalOpen = false"
+                        class="relative rounded-md bg-white text-gray-400 hover:text-gray-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:outline-hidden">
+                        <span class="absolute -inset-2.5"></span>
+                        <span class="sr-only">Close panel</span>
+                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                          aria-hidden="true" data-slot="icon">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="relative mt-6 flex-1 px-4 sm:px-6">
+
+                  <!-- Drawer Content -->
+                  <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Test Suite Variables</h3>
+                    <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto max-h-96">
+                      <pre class="text-sm text-gray-300"
+                        x-text="JSON.stringify(test_suites[selectedSuite]?.vars || {}, null, 2)">
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('methods', () => ({
+        isModalOpen: false,
+        toggleModal() {
+          this.isModalOpen = !this.isModalOpen;
+        },
+        selectedSuite: null,
+        selectSuite(index) {
+          this.selectedSuite = index;
+        },
+
+        renderMarkdown(text) {
+          if (!text) return '';
+          const converter = new showdown.Converter();
+          return converter.makeHtml(text);
+        },
+
+        formatDuration(seconds) {
+          return `${parseFloat(seconds).toFixed(2)}s`;
+        },
+
+        formatDate(dateString) {
+          if (!dateString) return 'N/A';
+          return new Date(dateString).toLocaleString();
+        },
+      }));
+
+      Alpine.data('reportData', () => ({{.JSONValue}}));
+    })
+
+  </script>
+</body>
+
+</html>
