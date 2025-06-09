@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	playwrightgo "github.com/playwright-community/playwright-go"
@@ -37,6 +38,7 @@ var actionMap = map[string]ActionFunc{
 	"GoBack":                GoBackAction,
 	"GoForward":             GoForwardAction,
 	"Refresh":               RefreshAction,
+	"Screenshot":            ScreenshotAction,
 }
 
 func castOptions[Dest any](action *ExecutorAction) (dest *Dest, err error) {
@@ -372,5 +374,29 @@ func SelectMultipleOptionsAction(page playwrightgo.Page, action *ExecutorAction)
 	}
 
 	_, err := page.Locator(action.Selector).First().SelectOption(selectOptionValues)
+	return err
+}
+
+func ScreenshotAction(page playwrightgo.Page, action *ExecutorAction) error {
+	opts, err := castOptions[playwrightgo.PageScreenshotOptions](action)
+	if err != nil {
+		return err
+	}
+	defaultTimeout := 10_000.00
+	fullPage := true
+	caretOption := playwrightgo.ScreenshotCaret("hide")
+	defaultOpts := playwrightgo.PageScreenshotOptions{
+		Caret:    &caretOption,
+		FullPage: &fullPage,
+		Timeout:  &defaultTimeout,
+	}
+	if opts == nil {
+		opts = &defaultOpts
+	}
+	screenshotBytes, err := page.Screenshot(*opts)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(action.Content, screenshotBytes, 0o775)
 	return err
 }
