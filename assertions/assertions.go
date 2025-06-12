@@ -66,6 +66,7 @@ var assertMap = map[string]AssertFunc{
 	"ShouldHappenBetween":          ShouldHappenBetween,
 	"ShouldTimeEqual":              ShouldTimeEqual,
 	"ShouldJSONEqual":              ShouldJSONEqual,
+	"ShouldNotJSONEqual":           ShouldNotJSONEqual,
 	"ShouldBeArray":                ShouldBeArray,
 	"ShouldBeMap":                  ShouldBeMap,
 	"ShouldMatchRegex":             ShouldMatchRegex,
@@ -1471,6 +1472,17 @@ func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 	default:
 		return fmt.Errorf("unexpected type for actual: %T", actual)
 	}
+}
+
+func ShouldNotJSONEqual(actual interface{}, expected ...interface{}) error {
+	if err := need(1, expected); err != nil {
+		return err
+	}
+
+	if err := ShouldJSONEqual(actual, expected...); err == nil {
+		return fmt.Errorf("expected '%v' to not be JSON equals to '%v'", actual, expected[0])
+	}
+	return nil
 }
 
 func getTimeFromString(in interface{}) (time.Time, error) {
