@@ -1474,13 +1474,14 @@ func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 	}
 }
 
+// ShouldNotJSONEqual asserts that the actual value is not JSON equal to the expected value
 func ShouldNotJSONEqual(actual interface{}, expected ...interface{}) error {
 	if err := need(1, expected); err != nil {
 		return err
 	}
 
 	if err := ShouldJSONEqual(actual, expected...); err == nil {
-		return fmt.Errorf("expected '%v' to not be JSON equals to '%v'", actual, expected[0])
+		return fmt.Errorf("expected %v to not be JSON equals to %v", actual, expected[0])
 	}
 	return nil
 }
