@@ -29,7 +29,7 @@ var Cmd = &cobra.Command{
 
 func getURLArtifactFromGithub() string {
 	client := github.NewClient(nil)
-	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "ovh", "venom")
+	release, resp, err := client.Repositories.GetLatestRelease(context.TODO(), "socotra", "venom")
 	if err != nil {
 		cmd.Exit("Repositories.GetLatestRelease returned error: %v\n%v", err, resp.Body)
 	}

@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/confluentinc/bincover"
+	"github.com/fatih/color"
+	"github.com/ovh/venom/reporting"
+	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 	"io"
 	"os"
 	"path"
@@ -13,11 +18,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-
-	"github.com/confluentinc/bincover"
-	"github.com/fatih/color"
-	"github.com/pkg/errors"
-	"github.com/spf13/cast"
 )
 
 var (
@@ -71,6 +71,7 @@ type Venom struct {
 	StopOnFailure bool
 	HtmlReport    bool
 	Verbose       int
+	OpenApiReport bool
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()
@@ -358,4 +359,212 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 	d := json.NewDecoder(bytes.NewReader(btes))
 	d.UseNumber()
 	return d.Decode(i)
+}
+
+func (v *Venom) GenerateOpenApiReport() error {
+	pattern := v.variables["openapi-report-pattern"]
+	strPattern := fmt.Sprintf("%v", pattern)
+
+	var files []reporting.FileEntry
+	dirs, err := filepath.Glob(strPattern)
+	if err != nil {
+		fmt.Printf("Error finding directories with pattern %q: %v\n", strPattern, err)
+		return nil
+	}
+
+	if len(dirs) == 0 {
+		fmt.Printf("No directories match the pattern %q\n", strPattern)
+		return nil
+	}
+
+	// Collect JSON (OpenAPI specs) and XML (JUnit results)
+	for _, dir := range dirs {
+		err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !d.IsDir() {
+				ext := filepath.Ext(d.Name())
+				if ext == ".json" || ext == ".xml" {
+					files = append(files, reporting.FileEntry{Path: path, Entry: d})
+				}
+			}
+			return nil
+		})
+
+		if err != nil {
+			fmt.Printf("Error walking the path %q: %v\n", dir, err)
+		}
+	}
+
+	var openAPIs []*reporting.OpenAPI
+
+	for _, file := range files {
+		if strings.HasSuffix(file.Entry.Name(), ".json") && !strings.Contains(file.Entry.Name(), "dump") {
+			tmpOpenAPI, err := reporting.LoadOpenAPISpec(file.Path)
+			if err != nil {
+				fmt.Println("Error:", err)
+				continue
+			}
+			openAPIs = append(openAPIs, tmpOpenAPI)
+		}
+	}
+
+	if len(openAPIs) == 0 {
+		return errors.Errorf("No OpenAPI Spec file found")
+	}
+
+	openAPIEndpoints := make(map[string]int)
+
+	// Merge all endpoints from each spec into openAPIEndpoints
+	for _, oapi := range openAPIs {
+		endpoints := getAllEndpointsFromTyped(oapi)
+		for _, ec := range endpoints {
+			key := ec.Method + " " + ec.Path
+			openAPIEndpoints[key] = 0
+		}
+	}
+
+	if len(openAPIEndpoints) == 0 {
+		return errors.Errorf("No endpoints found in the provided OpenAPI Specs")
+	}
+
+	// Combine all OpenAPI specs into a single typed spec, so coverage can be done on it
+	combinedOpenAPI := &reporting.OpenAPI{
+		Paths: make(map[string]*reporting.PathItem),
+	}
+
+	// Merge logic: If two specs have the same path, we merge method definitions
+	for _, oapi := range openAPIs {
+		for pathKey, pathItem := range oapi.Paths {
+			if existing, ok := combinedOpenAPI.Paths[pathKey]; ok {
+				mergePathItems(existing, pathItem)
+			} else {
+				combinedOpenAPI.Paths[pathKey] = pathItem
+			}
+		}
+	}
+
+	var allCoverages []reporting.EndpointCoverage
+	bigTestSuites := reporting.TestSuites{}
+
+	for _, file := range files {
+		if strings.HasSuffix(file.Entry.Name(), ".xml") {
+			testsuites, err := reporting.LoadJUnitXML(file.Path)
+			if err != nil {
+				fmt.Println("Error:", err)
+				continue
+			}
+			bigTestSuites.Testsuites = append(bigTestSuites.Testsuites, testsuites.Testsuites...)
+
+			allCoverages = reporting.CalculateCoverage(combinedOpenAPI, &bigTestSuites)
+
+			for _, testsuite := range testsuites.Testsuites {
+				httpMethod, endpoint := reporting.ExtractHttpEndpoint(testsuite.Name)
+				if httpMethod != "" {
+					key := httpMethod + " " + endpoint
+					if count, ok := openAPIEndpoints[key]; ok {
+						openAPIEndpoints[key] = count + 1
+					}
+				}
+			}
+		}
+	}
+
+	var filename = filepath.Join(v.OutputDir, computeOutputFilename("open_api_report.txt"))
+	var data []byte
+	htmlData := make(map[string]int)
+
+	for endpoint, count := range openAPIEndpoints {
+		htmlData[endpoint] = count
+		line := fmt.Sprintf("%s: %d\n", endpoint, count)
+		data = append(data, []byte(line)...)
+	}
+
+	if v.HtmlReport && len(htmlData) > 0 {
+
+		data, err := reporting.OpenApiOutputHtml(allCoverages)
+		if err != nil {
+			return errors.Wrapf(err, "Error: cannot format output html")
+		}
+		var filenameHTML = filepath.Join(v.OutputDir, computeOutputFilename("open_api_report.html"))
+		v.PrintFunc("Writing html file %s\n", filenameHTML)
+		if err := os.WriteFile(filenameHTML, data, 0600); err != nil {
+			return errors.Wrapf(err, "Error while creating file %s", filenameHTML)
+		}
+
+		v.PrintFunc("Open HTML report written to %s\n", filenameHTML)
+	}
+
+	if err := os.WriteFile(filename, data, 0644); err != nil {
+		return errors.Wrapf(err, "Error while creating file %s", filename)
+	}
+	v.PrintFunc("Writing open api report file %s\n", filename)
+	return nil
+}
+
+func getAllEndpointsFromTyped(oapi *reporting.OpenAPI) []reporting.EndpointCoverage {
+	var endpoints []reporting.EndpointCoverage
+	for p, pathItem := range oapi.Paths {
+		if pathItem.Get != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "GET", Path: p})
+		}
+		if pathItem.Post != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "POST", Path: p})
+		}
+		if pathItem.Put != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "PUT", Path: p})
+		}
+		if pathItem.Patch != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "PATCH", Path: p})
+		}
+		if pathItem.Delete != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "DELETE", Path: p})
+		}
+		if pathItem.Head != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "HEAD", Path: p})
+		}
+		if pathItem.Options != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "OPTIONS", Path: p})
+		}
+		if pathItem.Trace != nil {
+			endpoints = append(endpoints, reporting.EndpointCoverage{Method: "TRACE", Path: p})
+		}
+	}
+	return endpoints
+}
+
+func mergePathItems(dst, src *reporting.PathItem) *reporting.PathItem {
+	if dst == nil {
+		return src
+	}
+	if src == nil {
+		return dst
+	}
+	if src.Get != nil {
+		dst.Get = src.Get
+	}
+	if src.Post != nil {
+		dst.Post = src.Post
+	}
+	if src.Put != nil {
+		dst.Put = src.Put
+	}
+	if src.Patch != nil {
+		dst.Patch = src.Patch
+	}
+	if src.Delete != nil {
+		dst.Delete = src.Delete
+	}
+	if src.Head != nil {
+		dst.Head = src.Head
+	}
+	if src.Options != nil {
+		dst.Options = src.Options
+	}
+	if src.Trace != nil {
+		dst.Trace = src.Trace
+	}
+
+	return dst
 }

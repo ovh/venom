@@ -1,0 +1,59 @@
+name: Prepare and create a new release for all packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Release version'
+        required: true
+
+jobs:
+  createrelease:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Initialize mandatory git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+      - name: Create release branch
+        run: git checkout -b release/${{ github.event.inputs.releaseVersion }}
+      - name: Change version number
+        run: printf '${{ github.event.inputs.releaseVersion }}\n' > VERSION
+      - name: Commit VERSION
+        id: make-commit
+        run: |
+          git add VERSION 
+          git commit --message "Prepare release ${{ github.event.inputs.releaseVersion }}"
+          echo "::set-output name=commit::$(git rev-parse HEAD)"
+      - name: Push the branch
+        run: git push origin release/${{ github.event.inputs.releaseVersion }}
+      - name: Create pull request into master
+        uses: thomaseizinger/create-pull-request@1.4.0
+        with:
+          github_token: ${{ secrets.CI_GH_TOKEN}}
+          head: release/${{ github.event.inputs.releaseVersion }}
+          base: internal/master
+          title: ${{ github.event.inputs.releaseVersion }} into internal/master
+          reviewers: ${{ github.event.issue.user.login }}
+          body: |
+            This PR created in response of Create Release Workflow.
+            Updated VERSION is in commit: ${{ steps.make-commit.outputs.commit }}
+            Approving this PR will trigger new tag using version number from VERSION file
+
+      - name: Create pull request into develop
+        uses: thomaseizinger/create-pull-request@1.4.0
+        with:
+          github_token: ${{ secrets.CI_GH_TOKEN}}
+          head: release/${{ github.event.inputs.releaseVersion }}
+          base: internal/develop
+          title: ${{ github.event.inputs.releaseVersion }} into internal/develop
+          reviewers: ${{ github.event.issue.user.login }}
+          body: |
+            This PR created in response of Create Release Workflow.
+            Updated VERSION is in commit: ${{ steps.make-commit.outputs.commit }}

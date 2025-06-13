@@ -103,6 +103,38 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	result := Result{}
 
+	varsMap := venom.AllVarsFromCtx(ctx)
+
+	// Initialize Headers if it's nil
+	if e.Headers == nil {
+		e.Headers = make(Headers)
+	}
+
+	// Extract and set all headers that start with "header_"
+	for k, v := range varsMap {
+		if strings.HasPrefix(k, "header_") {
+			headerName := strings.TrimPrefix(k, "header_")
+			headerValue := fmt.Sprintf("%v", v)
+			e.setDefaultHeader(headerName, headerValue)
+			venom.Debug(ctx, "Configured header '%s' with value '%s'", headerName, headerValue)
+		}
+	}
+
+	// If authentication format and value are provided, set the Authorization header
+	if authFormat, okFormat := varsMap["auth_format"]; okFormat {
+		if authValue, okValue := varsMap["auth_value"]; okValue {
+			authHeader := fmt.Sprintf("%v %v", authFormat, authValue)
+			e.setDefaultHeader("Authorization", authHeader)
+			venom.Debug(ctx, "Configured 'Authorization' header")
+		}
+	}
+
+	// If MultipartForm is detected, remove the Content-Type header, as it may be set automatically
+	if e.MultipartForm != nil {
+		delete(e.Headers, "Content-Type")
+		venom.Debug(ctx, "MultipartForm detected, removed 'Content-Type' header")
+	}
+
 	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 
 	req, err := e.getRequest(ctx, workdir)
@@ -419,6 +451,13 @@ func isContentTypeSupported(contentType string) bool {
 func isBodyJSONSupported(resp *http.Response) bool {
 	contentType := parseContentType(resp.Header.Get("Content-Type"))
 	return strings.Contains(contentType, "application/json") || strings.HasSuffix(contentType, "+json")
+}
+
+// setDefaultHeader is a utility function to set a default header if it's not already present
+func (e Executor) setDefaultHeader(headerName, defaultValue string) {
+	if _, present := e.Headers[headerName]; !present {
+		e.Headers[headerName] = defaultValue
+	}
 }
 
 func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error, error) {
