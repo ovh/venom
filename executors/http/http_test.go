@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -122,4 +125,55 @@ func TestInterpolation_without_match_Of_String(t *testing.T) {
 
 	_, err := e.getRequest(ctx, "../../")
 	require.Errorf(t, err, "unable to interpolate file due to unresolved variables {{.name}}")
+}
+
+func TestCookieRedirect(t *testing.T) {
+	callCount := atomic.Int32{}
+	ctx := context.Background()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /set", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "some-cookie",
+			Value:    "some-value",
+			Path:     "/",
+			MaxAge:   100,
+			Secure:   false,
+			HttpOnly: true,
+		})
+		w.Header().Set("Location", "/get")
+		w.WriteHeader(http.StatusSeeOther)
+	})
+
+	mux.HandleFunc("GET /get", func(w http.ResponseWriter, r *http.Request) {
+		callCount.Add(1)
+		cookie, err := r.Cookie("some-cookie")
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if cookie.Value != "some-value" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	e := &Executor{}
+	res, err := e.Run(ctx, venom.TestStep{
+		"method": http.MethodGet,
+		"url":    srv.URL,
+		"path":   "/set",
+	})
+	require.NoError(t, err)
+
+	result, ok := res.(Result)
+	require.True(t, ok)
+
+	require.Equal(t, result.StatusCode, http.StatusOK)
+
+	require.Equal(t, int32(1), callCount.Load())
 }

@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -172,7 +173,14 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
-	client := &http.Client{Transport: tr}
+	// cookie jar can be used with redirects in the same call
+	// this doesn't support cross steps cookies.
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{Transport: tr, Jar: jar}
 	if e.NoFollowRedirect {
 		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
