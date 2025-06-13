@@ -188,13 +188,32 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 
 func (v *Venom) getUserExecutorFilesPath(ctx context.Context, vars map[string]string) []string {
 	var libpaths []string
-	if v.LibDir != "" {
-		p := strings.Split(v.LibDir, string(os.PathListSeparator))
-		libpaths = append(libpaths, p...)
-	}
-	libpaths = append(libpaths, path.Join(vars["venom.testsuite.workdir"], "lib"))
+	// ensure libpaths is unique
+	seen := make(map[string]struct{})
 
-	//use a map to avoid duplicates
+	if v.LibDir != "" {
+		for _, lp := range strings.Split(v.LibDir, string(os.PathListSeparator)) {
+			abs := strings.TrimSpace(lp)
+			if abs == "" {
+				continue
+			}
+			absPath, err := filepath.Abs(abs)
+			if err == nil {
+				seen[absPath] = struct{}{}
+				libpaths = append(libpaths, absPath)
+			}
+		}
+	}
+
+	relLib := path.Join(vars["venom.testsuite.workdir"], "lib")
+	if absRelLib, err := filepath.Abs(relLib); err == nil {
+		if _, exists := seen[absRelLib]; !exists {
+			libpaths = append(libpaths, absRelLib)
+			seen[absRelLib] = struct{}{}
+		}
+	}
+
+	// use a map to avoid duplicates
 	filepaths := make(map[string]bool)
 
 	for _, p := range libpaths {
