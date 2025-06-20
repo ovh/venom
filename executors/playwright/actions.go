@@ -39,6 +39,10 @@ var actionMap = map[string]ActionFunc{
 	"GoForward":             GoForwardAction,
 	"Refresh":               RefreshAction,
 	"Screenshot":            ScreenshotAction,
+	"Upload":                UploadFileAction, // alias for UploadFile
+	"UploadFile":            UploadFileAction,
+	"UploadFiles":           UploadMultipleFilesAction, // alias for UploadMultipleFiles
+	"UploadMultipleFiles":   UploadMultipleFilesAction,
 }
 
 func castOptions[Dest any](action *ExecutorAction) (dest *Dest, err error) {
@@ -399,4 +403,42 @@ func ScreenshotAction(page playwrightgo.Page, action *ExecutorAction) error {
 	}
 	err = os.WriteFile(action.Content, screenshotBytes, 0o775)
 	return err
+}
+
+func UploadFileAction(page playwrightgo.Page, action *ExecutorAction) error {
+	//   - files should be one of: string, []string, InputFile, []InputFile,
+	//     string: local file path
+	filename := action.Content
+	noWaitAfter := true
+	timeout := 10_000.00
+	opts, err := castOptions[playwrightgo.LocatorSetInputFilesOptions](action)
+	if err != nil {
+		return err
+	}
+	defaultOpts := playwrightgo.LocatorSetInputFilesOptions{
+		NoWaitAfter: &noWaitAfter,
+		Timeout:     &timeout,
+	}
+	if opts == nil {
+		opts = &defaultOpts
+	}
+	return page.Locator(action.Selector).First().SetInputFiles(filename, *opts)
+}
+
+func UploadMultipleFilesAction(page playwrightgo.Page, action *ExecutorAction) error {
+	files := action.Content
+	noWaitAfter := true
+	timeout := 10_000.00
+	opts, err := castOptions[playwrightgo.LocatorSetInputFilesOptions](action)
+	if err != nil {
+		return err
+	}
+	defaultOpts := playwrightgo.LocatorSetInputFilesOptions{
+		NoWaitAfter: &noWaitAfter,
+		Timeout:     &timeout,
+	}
+	if opts == nil {
+		opts = &defaultOpts
+	}
+	return page.Locator(action.Selector).First().SetInputFiles(files, *opts)
 }
