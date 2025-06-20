@@ -16,15 +16,24 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/venom"
+	libopenapi "github.com/pb33f/libopenapi"
+	validator "github.com/pb33f/libopenapi-validator"
 )
 
 // Name of executor
 const Name = "http"
+
+// Add a cache for loaded validators
+var (
+	validatorCache     = make(map[string]validator.Validator)
+	validatorCacheLock sync.Mutex
+)
 
 // New returns a new Executor
 func New() venom.Executor {
@@ -230,6 +239,30 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	result.Request.Form = cReq.Form
 	result.Request.PostForm = cReq.PostForm
 
+	openApiValidation := varsMap["open_api_validation"]
+	var openapiValidationErrors []string
+	var v validator.Validator
+	var vErr error
+	if openApiValidation != nil && openApiValidation == "true" {
+		// --- OpenAPI request validation ---
+		venom.Debug(ctx, "OpenAPI validation: deriving spec path from URL %s", req.URL.String())
+		specLocation := varsMap["open_api_specs_location"]
+		v, vErr = getValidatorForURL(ctx, specLocation.(string), req.URL)
+		if vErr == nil {
+			venom.Debug(ctx, "OpenAPI request validator loaded for URL %s", req.URL.String())
+			if ok, errs := v.ValidateHttpRequest(req); !ok {
+				for _, verr := range errs {
+					venom.Error(ctx, "OpenAPI request validation error: %s", verr.Message)
+					openapiValidationErrors = append(openapiValidationErrors, verr.Message)
+				}
+			}
+		} else {
+			venom.Error(ctx, "OpenAPI request validator error for URL %s: %v", req.URL.String(), vErr)
+			openapiValidationErrors = append(openapiValidationErrors, vErr.Error())
+		}
+		// ---
+	}
+
 	start := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -284,6 +317,24 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	result.StatusCode = resp.StatusCode
+	if openApiValidation != nil && openApiValidation == "true" {
+		// --- OpenAPI request/response validation ---
+		if vErr == nil && resp != nil {
+			venom.Debug(ctx, "OpenAPI response validation for URL %s", req.URL.String())
+			if ok, errs := v.ValidateHttpRequestResponse(req, resp); !ok {
+				for _, verr := range errs {
+					venom.Error(ctx, "OpenAPI response validation error: %s", verr.Message)
+					openapiValidationErrors = append(openapiValidationErrors, verr.Message)
+				}
+			}
+		}
+	}
+	// ---
+
+	if len(openapiValidationErrors) > 0 {
+		result.Err += "\nOpenAPI validation errors:\n" + strings.Join(openapiValidationErrors, "\n")
+	}
+
 	return result, nil
 }
 
@@ -548,4 +599,41 @@ func buildResultInfo(result *Result, resp *http.Response) string {
 		resp.Request.Method,
 		resp.Request.URL,
 		body)
+}
+
+// mapURLToSpecPath maps a request URL to an OpenAPI spec file path
+func mapURLToSpecPath(specLocation string, u *url.URL) string {
+	// Extract the service from the path: /{service}/...
+	parts := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
+	if len(parts) > 0 && parts[0] != "" {
+		service := parts[0]
+		return filepath.Join(specLocation, service+".json")
+	}
+	// If no service found, return empty string (or handle as needed)
+	return ""
+}
+
+// getValidatorForURL loads (and caches) a validator for the given URL
+func getValidatorForURL(ctx context.Context, specLocation string, u *url.URL) (validator.Validator, error) {
+	specPath := mapURLToSpecPath(specLocation, u)
+	venom.Debug(ctx, "OpenAPI spec %s found for URL %s", specPath, u.String())
+	validatorCacheLock.Lock()
+	defer validatorCacheLock.Unlock()
+	if v, ok := validatorCache[specPath]; ok {
+		return v, nil
+	}
+	specBytes, err := os.ReadFile(specPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read OpenAPI spec: %w", err)
+	}
+	doc, docErrs := libopenapi.NewDocument(specBytes)
+	if docErrs != nil {
+		return nil, fmt.Errorf("failed to parse OpenAPI spec: %v", docErrs)
+	}
+	v, vErrs := validator.NewValidator(doc)
+	if vErrs != nil && len(vErrs) > 0 {
+		return nil, fmt.Errorf("failed to create OpenAPI validator: %v", vErrs)
+	}
+	validatorCache[specPath] = v
+	return v, nil
 }
