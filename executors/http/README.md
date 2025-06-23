@@ -155,3 +155,8 @@ Example if you want to get value of `path` key of *second* element in `apis` arr
 ```yaml
 result.statuscode ShouldEqual 200
 ```
+
+## Cookies
+
+Cookies are automatically handled when following a redirect in a single step.
+They are not supported between successive steps.
