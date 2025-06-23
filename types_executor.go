@@ -203,6 +203,7 @@ func (ux UserExecutor) ZeroValueResult() interface{} {
 	return result
 }
 
+// RunUserExecutor runs a user executor with the given context, runner, test case, test step result, and step.
 func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn *TestCase, tsIn *TestStepResult, step TestStep) (interface{}, error) {
 	vrs := tcIn.TestSuiteVars.Clone()
 	ux := runner.GetExecutor().(UserExecutor)
@@ -232,7 +233,7 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 				// do not reinject input.vars from parent user executor if exists
 				continue
 			} else if !strings.HasPrefix(k, "venom") {
-				if vl, ok := step[k]; ok && vl != "" { // value from step
+				if vl, ok := step[k]; ok && vl != nil && vl != "" { // value from step and not nil/empty
 					vrs.AddWithPrefix("input", k, vl)
 				} else { // default value from executor
 					vrs.AddWithPrefix("input", k, va)
