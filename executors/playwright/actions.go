@@ -14,35 +14,34 @@ import (
 type ActionFunc func(page playwrightgo.Page, action *ExecutorAction) error
 
 var actionMap = map[string]ActionFunc{
-	"Click":                 ClickAction,
-	"DoubleClick":           DoubleClickAction,
-	"Doubleclick":           DoubleClickAction,
-	"Tap":                   TapAction,
-	"Focus":                 FocusAction,
-	"Blur":                  BlurAction,
-	"Clear":                 ClearAction,
-	"Fill":                  FillAction,
-	"Check":                 CheckAction,
-	"Uncheck":               UncheckAction,
-	"FillCheckbox":          CheckAction, // alias for Check
-	"Press":                 PressAction,
-	"PressSequentially":     PressSequentiallyAction,
-	"Select":                SelectOptionAction, // alias for SelectOption
-	"SelectOption":          SelectOptionAction,
-	"SelectMultipleOptions": SelectMultipleOptionsAction,
-	"Type":                  PressSequentiallyAction, // alias for PressSequentially
-	"WaitFor":               WaitForSelectorAction,
-	"WaitForSelector":       WaitForSelectorAction,
-	"WaitForURL":            WaitForURLAction,
-	"Goto":                  GotoAction,
-	"GoBack":                GoBackAction,
-	"GoForward":             GoForwardAction,
-	"Refresh":               RefreshAction,
-	"Screenshot":            ScreenshotAction,
-	"Upload":                UploadFileAction, // alias for UploadFile
-	"UploadFile":            UploadFileAction,
-	"UploadFiles":           UploadMultipleFilesAction, // alias for UploadMultipleFiles
-	"UploadMultipleFiles":   UploadMultipleFilesAction,
+	"click":                 ClickAction,
+	"doubleclick":           DoubleClickAction,
+	"tap":                   TapAction,
+	"focus":                 FocusAction,
+	"blur":                  BlurAction,
+	"clear":                 ClearAction,
+	"fill":                  FillAction,
+	"check":                 CheckAction,
+	"uncheck":               UncheckAction,
+	"fillcheckbox":          CheckAction, // alias for Check
+	"press":                 PressAction,
+	"presssequentially":     PressSequentiallyAction,
+	"select":                SelectOptionAction, // alias for SelectOption
+	"selectoption":          SelectOptionAction,
+	"selectmultipleoptions": SelectMultipleOptionsAction,
+	"type":                  PressSequentiallyAction, // alias for PressSequentially
+	"waitfor":               WaitForSelectorAction,
+	"waitforselector":       WaitForSelectorAction,
+	"waitforurl":            WaitForURLAction,
+	"goto":                  GotoAction,
+	"goback":                GoBackAction,
+	"goforward":             GoForwardAction,
+	"refresh":               RefreshAction,
+	"screenshot":            ScreenshotAction,
+	"upload":                UploadFileAction, // alias for UploadFile
+	"uploadfile":            UploadFileAction,
+	"uploadfiles":           UploadMultipleFilesAction, // alias for UploadMultipleFiles
+	"uploadmultiplefiles":   UploadMultipleFilesAction,
 }
 
 func castOptions[Dest any](action *ExecutorAction) (dest *Dest, err error) {

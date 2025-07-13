@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
@@ -153,7 +154,7 @@ func performActions(ctx context.Context, page playwrightgo.Page, actions []Execu
 			return fmt.Errorf("selector cannot be empty, please specify a selector")
 		}
 
-		actionName := action.Action
+		actionName := strings.ToLower(action.Action)
 		actionFunc, ok := actionMap[actionName]
 		if !ok {
 			return fmt.Errorf("invalid or unsupported action: '%s'", actionName)
