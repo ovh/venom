@@ -237,50 +237,30 @@ func extractHeaderValue(ctx context.Context, result interface{}, headerName stri
 
 func generateFailureLinkForUserExecutor(ctx context.Context, result interface{}, tsResult *TestStepResult, tc *TestCase) {
 	failureLinkHeader := StringVarFromCtx(ctx, "venom.failure_link_header")
-	if failureLinkHeader == "" {
-		return
-	}
-
 	failureLinkTemplate := StringVarFromCtx(ctx, "venom.failure_link_template")
-	if failureLinkTemplate == "" {
+
+	if failureLinkHeader == "" || failureLinkTemplate == "" {
 		return
 	}
 
-	// Try processed result first
-	if mapResult, ok := result.(map[string]interface{}); ok {
-		for _, value := range mapResult {
-			if stepResultMap, ok := value.(map[string]interface{}); ok {
-				if headers, exists := stepResultMap["headers"]; exists {
-					if headersMap, ok := headers.(map[string]interface{}); ok {
-						if headerValue, exists := headersMap[failureLinkHeader]; exists {
-							tsResult.FailureLink = strings.ReplaceAll(failureLinkTemplate, "{{header}}", fmt.Sprintf("%v", headerValue))
-							return
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Check internal step results
-	for _, internalStepResult := range tc.TestStepResults {
-		if internalStepResult.Raw != nil {
-			if headerValue := extractHeaderValue(ctx, internalStepResult.Raw, failureLinkHeader); headerValue != "" {
-				tsResult.FailureLink = strings.ReplaceAll(failureLinkTemplate, "{{header}}", headerValue)
-				return
-			}
-		}
-
-		if internalStepResult.ComputedVars != nil {
-			headerKey := fmt.Sprintf("result.headers.%s", failureLinkHeader)
-			if headerValue, exists := internalStepResult.ComputedVars[headerKey]; exists {
-				if headerValueStr, ok := headerValue.(string); ok {
-					tsResult.FailureLink = strings.ReplaceAll(failureLinkTemplate, "{{header}}", headerValueStr)
-					return
-				}
-			}
-		}
+	// Search for header value in order of preference
+	if headerValue := findHeaderInUserExecutor(ctx, result, tc, failureLinkHeader); headerValue != "" {
+		tsResult.FailureLink = strings.ReplaceAll(failureLinkTemplate, "{{header}}", headerValue)
+		return
 	}
 
 	Warn(ctx, "Response header %s not found in user executor results; skipping failure link", failureLinkHeader)
+}
+
+func findHeaderInUserExecutor(ctx context.Context, result interface{}, tc *TestCase, headerName string) string {
+	if mapResult, ok := result.(map[string]interface{}); ok {
+		for key, value := range mapResult {
+			if strings.Contains(key, "internal_headers") && strings.Contains(key, "result.headers."+headerName) {
+				if headerValueStr, ok := value.(string); ok {
+					return headerValueStr
+				}
+			}
+		}
+	}
+	return ""
 }

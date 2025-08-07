@@ -284,6 +284,11 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 
 	v.runTestSteps(ctx, tc, tsIn)
 
+	// Extract and preserve headers from internal HTTP steps (only if HTTP steps exist)
+	if v.hasHTTPSteps(tc.TestStepResults) {
+		v.preserveHeadersFromInternalSteps(ctx, tc)
+	}
+
 	computedVars, err := DumpString(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
@@ -366,7 +371,50 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 			}
 		}
 	}
+
+	// Add preserved headers to the result (only if headers were preserved)
+	if v.hasPreservedHeaders(tc.computedVars) {
+		for key, value := range tc.computedVars {
+			if strings.Contains(key, "internal_headers") {
+				result[key] = value
+			}
+		}
+	}
+
 	return result, nil
+}
+
+// preserveHeadersFromInternalSteps extracts headers from internal HTTP steps and adds them to the user executor's computed vars
+func (v *Venom) preserveHeadersFromInternalSteps(ctx context.Context, tc *TestCase) {
+	for i, stepResult := range tc.TestStepResults {
+		if stepResult.ComputedVars != nil {
+			for key, value := range stepResult.ComputedVars {
+				if strings.Contains(strings.ToLower(key), "header") {
+					stepPrefix := fmt.Sprintf("internal_headers.step_%d_%s", i, stepResult.Name)
+					headerKey := fmt.Sprintf("%s.%s", stepPrefix, key)
+					tc.computedVars[headerKey] = value
+				}
+			}
+		}
+	}
+}
+
+func (v *Venom) hasHTTPSteps(stepResults []TestStepResult) bool {
+	for _, stepResult := range stepResults {
+		if strings.Contains(strings.ToLower(stepResult.Name), "http") {
+			return true
+		}
+	}
+	return false
+}
+
+func (v *Venom) hasPreservedHeaders(computedVars H) bool {
+	for key := range computedVars {
+		if strings.Contains(key, "internal_headers") {
+			return true
+		}
+	}
+	return false
 }
 
 // quoteTemplateExpressions adds double quotes around template expressions in YAML content.
