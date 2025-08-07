@@ -275,7 +275,7 @@ loopRawTestSteps:
 				tsResult.appendError(err)
 				Error(ctx, "unable to parse step #%d: %v", stepNumber, err)
 				Error(ctx, content, nil)
-				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+				v.printTestStepResult(ctx, tc, tsResult, tsIn, stepNumber, false)
 				break loopRawTestSteps
 			}
 
@@ -297,7 +297,7 @@ loopRawTestSteps:
 			if err != nil {
 				tsResult.appendError(err)
 				Error(ctx, "unable to get executor: %v", err)
-				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+				v.printTestStepResult(ctx, tc, tsResult, tsIn, stepNumber, false)
 				break loopRawTestSteps
 			}
 
@@ -372,10 +372,10 @@ loopRawTestSteps:
 				if isRequired {
 					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", errors.New("At least one required assertion failed, skipping remaining steps"))
 					tsResult.appendFailure(*failure)
-					v.printTestStepResult(tc, tsResult, tsIn, stepNumber, true)
+					v.printTestStepResult(ctx, tc, tsResult, tsIn, stepNumber, true)
 					return
 				}
-				v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+				v.printTestStepResult(ctx, tc, tsResult, tsIn, stepNumber, false)
 				continue
 			}
 
@@ -388,7 +388,7 @@ loopRawTestSteps:
 				Error(ctx, "unable to process variable assignments: %v", errAssignment)
 			}
 
-			v.printTestStepResult(tc, tsResult, tsIn, stepNumber, false)
+			v.printTestStepResult(ctx, tc, tsResult, tsIn, stepNumber, false)
 
 			if errAssignment != nil {
 				break loopRawTestSteps
@@ -416,7 +416,7 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 }
 
 // Print a single step result (if verbosity is enabled)
-func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
+func (v *Venom) printTestStepResult(ctx context.Context, tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
 	fromUserExecutor := tsIn != nil
 	if fromUserExecutor {
 		// move back up user executor errors to parent test step for later logging
