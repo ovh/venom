@@ -433,6 +433,10 @@ func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *Test
 			for _, f := range ts.Errors {
 				v.Println(" \t\t  %s", Yellow(f.Value))
 			}
+			// Display failure link if available
+			if ts.FailureLink != "" {
+				v.Println(" \t\t  %s", Cyan("Failure Link: "+ts.FailureLink))
+			}
 			if mustAssertionFailed {
 				skipped := len(tc.RawTestSteps) - stepNumber
 				if skipped == 1 {

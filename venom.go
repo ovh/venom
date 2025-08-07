@@ -16,6 +16,7 @@ import (
 
 	"github.com/confluentinc/bincover"
 	"github.com/fatih/color"
+	"github.com/ovh/venom/reporting"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 )
@@ -65,12 +66,14 @@ type Venom struct {
 	variables H
 	secrets   H
 
-	LibDir        string
-	OutputFormat  string
-	OutputDir     string
-	StopOnFailure bool
-	HtmlReport    bool
-	Verbose       int
+	LibDir              string
+	OutputFormat        string
+	OutputDir           string
+	StopOnFailure       bool
+	HtmlReport          bool
+	Verbose             int
+	FailureLinkHeader   string
+	FailureLinkTemplate string
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()

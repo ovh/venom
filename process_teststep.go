@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gosimple/slug"
@@ -105,6 +106,11 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		tsResult.AssertionsApplied = assertRes
 		tsResult.ComputedVars.AddAll(H(mapResult))
 
+		// Generate failure link only if test step failed
+		if !assertRes.OK && len(assertRes.errors) > 0 {
+			generateFailureLink(ctx, result, tsResult)
+		}
+
 		if assertRes.OK {
 			break
 		}
@@ -170,4 +176,46 @@ func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, tc *T
 	case <-ctxTimeout.Done():
 		return nil, fmt.Errorf("Timeout after %d second(s)", e.Timeout())
 	}
+}
+
+// generateFailureLink extracts header values and generates a failure link if configured
+func generateFailureLink(ctx context.Context, result interface{}, tsResult *TestStepResult) {
+	// Extract headers from HTTP result
+	mapResult, ok := result.(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	headers, exists := mapResult["headers"]
+	if !exists {
+		return
+	}
+
+	headersMap, ok := headers.(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	// Get failure link configuration
+	failureLinkHeader := StringVarFromCtx(ctx, "venom.failure_link_header")
+	if failureLinkHeader == "" {
+		return
+	}
+
+	failureLinkTemplate := StringVarFromCtx(ctx, "venom.failure_link_template")
+	if failureLinkTemplate == "" {
+		return
+	}
+
+	// Extract header value and generate link
+	headerValue, exists := headersMap[failureLinkHeader]
+	if !exists {
+		Warn(ctx, "Response header %s not found in response; skipping failure link", failureLinkHeader)
+		return
+	}
+
+	headerValueStr := fmt.Sprintf("%v", headerValue)
+	failureLink := strings.ReplaceAll(failureLinkTemplate, "{{header}}", headerValueStr)
+	tsResult.FailureLink = failureLink
+	Debug(ctx, "Generated failure link: %s", failureLink)
 }
