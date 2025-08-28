@@ -26,7 +26,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 	var result interface{}
 
 	for tsResult.Retries = 0; tsResult.Retries <= e.Retry() && !assertRes.OK; tsResult.Retries++ {
-		if tsResult.Retries > 1 && !assertRes.OK {
+		if tsResult.Retries >= 1 && !assertRes.OK {
 			Debug(ctx, "Sleep %d, it's %d attempt", e.Delay(), tsResult.Retries)
 			time.Sleep(time.Duration(e.Delay()) * time.Second)
 		}
