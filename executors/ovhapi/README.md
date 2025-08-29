@@ -2,37 +2,49 @@
 
 ## Step to test OVH API
 
-Use case: you software need to make call to OVH API.<br>
-You will need OVH credentials to make API call. Please follow this tutorial to get all needed keys: <br>
+Use case: your software needs to make calls to OVH API.<br>
+You will need OVH credentials to make API calls. You can either use app keys authentication or OAuth2.
+
+To use app keys authentication, please follow this tutorial: <br>
 EN: https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/
 
+To use OAuth2, please follow this tutorial: <br>
+EN: https://help.ovhcloud.com/csm/en-manage-service-account?id=kb_article_view&sysparm_article=KB0059343
+
 ## Input
-In your yaml file, you can use:
 
-```
-  - endpoint optional, default value: ovh-eu
-  - applicationKey optional, if noAuth, otherwise mandatory
-  - applicationSecret optional, if noAuth, otherwise mandatory
-  - consumerKey optional, if noAuth, otherwise mandatory
-  - noAuth optional
-  - headers optional
-  - resolve optional
-  - proxy optional
-  - tlsRootCA optional
+The following parameters are available:
 
-  - method optional, default value: GET
-  - path mandatory, example "/me"
-  - body optional
-  - bodyFile optional
-```
+| Parameter         | Description                                                      | Default Value |
+|-------------------|------------------------------------------------------------------|---------------|
+| endpoint          | Optional                                                         | ovh-eu        |
+| applicationKey    | Optional if `noAuth`, mandatory if using app keys authentication |               |
+| applicationSecret | Optional if `noAuth`, mandatory if using app keys authentication |               |
+| consumerKey       | Optional if `noAuth`, mandatory if using app keys authentication |               |
+| clientID          | Optional if `noAuth`, mandatory if using OAuth2                  |               |
+| clientSecret      | Optional if `noAuth`, mandatory if using OAuth2                  |               |
+| noAuth            | Optional                                                         |               |
+| headers           | Optional                                                         |               |
+| resolve           | Optional                                                         |               |
+| proxy             | Optional                                                         |               |
+| tlsRootCA         | Optional                                                         |               |
 
-The first batch of parameters can also be defined inside Venom variables like this
+| Parameter | Description | Default Value |
+|-----------|-------------|---------------|
+| method    | Optional    | GET           |
+| path      | Mandatory   |               |
+| body      | Optional    |               |
+| bodyFile  | Optional    |               |
+ 
+The first batch of parameters can also be defined inside Venom variables like this:
 
 ```yaml
 vars:
   ovh.endpoint: ovh-eu
   ovh.applicationKey: foo
   ovh.applicationSecret: foo
+  ovh.clientID: foo
+  ovh.clientSecret: foo
   ovh.consumerKey: foo
   ovh.noAuth: false
   ovh.headers:
@@ -48,6 +60,9 @@ vars:
 ```
 
 ## Example of an __ovhapi__ TestSuite
+
+### Using App Keys authentication
+
 ```yaml
 name: Title of TestSuite
 testcases:
@@ -65,24 +80,42 @@ testcases:
     assertions:
     - result.statuscode ShouldEqual 200
     - result.bodyjson.nichandle ShouldContainSubstring MY_NICHANDLE
+```
 
+### Using OAuth2
+
+```yaml
+name: Title of TestSuite
+testcases:
+- name: me
+  steps:
+  - type: ovhapi
+    endpoint: 'ovh-eu'
+    clientID: 'CLIENT_ID'
+    clientSecret: 'CLIENT_SECRET'
+    method: GET
+    path: /me
+    retry: 3
+    delay: 2
+    assertions:
+    - result.statuscode ShouldEqual 200
+    - result.bodyjson.nichandle ShouldContainSubstring MY_NICHANDLE
 ```
 
 ## Output
 
-```
-result.executor
-result.timeseconds
-result.statuscode
-result.body
-result.bodyjson
-result.err
-```
-- result.timeseconds: execution duration
-- result.err: if exists, this field contains error
-- result.body: body of HTTP response
-- result.bodyjson: body of HTTP response if it's a json. You can access json data as result.bodyjson.yourkey for example
-- result.statuscode: Status Code of HTTP response
+The following output fields are available:
+
+| Field              | Description                          |
+|--------------------|--------------------------------------|
+| result.executor    |                                      |
+| result.timeseconds | Execution duration                   |
+| result.statuscode  | Status Code of HTTP response         |
+| result.body        | Body of HTTP response                |
+| result.bodyjson    | Body of HTTP response if it's a JSON |
+| result.err         | Error message if exists              |
+
+Note that you can access json data as `result.bodyjson.yourkey` for example.
 
 ## Default assertion
 
