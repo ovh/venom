@@ -31,7 +31,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mndrix/tap-go v0.0.0-20171203230836-629fa407e90b
-	github.com/ovh/go-ovh v1.4.3
+	github.com/ovh/go-ovh v1.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/yaml v0.4.0
 	github.com/rubenv/sql-migrate v1.5.2
@@ -66,6 +66,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
+	golang.org/x/oauth2 v0.26.0 // indirect
 )
 
 require (
