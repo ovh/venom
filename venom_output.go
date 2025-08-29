@@ -197,9 +197,14 @@ func outputXMLFormat(tests Tests, verbose int) ([]byte, error) {
 			systemerr := InnerResult{}
 			for _, result := range tc.TestStepResults {
 				for _, failure := range result.Errors {
-					failuresXML = append(failuresXML, FailureXML{
-						Value: failure.Value,
-					})
+					failureValue := failure.Value
+					if result.FailureLink != "" {
+						failureValue += fmt.Sprintf(" – see more details at %s", result.FailureLink)
+					}
+					failureXML := FailureXML{
+						Value: failureValue,
+					}
+					failuresXML = append(failuresXML, failureXML)
 				}
 				if len(result.Errors) > 0 {
 					appendCleanValue(&systemout.Value, result.Systemout)
