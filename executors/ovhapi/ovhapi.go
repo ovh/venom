@@ -38,6 +38,8 @@ type Executor struct {
 	ApplicationKey    string   `json:"applicationKey" yaml:"applicationKey"`
 	ApplicationSecret string   `json:"applicationSecret" yaml:"applicationSecret"`
 	ConsumerKey       string   `json:"consumerKey" yaml:"consumerKey"`
+	ClientID          string   `json:"clientID" yaml:"clientID"`
+	ClientSecret      string   `json:"clientSecret" yaml:"clientSecret"`
 	NoAuth            *bool    `json:"noAuth" yaml:"noAuth"`
 	Headers           Headers  `json:"headers" yaml:"headers"`
 	Resolve           []string `json:"resolve" yaml:"resolve"`
@@ -91,6 +93,12 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	if e.ConsumerKey == "" {
 		e.ConsumerKey = venom.StringVarFromCtx(ctx, "ovh.consumerKey")
 	}
+	if e.ClientID == "" {
+		e.ClientID = venom.StringVarFromCtx(ctx, "ovh.clientID")
+	}
+	if e.ClientSecret == "" {
+		e.ClientSecret = venom.StringVarFromCtx(ctx, "ovh.clientSecret")
+	}
 	if e.NoAuth == nil {
 		noauth := venom.BoolVarFromCtx(ctx, "ovh.noAuth")
 		e.NoAuth = &noauth
@@ -118,13 +126,25 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	r := Result{}
 
 	start := time.Now()
+
 	// prepare ovh api client
-	client, err := ovh.NewClient(
-		e.Endpoint,
-		e.ApplicationKey,
-		e.ApplicationSecret,
-		e.ConsumerKey,
-	)
+	var client *ovh.Client
+	var err error
+	if e.ClientID != "" && e.ClientSecret != "" {
+		venom.Debug(ctx, "creating OAuth2 client")
+		client, err = ovh.NewOAuth2Client(
+			e.Endpoint,
+			e.ClientID,
+			e.ClientSecret,
+		)
+	} else {
+		client, err = ovh.NewClient(
+			e.Endpoint,
+			e.ApplicationKey,
+			e.ApplicationSecret,
+			e.ConsumerKey,
+		)
+	}
 	if err != nil {
 		return nil, err
 	}
