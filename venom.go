@@ -65,12 +65,13 @@ type Venom struct {
 	variables H
 	secrets   H
 
-	LibDir        string
-	OutputFormat  string
-	OutputDir     string
-	StopOnFailure bool
-	HtmlReport    bool
-	Verbose       int
+	LibDir            string
+	OutputFormat      string
+	OutputDir         string
+	StopOnFailure     bool
+	HtmlReport        bool
+	HtmlReportVersion int
+	Verbose           int
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()
