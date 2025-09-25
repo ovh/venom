@@ -2329,3 +2329,112 @@ func TestShouldJSONEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestShouldNotJSONEqual(t *testing.T) {
+	tests := []struct {
+		name     string
+		actual   interface{}
+		expected interface{}
+		wantErr  bool
+	}{
+		{
+			name:     "equal objects should error",
+			actual:   map[string]interface{}{"a": 1, "b": 2},
+			expected: `{"a": 1, "b": 2}`,
+			wantErr:  true,
+		},
+		{
+			name:     "different objects should not error",
+			actual:   map[string]interface{}{"a": 1, "b": 2},
+			expected: `{"a": 1, "b": 3}`,
+			wantErr:  false,
+		},
+		{
+			name:     "equal arrays should error",
+			actual:   []interface{}{1, 2, 3},
+			expected: `[1, 2, 3]`,
+			wantErr:  true,
+		},
+		{
+			name:     "different arrays should not error",
+			actual:   []interface{}{1, 2, 3},
+			expected: `[1, 2, 4]`,
+			wantErr:  false,
+		},
+		{
+			name:     "equal strings should error",
+			actual:   "test",
+			expected: "test",
+			wantErr:  true,
+		},
+		{
+			name:     "different strings should not error",
+			actual:   "test1",
+			expected: "test2",
+			wantErr:  false,
+		},
+		{
+			name:     "equal numbers should error",
+			actual:   json.Number("123"),
+			expected: json.Number("123"),
+			wantErr:  true,
+		},
+		{
+			name:     "different numbers should not error",
+			actual:   json.Number("123"),
+			expected: json.Number("456"),
+			wantErr:  false,
+		},
+		{
+			name:     "equal booleans should error",
+			actual:   true,
+			expected: true,
+			wantErr:  true,
+		},
+		{
+			name:     "different booleans should not error",
+			actual:   true,
+			expected: false,
+			wantErr:  false,
+		},
+		{
+			name:     "null values should error",
+			actual:   "",
+			expected: "null",
+			wantErr:  true,
+		},
+		{
+			name:     "null and non-null should not error",
+			actual:   "",
+			expected: "not null",
+			wantErr:  false,
+		},
+		{
+			name:     "objects with different key order should error",
+			actual:   map[string]interface{}{"a": 1, "b": 2},
+			expected: `{"b": 2, "a": 1}`,
+			wantErr:  true,
+		},
+		{
+			name:     "nested objects should error when equal",
+			actual:   map[string]interface{}{"a": map[string]interface{}{"b": 1}},
+			expected: `{"a": {"b": 1}}`,
+			wantErr:  true,
+		},
+		{
+			name:     "nested objects should not error when different",
+			actual:   map[string]interface{}{"a": map[string]interface{}{"b": 1}},
+			expected: `{"a": {"b": 2}}`,
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ShouldNotJSONEqual(tt.actual, tt.expected)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ShouldNotJSONEqual() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
