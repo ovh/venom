@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
-	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
 
 	"github.com/ovh/venom"
@@ -227,7 +226,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	if err != nil {
 		return Result{Err: err.Error()}, fmt.Errorf("grpc dial error: %w", err)
 	}
-	refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
+	refClient = grpcreflect.NewClientAuto(refCtx, cc)
 	descSource = grpcurl.DescriptorSourceFromServer(ctx, refClient)
 
 	// arrange for the RPCs to be cleanly shutdown
