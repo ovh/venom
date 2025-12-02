@@ -9,7 +9,7 @@ require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/confluentinc/bincover v0.2.0
 	github.com/couchbase/gocb/v2 v2.10.0
-	github.com/eclipse/paho.mqtt.golang v1.4.3
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/fatih/color v1.15.0
 	github.com/fsamin/go-dump v1.8.0
 	github.com/fullstorydev/grpcurl v1.8.8
