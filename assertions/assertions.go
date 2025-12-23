@@ -1508,3 +1508,13 @@ func getTimeFromString(in interface{}) (time.Time, error) {
 
 	return t, nil
 }
+
+// RegisterCustomAssertFunc registers a custom assertion function
+func RegisterCustomAssertFunc(name string, ux AssertFunc) error {
+	if _, ok := assertMap[name]; ok {
+		return errors.Errorf("cannot redefine existing assertion %q", name)
+	}
+
+	assertMap[name] = ux
+	return nil
+}

@@ -39,6 +39,7 @@ Venom is a CLI (Command Line Interface) that aims to create, manage and run your
   - [Assertions](#assertions)
     - [Keywords](#keywords)
       - [`Must` keywords](#must-keywords)
+      - [Custom assertions](#custom-assertions)
     - [Using logical operators](#using-logical-operators)
 - [Write and run your first test suite](#write-and-run-your-first-test-suite)
 - [Export tests report](#export-tests-report)
@@ -693,6 +694,45 @@ Example:
     assertions:
       - result.code MustEqual 0
   # Remaining steps in this context will not be executed
+```
+
+#### Custom assertions
+
+It is possible to use the [user defined executors syntax](#user-defined-executors) and prefixing your executor name with `Should` to create a new custom assertion keyword. 
+
+Example:
+```yml
+# lib/ShouldBeHttp2XX.yml
+executor: ShouldBeHttp2XX
+steps:
+  - assertions:
+    - a ShouldBeGreaterThanOrEqualTo 200
+    - a ShouldBeLessThan 300
+```
+
+You may also include additional steps like a regular user defined executor.
+
+Custom assertions are executed in an entirely clean context, containing only the following variables:
+- `a`: the left operand
+- `b`: the (first) right operand
+- `argv`: the rights operands
+
+If you need to be compatible with the `input` syntax of user defined executors, you could use the `argv` as the default value and access these through the regular `input.*` syntax. 
+```yaml
+input:
+  test: "{{.argv.argv1}}"
+```
+
+To call a registered custom assertions, just use its registered name in the `assertions` array, like any built-in assertion keyword.
+
+```yml
+# test.yml
+testcases:
+- steps:
+  - type: http
+    url: https://example.com
+    assertions:
+    - result.statuscode ShouldBeHttp2XX
 ```
 
 ### Using logical operators
