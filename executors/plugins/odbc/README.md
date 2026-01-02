@@ -53,7 +53,7 @@ testcases:
           - "SELECT * FROM employee;"
           - "SELECT * FROM person;"
         assertions:
-          - result.queries.__len__ ShouldEqual 2
+          - result.queries.__Len__ ShouldEqual 2
           - result.queries.queries0.rows.rows0.name ShouldEqual Jack
           - result.queries.queries1.rows.rows0.age ShouldEqual 21
 ```
@@ -71,7 +71,7 @@ testcases:
         dsn: user:password@(localhost:3306)/venom
         file: ./test.sql
         assertions:
-          - result.queries.__len__ ShouldEqual 1
+          - result.queries.__Len__ ShouldEqual 1
 ```
 
 *note: in the example above, the results of each command is stored in the results array
