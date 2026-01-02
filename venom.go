@@ -285,7 +285,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context) error {
 		if strings.HasPrefix(ux.Executor, "Should") {
 			err = v.registerUserAssertFunc(ctx, ux.Executor)
 			if err != nil {
-				return errors.Wrapf(err, "unable to register user executor %q from file %q as custom assertion", ux.Executor, f)
+				return errors.Wrapf(err, "unable to register user executor %q from file %q as user assertion", ux.Executor, f)
 			}
 		}
 	}
@@ -299,7 +299,7 @@ func (v *Venom) registerUserAssertFunc(ctx context.Context, name string) error {
 		return errors.Wrapf(err, "unable to load user executor %q", name)
 	}
 
-	err = assertions.RegisterCustomAssertFunc(name, func(actual interface{}, expected ...interface{}) error {
+	err = assertions.RegisterUserAssertFunc(name, func(actual interface{}, expected ...interface{}) error {
 		// Prepare a minimal context in which the user executor can be run
 		// We only need to register the operands in the var set
 		// as parent contexts will already have been templated
@@ -325,7 +325,7 @@ func (v *Venom) registerUserAssertFunc(ctx context.Context, name string) error {
 			}
 			return errors.New(strings.Join(msg, "\n"))
 		} else if err != nil {
-			return errors.Wrapf(err, "custom assertion failed during execution")
+			return errors.Wrapf(err, "user assertion failed during execution")
 		}
 
 		return nil

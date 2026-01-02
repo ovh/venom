@@ -2439,7 +2439,7 @@ func TestShouldNotJSONEqual(t *testing.T) {
 	}
 }
 
-func TestRegisterCustomAssertFunc(t *testing.T) {
+func TestRegisterUserAssertFunc(t *testing.T) {
 	var assertFunc AssertFunc
 
 	tests := []struct {
@@ -2465,9 +2465,9 @@ func TestRegisterCustomAssertFunc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := RegisterCustomAssertFunc(tt.actual, assertFunc)
+			err := RegisterUserAssertFunc(tt.actual, assertFunc)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterCustomAssertFunc() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RegisterUserAssertFunc() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

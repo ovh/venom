@@ -39,7 +39,7 @@ Venom is a CLI (Command Line Interface) that aims to create, manage and run your
   - [Assertions](#assertions)
     - [Keywords](#keywords)
       - [`Must` keywords](#must-keywords)
-      - [Custom assertions](#custom-assertions)
+      - [User assertions](#user-assertions)
     - [Using logical operators](#using-logical-operators)
 - [Write and run your first test suite](#write-and-run-your-first-test-suite)
 - [Export tests report](#export-tests-report)
@@ -696,9 +696,9 @@ Example:
   # Remaining steps in this context will not be executed
 ```
 
-#### Custom assertions
+#### User assertions
 
-It is possible to use the [user defined executors syntax](#user-defined-executors) and prefixing your executor name with `Should` to create a new custom assertion keyword. 
+It is possible to use the [user defined executors syntax](#user-defined-executors) and prefixing your executor name with `Should` to create a new "user assertion" keyword. 
 
 Example:
 ```yml
@@ -712,7 +712,7 @@ steps:
 
 You may also include additional steps like a regular user defined executor.
 
-Custom assertions are executed in an entirely clean context, containing only the following variables:
+User assertions are executed in an entirely clean context, containing only the following variables:
 - `a`: the left operand
 - `b`: the (first) right operand
 - `argv`: the rights operands
@@ -723,7 +723,7 @@ input:
   test: "{{.argv.argv1}}"
 ```
 
-To call a registered custom assertions, just use its registered name in the `assertions` array, like any built-in assertion keyword.
+To call a registered user assertions, just use its registered name in the `assertions` array, like any built-in assertion keyword.
 
 ```yml
 # test.yml
