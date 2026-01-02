@@ -56,12 +56,12 @@ testcases:
         sourceAddr: amqp-test
         messageLimit: 4
         assertions:
-          - result.messages.__len__ ShouldEqual 4
+          - result.messages.__Len__ ShouldEqual 4
           - result.messages.messages0 ShouldEqual '{"key1":"value1","key2":"value2"}'
           - result.messages.messages1 ShouldEqual '{"key3":"value3","key4":"value4"}'
           - result.messages.messages2 ShouldEqual 'not json'
           - result.messages.messages3 ShouldEqual '["value5","value6"]'
-          - result.messagesjson.__len__ ShouldEqual 4
+          - result.messagesjson.__Len__ ShouldEqual 4
           - result.messagesjson.messagesjson0.key1 ShouldEqual value1
           - result.messagesjson.messagesjson0.key2 ShouldEqual value2
           - result.messagesjson.messagesjson1.key3 ShouldEqual value3
