@@ -1,0 +1,15 @@
+executor: ShouldCustom
+input:
+  test: "{{.argv.argv1}}"
+steps:
+  - script: echo baz
+    vars: 
+      c:
+        from: result.systemout
+  - assertions:
+    - a ShouldEqual foo
+    - b ShouldEqual bar
+    - c ShouldEqual baz
+    - input.test ShouldEqual qux
+    - argv.argv1 ShouldEqual qux
+    - argv.__Len__ ShouldEqual 2
