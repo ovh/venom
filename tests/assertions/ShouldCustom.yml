@@ -1,0 +1,8 @@
+name: Assertions testsuite
+testcases:
+- name: test assertion ShouldCustom
+  steps:
+  - script: echo foo
+    assertions:
+    - result.systemout ShouldCustom bar qux
+    - result.systemout MustCustom bar qux
