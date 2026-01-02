@@ -63,7 +63,7 @@ func uniq(stringSlice []string) []string {
 
 func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 	for _, filePath := range filesPath {
-		Info(ctx, "Reading %v", filePath)
+		Debug(ctx, "Reading %v", filePath)
 		btes, err := os.ReadFile(filePath)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read file %q", filePath)

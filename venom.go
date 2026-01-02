@@ -252,7 +252,7 @@ func (v *Venom) registerUserExecutors(ctx context.Context) error {
 	executorsPath := v.getUserExecutorFilesPath(ctx, vars)
 
 	for _, f := range executorsPath {
-		Info(ctx, "Reading %v", f)
+		Debug(ctx, "Reading %v", f)
 		content, err := os.ReadFile(f)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read file %q", f)
