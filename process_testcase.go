@@ -67,9 +67,9 @@ func (v *Venom) parseTestCase(_ *TestSuite, tc *TestCase) ([]string, []string, e
 					extractedVars = append(extractedVars, k)
 				}
 				extractedVars = append(extractedVars, tc.Name+"."+k)
-				if strings.HasSuffix(k, "__type__") && dumpE[k] == "Map" {
+				if strings.HasSuffix(k, "__Type__") && dumpE[k] == "Map" {
 					// go-dump doesn't dump the map name, here is a workaround
-					k = strings.TrimSuffix(k, "__type__")
+					k = strings.TrimSuffix(k, "__Type__")
 					extractedVars = append(extractedVars, tc.Name+"."+k)
 				}
 			}

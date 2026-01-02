@@ -1,20 +1,10 @@
 package venom
 
 import (
-	"os"
 	"strings"
 
 	"github.com/fsamin/go-dump"
 )
-
-var preserveCase string
-
-func init() {
-	preserveCase = os.Getenv("VENOM_PRESERVE_CASE")
-	if preserveCase == "" || preserveCase == "AUTO" {
-		preserveCase = "ON"
-	}
-}
 
 // Dump dumps v as a map[string]interface{}.
 func DumpWithPrefix(va interface{}, prefix string) (map[string]interface{}, error) {
@@ -25,14 +15,8 @@ func DumpWithPrefix(va interface{}, prefix string) (map[string]interface{}, erro
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
 	e.Prefix = prefix
-
-	// TODO venom >= v1.2 update the PreserveCase behaviour
-	if preserveCase == "ON" {
-		e.ExtraFields.UseJSONTag = true
-		e.Formatters = []dump.KeyFormatterFunc{WithFormatterLowerFirstKey()}
-	} else {
-		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-	}
+	e.ExtraFields.UseJSONTag = true
+	e.Formatters = []dump.KeyFormatterFunc{WithFormatterLowerFirstKey()}
 
 	return e.ToMap(va)
 }
@@ -45,15 +29,8 @@ func Dump(va interface{}) (map[string]interface{}, error) {
 	e.ExtraFields.DetailedStruct = true
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
-
-	// TODO venom >= v1.2 update the PreserveCase behaviour
-	if preserveCase == "ON" {
-		e.ExtraFields.UseJSONTag = true
-		e.Formatters = []dump.KeyFormatterFunc{WithFormatterLowerFirstKey()}
-	} else {
-		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-	}
-
+	e.ExtraFields.UseJSONTag = true
+	e.Formatters = []dump.KeyFormatterFunc{WithFormatterLowerFirstKey()}
 	return e.ToMap(va)
 }
 
@@ -65,14 +42,8 @@ func DumpString(va interface{}) (map[string]string, error) {
 	e.ExtraFields.DetailedStruct = true
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
-
-	// TODO venom >= v1.2 update the PreserveCase behaviour
-	if preserveCase == "ON" {
-		e.ExtraFields.UseJSONTag = true
-		e.Formatters = []dump.KeyFormatterFunc{WithFormatterLowerFirstKey()}
-	} else {
-		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-	}
+	e.ExtraFields.UseJSONTag = true
+	e.Formatters = []dump.KeyFormatterFunc{WithFormatterLowerFirstKey()}
 	return e.ToStringMap(va)
 }
 
@@ -84,9 +55,7 @@ func DumpStringPreserveCase(va interface{}) (map[string]string, error) {
 	e.ExtraFields.DetailedStruct = true
 	e.ExtraFields.DetailedMap = true
 	e.ExtraFields.DetailedArray = true
-	if preserveCase == "ON" {
-		e.ExtraFields.UseJSONTag = true
-	}
+	e.ExtraFields.UseJSONTag = true
 	return e.ToStringMap(va)
 }
 
