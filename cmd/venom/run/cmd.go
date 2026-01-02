@@ -11,44 +11,46 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
+	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 	"github.com/rockbears/yaml"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-
-	"github.com/ovh/venom"
-	"github.com/ovh/venom/executors"
-	"github.com/ovh/venom/interpolate"
 )
 
 var (
 	path []string
 	v    *venom.Venom
 
-	variables     []string
-	secrets       []string
-	format        string = "xml" // Set the default value for formatFlag
-	varFiles      []string
-	outputDir     string
-	libDir        string
-	htmlReport    bool
-	stopOnFailure bool
-	verbose       int = 0 // Set the default value for verboseFlag
+	variables         []string
+	secrets           []string
+	format            string = "xml" // Set the default value for formatFlag
+	varFiles          []string
+	outputDir         string
+	libDir            string
+	htmlReport        bool
+	htmlReportVersion int = 1 // Set default value to version 1
+	stopOnFailure     bool
+	verbose           int = 0 // Set the default value for verboseFlag
 
-	variablesFlag     *[]string
-	formatFlag        *string
-	varFilesFlag      *[]string
-	outputDirFlag     *string
-	libDirFlag        *string
-	stopOnFailureFlag *bool
-	htmlReportFlag    *bool
-	verboseFlag       *int
+	variablesFlag         *[]string
+	formatFlag            *string
+	varFilesFlag          *[]string
+	outputDirFlag         *string
+	libDirFlag            *string
+	stopOnFailureFlag     *bool
+	htmlReportFlag        *bool
+	htmlReportVersionFlag *int
+	verboseFlag           *int
 )
 
 func init() {
 	formatFlag = Cmd.Flags().String("format", "xml", "--format:json, tap, xml, yaml")
 	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
 	htmlReportFlag = Cmd.Flags().Bool("html-report", false, "Generate HTML Report")
+	htmlReportVersionFlag = Cmd.Flags().Int("html-report-version", 1, "HTML Report Version")
 	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -v (INFO level in venom.log file), -vv to very verbose (DEBUG level) and -vvv to very verbose with CPU Profiling")
 	varFilesFlag = Cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary")
 	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
@@ -88,6 +90,10 @@ func initFromCommandArguments(f *pflag.Flag) {
 	case "html-report":
 		if htmlReportFlag != nil {
 			htmlReport = *htmlReportFlag
+		}
+	case "html-report-version":
+		if htmlReportVersionFlag != nil {
+			htmlReportVersion = *htmlReportVersionFlag
 		}
 	case "output-dir":
 		if outputDirFlag != nil {
@@ -152,15 +158,16 @@ func initFromConfigFile() error {
 }
 
 type ConfigFileData struct {
-	Format         *string   `json:"format,omitempty" yaml:"format,omitempty"`
-	LibDir         *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
-	OutputDir      *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
-	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
-	HtmlReport     *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
-	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Secrets        *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
-	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
-	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
+	Format            *string   `json:"format,omitempty" yaml:"format,omitempty"`
+	LibDir            *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
+	OutputDir         *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
+	StopOnFailure     *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
+	HtmlReport        *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
+	HtmlReportVersion *int      `json:"html_report_version,omitempty" yaml:"html_report_version,omitempty"`
+	Variables         *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Secrets           *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
+	VariablesFiles    *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
+	Verbosity         *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
 }
 
 // Configuration file overrides the environment variables.
@@ -190,6 +197,9 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.HtmlReport != nil {
 		htmlReport = *configFileData.HtmlReport
+	}
+	if configFileData.HtmlReportVersion != nil {
+		htmlReportVersion = *configFileData.HtmlReportVersion
 	}
 	if configFileData.Variables != nil {
 		for _, varFromFile := range *configFileData.Variables {
@@ -303,6 +313,7 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option outputDir=%v", outputDir)
 	venom.Debug(ctx, "option stopOnFailure=%v", stopOnFailure)
 	venom.Debug(ctx, "option htmlReport=%v", htmlReport)
+	venom.Debug(ctx, "option htmlReportVersion=%v", htmlReportVersion)
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "option verbose=%v", verbose)
 }
@@ -343,6 +354,7 @@ var Cmd = &cobra.Command{
 		v.OutputFormat = format
 		v.StopOnFailure = stopOnFailure
 		v.HtmlReport = htmlReport
+		v.HtmlReportVersion = htmlReportVersion
 		v.Verbose = verbose
 
 		if err := v.InitLogger(); err != nil {
