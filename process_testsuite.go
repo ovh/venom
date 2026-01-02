@@ -50,6 +50,8 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	ts.Vars.Add("venom.outputdir", v.OutputDir)
 	ts.Vars.Add("venom.libdir", v.LibDir)
 	ts.Vars.Add("venom.testsuite", ts.Name)
+	ts.Vars.Add("venom.failure_link_header", v.FailureLinkHeader)
+	ts.Vars.Add("venom.failure_link_template", v.FailureLinkTemplate)
 	ts.ComputedVars = H{}
 
 	ctx = context.WithValue(ctx, ContextKey("testsuite"), ts.Name)

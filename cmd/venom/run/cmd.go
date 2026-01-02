@@ -35,14 +35,19 @@ var (
 	stopOnFailure bool
 	verbose       int = 0 // Set the default value for verboseFlag
 
-	variablesFlag     *[]string
-	formatFlag        *string
-	varFilesFlag      *[]string
-	outputDirFlag     *string
-	libDirFlag        *string
-	stopOnFailureFlag *bool
-	htmlReportFlag    *bool
-	verboseFlag       *int
+	failureLinkHeader   string
+	failureLinkTemplate string
+
+	variablesFlag           *[]string
+	formatFlag              *string
+	varFilesFlag            *[]string
+	outputDirFlag           *string
+	libDirFlag              *string
+	stopOnFailureFlag       *bool
+	htmlReportFlag          *bool
+	verboseFlag             *int
+	failureLinkHeaderFlag   *string
+	failureLinkTemplateFlag *string
 )
 
 func init() {
@@ -54,6 +59,8 @@ func init() {
 	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	outputDirFlag = Cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
 	libDirFlag = Cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+	failureLinkHeaderFlag = Cmd.Flags().String("failure-link-header", "X-Failure-Link", "Header to add to the HTTP response for failure links")
+	failureLinkTemplateFlag = Cmd.Flags().String("failure-link-template", "http://localhost:8080/failure/%s", "Template for failure links")
 }
 
 func initArgs(cmd *cobra.Command) {
@@ -115,6 +122,14 @@ func initFromCommandArguments(f *pflag.Flag) {
 				variables = mergeVariables(varFlag, variables)
 			}
 		}
+	case "failure-link-header":
+		if failureLinkHeaderFlag != nil {
+			failureLinkHeader = *failureLinkHeaderFlag
+		}
+	case "failure-link-template":
+		if failureLinkTemplateFlag != nil {
+			failureLinkTemplate = *failureLinkTemplateFlag
+		}
 	}
 }
 
@@ -152,15 +167,17 @@ func initFromConfigFile() error {
 }
 
 type ConfigFileData struct {
-	Format         *string   `json:"format,omitempty" yaml:"format,omitempty"`
-	LibDir         *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
-	OutputDir      *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
-	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
-	HtmlReport     *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
-	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Secrets        *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
-	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
-	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
+	Format              *string   `json:"format,omitempty" yaml:"format,omitempty"`
+	LibDir              *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
+	OutputDir           *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
+	StopOnFailure       *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
+	HtmlReport          *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
+	Variables           *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Secrets             *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
+	VariablesFiles      *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
+	Verbosity           *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
+	FailureLinkHeader   *string   `json:"failure_link_header,omitempty" yaml:"failure_link_header,omitempty"`
+	FailureLinkTemplate *string   `json:"failure_link_template,omitempty" yaml:"failure_link_template,omitempty"`
 }
 
 // Configuration file overrides the environment variables.
@@ -208,6 +225,12 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.Verbosity != nil {
 		verbose = *configFileData.Verbosity
+	}
+	if configFileData.FailureLinkHeader != nil {
+		failureLinkHeader = *configFileData.FailureLinkHeader
+	}
+	if configFileData.FailureLinkTemplate != nil {
+		failureLinkTemplate = *configFileData.FailureLinkTemplate
 	}
 
 	return nil
@@ -279,6 +302,12 @@ func initFromEnv(environ []string) ([]string, error) {
 		v2 := int(v)
 		verbose = v2
 	}
+	if os.Getenv("FAILURE_LINK_HEADER") != "" {
+		failureLinkHeader = os.Getenv("FAILURE_LINK_HEADER")
+	}
+	if os.Getenv("FAILURE_LINK_TEMPLATE") != "" {
+		failureLinkTemplate = os.Getenv("FAILURE_LINK_TEMPLATE")
+	}
 
 	cast := func(vS string) interface{} {
 		var v interface{}
@@ -305,6 +334,8 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option htmlReport=%v", htmlReport)
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "option verbose=%v", verbose)
+	venom.Debug(ctx, "option failureLinkHeader=%v", failureLinkHeader)
+	venom.Debug(ctx, "option failureLinkTemplate=%v", failureLinkTemplate)
 }
 
 // Cmd run
@@ -344,6 +375,8 @@ var Cmd = &cobra.Command{
 		v.StopOnFailure = stopOnFailure
 		v.HtmlReport = htmlReport
 		v.Verbose = verbose
+		v.FailureLinkHeader = failureLinkHeader
+		v.FailureLinkTemplate = failureLinkTemplate
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)

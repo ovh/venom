@@ -194,6 +194,7 @@ type TestStepResult struct {
 	ComputedInfo      []string          `json:"computedInfos" yaml:"-"`
 	AssertionsApplied AssertionsApplied `json:"assertionsApplied" yaml:"-"`
 	Retries           int               `json:"retries" yaml:"retries"`
+	FailureLink       string            `json:"failure_link,omitempty" yaml:"failure_link,omitempty"`
 
 	Systemout string    `json:"systemout"`
 	Systemerr string    `json:"systemerr"`

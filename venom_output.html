@@ -355,6 +355,11 @@
               r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#errors-'+i+''+j+'")>Errors</a>';
               r += '</li>';
             }
+            if (result.failure_link && result.failure_link !== '') {
+              r += '<li class="nav-item">';
+              r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#failure-link-'+i+''+j+'")>Failure Link</a>';
+              r += '</li>';
+            }
             if (result.raw && result.raw !== '') {
               r += '<li class="nav-item">';
               r += '<a class="nav-link" aria-current="page" href="#" data-bs-toggle="collapse" onclick=toggle("#raw-'+i+''+j+'")>Raw</a>';
@@ -405,6 +410,11 @@
                 r += ' <code class="nt">'+result.errors[k].value+'</code></li>';
               }
               r += '</ul></div>';
+            }
+            if (result.failure_link && result.failure_link !== '') {
+              r += '<div id="failure-link-'+i+''+j+'" class="collapse multi-collapse p-3">';
+              r += '  <a href="'+result.failure_link+'" target="_blank" class="btn btn-primary btn-sm">View Failure Details</a>';
+              r += '</div>';
             }
 
             if (result.raw && result.raw !== '') {
