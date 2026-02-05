@@ -75,7 +75,7 @@ testcases:
       - test-topic
     assertions:
     - result.messagesjson.messagesjson0.value.hello ShouldEqual bar
-    - result.messages.__len__ ShouldEqual 1
+    - result.messages.__Len__ ShouldEqual 1
 
 ```
 
@@ -120,5 +120,5 @@ testcases:
     - result.messagesjson.messagesjson0.value.id ShouldEqual 1
     - result.messagesjson.messagesjson0.value.message ShouldEqual "Some test"
     - result.messagesjson.messagesjson1.value.id ShouldEqual 2
-    - result.messages.__len__ ShouldEqual 2
+    - result.messages.__Len__ ShouldEqual 2
 ```

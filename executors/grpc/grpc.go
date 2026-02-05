@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
-	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
 
 	"github.com/ovh/venom"
@@ -53,13 +52,14 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Systemout     string      `json:"systemout,omitempty" yaml:"systemout,omitempty"`
-	SystemoutJSON interface{} `json:"systemoutjson,omitempty" yaml:"systemoutjson,omitempty"`
-	Systemerr     string      `json:"systemerr,omitempty" yaml:"systemerr,omitempty"`
-	SystemerrJSON interface{} `json:"systemerrjson,omitempty" yaml:"systemerrjson,omitempty"`
-	Err           string      `json:"err,omitempty" yaml:"err,omitempty"`
-	Code          string      `json:"code,omitempty" yaml:"code,omitempty"`
-	TimeSeconds   float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
+	Systemout     string        `json:"systemout,omitempty" yaml:"systemout,omitempty"`
+	SystemoutJSON interface{}   `json:"systemoutjson,omitempty" yaml:"systemoutjson,omitempty"`
+	Systemerr     string        `json:"systemerr,omitempty" yaml:"systemerr,omitempty"`
+	SystemerrJSON interface{}   `json:"systemerrjson,omitempty" yaml:"systemerrjson,omitempty"`
+	Err           string        `json:"err,omitempty" yaml:"err,omitempty"`
+	Code          string        `json:"code,omitempty" yaml:"code,omitempty"`
+	Details       []interface{} `json:"details,omitempty" yaml:"details,omitempty"`
+	TimeSeconds   float64       `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
 }
 
 type customHandler struct {
@@ -91,6 +91,19 @@ func (c *customHandler) OnReceiveResponse(msg proto.Message) {
 func (c *customHandler) OnReceiveTrailers(stat *status.Status, met metadata.MD) {
 	if err := stat.Err(); err != nil {
 		c.target.Systemerr = err.Error()
+
+		// Extract gRPC error details
+		for _, d := range stat.Details() {
+			jsonBytes, err := json.Marshal(d)
+			if err != nil {
+				continue
+			}
+			var detailMap map[string]interface{}
+			if err := json.Unmarshal(jsonBytes, &detailMap); err != nil {
+				continue
+			}
+			c.target.Details = append(c.target.Details, detailMap)
+		}
 	}
 	c.target.Code = strconv.Itoa(int(uint32(stat.Code())))
 }
@@ -227,7 +240,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	if err != nil {
 		return Result{Err: err.Error()}, fmt.Errorf("grpc dial error: %w", err)
 	}
-	refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
+	refClient = grpcreflect.NewClientAuto(refCtx, cc)
 	descSource = grpcurl.DescriptorSourceFromServer(ctx, refClient)
 
 	// arrange for the RPCs to be cleanly shutdown
@@ -288,13 +301,13 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	// parse stderr output as JSON
 	var errJSONArray []interface{}
-	if err := venom.JSONUnmarshal([]byte(result.Systemout), &errJSONArray); err != nil {
+	if err := venom.JSONUnmarshal([]byte(result.Systemerr), &errJSONArray); err != nil {
 		errJSONMap := map[string]interface{}{}
-		if err2 := venom.JSONUnmarshal([]byte(result.Systemout), &errJSONMap); err2 == nil {
-			result.SystemoutJSON = errJSONMap
+		if err2 := venom.JSONUnmarshal([]byte(result.Systemerr), &errJSONMap); err2 == nil {
+			result.SystemerrJSON = errJSONMap
 		}
 	} else {
-		result.SystemoutJSON = errJSONArray
+		result.SystemerrJSON = errJSONArray
 	}
 
 	return result, nil

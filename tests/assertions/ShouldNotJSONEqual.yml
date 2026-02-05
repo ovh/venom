@@ -1,0 +1,31 @@
+name: test ShouldNotJSONEqual
+testcases:
+- name: test assertion ShouldNotJSONEqual with different values (should pass)
+  steps:
+  - type: exec
+    script: |
+      echo '{
+        "o" : {
+          "a" : 1,
+          "b" : 2,
+          "c" : {
+              "x":1,
+              "y":2
+          }
+        },
+        "a" : [1,2],
+        "s" : "foo",
+        "n" : 1.2,
+        "t" : true,
+        "f" : false,
+        "z" : null
+      }'
+    assertions:
+      - result.systemoutjson.o ShouldNotJSONEqual '{"a":1,"b":3,"c":{"x":1,"y":2}}'
+      - result.systemoutjson.o.c ShouldNotJSONEqual '{"x":2,"y":2}'
+      - result.systemoutjson.a ShouldNotJSONEqual '[1,3]'
+      - result.systemoutjson.s ShouldNotJSONEqual 'bar'
+      - result.systemoutjson.n ShouldNotJSONEqual 1.3
+      - result.systemoutjson.t ShouldNotJSONEqual false
+      - result.systemoutjson.f ShouldNotJSONEqual true
+      - result.systemoutjson.z ShouldNotJSONEqual 'not null'

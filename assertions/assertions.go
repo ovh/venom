@@ -66,6 +66,7 @@ var assertMap = map[string]AssertFunc{
 	"ShouldHappenBetween":          ShouldHappenBetween,
 	"ShouldTimeEqual":              ShouldTimeEqual,
 	"ShouldJSONEqual":              ShouldJSONEqual,
+	"ShouldNotJSONEqual":           ShouldNotJSONEqual,
 	"ShouldBeArray":                ShouldBeArray,
 	"ShouldBeMap":                  ShouldBeMap,
 	"ShouldMatchRegex":             ShouldMatchRegex,
@@ -1473,6 +1474,18 @@ func ShouldJSONEqual(actual interface{}, expected ...interface{}) error {
 	}
 }
 
+// ShouldNotJSONEqual asserts that the actual value is not JSON equal to the expected value
+func ShouldNotJSONEqual(actual interface{}, expected ...interface{}) error {
+	if err := need(1, expected); err != nil {
+		return err
+	}
+
+	if err := ShouldJSONEqual(actual, expected...); err == nil {
+		return fmt.Errorf("expected %v to not be JSON equals to %v", actual, expected[0])
+	}
+	return nil
+}
+
 func getTimeFromString(in interface{}) (time.Time, error) {
 	if t, isTime := in.(time.Time); isTime {
 		return t, nil
@@ -1494,4 +1507,14 @@ func getTimeFromString(in interface{}) (time.Time, error) {
 	}
 
 	return t, nil
+}
+
+// RegisterUserAssertFunc registers a user assertion function
+func RegisterUserAssertFunc(name string, ux AssertFunc) error {
+	if _, ok := assertMap[name]; ok {
+		return errors.Errorf("cannot redefine existing assertion %q", name)
+	}
+
+	assertMap[name] = ux
+	return nil
 }

@@ -29,8 +29,9 @@ func (v *Venom) parseTestCase(_ *TestSuite, tc *TestCase) ([]string, []string, e
 	// the value of each var can contain a double-quote -> "
 	// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
 	// This also avoids injections into the json structure of a step
+	// Use strconv.Quote for proper escaping to avoid double-escaping issues
 	for i := range dvars {
-		dvars[i] = strings.ReplaceAll(dvars[i], "\"", "\\\"")
+		dvars[i] = escapeQuotes(dvars[i])
 	}
 	for _, rawStep := range tc.RawTestSteps {
 		content, err := interpolate.Do(string(rawStep), dvars)
@@ -66,9 +67,9 @@ func (v *Venom) parseTestCase(_ *TestSuite, tc *TestCase) ([]string, []string, e
 					extractedVars = append(extractedVars, k)
 				}
 				extractedVars = append(extractedVars, tc.Name+"."+k)
-				if strings.HasSuffix(k, "__type__") && dumpE[k] == "Map" {
+				if strings.HasSuffix(k, "__Type__") && dumpE[k] == "Map" {
 					// go-dump doesn't dump the map name, here is a workaround
-					k = strings.TrimSuffix(k, "__type__")
+					k = strings.TrimSuffix(k, "__Type__")
 					extractedVars = append(extractedVars, tc.Name+"."+k)
 				}
 			}
@@ -634,4 +635,15 @@ func processVariableAssignments(ctx context.Context, tcName string, tcVars H, ra
 		}
 	}
 	return result, true, nil
+}
+
+func escapeQuotes(str string) string {
+	if strings.Contains(str, `"`) {
+		// Use strconv.Quote which handles escaping correctly
+		x := strconv.Quote(str)
+		x = strings.TrimPrefix(x, `"`)
+		x = strings.TrimSuffix(x, `"`)
+		return x
+	}
+	return str
 }
