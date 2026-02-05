@@ -10,28 +10,15 @@ import (
 )
 
 //go:embed venom_output.html
-var templateHTML1 string
-
-//go:embed venom_output2.html
-var templateHTML2 string
+var templateHTML string
 
 type TestsHTML struct {
-	Tests     Tests       `json:"tests"`
+	Tests     Tests  `json:"tests"`
 	JSONValue template.JS `json:"jsonValue"`
 }
 
-func outputHTML(testsResult *Tests, version int) ([]byte, error) {
+func outputHTML(testsResult *Tests) ([]byte, error) {
 	var buf bytes.Buffer
-	var html string
-
-	println(version)
-
-	switch version {
-	case 2:
-		html = templateHTML2
-	default:
-		html = templateHTML1
-	}
 
 	testJSON, err := json.MarshalIndent(testsResult, "", " ")
 	if err != nil {
@@ -42,7 +29,7 @@ func outputHTML(testsResult *Tests, version int) ([]byte, error) {
 		Tests:     *testsResult,
 		JSONValue: template.JS(testJSON),
 	}
-	tmpl := template.Must(template.New("reportHTML").Parse(html))
+	tmpl := template.Must(template.New("reportHTML").Parse(templateHTML))
 	if err := tmpl.Execute(&buf, testsHTML); err != nil {
 		return nil, errors.Wrap(err, "unable to make template")
 	}
