@@ -76,7 +76,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 			continue
 		}
 
-		venom.Debug(ctx, "spanner: executing statement number %d\n", i)
+		venom.Debug(ctx, "spanner: executing statement number %d", i)
 		result, execErr := executeStatement(ctx, client, stmt)
 		if execErr != nil {
 			return nil, errors.Wrapf(execErr, "failed to execute statement number %d", i)
@@ -120,7 +120,7 @@ func (e Executor) commandsFromStep(ctx context.Context) ([]string, error) {
 
 	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 	file := path.Join(workdir, e.File)
-	venom.Debug(ctx, "spanner: loading SQL file from %s\n", file)
+	venom.Debug(ctx, "spanner: loading SQL file from %s", file)
 
 	b, err := os.ReadFile(file)
 	if err != nil {
