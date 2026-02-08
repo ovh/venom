@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/venom/executors/readfile"
 	"github.com/ovh/venom/executors/redis"
 	"github.com/ovh/venom/executors/smtp"
+	"github.com/ovh/venom/executors/spanner"
 	"github.com/ovh/venom/executors/sql"
 	"github.com/ovh/venom/executors/ssh"
 	"github.com/ovh/venom/executors/web"
@@ -44,4 +45,5 @@ var Registry map[string]Constructor = map[string]Constructor{
 	mongo.Name:      mongo.New,
 	web.Name:        web.New,
 	couchbase.Name:  couchbase.New,
+	spanner.Name:    spanner.New,
 }
