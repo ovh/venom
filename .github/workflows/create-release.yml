@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Initialize mandatory git config
         run: |
           git config user.name "GitHub Actions"
