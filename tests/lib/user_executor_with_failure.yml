@@ -1,0 +1,17 @@
+executor: user_executor_with_failure
+input:
+  expected_result: "success"
+
+steps:
+- type: exec
+  script: echo "this step succeeds"
+  assertions:
+  - result.code ShouldEqual 0
+
+- type: exec
+  script: echo "failing step"
+  assertions:
+  - result.code ShouldEqual 1
+
+output:
+  result: "{{.result.systemout}}"

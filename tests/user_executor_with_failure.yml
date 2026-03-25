@@ -1,0 +1,10 @@
+name: user executor failure propagation
+testcases:
+- name: simple user executor failure
+  steps:
+  - type: user_executor_with_failure
+
+- name: nested user executor failure (outer calls inner which fails)
+  steps:
+  - type: nested_fail_outer
+    greeting: "world"

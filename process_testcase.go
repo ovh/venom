@@ -419,13 +419,7 @@ func (v *Venom) setTestStepName(ts *TestStepResult, e ExecutorRunner, step TestS
 // Print a single step result (if verbosity is enabled)
 func (v *Venom) printTestStepResult(tc *TestCase, ts *TestStepResult, tsIn *TestStepResult, stepNumber int, mustAssertionFailed bool) {
 	fromUserExecutor := tsIn != nil
-	if fromUserExecutor {
-		// move back up user executor errors to parent test step for later logging
-		tsIn.Errors = append(tsIn.Errors, ts.Errors...)
-
-		// move back up user executor logs to parent test step for later logging
-		tsIn.ComputedInfo = append(tsIn.ComputedInfo, ts.ComputedInfo...)
-	} else if v.Verbose >= 1 {
+	if !fromUserExecutor && v.Verbose >= 1 {
 		if len(ts.Errors) > 0 {
 			v.Println(" %s", Red(StatusFail))
 			for _, i := range ts.ComputedInfo {
