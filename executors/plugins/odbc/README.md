@@ -1,4 +1,4 @@
-# Venom - Executor SQL
+# Venom - Executor ODBC
 
 This executor is a plugin executor. You need to recompile venom with plugin support to use it.
 
@@ -24,7 +24,7 @@ Step to execute SQL queries into databases:
 
 * **ODBC**
 
-It use the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retrieve rows as a list of map[string]interface{}
+It uses the package `sqlx` under the hood: https://github.com/jmoiron/sqlx to retrieve rows as a list of map[string]interface{}
 
 ## Input
 
@@ -74,7 +74,7 @@ testcases:
           - result.queries.__Len__ ShouldEqual 1
 ```
 
-*note: in the example above, the results of each command is stored in the results array
+*note: in the example above, the results of each command are stored in the results array*
 
 ## SQL drivers
 

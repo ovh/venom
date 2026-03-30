@@ -1,6 +1,6 @@
 # Venom - Executor SSH
 
-Step for execute a script on remote server via SSH
+Step to execute a script on a remote server via SSH
 
 
 ## Input

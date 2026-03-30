@@ -1,6 +1,6 @@
 # Venom - Executor AMQP
 
-Step to publish / subscribe to AMQP 1.0 compatible broker (currently implemented by QPID and ActiveMQ, among others)
+Step to publish / subscribe to an AMQP 1.0 compatible broker (currently implemented by QPID and ActiveMQ, among others)
 
 ## Input
 

@@ -1,6 +1,6 @@
 # Venom - Executor HTTP
 
-Step for execute a HTTP Request
+Step to execute an HTTP request
 
 ## Input
 In your yaml file, you can use:
@@ -23,9 +23,9 @@ In your yaml file, you can use:
   - no_follow_redirect (optional): indicates that you don't want to follow Location if server returns a Redirect (301/302/...)
   - skip_body: skip the body and bodyjson result
   - skip_headers: skip the headers result
-  - tls_client_cert (optional): a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enable mutual TLS authentication. Set the PEM content or the path to the PEM file.
+  - tls_client_cert (optional): a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enables mutual TLS authentication. Set the PEM content or the path to the PEM file.
   - tls_client_key (optional): private key corresponding to the certificate. Set the PEM content or the path to the PEM file.
-  - tls_root_ca (optional): defines additional root CAs to perform the call. Can contains multiple CAs concatenated together Set the PEM content or the path to the PEM file.
+  - tls_root_ca (optional): defines additional root CAs to perform the call. Can contain multiple CAs concatenated together. Set the PEM content or the path to the PEM file.
 
 ```
 
@@ -140,11 +140,11 @@ result.err
 JSON keys are lowercased automatically (eg. use `result.bodyjson.yourkey`, not
 `result.bodyjson.YourKey`).
 
-On top of that, if a JSON key contains special characters, they will be translate to underscores.
+On top of that, if a JSON key contains special characters, they will be translated to underscores.
 
 ### JSON arrays
 
-When a HTTP response contains a JSON array, you have to use following syntax
+When an HTTP response contains a JSON array, you have to use the following syntax
 to access specific key of an array: `result.bodyjson.array_name.array_name_index_in_array.key`
 
 Example if you want to get value of `path` key of *second* element in `apis` array: `result.bodyjson.apis.apis1.path`
