@@ -280,17 +280,11 @@ func initFromEnv(environ []string) ([]string, error) {
 		verbose = v2
 	}
 
-	cast := func(vS string) interface{} {
-		var v interface{}
-		_ = yaml.Unmarshal([]byte(vS), &v) //nolint
-		return v
-	}
-
 	for _, env := range environ {
 		if strings.HasPrefix(env, "VENOM_VAR_") {
 			tuple := strings.SplitN(env, "=", 2)
 			k := strings.TrimPrefix(tuple[0], "VENOM_VAR_")
-			variables = append(variables, fmt.Sprintf("%v=%v", k, cast(tuple[1])))
+			variables = append(variables, fmt.Sprintf("%s=%s", k, tuple[1]))
 		}
 	}
 
