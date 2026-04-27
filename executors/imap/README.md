@@ -27,7 +27,7 @@ As of today, these are the available commands:
 - **flag**: add, remove or set the flags of a mail
 - **move**: move a mail from one mailbox to another
 
-Multiple commands can be stated as once: they will be executed in the order they are presented under the `commands` field.
+Multiple commands can be stated at once: they will be executed in the order they are presented under the `commands` field.
 
 Each command consists of a `name` field which allows to specify the command to execute.
 Then they are composed of the `search` field and/or the `args` field.
@@ -170,8 +170,8 @@ commands:
 
 ### Assertions
 
-Each execution of a command produces a `result` Its content depends on the command and its execution.\
-Taking that multiple commands can be executed in a single testcase, the `result` object follows this syntax:
+Each execution of a command produces a `result`. Its content depends on the command and its execution.\
+Considering that multiple commands can be executed in a single testcase, the `result` object follows this syntax:
 ```json
 {
   "result": {
@@ -213,7 +213,7 @@ Where each command has its own results that can be asserted.
 As an example, here is a list of possible assertions after execution of two commands in the same testcase:
 ```yaml
 assertions:
-  # First ommand
+  # First command
   - result.commands.commands0.err ShouldBeEmpty
   # State of the mail before command execution (search)
   - result.commands.commands0.search.from ShouldEqual "from@mail-before-command-execution.com"

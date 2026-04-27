@@ -1,6 +1,6 @@
 # Venom - Executor Kafka
 
-Step to use read / write on a Kafka topic. We also have possibility to use Avro schema to encode message in Kafka Topic.
+Step to read from / write to a Kafka topic. It is also possible to use an Avro schema to encode messages in a Kafka topic.
 
 ## Input
 
@@ -11,13 +11,13 @@ In your yaml file, you can use:
   - with_tls optional
   - with_sasl optional
   - with_sasl_handshaked optional
-  - with_avro optional - describes if this test should expect Avro schema to be used. NOTE if you used it for consumer, you will have to use it for Producer too.
+  - with_avro optional - describes if this test should expect Avro schema to be used. NOTE: if you use it for the consumer, you will have to use it for the producer too.
   - user optional
   - password optional
   - kafka_version optional, default is 0.10.2.0
   - insecure_tls optional, permit to allow self-signed certificates when using tls
 
-  - client_type mandator: producer or consumer
+  - client_type mandatory: producer or consumer
 
   # for consumer client type:
   - group_id mandatory
@@ -36,7 +36,7 @@ In your yaml file, you can use:
   - messages.headers - Headers for message (optional)
   - messages.value - Value for message
   - messages.valueFile - Take value for message from file provided here
-  - messages.avroSchemaFile - Specify Avro schema file. messages.valueFile or messages.value should have value, which can be encoded with that schema. If not provided, then it will retrieve the latest available version from schema registry using Topic Name strategy, that is, ${topicName}-value as subject.
+  - messages.avroSchemaFile - Specify an Avro schema file. messages.valueFile or messages.value should have a value that can be encoded with that schema. If not provided, then it will retrieve the latest available version from schema registry using the Topic Name strategy, that is, ${topicName}-value as subject.
 ```
 
 Example without Avro:

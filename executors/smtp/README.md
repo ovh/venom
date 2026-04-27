@@ -2,7 +2,7 @@
 
 Step for sending SMTP
 
-Use case: you software have to check mails for doing something with them?
+Use case: your software has to check mails to do something with them?
 Venom can send mail then execute some tests on your software.
 
 ## Input

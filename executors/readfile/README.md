@@ -3,7 +3,7 @@
 Step used to read a file
 
 Use case: your application writes a file on disk. Venom can check that this file is produced, read it,
-and return its content. Content can be used by another steps of testsuite.
+and return its content. Content can be used by other steps of the testsuite.
 
 Path can contain a fullpath, a wildcard or a directory:
 
@@ -53,9 +53,9 @@ testcases:
 - result.timeseconds: execution duration
 - result.err: if the file does not exist, this field contains an error
 - result.content: content of the read file
-- result.contentjson: content of the read file if it's a json file. You can access json data as result.contentjson.yourkey for example
+- result.contentjson: content of the read file if it's a JSON file. You can access json data as result.contentjson.yourkey for example
 - result.size.filename: size of the file 'filename'
-- result.md5sum.filename: md5 of the file 'fifename'
+- result.md5sum.filename: md5 of the file 'filename'
 - result.modtime.filename: modification date of the file 'filename', example: 1487698253
 - result.mod.filename: rights on file 'filename', example: -rw-r--r--
 

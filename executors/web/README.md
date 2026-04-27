@@ -8,7 +8,7 @@ The web executor allows you to navigate into your web application and execute ac
 
 ## Web driver
 
-Web driver allow to manipulate a browser.
+Web driver allows to manipulate a browser.
 
 To use firefox browser, `geckodriver` binary must be installed - see [here](https://github.com/mozilla/geckodriver/releases)
 To use chrome browser, `chromedriver` binary must be installed - see [here](https://chromedriver.chromium.org/downloads)
@@ -25,7 +25,7 @@ To use chrome browser, `chromedriver` binary must be installed - see [here](http
 You can define parameters to configure the browser used during the test suite. All parameters are optional:
 * width: Width of the browser page
 * height: Height of the browser page
-* driver (default: `chrome`): Driver to use, severals values possibles:
+* driver (default: `chrome`): Driver to use, several possible values:
   * `chrome`: Use chrome driver
   * `gecko`: Use gecko driver (firefox)
 * args: Web driver arguments
@@ -33,11 +33,11 @@ You can define parameters to configure the browser used during the test suite. A
 * timeout (default: `180`): Timeout in seconds
 * debug (default: `false`): Boolean, enabling/disabling the debug mode of the web driver (Deprecated - use logLevel instead)
 * proxy: Proxy to use to query web site (Format: `[server]:[port]`)
-* headless (default: `false`): Boolean, enabling/disabling the headless mode of the web driver. Usefull to integrate tool in CI/CD pipeline 
+* headless (default: `false`): Boolean, enabling/disabling the headless mode of the web driver. Useful to integrate the tool in a CI/CD pipeline 
 * detach (default: `false`): Boolean, enabling/disabling the detach mode of the web driver 
-* logLevel (default: `false`): Define log level of client, severals values possibles:
+* logLevel (default: `false`): Define log level of client, several possible values:
   * `ERROR`: In this mode, you can see errors
-  * `WARN`: In this mode, you can see warning
+  * `WARN`: In this mode, you can see warnings
   * `INFO`: In this mode, you can see all methods called
   * `DEBUG`: In this mode, you can see all interactions between web driver and browser
 * binaryPath: Binary path of browser, if path is not defined, use default path
@@ -45,7 +45,7 @@ You can define parameters to configure the browser used during the test suite. A
 * driverPort: Port to run driver, if port is not defined, use driver default port
 
 ## Action
-Action allow to manipulate browser
+Actions allow you to manipulate the browser
 
 List of output values available:
 * result.url: URL of the current page
@@ -78,7 +78,7 @@ Search an element from a selector
 * Locator: Locator to use to search element (CSS or XPATH)
 
 #### Output
-* result.find: return number of object identified
+* result.find: returns the number of objects identified
 
 #### Example
 ```yaml
@@ -104,9 +104,9 @@ Search an element from a selector
 Click on an element from a selector
 
 #### Input
-* Find: Element to find (More informations in find section)
+* Find: Element to find (More information in find section)
 * Wait: Time to wait after click (in seconds)
-* SyncTimeout: Option to enable element synchronization (wait until element appear in page). SyncTimeout allow to define maximum time to wait for synchronization
+* SyncTimeout: Option to enable element synchronization (wait until element appears on the page). SyncTimeout allows defining the maximum time to wait for synchronization
 
 #### Example
 ```yaml
@@ -123,10 +123,10 @@ Fill an element (input or textarea) with a text
 
 #### Input
 Array of structured input:
-* Find: Element to find (More informations in find section)
+* Find: Element to find (More information in find section)
 * Text: Update element value with text
 * Key: Update element value with key
-* SyncTimeout: Option to enable element synchronization (wait until element appear in page). SyncTimeout allow to define maximum time to wait for synchronization
+* SyncTimeout: Option to enable element synchronization (wait until element appears on the page). SyncTimeout allows defining the maximum time to wait for synchronization
 
 #### Example
 ```yaml
@@ -143,10 +143,10 @@ Array of structured input:
 Select an option of a web element
 
 #### Input
-* Find: Element to find (More informations in find section)
+* Find: Element to find (More information in find section)
 * Text: Option to select
 * Wait: Time to wait after click (in seconds)
-* SyncTimeout: Option to enable element synchronization (wait until element appear in page). SyncTimeout allow to define maximum time to wait for synchronization
+* SyncTimeout: Option to enable element synchronization (wait until element appears on the page). SyncTimeout allows defining the maximum time to wait for synchronization
 
 #### Example
 ```yaml
@@ -163,10 +163,10 @@ Select an option of a web element
 Upload file on a web element
 
 #### Input
-* Find: Element to find (More informations in find section)
+* Find: Element to find (More information in find section)
 * Files: String array to define files to upload
 * Wait: Time to wait after click (in seconds)
-* SyncTimeout: Option to enable element synchronization (wait until element appear in page). SyncTimeout allow to define maximum time to wait for synchronization
+* SyncTimeout: Option to enable element synchronization (wait until element appears on the page). SyncTimeout allows defining the maximum time to wait for synchronization
 
 #### Example
 ```yaml
@@ -195,8 +195,8 @@ An integer value to define number of seconds to wait
 Select a frame presents in the current page
 
 #### Input
-* Find: Frame to find (More informations in find section)
-* SyncTimeout: Option to enable element synchronization (wait until element appear in page). SyncTimeout allow to define maximum time to wait for synchronization
+* Find: Frame to find (More information in find section)
+* SyncTimeout: Option to enable element synchronization (wait until element appears on the page). SyncTimeout allows defining the maximum time to wait for synchronization
 
 #### Example
 ```yaml
@@ -245,7 +245,7 @@ A boolean value to set to true to back to previous page
 ```
 
 ### Forward
-Foward to next page
+Forward to next page
 A boolean value to set to true to forward page
 
 #### Example
@@ -310,7 +310,7 @@ Execute javascript code
 ```
 
 
-More informations about actions (https://github.com/ovh/venom/tree/master/executors/web/types.go)
+More information about actions (https://github.com/ovh/venom/tree/master/executors/web/types.go)
 For an action, you can take screenshot of browser with following command: `screenshot: [fileName].png`
 
 ## Example

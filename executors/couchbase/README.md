@@ -2,11 +2,11 @@
 
 Step to execute actions on a couchbase database using [github.com/couchbase/gocb/v2](https://pkg.go.dev/github.com/couchbase/gocb/v2) sdk.
 
-More information you can find [here](https://docs.couchbase.com/go-sdk/current/hello-world/start-using-sdk.html)
+You can find more information [here](https://docs.couchbase.com/go-sdk/current/hello-world/start-using-sdk.html)
 
 ## Connection
 
-To be possible use couchbase executor you need to specify at least the couchbase bucket (in case of no auth and running local).
+To use the couchbase executor you need to specify at least the couchbase bucket (in case of no auth and running local).
 
 A minimal couchbase configuration can be the following one:
 
@@ -48,7 +48,7 @@ For transcoder, you have the following options:
 
 See also [tests/couchbase.yml](../../tests/couchbase.yml) for executable examples.
 
-Couchbase can be used to store json structured data, but can store also binary and string types.
+Couchbase can be used to store JSON structured data, but can also store binary and string types.
 
 Example:
 
@@ -70,7 +70,7 @@ Get will retrieve documents by id. If the id can't be found the flag `found` wil
 
 By using flag `with_expiry` the expiration of the given entry will be returned (or will be zero if no expiration).
 
-by using flag `expiry` the get operation became `get and touch` and the option `with_expiry` will be ignored.
+By using flag `expiry` the get operation becomes `get and touch` and the option `with_expiry` will be ignored.
 
 ```yaml
 - type: couchbase
@@ -140,7 +140,7 @@ An expiration, in seconds, can be defined via field `expiry` to override the _de
 
 ### Upsert documents
 
-Upsert will insert or documents by id. It will set the flag `upserted` to true
+Upsert will insert or update documents by id. It will set the flag `upserted` to true.
 
 It is possible to preserve the original expiration (if any) via boolean field `preserve_expiry`.
 
@@ -183,7 +183,7 @@ Delete will remove by id. It will set the flag `deleted` to true in case the id 
 
 Touch will update the object expiration for a given id. It will set the flag `touch` to true in case the id has been found.
 
-An `expiry` in seconds can be specified to be used. Unless it will use the global `expiry`.
+An `expiry` in seconds can be specified to be used. Otherwise it will use the global `expiry`.
 
 ```yaml
 - type: couchbase
@@ -201,7 +201,7 @@ An `expiry` in seconds can be specified to be used. Unless it will use the globa
 
 ### Check if document exists
 
-The command `exists` check if the document id exists or not. It will set a boolean flag `found` with the status.
+The command `exists` checks if the document id exists or not. It will set a boolean flag `found` with the status.
 
 ```yaml
 - type: couchbase

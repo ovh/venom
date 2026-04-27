@@ -20,11 +20,11 @@ In your yaml file, you declare your step like this
   - folder optional
  ```
 
-- `schemas` is a list of paths to several `.sql` file that contains the schemas of the tables in your database. If specified, the content of every file will be executed before loading the fixtures.
+- `schemas` is a list of paths to several `.sql` files that contain the schemas of the tables in your database. If specified, the content of every file will be executed before loading the fixtures.
 - `files` parameter is only used as a fallback if `folder` is not used.
-- `migrations` is a folder path that contains SQL migrations files that can be used to initialize the database, instead of a list of schemas. **Note that if `schemas` is not empty, it will have precedence and migrations files will be ignored.**
+- `migrations` is a folder path that contains SQL migration files that can be used to initialize the database, instead of a list of schemas. **Note that if `schemas` is not empty, it will have precedence and migration files will be ignored.**
 - `migrationsTable` is the table used to store the migration version.
-- `skipResetSequences` is only used for PostgreSQL database, it control whether index should be reset (default) or not
+- `skipResetSequences` is only used for PostgreSQL databases, it controls whether the index should be reset (default) or not
 
 Example usage (_mysql_):
 ```yaml
