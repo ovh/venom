@@ -24,15 +24,16 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	WithTLS  bool   `json:"withtls,omitempty" yaml:"withtls,omitempty"`
-	Host     string `json:"host,omitempty" yaml:"host,omitempty"`
-	Port     string `json:"port,omitempty" yaml:"port,omitempty"`
-	User     string `json:"user,omitempty" yaml:"user,omitempty"`
-	Password string `json:"password,omitempty" yaml:"password,omitempty"`
-	To       string `json:"to,omitempty" yaml:"to,omitempty"`
-	From     string `json:"from,omitempty" yaml:"from,omitempty"`
-	Subject  string `json:"subject,omitempty" yaml:"subject,omitempty"`
-	Body     string `json:"body,omitempty" yaml:"body,omitempty"`
+	WithTLS         bool   `json:"withtls,omitempty" yaml:"withtls,omitempty"`
+	IgnoreVerifySSL bool   `json:"ignore_verify_ssl,omitempty" yaml:"ignore_verify_ssl,omitempty"`
+	Host            string `json:"host,omitempty" yaml:"host,omitempty"`
+	Port            string `json:"port,omitempty" yaml:"port,omitempty"`
+	User            string `json:"user,omitempty" yaml:"user,omitempty"`
+	Password        string `json:"password,omitempty" yaml:"password,omitempty"`
+	To              string `json:"to,omitempty" yaml:"to,omitempty"`
+	From            string `json:"from,omitempty" yaml:"from,omitempty"`
+	Subject         string `json:"subject,omitempty" yaml:"subject,omitempty"`
+	Body            string `json:"body,omitempty" yaml:"body,omitempty"`
 }
 
 // Result represents a step result
@@ -105,7 +106,7 @@ func (e *Executor) sendEmail(ctx context.Context) error {
 	message += "\r\n" + e.Body
 
 	tlsconfig := &tls.Config{
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: e.IgnoreVerifySSL,
 		ServerName:         e.Host,
 	}
 

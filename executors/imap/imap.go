@@ -274,11 +274,12 @@ type Client struct {
 }
 
 type AuthConfig struct {
-	WithTLS  bool   `json:"withtls,omitempty" yaml:"withtls,omitempty"`
-	Host     string `json:"host,omitempty" yaml:"host,omitempty"`
-	Port     string `json:"port,omitempty" yaml:"port,omitempty"`
-	User     string `json:"user,omitempty" yaml:"user,omitempty"`
-	Password string `json:"password,omitempty" yaml:"password,omitempty"`
+	WithTLS         bool   `json:"withtls,omitempty" yaml:"withtls,omitempty"`
+	IgnoreVerifySSL bool   `json:"ignore_verify_ssl,omitempty" yaml:"ignore_verify_ssl,omitempty"`
+	Host            string `json:"host,omitempty" yaml:"host,omitempty"`
+	Port            string `json:"port,omitempty" yaml:"port,omitempty"`
+	User            string `json:"user,omitempty" yaml:"user,omitempty"`
+	Password        string `json:"password,omitempty" yaml:"password,omitempty"`
 }
 
 // Executor represents a Test Executor
@@ -870,7 +871,8 @@ func (e Executor) connect(host, port, imapUsername, imapPassword string) (*imap.
 	)
 	if e.Auth.WithTLS {
 		c, err = imap.DialTLS(host+":"+port, &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: e.Auth.IgnoreVerifySSL,
+			ServerName:         host,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to dialTLS: %s", err)

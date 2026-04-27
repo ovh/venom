@@ -14,6 +14,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 
 	"github.com/ovh/venom"
 )
@@ -31,13 +32,14 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	Host         string `json:"host,omitempty" yaml:"host,omitempty"`
-	Command      string `json:"command,omitempty" yaml:"command,omitempty"`
-	User         string `json:"user,omitempty" yaml:"user,omitempty"`
-	Password     string `json:"password,omitempty" yaml:"password,omitempty"`
-	PrivateKey   string `json:"privatekey,omitempty" yaml:"privatekey,omitempty"`
-	Sudo         string `json:"sudo,omitempty" yaml:"sudo,omitempty"`
-	SudoPassword string `json:"sudopassword,omitempty" yaml:"sudopassword,omitempty"`
+	Host                  string `json:"host,omitempty" yaml:"host,omitempty"`
+	Command               string `json:"command,omitempty" yaml:"command,omitempty"`
+	User                  string `json:"user,omitempty" yaml:"user,omitempty"`
+	Password              string `json:"password,omitempty" yaml:"password,omitempty"`
+	PrivateKey            string `json:"privatekey,omitempty" yaml:"privatekey,omitempty"`
+	Sudo                  string `json:"sudo,omitempty" yaml:"sudo,omitempty"`
+	SudoPassword          string `json:"sudopassword,omitempty" yaml:"sudopassword,omitempty"`
+	InsecureIgnoreHostKey bool   `json:"insecure_ignore_host_key,omitempty" yaml:"insecure_ignore_host_key,omitempty"`
 }
 
 // Result represents a step result
@@ -73,7 +75,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	start := time.Now()
 	result := Result{}
 
-	client, session, err := connectToHost(e.User, e.Password, e.PrivateKey, e.Host, e.Sudo)
+	client, session, err := connectToHost(e.User, e.Password, e.PrivateKey, e.Host, e.Sudo, e.InsecureIgnoreHostKey)
 	if err != nil {
 		result.Err = err.Error()
 	} else {
@@ -143,7 +145,7 @@ func handleSudo(in io.Writer, out *Buffer, quit chan bool, password string) {
 	}
 }
 
-func connectToHost(u, pass, key, host, sudo string) (*ssh.Client, *ssh.Session, error) {
+func connectToHost(u, pass, key, host, sudo string, insecureIgnoreHostKey bool) (*ssh.Client, *ssh.Session, error) {
 	// Default user is current username
 	if u == "" {
 		osUser, err := user.Current()
@@ -166,10 +168,15 @@ func connectToHost(u, pass, key, host, sudo string) (*ssh.Client, *ssh.Session, 
 		auth = []ssh.AuthMethod{ssh.PublicKeys(key)}
 	}
 
+	hostKeyCallback, err := buildHostKeyCallback(insecureIgnoreHostKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            u,
 		Auth:            auth,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: hostKeyCallback,
 	}
 
 	// If host doen't contain port, set the default port
@@ -212,9 +219,7 @@ func privateKey(file string) (key ssh.Signer, err error) {
 		if err != nil {
 			return nil, err
 		}
-		file = filepath.Join(usr.HomeDir + "/.ssh/id_rsa")
-	} else {
-		file = os.ExpandEnv(file)
+		file = filepath.Join(usr.HomeDir, ".ssh", "id_rsa")
 	}
 
 	// Read the file
@@ -228,4 +233,27 @@ func privateKey(file string) (key ssh.Signer, err error) {
 		return nil, err
 	}
 	return key, nil
+}
+
+// buildHostKeyCallback returns the ssh.HostKeyCallback to use for the
+// connection. By default it verifies the server key against the user's
+// $HOME/.ssh/known_hosts. If insecureIgnoreHostKey is true, all server
+// keys are accepted (legacy behaviour, only for trusted environments).
+func buildHostKeyCallback(insecureIgnoreHostKey bool) (ssh.HostKeyCallback, error) {
+	if insecureIgnoreHostKey {
+		return ssh.InsecureIgnoreHostKey(), nil
+	}
+	usr, err := user.Current()
+	if err != nil {
+		return nil, fmt.Errorf("unable to resolve current user to locate known_hosts: %w", err)
+	}
+	knownHostsPath := filepath.Join(usr.HomeDir, ".ssh", "known_hosts")
+	if _, err := os.Stat(knownHostsPath); err != nil {
+		return nil, fmt.Errorf("known_hosts file %q is not available (%w); populate it or set 'insecure_ignore_host_key: true' to bypass host key verification", knownHostsPath, err)
+	}
+	cb, err := knownhosts.New(knownHostsPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load known_hosts from %q: %w", knownHostsPath, err)
+	}
+	return cb, nil
 }

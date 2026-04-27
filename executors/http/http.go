@@ -279,10 +279,9 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
-		bodyfilePath := e.BodyFile
-		if !filepath.IsAbs(e.BodyFile) {
-			// Only join with the workdir with relative path
-			bodyfilePath = filepath.Join(workdir, e.BodyFile)
+		bodyfilePath, errResolve := venom.ResolveWorkdirPath(workdir, e.BodyFile)
+		if errResolve != nil {
+			return nil, errResolve
 		}
 		if _, err := os.Stat(bodyfilePath); !os.IsNotExist(err) {
 			temp, err := os.ReadFile(bodyfilePath)

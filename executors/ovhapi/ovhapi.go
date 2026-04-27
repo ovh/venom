@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -285,9 +284,12 @@ func (e Executor) getRequestBody(workdir string) (res interface{}, err error) {
 	if e.Body != "" {
 		bytes = []byte(e.Body)
 	} else if e.BodyFile != "" {
-		path := filepath.Join(workdir, e.BodyFile)
-		if _, err = os.Stat(path); !os.IsNotExist(err) {
-			bytes, err = os.ReadFile(path)
+		bodyPath, errResolve := venom.ResolveWorkdirPath(workdir, e.BodyFile)
+		if errResolve != nil {
+			return nil, errResolve
+		}
+		if _, err = os.Stat(bodyPath); !os.IsNotExist(err) {
+			bytes, err = os.ReadFile(bodyPath)
 			if err != nil {
 				return nil, err
 			}

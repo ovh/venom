@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"path"
 
 	fixtures "github.com/go-testfixtures/testfixtures/v3"
 	"github.com/mitchellh/mapstructure"
@@ -73,13 +72,16 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 	if len(e.Schemas) != 0 {
 		for _, s := range e.Schemas {
 			venom.Debug(ctx, "loading schema from file %s\n", s)
-			s = path.Join(workdir, s)
-			sbytes, errs := os.ReadFile(s)
+			schemaPath, errResolve := venom.ResolveWorkdirPath(workdir, s)
+			if errResolve != nil {
+				return nil, errResolve
+			}
+			sbytes, errs := os.ReadFile(schemaPath)
 			if errs != nil {
 				return nil, errs
 			}
 			if _, err = db.Exec(string(sbytes)); err != nil {
-				return nil, errors.Wrapf(err, "failed to exec schema from file %q", s)
+				return nil, errors.Wrapf(err, "failed to exec schema from file %q", schemaPath)
 			}
 		}
 	} else if e.Migrations != "" {
@@ -89,7 +91,10 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 			migrate.SetTable(e.MigrationsTable)
 		}
 
-		dir := path.Join(workdir, e.Migrations)
+		dir, errResolve := venom.ResolveWorkdirPath(workdir, e.Migrations)
+		if errResolve != nil {
+			return nil, errResolve
+		}
 		migrations := &migrate.FileMigrationSource{
 			Dir: dir,
 		}
@@ -124,26 +129,34 @@ func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 // and switch to the list of files if no folder was specified.
 func loadFixtures(ctx context.Context, db *sql.DB, files []string, folder string, dialect func(*fixtures.Loader) error, workdir string) error {
 	if folder != "" {
-		venom.Debug(ctx, "loading fixtures from folder %s\n", path.Join(workdir, folder))
+		folderPath, err := venom.ResolveWorkdirPath(workdir, folder)
+		if err != nil {
+			return err
+		}
+		venom.Debug(ctx, "loading fixtures from folder %s\n", folderPath)
 		loader, err := fixtures.New(
 			// By default the package refuse to load if the database
 			// does not contains "test" to avoid wiping a production db.
 			fixtures.DangerousSkipTestDatabaseCheck(),
 			fixtures.Database(db),
-			fixtures.Directory(path.Join(workdir, folder)),
+			fixtures.Directory(folderPath),
 			dialect)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create folder loader")
 		}
 		if err = loader.Load(); err != nil {
-			return errors.Wrapf(err, "failed to load fixtures from folder %q", path.Join(workdir, folder))
+			return errors.Wrapf(err, "failed to load fixtures from folder %q", folderPath)
 		}
 		return nil
 	}
 	if len(files) != 0 {
 		venom.Debug(ctx, "loading fixtures from files: %v\n", files)
 		for i := range files {
-			files[i] = path.Join(workdir, files[i])
+			resolved, err := venom.ResolveWorkdirPath(workdir, files[i])
+			if err != nil {
+				return err
+			}
+			files[i] = resolved
 		}
 		loader, err := fixtures.New(
 			// By default the package refuse to load if the database
