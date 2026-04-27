@@ -285,6 +285,23 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 
 	v.runTestSteps(ctx, tc, tsIn)
 
+	// Merge inner step results into the parent test step result so they
+	// appear in JUnit XML, JSON, HTML, and other report outputs.
+	for _, innerResult := range tc.TestStepResults {
+		if len(innerResult.Errors) > 0 {
+			tsIn.Errors = append(tsIn.Errors, innerResult.Errors...)
+		}
+		if len(innerResult.ComputedInfo) > 0 {
+			tsIn.ComputedInfo = append(tsIn.ComputedInfo, innerResult.ComputedInfo...)
+		}
+		if strings.TrimSpace(innerResult.Systemout) != "" {
+			tsIn.Systemout += innerResult.Systemout
+		}
+		if strings.TrimSpace(innerResult.Systemerr) != "" {
+			tsIn.Systemerr += innerResult.Systemerr
+		}
+	}
+
 	computedVars, err := DumpString(tc.computedVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to dump testcase computedVars")
