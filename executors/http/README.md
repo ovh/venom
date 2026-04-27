@@ -23,9 +23,9 @@ In your yaml file, you can use:
   - no_follow_redirect (optional): indicates that you don't want to follow Location if server returns a Redirect (301/302/...)
   - skip_body: skip the body and bodyjson result
   - skip_headers: skip the headers result
-  - tls_client_cert (optional): a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enables mutual TLS authentication. Set the PEM content or the path to the PEM file.
-  - tls_client_key (optional): private key corresponding to the certificate. Set the PEM content or the path to the PEM file.
-  - tls_root_ca (optional): defines additional root CAs to perform the call. Can contain multiple CAs concatenated together. Set the PEM content or the path to the PEM file.
+  - tls_client_cert (optional): a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enables mutual TLS authentication. Provide either inline PEM content (must contain "-----BEGIN") or a path relative to the testsuite workdir. Absolute paths are rejected.
+  - tls_client_key (optional): private key corresponding to the certificate. Provide either inline PEM content or a path relative to the testsuite workdir.
+  - tls_root_ca (optional): additional root CAs used for the call. Can contain multiple CAs concatenated together. Provide either inline PEM content or a path relative to the testsuite workdir.
 
 ```
 

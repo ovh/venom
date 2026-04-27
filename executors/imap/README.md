@@ -10,6 +10,7 @@ Venom IMAP executor implements a few IMAP commands such as FETCH, APPEND, MOVE, 
 ```yaml
 auth:
   withtls: false
+  ignore_verify_ssl: false # Optional, default false. Set to true to disable TLS certificate verification (e.g. self-signed certs).
   host: yourimaphost
   port: 143 # Most probably 993 if using TLS
   user: imap@venom.com

@@ -12,9 +12,16 @@ In your yaml file, you can use:
   - command mandatory
   - user optional (default is OS username)
   - password optional (mandatory if no privatekey is found)
-  - privatekey optional (default is $HOME/.ssh/id_rsa)
+  - privatekey optional (default is $HOME/.ssh/id_rsa).
+                       Relative paths are resolved under the testsuite workdir.
+                       Absolute paths must be located under the user's $HOME.
   - sudo optional
   - sudopassword optional (default to password)
+  - insecure_ignore_host_key optional (default false). When false, the server
+                                       host key is verified against
+                                       $HOME/.ssh/known_hosts. Set to true to
+                                       skip verification (insecure).
+  - timeout optional (default 30). Connection timeout, in seconds.
 ```
 
 Example

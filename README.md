@@ -419,6 +419,8 @@ Notice the variable `alljson`. All variables declared in output are automaticall
 Venom will load user-defined executors from the directory `lib/` relative to the testsuite path. You can add executor source paths using the flag `--lib-dir`. 
 Note that all folders listed with `--lib-dir` will be scanned recursively to find `.yml` files as user executors.
 
+Compiled Go plugins (`.so`) are **only** loaded from `--lib-dir`; they are no longer auto-discovered from `<workdir>/lib/`. The plugin name (the YAML `type:` field) must match `[A-Za-z0-9_-]+`.
+
 The user defined executors work with templating, you can check the templating result in `venom.log`. In this file, if you see an error such as `error converting YAML to JSON: yaml: line 14: found unexpected end of stream`, you probably need to adjust indentation with the templating function `indent`. 
 
 Example:

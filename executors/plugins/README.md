@@ -77,10 +77,14 @@ testcases:
     - result.body ShouldContainSubstring world
 ```
 
-Run venom:
+Run venom (the `--lib-dir` flag must point to the directory containing the
+compiled `.so` plugin; auto-discovery from the testsuite workdir is no longer
+supported for security reasons):
 
 ```
-$ ./venom run test.yml
+$ ./venom run --lib-dir=./lib test.yml
 ```
+
+Plugin names are restricted to the `[A-Za-z0-9_-]` character set.
 
 Feel free to open a Pull Request with your executors.

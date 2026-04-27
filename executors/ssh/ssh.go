@@ -40,7 +40,10 @@ type Executor struct {
 	Sudo                  string `json:"sudo,omitempty" yaml:"sudo,omitempty"`
 	SudoPassword          string `json:"sudopassword,omitempty" yaml:"sudopassword,omitempty"`
 	InsecureIgnoreHostKey bool   `json:"insecure_ignore_host_key,omitempty" yaml:"insecure_ignore_host_key,omitempty"`
+	Timeout               int    `json:"timeout,omitempty" yaml:"timeout,omitempty"` // connection timeout in seconds, default 30
 }
+
+const defaultSSHTimeoutSeconds = 30
 
 // Result represents a step result
 type Result struct {
@@ -75,7 +78,8 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	start := time.Now()
 	result := Result{}
 
-	client, session, err := connectToHost(e.User, e.Password, e.PrivateKey, e.Host, e.Sudo, e.InsecureIgnoreHostKey)
+	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
+	client, session, err := connectToHost(e.User, e.Password, e.PrivateKey, e.Host, e.Sudo, workdir, e.InsecureIgnoreHostKey, e.Timeout)
 	if err != nil {
 		result.Err = err.Error()
 	} else {
@@ -145,7 +149,7 @@ func handleSudo(in io.Writer, out *Buffer, quit chan bool, password string) {
 	}
 }
 
-func connectToHost(u, pass, key, host, sudo string, insecureIgnoreHostKey bool) (*ssh.Client, *ssh.Session, error) {
+func connectToHost(u, pass, key, host, sudo, workdir string, insecureIgnoreHostKey bool, timeoutSeconds int) (*ssh.Client, *ssh.Session, error) {
 	// Default user is current username
 	if u == "" {
 		osUser, err := user.Current()
@@ -161,7 +165,7 @@ func connectToHost(u, pass, key, host, sudo string, insecureIgnoreHostKey bool) 
 		auth = []ssh.AuthMethod{ssh.Password(pass)}
 	} else {
 		// Load the the private key
-		key, err := privateKey(key)
+		key, err := privateKey(key, workdir)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -173,10 +177,15 @@ func connectToHost(u, pass, key, host, sudo string, insecureIgnoreHostKey bool) 
 		return nil, nil, err
 	}
 
+	if timeoutSeconds <= 0 {
+		timeoutSeconds = defaultSSHTimeoutSeconds
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            u,
 		Auth:            auth,
 		HostKeyCallback: hostKeyCallback,
+		Timeout:         time.Duration(timeoutSeconds) * time.Second,
 	}
 
 	// If host doen't contain port, set the default port
@@ -212,7 +221,7 @@ func connectToHost(u, pass, key, host, sudo string, insecureIgnoreHostKey bool) 
 	return client, session, nil
 }
 
-func privateKey(file string) (key ssh.Signer, err error) {
+func privateKey(file, workdir string) (key ssh.Signer, err error) {
 	// Default private key is $HOME/.ssh/id_rsa
 	if file == "" {
 		usr, err := user.Current()
@@ -220,6 +229,26 @@ func privateKey(file string) (key ssh.Signer, err error) {
 			return nil, err
 		}
 		file = filepath.Join(usr.HomeDir, ".ssh", "id_rsa")
+	} else if filepath.IsAbs(file) {
+		// Absolute paths are only allowed under the user's $HOME, to prevent
+		// a malicious testsuite from pointing to /etc/shadow or similar.
+		usr, err := user.Current()
+		if err != nil {
+			return nil, fmt.Errorf("unable to resolve current user to validate privatekey path: %w", err)
+		}
+		clean := filepath.Clean(file)
+		homePrefix := filepath.Clean(usr.HomeDir) + string(os.PathSeparator)
+		if !strings.HasPrefix(clean, homePrefix) {
+			return nil, fmt.Errorf("absolute privatekey path %q must be located under the user's home directory %q", file, usr.HomeDir)
+		}
+		file = clean
+	} else {
+		// Resolve relative paths under the testsuite workdir.
+		resolved, err := venom.ResolveWorkdirPath(workdir, file)
+		if err != nil {
+			return nil, fmt.Errorf("invalid privatekey path: %w", err)
+		}
+		file = resolved
 	}
 
 	// Read the file

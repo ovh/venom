@@ -5,7 +5,7 @@ testcases:
   - type: ssh
     user: venom
     host: localhost:2222
-    privatekey: "$HOME/.ssh/id_rsa"
+    insecure_ignore_host_key: true
     command: echo foo
     assertions:
     - result.code ShouldEqual 0
@@ -16,7 +16,7 @@ testcases:
   - type: ssh
     user: venom
     host: localhost:2222
-    privatekey: "$HOME/.ssh/id_rsa"
+    insecure_ignore_host_key: true
     command: whoami
     sudo: root
     sudopassword: testvenom
@@ -30,7 +30,7 @@ testcases:
   - type: ssh
     user: venom
     host: localhost:2222
-    privatekey: "$HOME/.ssh/id_rsa"
+    insecure_ignore_host_key: true
     command: whoami
     sudo: venom
     sudopassword: testvenom

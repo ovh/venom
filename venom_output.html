@@ -16,6 +16,9 @@
   <!-- Showdown for Markdown (if needed) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 
+  <!-- DOMPurify to sanitise rendered Markdown / HTML and prevent XSS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"></script>
+
   <!-- Custom Tailwind Config -->
   <script>
     tailwind.config = {
@@ -491,7 +494,10 @@
         renderMarkdown(text) {
           if (!text) return '';
           const converter = new showdown.Converter();
-          return converter.makeHtml(text);
+          const dirty = converter.makeHtml(text);
+          // Sanitise the generated HTML to prevent XSS through user-supplied
+          // content (testsuite descriptions, step results, etc.).
+          return DOMPurify.sanitize(dirty);
         },
 
         formatDuration(seconds) {
