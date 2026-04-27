@@ -1,0 +1,14 @@
+executor: nested_fail_inner
+input:
+  message: "default_inner"
+steps:
+- type: exec
+  script: echo '{{.input.message}}'
+  assertions:
+  - result.code ShouldEqual 0
+- type: exec
+  script: echo 'this assertion will fail'
+  assertions:
+  - result.systemout ShouldEqual "this will never match"
+output:
+  result: "{{.result.systemout}}"
