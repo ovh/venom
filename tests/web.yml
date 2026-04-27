@@ -4,6 +4,7 @@ vars:
     driver: gecko
     width: 1920
     height: 1080
+    headless: true
     # driver: chrome
     # args:
     #   - "--headless"

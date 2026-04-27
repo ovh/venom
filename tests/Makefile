@@ -52,6 +52,11 @@ venom-sshd.cid:
 	$(call docker_run,ghcr.io/linuxserver/openssh-server,sshd,-p 2222:2222 -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e PUBLIC_KEY="$(shell cat ~/.ssh/id_rsa.pub)" -e USER_NAME=venom -e PASSWORD_ACCESS=true -e USER_PASSWORD=testvenom -e SUDO_ACCESS=true)
 venom-mqtt.cid:
 	$(call docker_run,eclipse-mosquitto,mqtt-broker,-p 1883:1883 -p 9001:9001 -v $(shell realpath mqtt/mosquitto.conf):/mosquitto/config/mosquitto.conf:ro)
+venom-qpid.cid:
+	$(call docker_run,scholzj/qpid-cpp:1.39.0,qpid,-p 5673:5672)
+	@printf "waiting for QPID broker to be ready..." ; \
+	until docker exec venom-qpid qpid-config -b 127.0.0.1:5672 add queue amqp-test 2>/dev/null; do sleep 1; done ; \
+	echo " done"
 venom-grpc.cid:
 	docker build -t venom-grpc-greeter ./grpc
 	$(call docker_run,venom-grpc-greeter,grpc,-p 50051:50051)
@@ -68,6 +73,7 @@ start-test-stack: venom-kafka.cid
 start-test-stack: venom-rabbit.cid
 start-test-stack: venom-sshd.cid
 start-test-stack: venom-mqtt.cid
+start-test-stack: venom-qpid.cid
 start-test-stack: $(PKI_DIR)
 start-test-stack: venom-httpbin.cid
 start-test-stack: venom-grpc.cid
@@ -82,7 +88,7 @@ build-test-binary:
 	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o ../../tests/venom.test -ldflags "-X github.com/ovh/venom.IsTest=true" -tags testbincover;
 
 build-test-binary-docker:
-	docker run -v `pwd`/..:/workspace golang:1.25 sh -c "cd /workspace/tests && make build-test-binary"	
+	docker run -v `pwd`/..:/workspace golang:1.26 sh -c "cd /workspace/tests && make build-test-binary"	
 
 run-test: generate-venom-pki
 	VENOM_VAR_MY_ENVAR=foo  ./venom_wrapper.sh run \
@@ -99,7 +105,7 @@ clean:
 	@rm -f *.prof *.html *.xml *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
 
 merge-coverage:
-	@docker run -v `pwd`:/workspace golang:1.25 sh -c "\
+	@docker run -v `pwd`:/workspace golang:1.26 sh -c "\
 			go install github.com/wadey/gocovmerge@latest && \
 			cd /workspace && \
     gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \
