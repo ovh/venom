@@ -40,7 +40,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 		return nil, err
 	}
 
-	venom.Debug(ctx, "connecting to database: %s\n", e.URI)
+	venom.Debug(ctx, "connecting to database: %s\n", venom.RedactURI(e.URI))
 	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(e.URI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)

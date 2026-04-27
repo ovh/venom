@@ -275,7 +275,7 @@ type Client struct {
 
 type AuthConfig struct {
 	WithTLS         bool   `json:"withtls,omitempty" yaml:"withtls,omitempty"`
-	IgnoreVerifySSL bool   `json:"ignore_verify_ssl,omitempty" yaml:"ignore_verify_ssl,omitempty"`
+	IgnoreVerifySSL bool   `json:"ignore_verify_ssl,omitempty" yaml:"ignore_verify_ssl,omitempty" mapstructure:"ignore_verify_ssl"`
 	Host            string `json:"host,omitempty" yaml:"host,omitempty"`
 	Port            string `json:"port,omitempty" yaml:"port,omitempty"`
 	User            string `json:"user,omitempty" yaml:"user,omitempty"`

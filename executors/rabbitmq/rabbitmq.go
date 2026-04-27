@@ -10,7 +10,7 @@ import (
 
 	"github.com/ovh/venom"
 
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // Name of executor

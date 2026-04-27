@@ -62,7 +62,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 		return nil, err
 	}
 	// Connect to the database and ping it.
-	venom.Debug(ctx, "connecting to database %s, %s\n", e.Driver, e.DSN)
+	venom.Debug(ctx, "connecting to database %s, %s\n", e.Driver, venom.RedactURI(e.DSN))
 	db, err := sqlx.Connect(e.Driver, e.DSN)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect to database")

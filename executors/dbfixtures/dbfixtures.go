@@ -14,7 +14,7 @@ import (
 	// SQL drivers.
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 
 	"github.com/ovh/venom"
 )
@@ -52,10 +52,16 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
-	// Connect to the database and ping it.
-	venom.Debug(ctx, "connecting to database %s, %s\n", e.Database, e.DSN)
+	// Map user-facing database name to the registered Go driver name.
+	driverName := e.Database
+	if driverName == "sqlite3" {
+		driverName = "sqlite" // modernc.org/sqlite registers under "sqlite"
+	}
 
-	db, err := sql.Open(e.Database, e.DSN)
+	// Connect to the database and ping it.
+	venom.Debug(ctx, "connecting to database %s, %s\n", e.Database, venom.RedactURI(e.DSN))
+
+	db, err := sql.Open(driverName, e.DSN)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect to database")
 	}
@@ -194,7 +200,10 @@ func getDialect(name string, skipResetSequences bool) func(*fixtures.Loader) err
 		}
 	case "mysql":
 		return fixtures.Dialect("mysql")
-	case "sqlite3":
+	case "sqlite", "sqlite3":
+		// Both names are accepted: "sqlite" matches the modernc.org/sqlite
+		// driver name, "sqlite3" is kept for testsuite backward compatibility
+		// (the testfixtures dialect identifier remains "sqlite3").
 		return fixtures.Dialect("sqlite3")
 	}
 	return nil

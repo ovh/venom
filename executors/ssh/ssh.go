@@ -39,8 +39,8 @@ type Executor struct {
 	PrivateKey            string `json:"privatekey,omitempty" yaml:"privatekey,omitempty"`
 	Sudo                  string `json:"sudo,omitempty" yaml:"sudo,omitempty"`
 	SudoPassword          string `json:"sudopassword,omitempty" yaml:"sudopassword,omitempty"`
-	InsecureIgnoreHostKey bool   `json:"insecure_ignore_host_key,omitempty" yaml:"insecure_ignore_host_key,omitempty"`
-	Timeout               int    `json:"timeout,omitempty" yaml:"timeout,omitempty"` // connection timeout in seconds, default 30
+	InsecureIgnoreHostKey bool   `json:"insecure_ignore_host_key,omitempty" yaml:"insecure_ignore_host_key,omitempty" mapstructure:"insecure_ignore_host_key"`
+	Timeout               int    `json:"timeout,omitempty" yaml:"timeout,omitempty" mapstructure:"timeout"` // connection timeout in seconds, default 30
 }
 
 const defaultSSHTimeoutSeconds = 30
