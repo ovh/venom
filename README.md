@@ -8,10 +8,10 @@ Venom is a CLI (Command Line Interface) that aims to create, manage and run your
 [![Discussions](https://img.shields.io/badge/Discussions-OVHcloud-brightgreen)](https://github.com/ovh/venom/discussions)
 <a href="https://gitpod.io/#https://github.com/ovh/venom"><img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
  
-# Table of content
+# Table of contents
 
 - [🐍 Venom](#-venom)
-- [Table of content](#table-of-content)
+- [Table of contents](#table-of-contents)
 - [Overview](#overview)
 - [Installing](#installing)
   - [Install from binaries](#install-from-binaries)
@@ -61,10 +61,10 @@ Venom is a CLI (Command Line Interface) that aims to create, manage and run your
 # Overview
 
 Venom allows you to handle integration tests the same way you code your application.
-With Venom, testcases will be managed as code: the readability of the tests means that the tests are part of the code reviews. Thanks to that, write and execute testsuites become easier for developers and teams.
+With Venom, testcases will be managed as code: the readability of the tests means that the tests are part of the code reviews. Thanks to that, writing and executing testsuites becomes easier for developers and teams.
 
-Concretely, you have to write testsuite in a YAML file.
-Venom run executors (scripts, HTTP Request, web, IMAP, etc.) and apply assertions. 
+Concretely, you have to write a testsuite in a YAML file.
+Venom runs executors (scripts, HTTP Request, web, IMAP, etc.) and applies assertions. 
 It can also generate xUnit result files.
 
 <img src="./venom.gif" alt="Venom Demonstration">
@@ -73,7 +73,7 @@ It can also generate xUnit result files.
 
 ## Install from binaries
 
-You can find latest binary release from: https://github.com/ovh/venom/releases/latest/.
+You can find the latest binary release at: https://github.com/ovh/venom/releases/latest/.
 
 Example for Linux:
 
@@ -107,7 +107,7 @@ Version venom: v1.2.0
 
 # Docker image
 
-Instead of installing (and updating) Venom locally, Venom can be started as a Docker image with following commands. 
+Instead of installing (and updating) Venom locally, Venom can be started as a Docker image with the following commands. 
 
 Considering your testsuites are in `./tests` directory in your current directory and your test library is under `./tests/lib`, the results will be available under the `results` directory.
 
@@ -292,7 +292,7 @@ lib_dir: lib
 verbosity: 3
 ```
 
-Please note that the command line flags overrides the configuration file. The configuration file overrides the environment variables.
+Please note that the command line flags override the configuration file. The configuration file overrides the environment variables.
 
 
 # Concepts
@@ -302,7 +302,7 @@ Please note that the command line flags overrides the configuration file. The co
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has a specified set of behaviors.
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
-In `venom` the testcases are executed sequentially within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enable some specific kind of behavior.
+In `venom` the testcases are executed sequentially within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enables some specific kind of behavior.
 
 In `venom` a testsuite is written in one `YAML` file respecting the following structure:
 
@@ -414,12 +414,12 @@ testcases:
     - result.alljson.hello ShouldContainSubstring World
 ```
 
-Notice the variable `alljson`. All variables declared in output are automatically converted in a json format with the suffix `json`. In the example above, two implicit variables are available: `displayjson.hello` and `alljson`.
+Notice the variable `alljson`. All variables declared in output are automatically converted into JSON format with the suffix `json`. In the example above, two implicit variables are available: `displayjson.hello` and `alljson`.
 
-Venom will load user's executors from the directory `lib/` relative to the testsuite path. You add executors source path using the flag `--lib-dir`. 
+Venom will load user-defined executors from the directory `lib/` relative to the testsuite path. You can add executor source paths using the flag `--lib-dir`. 
 Note that all folders listed with `--lib-dir` will be scanned recursively to find `.yml` files as user executors.
 
-The user defined executors work with templating, you can check the templating result in `venom.log`. In this file, if you see an error as `error converting YAML to JSON: yaml: line 14: found unexpected end of stream`, you probably need to adjust indentation with the templating function `indent`. 
+The user defined executors work with templating, you can check the templating result in `venom.log`. In this file, if you see an error such as `error converting YAML to JSON: yaml: line 14: found unexpected end of stream`, you probably need to adjust indentation with the templating function `indent`. 
 
 Example:
 
@@ -552,7 +552,7 @@ More examples are available [here](https://github.com/ovh/venom/tree/master/vari
 To be able to reuse a property from a teststep in a following testcase or step, you have to extract the variable, as the following example. 
 
 After the first step execution, `venom` extracts a value using a regular expression `foo with a ([a-z]+) here` from the content of the `result.systemout` property returned by the `executor`.
-Then this variable can be reused in another test, with the name `testA.myvariable` with `testA` corresponding to the name of the testcase. A default value could also be supplied if the variable can't be extracted from the output, which can commonly happen when parsing json output.
+Then this variable can be reused in another test, with the name `testA.myvariable` with `testA` corresponding to the name of the testcase. A default value could also be supplied if the variable can't be extracted from the output, which can commonly happen when parsing JSON output.
 
 ```yaml
 name: MyTestSuite
@@ -715,7 +715,7 @@ You may also include additional steps like a regular user defined executor.
 User assertions are executed in an entirely clean context, containing only the following variables:
 - `a`: the left operand
 - `b`: the (first) right operand
-- `argv`: the rights operands
+- `argv`: the right operands
 
 If you need to be compatible with the `input` syntax of user defined executors, you could use the `argv` as the default value and access these through the regular `input.*` syntax. 
 ```yaml
@@ -816,7 +816,7 @@ $ venom run --format=xml --output-dir="."
 $ venom run --output-dir="." --html-report
 ```
 
-Reports exported in XML can be visualized with a xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see results run after run.
+Reports exported in XML can be visualized with an xUnit/jUnit Viewer, directly in your favorite CI/CD stack for example in order to see results run after run.
 
 # Advanced usage
 
@@ -846,7 +846,7 @@ testcases:
   - script: cat exec/testa.json
     info: "the value of result.systemoutjson is {{.result.systemoutjson}}"
     assertions:
-    - result.systemoutjson.foo ShouldContainSubstrin bar
+    - result.systemoutjson.foo ShouldContainSubstring bar
 ```
 
 ```bash
@@ -933,7 +933,7 @@ testcases:
 
 It is possible to iterate over data using `range` attribute.
 
-The following data types are supported, each exposing contexted variables `.index`, `.key` and `.value`:
+The following data types are supported, each exposing contextual variables `.index`, `.key` and `.value`:
 
 - An array where each value will be iterated over (`[]interface{}`)
   - `.index`/`.key`: current iteration index
@@ -1074,7 +1074,7 @@ Our awesome contributors:
 
 # License
 
-Copyright 2022 OVH SAS
+Copyright 2026 OVH SAS
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

@@ -27,4 +27,4 @@ MQTT could deliver messages after connection, but before the service gets a chan
 
 * Add the ability to obtain message content from files rather than from within the yaml config. This need not be specific to this executor
 * Add support for codecs so we can support serialisation formats other than json. This should really be a capability that any executor can take advantage of rather than solved for each individually
-* Add TLs support for MQTT interface
+* Add TLS support for MQTT interface
