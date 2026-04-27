@@ -1,10 +1,28 @@
-name: user executor failure propagation
-testcases:
-- name: simple user executor failure
-  steps:
-  - type: user_executor_with_failure
+name: user executor failure propagation in JUnit XML report (regression test for #907)
 
-- name: nested user executor failure (outer calls inner which fails)
+testcases:
+- name: user executor failures appear in JUnit XML report
   steps:
-  - type: nested_fail_outer
-    greeting: "world"
+  # Spawn a venom sub-process running tests/failing/user_executor_with_failure.yml.
+  # That fixture invokes user executors whose inner steps intentionally fail.
+  # Generate a JUnit XML report; the sub-process must exit with code 2
+  # (venom's "test failed" exit code) and stderr must be empty.
+  - type: exec
+    script: './venom run failing/user_executor_with_failure.yml --lib-dir=lib --format=xml --output-dir=./venom-uef-test'
+    assertions:
+    - result.code ShouldEqual 2
+    - result.systemerr ShouldBeEmpty
+
+  - type: exec
+    script: 'cat ./venom-uef-test/test_results_user_executor_with_failure.xml'
+    assertions:
+    - result.code ShouldEqual 0
+    # report contains <error> entries (venom JUnit failures)
+    - result.systemout ShouldContainSubstring '<error'
+    # both top-level testcases are present
+    - result.systemout ShouldContainSubstring 'simple user executor failure'
+    - result.systemout ShouldContainSubstring 'nested user executor failure'
+    # inner failed assertion of user_executor_with_failure is in the report
+    - result.systemout ShouldContainSubstring 'result.code ShouldEqual 1'
+    # inner failed assertion of nested_fail_inner is in the report
+    - result.systemout ShouldContainSubstring 'result.systemout ShouldEqual'
