@@ -36,7 +36,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 		if err != nil {
 			// we save the failure only if it's the last attempt
 			if tsResult.Retries == e.Retry() {
-				failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", err)
+				failure := newFailure(ctx, *tc, stepNumber, rangedIndex, -1, "", err)
 				tsResult.appendFailure(*failure)
 			}
 			continue
@@ -66,7 +66,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			tc.computedVerbose = append(tc.computedVerbose, fmt.Sprintf("writing %s", filename))
 		}
 
-		for ninfo, i := range e.Info() {
+		for _, i := range e.Info() {
 			info, err := interpolate.Do(i, mapResultString)
 			if err != nil {
 				Error(ctx, "unable to parse %q: %v", i, err)
@@ -75,17 +75,10 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			if info == "" {
 				continue
 			}
-			filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
-			lineNumber := findLineNumber(filename, tc.originalName, stepNumber, i, ninfo+1)
+			filepath := StringVarFromCtx(ctx, "venom.testsuite.filepath")
+			lineNumber := tc.findSourceLine(stepNumber, -1)
 			if lineNumber > 0 {
-				info += fmt.Sprintf(" (%s:%d)", filename, lineNumber)
-			} else if tc.IsExecutor {
-				filename = StringVarFromCtx(ctx, "venom.executor.filename")
-				originalName := StringVarFromCtx(ctx, "venom.executor.name")
-				lineNumber = findLineNumber(filename, originalName, stepNumber, i, ninfo+1)
-				if lineNumber > 0 {
-					info += fmt.Sprintf(" (%s:%d)", filename, lineNumber)
-				}
+				info += fmt.Sprintf(" (%s:%d)", filepath, lineNumber)
 			}
 			Info(ctx, info, nil)
 			tsResult.ComputedInfo = append(tsResult.ComputedInfo, info)
@@ -114,7 +107,7 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 			break
 		}
 		if len(failures) > 0 {
-			failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-tsResult.Retries))
+			failure := newFailure(ctx, *tc, stepNumber, rangedIndex, -1, "", fmt.Errorf("retry conditions not fulfilled, skipping %d remaining retries", e.Retry()-tsResult.Retries))
 			tsResult.Errors = append(tsResult.Errors, *failure)
 			break
 		}

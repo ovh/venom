@@ -371,7 +371,7 @@ loopRawTestSteps:
 				Error(ctx, "teststep output vars are: %v", redactedOutputVars)
 
 				if isRequired {
-					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", errors.New("At least one required assertion failed, skipping remaining steps"))
+					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, -1, "", errors.New("At least one required assertion failed, skipping remaining steps"))
 					tsResult.appendFailure(*failure)
 					v.printTestStepResult(tc, tsResult, tsIn, stepNumber, true)
 					return

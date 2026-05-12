@@ -251,3 +251,90 @@ func Test_getFilesPath_files_order(t *testing.T) {
 	require.True(t, strings.HasSuffix(output[0], "a.yml"))
 	require.True(t, strings.HasSuffix(output[1], "A.yml"))
 }
+
+func Test_extractLineNumbers(t *testing.T) {
+	yaml := []byte(`name: HTTP testsuite
+vars:
+  input: "this my input"
+
+testcases:
+- name: get http testcase
+  steps:
+  - type: http
+    method: GET
+    url: https://example.com
+    assertions:
+    - result.statuscode ShouldEqual 200
+    - result.body ShouldContainSubstring hello
+
+- name: post http testcase
+  steps:
+  - type: http
+    method: POST
+    url: https://example.com/api
+    assertions:
+    - result.statuscode ShouldEqual 201
+  - type: exec
+    script: echo done
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring done
+`)
+
+	infos := extractLineNumbers(yaml)
+	require.Len(t, infos, 2)
+
+	// First testcase
+	require.Equal(t, 6, infos[0].TestCaseLine)
+	require.Len(t, infos[0].StepLines, 1)
+	require.Equal(t, 8, infos[0].StepLines[0])
+	require.Len(t, infos[0].AssertionLines, 1)
+	require.Len(t, infos[0].AssertionLines[0], 2)
+	require.Equal(t, 12, infos[0].AssertionLines[0][0])
+	require.Equal(t, 13, infos[0].AssertionLines[0][1])
+
+	// Second testcase
+	require.Equal(t, 15, infos[1].TestCaseLine)
+	require.Len(t, infos[1].StepLines, 2)
+	require.Equal(t, 17, infos[1].StepLines[0])
+	require.Equal(t, 22, infos[1].StepLines[1])
+	require.Len(t, infos[1].AssertionLines, 2)
+	require.Len(t, infos[1].AssertionLines[0], 1)
+	require.Equal(t, 21, infos[1].AssertionLines[0][0])
+	require.Len(t, infos[1].AssertionLines[1], 2)
+	require.Equal(t, 25, infos[1].AssertionLines[1][0])
+	require.Equal(t, 26, infos[1].AssertionLines[1][1])
+}
+
+func Test_findSourceLine(t *testing.T) {
+	tc := TestCase{
+		SourceLine:      6,
+		StepSourceLines: []int{8, 17},
+		AssertionSourceLines: [][]int{
+			{12, 13},
+			{21, 25, 26},
+		},
+	}
+
+	// Assertion line found
+	require.Equal(t, 12, tc.findSourceLine(0, 0))
+	require.Equal(t, 13, tc.findSourceLine(0, 1))
+	require.Equal(t, 21, tc.findSourceLine(1, 0))
+	require.Equal(t, 25, tc.findSourceLine(1, 1))
+	require.Equal(t, 26, tc.findSourceLine(1, 2))
+
+	// No assertion index -> step line
+	require.Equal(t, 8, tc.findSourceLine(0, -1))
+	require.Equal(t, 17, tc.findSourceLine(1, -1))
+
+	// Out of bounds assertion -> step line
+	require.Equal(t, 8, tc.findSourceLine(0, 5))
+	require.Equal(t, 17, tc.findSourceLine(1, 10))
+
+	// Out of bounds step -> testcase line
+	require.Equal(t, 6, tc.findSourceLine(5, -1))
+
+	// Empty testcase
+	tc2 := TestCase{}
+	require.Equal(t, 0, tc2.findSourceLine(0, 0))
+}

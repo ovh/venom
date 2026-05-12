@@ -177,6 +177,11 @@ type TestCase struct {
 	computedVerbose []string `json:"-" yaml:"-"`
 	IsExecutor      bool     `json:"-" yaml:"-"`
 	IsEvaluated     bool     `json:"-" yaml:"-"`
+
+	// Source line numbers extracted from YAML parsing (1-indexed)
+	SourceLine           int     `json:"-" yaml:"-"` // line of the testcase definition
+	StepSourceLines      []int   `json:"-" yaml:"-"` // line of each step (indexed by step number)
+	AssertionSourceLines [][]int `json:"-" yaml:"-"` // [stepIdx][assertIdx] -> line number
 }
 
 type TestStepResult struct {
@@ -284,9 +289,12 @@ type FailureXML struct {
 	Message string `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
 }
 
-func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion string, err error) *Failure {
-	filename := StringVarFromCtx(ctx, "venom.testsuite.filename")
-	lineNumber := findLineNumber(filename, tc.originalName, stepNumber, assertion, -1)
+func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertionIndex int, assertion string, err error) *Failure {
+	filepath := StringVarFromCtx(ctx, "venom.testsuite.filepath")
+
+	// Try to get line number from stored source lines
+	lineNumber := tc.findSourceLine(stepNumber, assertionIndex)
+
 	var value string
 	if assertion != "" {
 		value = fmt.Sprintf(`Testcase %q, step #%d-%d: Assertion %q failed. %s (%v:%d)`,
@@ -295,7 +303,7 @@ func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex in
 			rangedIndex,
 			RemoveNotPrintableChar(assertion),
 			RemoveNotPrintableChar(err.Error()),
-			filename,
+			filepath,
 			lineNumber,
 		)
 	} else {
@@ -304,13 +312,13 @@ func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex in
 			stepNumber,
 			rangedIndex,
 			RemoveNotPrintableChar(err.Error()),
-			filename,
+			filepath,
 			lineNumber,
 		)
 	}
 
 	failure := Failure{
-		TestcaseClassname:  filename,
+		TestcaseClassname:  filepath,
 		TestcaseName:       tc.Name,
 		TestcaseLineNumber: lineNumber,
 		StepNumber:         stepNumber,
@@ -320,6 +328,27 @@ func newFailure(ctx context.Context, tc TestCase, stepNumber int, rangedIndex in
 	}
 
 	return &failure
+}
+
+// findSourceLine returns the best source line number for a given step and assertion.
+// It tries the assertion line first, then falls back to the step line.
+func (tc TestCase) findSourceLine(stepNumber int, assertionIndex int) int {
+	// Try assertion-level line number
+	if assertionIndex >= 0 && stepNumber < len(tc.AssertionSourceLines) {
+		assertions := tc.AssertionSourceLines[stepNumber]
+		if assertionIndex < len(assertions) && assertions[assertionIndex] > 0 {
+			return assertions[assertionIndex]
+		}
+	}
+	// Fall back to step line
+	if stepNumber < len(tc.StepSourceLines) && tc.StepSourceLines[stepNumber] > 0 {
+		return tc.StepSourceLines[stepNumber]
+	}
+	// Fall back to testcase line
+	if tc.SourceLine > 0 {
+		return tc.SourceLine
+	}
+	return 0
 }
 
 func (f Failure) String() string {
