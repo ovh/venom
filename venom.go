@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"plugin"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -20,6 +21,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 )
+
+// pluginNamePattern restricts plugin names to a safe character set,
+// preventing path traversal via the YAML "type" field.
+var pluginNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
 var (
 	// Version is set with -ldflags "-X github.com/ovh/venom/venom.Version=$(VERSION)"
@@ -338,26 +343,47 @@ func (v *Venom) registerUserAssertFunc(ctx context.Context, name string) error {
 }
 
 func (v *Venom) registerPlugin(ctx context.Context, name string, vars map[string]string) error {
-	workdir := vars["venom.testsuite.workdir"]
-	// try to load from testsuite path
-	p, err := plugin.Open(path.Join(workdir, "lib", name+".so"))
-	if err != nil {
-		// try to load from venom binary path
-		p, err = plugin.Open(path.Join("lib", name+".so"))
-		if err != nil {
-			return fmt.Errorf("unable to load plugin %q.so", name)
+	if !pluginNamePattern.MatchString(name) {
+		return fmt.Errorf("invalid plugin name %q: only [A-Za-z0-9_-] characters are allowed", name)
+	}
+
+	if v.LibDir == "" {
+		return fmt.Errorf("plugin %q cannot be loaded: --lib-dir is not set", name)
+	}
+
+	var lastErr error
+	for _, lp := range strings.Split(v.LibDir, string(os.PathListSeparator)) {
+		dir := strings.TrimSpace(lp)
+		if dir == "" {
+			continue
 		}
+		absDir, err := filepath.Abs(dir)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		candidate := filepath.Join(absDir, name+".so")
+		p, err := plugin.Open(candidate)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		symbolExecutor, err := p.Lookup("Plugin")
+		if err != nil {
+			return err
+		}
+		executor, ok := symbolExecutor.(Executor)
+		if !ok {
+			return fmt.Errorf("plugin %q does not export a valid Executor symbol", name)
+		}
+		v.RegisterExecutorPlugin(name, executor)
+		return nil
 	}
 
-	symbolExecutor, err := p.Lookup("Plugin")
-	if err != nil {
-		return err
+	if lastErr != nil {
+		return fmt.Errorf("unable to load plugin %q from --lib-dir: %w", name, lastErr)
 	}
-
-	executor := symbolExecutor.(Executor)
-	v.RegisterExecutorPlugin(name, executor)
-
-	return nil
+	return fmt.Errorf("unable to load plugin %q: not found in --lib-dir", name)
 }
 
 func VarFromCtx(ctx context.Context, varname string) interface{} {

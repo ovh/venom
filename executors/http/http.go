@@ -279,10 +279,9 @@ func (e Executor) getRequest(ctx context.Context, workdir string) (*http.Request
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
-		bodyfilePath := e.BodyFile
-		if !filepath.IsAbs(e.BodyFile) {
-			// Only join with the workdir with relative path
-			bodyfilePath = filepath.Join(workdir, e.BodyFile)
+		bodyfilePath, errResolve := venom.ResolveWorkdirPath(workdir, e.BodyFile)
+		if errResolve != nil {
+			return nil, errResolve
 		}
 		if _, err := os.Stat(bodyfilePath); !os.IsNotExist(err) {
 			temp, err := os.ReadFile(bodyfilePath)
@@ -429,6 +428,25 @@ func isBodyJSONSupported(resp *http.Response) bool {
 	return strings.Contains(contentType, "application/json") || strings.HasSuffix(contentType, "+json")
 }
 
+// loadPEMOrFile decides whether the given value is inline PEM content or a
+// path to a file under the testsuite workdir. Inline PEM (recognised by the
+// "-----BEGIN" marker) is returned as-is. Otherwise the value is treated as
+// a relative path, sanitised against escapes, and read from disk.
+func loadPEMOrFile(workdir, value, fieldName string) ([]byte, error) {
+	if strings.Contains(value, "-----BEGIN") {
+		return []byte(value), nil
+	}
+	resolved, err := venom.ResolveWorkdirPath(workdir, value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid %s path: %w", fieldName, err)
+	}
+	data, err := os.ReadFile(resolved)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read %s from file %s: %w", fieldName, resolved, err)
+	}
+	return data, nil
+}
+
 func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error, error) {
 	var opts []func(*http.Transport) error
 
@@ -439,51 +457,28 @@ func (e Executor) TLSOptions(ctx context.Context) ([]func(*http.Transport) error
 	workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
 
 	if e.TLSRootCA != "" {
-		TLSRootCAFilepath := e.TLSRootCA
-		if !filepath.IsAbs(e.TLSRootCA) {
-			TLSRootCAFilepath = filepath.Join(workdir, e.TLSRootCA)
+		data, err := loadPEMOrFile(workdir, e.TLSRootCA, "TLSRootCA")
+		if err != nil {
+			return nil, err
 		}
-		var TLSRootCA []byte
-		if _, err := os.Stat(TLSRootCAFilepath); err == nil {
-			TLSRootCA, err = os.ReadFile(TLSRootCAFilepath)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read TLSRootCA from file %s", TLSRootCAFilepath)
-			}
-		} else {
-			TLSRootCA = []byte(e.TLSRootCA)
-		}
-		opts = append(opts, WithTLSRootCA(ctx, TLSRootCA))
+		opts = append(opts, WithTLSRootCA(ctx, data))
 	}
 
 	var TLSClientCert, TLSClientKey []byte
 	if e.TLSClientCert != "" {
-		TLSClientCertFilepath := e.TLSClientCert
-		if !filepath.IsAbs(e.TLSClientCert) {
-			TLSClientCertFilepath = filepath.Join(workdir, e.TLSClientCert)
+		data, err := loadPEMOrFile(workdir, e.TLSClientCert, "TLSClientCert")
+		if err != nil {
+			return nil, err
 		}
-		if _, err := os.Stat(TLSClientCertFilepath); err == nil {
-			TLSClientCert, err = os.ReadFile(TLSClientCertFilepath)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read TLSClientCert from file %s", TLSClientCertFilepath)
-			}
-		} else {
-			TLSClientCert = []byte(e.TLSClientCert)
-		}
+		TLSClientCert = data
 	}
 
 	if e.TLSClientKey != "" {
-		TLSClientKeyFilepath := e.TLSClientKey
-		if !filepath.IsAbs(e.TLSClientKey) {
-			TLSClientKeyFilepath = filepath.Join(workdir, e.TLSClientKey)
+		data, err := loadPEMOrFile(workdir, e.TLSClientKey, "TLSClientKey")
+		if err != nil {
+			return nil, err
 		}
-		if _, err := os.Stat(TLSClientKeyFilepath); err == nil {
-			TLSClientKey, err = os.ReadFile(TLSClientKeyFilepath)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read TLSClientKey from file %s", TLSClientKeyFilepath)
-			}
-		} else {
-			TLSClientKey = []byte(e.TLSClientKey)
-		}
+		TLSClientKey = data
 	}
 
 	if len(TLSClientCert) > 0 && len(TLSClientKey) > 0 {

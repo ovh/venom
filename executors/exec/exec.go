@@ -2,9 +2,12 @@ package exec
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -97,47 +100,42 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
 		}
 
-		// Create a tmp file
-		tmpscript, err := os.CreateTemp(os.TempDir(), "venom-")
+		// Create the tmp script file atomically with the right permissions
+		// (O_EXCL avoids races, 0o700 keeps the script private to the user).
+		nameBytes := make([]byte, 16)
+		if _, err := rand.Read(nameBytes); err != nil {
+			return nil, fmt.Errorf("cannot generate tmp name: %s", err)
+		}
+		baseName := "venom-" + hex.EncodeToString(nameBytes)
+		if runtime.GOOS == "windows" {
+			baseName += ".PS1"
+		}
+		scriptPath := filepath.Join(os.TempDir(), baseName)
+		tmpscript, err := os.OpenFile(scriptPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o700)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create tmp file: %s", err)
 		}
 
-		// Put script in file
-		venom.Debug(ctx, "work with tmp file %s", tmpscript.Name())
+		venom.Debug(ctx, "work with tmp file %s", scriptPath)
 		n, err := tmpscript.Write([]byte(scriptContent))
 		if err != nil || n != len(scriptContent) {
+			tmpscript.Close()
+			os.Remove(scriptPath)
 			if err != nil {
 				return nil, fmt.Errorf("cannot write script: %s", err)
 			}
 			return nil, fmt.Errorf("cannot write all script: %d/%d", n, len(scriptContent))
 		}
-
-		oldPath := tmpscript.Name()
 		tmpscript.Close()
-		var scriptPath string
+
 		if runtime.GOOS == "windows" {
-			// Remove all .txt Extensions, there is not always a .txt extension
-			newPath := strings.ReplaceAll(oldPath, ".txt", "")
-			// and add .PS1 extension
-			newPath += ".PS1"
-			if err := os.Rename(oldPath, newPath); err != nil {
-				return nil, fmt.Errorf("cannot rename script to add powershell extension, aborting")
-			}
 			// This aims to stop a the very first error and return the right exit code
-			psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
-			scriptPath = newPath
+			psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", scriptPath)
 			opts = append(opts, psCommand)
 		} else {
-			scriptPath = oldPath
 			opts = append(opts, scriptPath)
 		}
 		defer os.Remove(scriptPath)
-
-		// Chmod file
-		if err := os.Chmod(scriptPath, 0o700); err != nil {
-			return nil, fmt.Errorf("cannot chmod script %s: %s", scriptPath, err)
-		}
 
 		command = shell
 	}
@@ -161,6 +159,12 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 	}
 
 	result := Result{}
+
+	// The two goroutines below are the only writers of result.Systemout and
+	// result.Systemerr. The parent reads these fields only after <-outchan
+	// and <-errchan have unblocked, which happens-after their respective
+	// close. Do not access result.Systemout / result.Systemerr from any
+	// other goroutine while the command is running.
 	outchan := make(chan bool)
 
 	go func() {
@@ -194,7 +198,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			if n > 0 {
 				chunk := buf[:n]
 				sb.Write(chunk)
-				venom.Debug(ctx, venom.HideSensitive(ctx, string(chunk)))
+				venom.Debug(ctx, "%s", venom.HideSensitive(ctx, string(chunk)))
 			}
 			if err != nil {
 				break

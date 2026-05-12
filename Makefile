@@ -43,7 +43,11 @@ $(ALL_RESULTS_TARGETS):
 	$(info copying $(call get_results_from_target, $@) to $@)
 	@cp -f $(call get_results_from_target, $@) $@
 
-.PHONY: build lint clean testrun test dist test-xunit package
+.PHONY: build lint clean testrun test dist test-xunit package vulncheck checksums
+
+vulncheck: ## scan dependencies for known CVEs (uses golang.org/x/vuln/cmd/govulncheck)
+	@which govulncheck > /dev/null 2>&1 || go install golang.org/x/vuln/cmd/govulncheck@latest
+	govulncheck ./...
 
 build: ## build all components and push them into dist directory
 	$(info Building Component venom)
@@ -58,6 +62,10 @@ plugins: ## build all components and push them into dist directory
 	mv executors/plugins/dist/lib/* dist/lib;
 
 dist: $(ALL_DIST_TARGETS)
+
+checksums: dist ## generate checksums.txt with SHA256 of all dist binaries (sha256sum format)
+	@cd $(DIST_DIR) && sha256sum venom.* > checksums.txt
+	$(info checksums.txt generated in $(DIST_DIR))
 
 run: ## build binary for current OS only and run it. For development purpose only
 	OS=${UNAME_LOWERCASE} $(MAKE) build -C cmd/venom

@@ -5,9 +5,11 @@ testcases:
   - type: ssh
     user: venom
     host: localhost:2222
-    privatekey: "$HOME/.ssh/id_rsa"
+    password: testvenom
+    insecure_ignore_host_key: true
     command: echo foo
     assertions:
+    - result.err ShouldBeEmpty
     - result.code ShouldEqual 0
     - result.timeseconds ShouldBeLessThan 10
 
@@ -16,11 +18,13 @@ testcases:
   - type: ssh
     user: venom
     host: localhost:2222
-    privatekey: "$HOME/.ssh/id_rsa"
+    password: testvenom
+    insecure_ignore_host_key: true
     command: whoami
     sudo: root
     sudopassword: testvenom
     assertions:
+    - result.err ShouldBeEmpty
     - result.code ShouldEqual 0
     - result.systemout ShouldEqual root
     - result.timeseconds ShouldBeLessThan 10
@@ -30,11 +34,13 @@ testcases:
   - type: ssh
     user: venom
     host: localhost:2222
-    privatekey: "$HOME/.ssh/id_rsa"
+    password: testvenom
+    insecure_ignore_host_key: true
     command: whoami
     sudo: venom
     sudopassword: testvenom
     assertions:
+    - result.err ShouldBeEmpty
     - result.code ShouldEqual 0
     - result.systemout ShouldEqual venom
     - result.timeseconds ShouldBeLessThan 10

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"path"
 
 	fixtures "github.com/go-testfixtures/testfixtures/v3"
 	"github.com/mitchellh/mapstructure"
@@ -15,7 +14,7 @@ import (
 	// SQL drivers.
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 
 	"github.com/ovh/venom"
 )
@@ -53,10 +52,16 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
-	// Connect to the database and ping it.
-	venom.Debug(ctx, "connecting to database %s, %s\n", e.Database, e.DSN)
+	// Map user-facing database name to the registered Go driver name.
+	driverName := e.Database
+	if driverName == "sqlite3" {
+		driverName = "sqlite" // modernc.org/sqlite registers under "sqlite"
+	}
 
-	db, err := sql.Open(e.Database, e.DSN)
+	// Connect to the database and ping it.
+	venom.Debug(ctx, "connecting to database %s, %s\n", e.Database, venom.RedactURI(e.DSN))
+
+	db, err := sql.Open(driverName, e.DSN)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect to database")
 	}
@@ -73,13 +78,16 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 	if len(e.Schemas) != 0 {
 		for _, s := range e.Schemas {
 			venom.Debug(ctx, "loading schema from file %s\n", s)
-			s = path.Join(workdir, s)
-			sbytes, errs := os.ReadFile(s)
+			schemaPath, errResolve := venom.ResolveWorkdirPath(workdir, s)
+			if errResolve != nil {
+				return nil, errResolve
+			}
+			sbytes, errs := os.ReadFile(schemaPath)
 			if errs != nil {
 				return nil, errs
 			}
 			if _, err = db.Exec(string(sbytes)); err != nil {
-				return nil, errors.Wrapf(err, "failed to exec schema from file %q", s)
+				return nil, errors.Wrapf(err, "failed to exec schema from file %q", schemaPath)
 			}
 		}
 	} else if e.Migrations != "" {
@@ -89,7 +97,10 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 			migrate.SetTable(e.MigrationsTable)
 		}
 
-		dir := path.Join(workdir, e.Migrations)
+		dir, errResolve := venom.ResolveWorkdirPath(workdir, e.Migrations)
+		if errResolve != nil {
+			return nil, errResolve
+		}
 		migrations := &migrate.FileMigrationSource{
 			Dir: dir,
 		}
@@ -124,26 +135,34 @@ func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 // and switch to the list of files if no folder was specified.
 func loadFixtures(ctx context.Context, db *sql.DB, files []string, folder string, dialect func(*fixtures.Loader) error, workdir string) error {
 	if folder != "" {
-		venom.Debug(ctx, "loading fixtures from folder %s\n", path.Join(workdir, folder))
+		folderPath, err := venom.ResolveWorkdirPath(workdir, folder)
+		if err != nil {
+			return err
+		}
+		venom.Debug(ctx, "loading fixtures from folder %s\n", folderPath)
 		loader, err := fixtures.New(
 			// By default the package refuse to load if the database
 			// does not contains "test" to avoid wiping a production db.
 			fixtures.DangerousSkipTestDatabaseCheck(),
 			fixtures.Database(db),
-			fixtures.Directory(path.Join(workdir, folder)),
+			fixtures.Directory(folderPath),
 			dialect)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create folder loader")
 		}
 		if err = loader.Load(); err != nil {
-			return errors.Wrapf(err, "failed to load fixtures from folder %q", path.Join(workdir, folder))
+			return errors.Wrapf(err, "failed to load fixtures from folder %q", folderPath)
 		}
 		return nil
 	}
 	if len(files) != 0 {
 		venom.Debug(ctx, "loading fixtures from files: %v\n", files)
 		for i := range files {
-			files[i] = path.Join(workdir, files[i])
+			resolved, err := venom.ResolveWorkdirPath(workdir, files[i])
+			if err != nil {
+				return err
+			}
+			files[i] = resolved
 		}
 		loader, err := fixtures.New(
 			// By default the package refuse to load if the database
@@ -181,7 +200,10 @@ func getDialect(name string, skipResetSequences bool) func(*fixtures.Loader) err
 		}
 	case "mysql":
 		return fixtures.Dialect("mysql")
-	case "sqlite3":
+	case "sqlite", "sqlite3":
+		// Both names are accepted: "sqlite" matches the modernc.org/sqlite
+		// driver name, "sqlite3" is kept for testsuite backward compatibility
+		// (the testfixtures dialect identifier remains "sqlite3").
 		return fixtures.Dialect("sqlite3")
 	}
 	return nil

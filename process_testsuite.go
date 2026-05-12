@@ -63,10 +63,6 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 
 	ts.Vars.Add(("venom.testsuite.totalSteps"), totalSteps)
 	ts.Status = StatusRun
-	Info(ctx, "With secrets in testsuite")
-	for _, v := range ts.Secrets {
-		Info(ctx, "secret  %+v", v)
-	}
 	// ##### RUN Test Cases Here
 	v.runTestCases(ctx, ts)
 

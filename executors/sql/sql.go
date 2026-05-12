@@ -3,7 +3,6 @@ package sql
 import (
 	"context"
 	"os"
-	"path"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -63,7 +62,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 		return nil, err
 	}
 	// Connect to the database and ping it.
-	venom.Debug(ctx, "connecting to database %s, %s\n", e.Driver, e.DSN)
+	venom.Debug(ctx, "connecting to database %s, %s\n", e.Driver, venom.RedactURI(e.DSN))
 	db, err := sqlx.Connect(e.Driver, e.DSN)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect to database")
@@ -88,7 +87,10 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, er
 		}
 	} else if e.File != "" {
 		workdir := venom.StringVarFromCtx(ctx, "venom.testsuite.workdir")
-		file := path.Join(workdir, e.File)
+		file, err := venom.ResolveWorkdirPath(workdir, e.File)
+		if err != nil {
+			return nil, err
+		}
 		venom.Debug(ctx, "loading SQL file from %s\n", file)
 		sbytes, errs := os.ReadFile(file)
 		if errs != nil {

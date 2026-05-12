@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 
 	"github.com/gomodule/redigo/redis"
 	shellwords "github.com/mattn/go-shellwords"
@@ -71,7 +70,11 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	var commands []string
 	if e.FilePath != "" {
-		commands, err = file2lines(path.Join(workdir, e.FilePath))
+		filePath, errResolve := venom.ResolveWorkdirPath(workdir, e.FilePath)
+		if errResolve != nil {
+			return nil, errResolve
+		}
+		commands, err = file2lines(filePath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to load file")
 		}

@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -190,9 +188,12 @@ func (e Executor) produceMessages(workdir string) error {
 	messages := []*sarama.ProducerMessage{}
 
 	if e.MessagesFile != "" {
-		path := filepath.Join(workdir, e.MessagesFile)
-		if _, err = os.Stat(path); err == nil {
-			content, err := os.ReadFile(path)
+		messagesPath, err := venom.ResolveWorkdirPath(workdir, e.MessagesFile)
+		if err != nil {
+			return err
+		}
+		if _, err = os.Stat(messagesPath); err == nil {
+			content, err := os.ReadFile(messagesPath)
 			if err != nil {
 				return err
 			}
@@ -243,7 +244,10 @@ func (e Executor) getMessageValue(m *Message, workdir string) ([]byte, error) {
 	subject := fmt.Sprintf("%s-value", m.Topic) // Using topic name strategy
 	schemaFile := strings.Trim(m.AvroSchemaFile, " ")
 	if len(schemaFile) != 0 {
-		schemaPath := path.Join(workdir, schemaFile)
+		schemaPath, err := venom.ResolveWorkdirPath(workdir, schemaFile)
+		if err != nil {
+			return nil, err
+		}
 		schemaBlob, err := os.ReadFile(schemaPath)
 		if err != nil {
 			return nil, fmt.Errorf("can't read from %s: %w", schemaPath, err)
@@ -282,7 +286,10 @@ func (e Executor) getRAWMessageValue(m *Message, workdir string) ([]byte, error)
 		return []byte(m.Value), nil
 	}
 	// Read from file
-	s := path.Join(workdir, m.ValueFile)
+	s, err := venom.ResolveWorkdirPath(workdir, m.ValueFile)
+	if err != nil {
+		return nil, err
+	}
 	value, err := os.ReadFile(s)
 	if err != nil {
 		return nil, fmt.Errorf("can't read from %s: %w", s, err)

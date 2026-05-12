@@ -16,48 +16,61 @@ import (
 	"github.com/ovh/venom"
 )
 
-func generateClientFile(t *testing.T) (string, string) {
-	TLSClientKey, err := os.CreateTemp(os.TempDir(), "TLSClientKey.*.key")
-	require.NoError(t, err)
-	TLSClientKeyFileName := TLSClientKey.Name()
-	t.Logf("generating file %q", TLSClientKeyFileName)
-	cmd := exec.Command("openssl", "genrsa", "-out", TLSClientKeyFileName, "2048")
+// generateClientFile creates a TLS key and self-signed certificate inside dir.
+// Returns the file names (relative to dir) so tests can resolve them through
+// venom.ResolveWorkdirPath.
+func generateClientFile(t *testing.T, dir string) (string, string) {
+	keyPath := "TLSClientKey.key"
+	certPath := "TLSClientCert.crt"
+	absKey := dir + "/" + keyPath
+	absCert := dir + "/" + certPath
+
+	t.Logf("generating file %q", absKey)
+	cmd := exec.Command("openssl", "genrsa", "-out", absKey, "2048")
 	output, err := cmd.CombinedOutput()
 	t.Log(string(output))
 	require.NoError(t, err)
 
-	TLSClientCert, err := os.CreateTemp(os.TempDir(), "TLSClientCert.*.crt")
-	require.NoError(t, err)
-	TLSClientCertFilename := TLSClientCert.Name()
-	t.Logf("generating file %q", TLSClientCertFilename)
-	cmd = exec.Command("openssl", "req", "-batch", "-subj", "/C=GB/ST=Yorks/L=York/O=MyCompany Ltd./OU=IT/CN=mysubdomain.mydomain.com", "-new", "-x509", "-sha256", "-key", TLSClientKeyFileName, "-out", TLSClientCertFilename, "-days", "365")
+	t.Logf("generating file %q", absCert)
+	cmd = exec.Command("openssl", "req", "-batch", "-subj", "/C=GB/ST=Yorks/L=York/O=MyCompany Ltd./OU=IT/CN=mysubdomain.mydomain.com", "-new", "-x509", "-sha256", "-key", absKey, "-out", absCert, "-days", "365")
 	output, err = cmd.CombinedOutput()
 	t.Log(string(output))
 	require.NoError(t, err)
 
-	return TLSClientKeyFileName, TLSClientCertFilename
+	return keyPath, certPath
+}
+
+func ctxWithWorkdir(workdir string) context.Context {
+	return context.WithValue(context.Background(), venom.ContextKey("var.venom.testsuite.workdir"), workdir)
 }
 
 func TestExecutor_TLSOptions_From_File(t *testing.T) {
-	TLSClientKeyFileName, TLSClientCertFilename := generateClientFile(t)
+	workdir := t.TempDir()
+	keyName, certName := generateClientFile(t, workdir)
+
+	rootCA, err := os.ReadFile("../../tests/http/tls/digicert-root-ca.crt")
+	require.NoError(t, err)
+	rootCAPath := "digicert-root-ca.crt"
+	require.NoError(t, os.WriteFile(workdir+"/"+rootCAPath, rootCA, 0o600))
 
 	e := Executor{
 		IgnoreVerifySSL: true,
-		TLSClientCert:   TLSClientCertFilename,
-		TLSClientKey:    TLSClientKeyFileName,
-		TLSRootCA:       "../../tests/http/tls/digicert-root-ca.crt",
+		TLSClientCert:   certName,
+		TLSClientKey:    keyName,
+		TLSRootCA:       rootCAPath,
 	}
-	opts, err := e.TLSOptions(context.Background())
+	opts, err := e.TLSOptions(ctxWithWorkdir(workdir))
 	require.NoError(t, err)
 	require.Len(t, opts, 3)
 }
 
 func TestExecutor_TLSOptions_From_String(t *testing.T) {
-	TLSClientKeyFileName, TLSClientCertFilename := generateClientFile(t)
+	workdir := t.TempDir()
+	keyName, certName := generateClientFile(t, workdir)
 
-	TLSClientCert, err := os.ReadFile(TLSClientCertFilename)
+	TLSClientCert, err := os.ReadFile(workdir + "/" + certName)
 	require.NoError(t, err)
-	TLSClientKey, err := os.ReadFile(TLSClientKeyFileName)
+	TLSClientKey, err := os.ReadFile(workdir + "/" + keyName)
 	require.NoError(t, err)
 	TLSRootCA, err := os.ReadFile("../../tests/http/tls/digicert-root-ca.crt")
 	require.NoError(t, err)
@@ -66,9 +79,17 @@ func TestExecutor_TLSOptions_From_String(t *testing.T) {
 		TLSClientKey:  string(TLSClientKey),
 		TLSRootCA:     string(TLSRootCA),
 	}
-	opts, err := e.TLSOptions(context.Background())
+	opts, err := e.TLSOptions(ctxWithWorkdir(workdir))
 	require.NoError(t, err)
 	require.Len(t, opts, 2)
+}
+
+func TestExecutor_TLSOptions_RejectAbsolutePath(t *testing.T) {
+	e := Executor{
+		TLSRootCA: "/etc/ssl/certs/ca-certificates.crt",
+	}
+	_, err := e.TLSOptions(ctxWithWorkdir(t.TempDir()))
+	require.Error(t, err)
 }
 
 func TestInterpolation_Of_String(t *testing.T) {

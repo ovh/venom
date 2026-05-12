@@ -89,9 +89,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 func (e *Executor) readfile(ctx context.Context, workdir string) (Result, error) {
 	result := Result{}
 
-	absPath := e.Path
-	if !filepath.IsAbs(absPath) {
-		absPath = filepath.Join(workdir, e.Path)
+	absPath, err := venom.ResolveWorkdirPath(workdir, e.Path)
+	if err != nil {
+		return result, err
 	}
 
 	fileInfo, _ := os.Stat(absPath) // nolint

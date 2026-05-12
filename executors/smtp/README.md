@@ -14,6 +14,7 @@ testcases:
   steps:
   - type: smtp
     withtls: false
+    ignore_verify_ssl: false # Optional, default false. Set to true to disable TLS certificate verification (e.g. self-signed certs).
     host: localhost
     port: 25 # 465 if using TLS
     user: yourSMTPUsername # Optional, only works with TLS

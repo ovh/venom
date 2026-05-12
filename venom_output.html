@@ -1,513 +1,1407 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tailwind Template</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Venom · Test Report</title>
 
-  <!-- Alpine Plugins -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+<!-- Showdown for Markdown (suite descriptions) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"
+        integrity="sha512-LhccdVNGe2QMEfI3x4DVV3ckMRe36TfydKss6mJpdHjNFiV07dFpS2xzeZedptKZrwxfICJpez09iNioiSZ3hA=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
 
-  <!-- Alpine.js -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- DOMPurify to sanitise rendered Markdown / HTML and prevent XSS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"
+        integrity="sha512-ce0fmuEgWrpnIXWKQrSgJ5FsBsr/hnOsxdWvk5lu1GThckasLwc+TAFERLNIwWnWqBoWV4GPDJiz2PSPntinVA=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
 
-  <!-- Showdown for Markdown (if needed) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+<style>
+/* ---------- TOKENS ---------- */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, "Menlo", monospace;
 
-  <!-- Custom Tailwind Config -->
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'brand': '#3b82f6',
-          }
-        }
-      }
-    }
-  </script>
+  /* Light theme defaults */
+  --bg: #fbfbfa;
+  --bg-elev: #ffffff;
+  --bg-sidebar: #f4f4f1;
+  --bg-code: #0f1115;
+  --bg-hover: #eeefea;
+  --bg-selected: #e8eee8;
+  --border: #e5e5df;
+  --border-strong: #d4d4cc;
+  --fg: #1a1a17;
+  --fg-muted: #6b6b63;
+  --fg-dim: #94948a;
+  --fg-code: #d6d6cf;
 
-  <style type="text/tailwindcss">
-    @layer components {
-      .pill-pass {
-        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-green-100 text-green-800;
-      }
-      .pill-fail {
-        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-red-100 text-red-800;
-      }
-      .pill-skip {
-        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-gray-100 text-gray-800;
-      }
-      .pill-info {
-        @apply inline-flex items-center px-2.5 py-0.5 rounded font-medium bg-blue-100 text-gray-500;
-      }
-      .border-pass {
-        @apply border-green-500;
-      }
-      .border-fail {
-        @apply border-red-500;
-      }
-      .border-skip {
-        @apply border-gray-500;
-      }
-    }
-  </style>
+  /* Status (venom palette: poison-green pass, ember-red fail, ash skip) */
+  --pass: oklch(58% 0.13 158);
+  --pass-bg: oklch(96% 0.03 158);
+  --pass-strong: oklch(45% 0.14 158);
+  --fail: oklch(58% 0.18 25);
+  --fail-bg: oklch(96% 0.03 25);
+  --fail-strong: oklch(48% 0.19 25);
+  --skip: oklch(60% 0.01 100);
+  --skip-bg: oklch(96% 0.005 100);
+  --skip-strong: oklch(45% 0.01 100);
+
+  --accent: oklch(58% 0.13 158);
+
+  --radius: 6px;
+  --radius-sm: 4px;
+  --gap: 12px;
+
+  --row-h: 44px;
+}
+[data-theme="dark"] {
+  --bg: #0e1014;
+  --bg-elev: #15181d;
+  --bg-sidebar: #0a0c10;
+  --bg-code: #06080a;
+  --bg-hover: #1c2027;
+  --bg-selected: #1a2620;
+  --border: #1f242c;
+  --border-strong: #2a3038;
+  --fg: #e8e8e3;
+  --fg-muted: #9ba0a8;
+  --fg-dim: #6b7079;
+  --fg-code: #d6d6cf;
+
+  --pass: oklch(70% 0.14 158);
+  --pass-bg: oklch(22% 0.04 158);
+  --pass-strong: oklch(78% 0.14 158);
+  --fail: oklch(70% 0.18 25);
+  --fail-bg: oklch(22% 0.04 25);
+  --fail-strong: oklch(78% 0.19 25);
+  --skip: oklch(65% 0.01 100);
+  --skip-bg: oklch(22% 0.005 100);
+  --skip-strong: oklch(78% 0.01 100);
+  --accent: oklch(70% 0.14 158);
+}
+[data-density="compact"] { --row-h: 36px; --gap: 8px; }
+[data-density="cozy"]    { --row-h: 52px; --gap: 16px; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button { font-family: inherit; font-size: inherit; color: inherit; cursor: pointer; }
+
+/* ---------- LAYOUT ---------- */
+.app {
+  display: grid;
+  grid-template-rows: 48px 1fr;
+  height: 100vh;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  height: 48px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+.brand-mark {
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  filter: saturate(1.05);
+  transform: translateY(-0.5px);
+}
+.brand-sub {
+  color: var(--fg-muted);
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 2px;
+}
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  font-size: 12px;
+}
+.summary-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+.summary-stat .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--fg);
+}
+.summary-stat .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+}
+.dot.pass { background: var(--pass); }
+.dot.fail { background: var(--fail); }
+.dot.skip { background: var(--skip); }
+.summary-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+}
+.global-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.global-status.pass { color: var(--pass-strong); background: var(--pass-bg); }
+.global-status.fail { color: var(--fail-strong); background: var(--fail-bg); }
+.global-status.skip { color: var(--skip-strong); background: var(--skip-bg); }
+
+.icon-btn {
+  width: 30px; height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+  transition: background 80ms;
+}
+.icon-btn:hover { background: var(--bg-hover); color: var(--fg); }
+.icon-btn.active { background: var(--bg-selected); color: var(--accent); }
+
+/* ---------- BODY GRID ---------- */
+.body {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: 0;
+}
+.sidebar {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sidebar-head {
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 9px;
+  margin-bottom: 8px;
+}
+.search:focus-within { border-color: var(--accent); }
+.search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12.5px;
+}
+.search svg { color: var(--fg-dim); flex-shrink: 0; }
+
+.filter-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+  transition: all 80ms;
+}
+.chip:hover { background: var(--bg-hover); }
+.chip.active { background: var(--bg-elev); color: var(--fg); border-color: var(--border-strong); }
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.suite-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 24px;
+}
+.suite-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: var(--row-h);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  user-select: none;
+  position: relative;
+}
+.suite-row:hover { background: var(--bg-hover); }
+.suite-row.selected {
+  background: var(--bg-selected);
+  border-left-color: var(--accent);
+}
+.suite-idx {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+}
+.suite-main { min-width: 0; }
+.suite-name {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.suite-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.suite-status {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.suite-status.pass { background: var(--pass); }
+.suite-status.fail { background: var(--fail); box-shadow: 0 0 0 3px var(--fail-bg); }
+.suite-status.skip { background: var(--skip); }
+
+/* ---------- MAIN ---------- */
+.main {
+  overflow-y: auto;
+  background: var(--bg);
+  min-width: 0;
+}
+.main-inner {
+  max-width: 1100px;
+  padding: 24px 28px 80px;
+}
+.suite-header {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.breadcrumb {
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  margin-bottom: 6px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.breadcrumb .sep { opacity: 0.5; }
+.suite-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.suite-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.suite-meta-row .label {
+  color: var(--fg-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 6px;
+}
+.suite-meta-row .val {
+  font-family: var(--font-mono);
+  color: var(--fg);
+}
+.suite-meta-row .vars-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg);
+}
+.suite-meta-row .vars-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.suite-description {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg);
+}
+.suite-description :first-child { margin-top: 0; }
+.suite-description :last-child { margin-bottom: 0; }
+.suite-description code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-hover);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.suite-description pre {
+  background: var(--bg-code);
+  color: var(--fg-code);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+.suite-description a { color: var(--accent); text-decoration: none; }
+.suite-description a:hover { text-decoration: underline; }
+
+/* ---------- TESTCASES ---------- */
+.tc {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.tc-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  user-select: none;
+}
+.tc.pass .tc-head { border-left-color: var(--pass); }
+.tc.fail .tc-head { border-left-color: var(--fail); }
+.tc.skip .tc-head { border-left-color: var(--skip); }
+.tc-head:hover { background: var(--bg-hover); }
+.tc-toggle {
+  width: 18px; height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-dim);
+  transition: transform 120ms;
+}
+.tc.expanded .tc-toggle { transform: rotate(90deg); }
+.tc-name {
+  font-weight: 500;
+  font-size: 13.5px;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tc-name .prefix { color: var(--fg-dim); font-weight: 400; margin-right: 4px; font-size: 12px; font-family: var(--font-mono); }
+.tc-dur {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+}
+.status-tag.pass { color: var(--pass-strong); background: var(--pass-bg); }
+.status-tag.fail { color: var(--fail-strong); background: var(--fail-bg); }
+.status-tag.skip { color: var(--skip-strong); background: var(--skip-bg); }
+
+.tc-body { display: none; border-top: 1px solid var(--border); }
+.tc.expanded .tc-body { display: block; }
+
+/* ---------- STEPS ---------- */
+.step {
+  border-bottom: 1px solid var(--border);
+}
+.step:last-child { border-bottom: 0; }
+.step-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 14px 8px 32px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.step-head:hover { background: var(--bg-hover); }
+.step-head::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+.step.pass .step-head::before { background: var(--pass); }
+.step.fail .step-head::before { background: var(--fail); }
+.step.skip .step-head::before { background: var(--skip); }
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+}
+.step-name {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--fg);
+}
+.step-retries {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: oklch(from var(--accent) l c h / 0.12);
+  color: var(--accent);
+}
+.step-dur {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.step-toggle {
+  color: var(--fg-dim);
+  transition: transform 120ms;
+}
+.step.expanded .step-toggle { transform: rotate(90deg); }
+.step-body { display: none; padding: 0 14px 14px 32px; }
+.step.expanded .step-body { display: block; }
+
+/* tabs */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+.tab-btn {
+  background: transparent;
+  border: 0;
+  padding: 7px 11px;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  font-family: var(--font-mono);
+  position: relative;
+}
+.tab-btn:hover { color: var(--fg); }
+.tab-btn.active { color: var(--fg); border-bottom-color: var(--accent); }
+.tab-btn .badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  font-size: 10px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.tab-btn.has-error { color: var(--fail-strong); }
+.tab-btn.has-error.active { border-bottom-color: var(--fail); }
+
+/* code blocks */
+pre.code {
+  background: var(--bg-code);
+  color: var(--fg-code);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre;
+  tab-size: 2;
+}
+pre.code .yk { color: oklch(75% 0.13 230); }
+pre.code .ys { color: oklch(75% 0.13 158); }
+pre.code .yn { color: oklch(78% 0.13 80); }
+pre.code .yc { color: var(--fg-dim); font-style: italic; }
+pre.code .yb { color: oklch(78% 0.13 25); }
+pre.code .yd { color: oklch(70% 0.04 80); }
+
+.errors-panel {
+  background: var(--fail-bg);
+  border: 1px solid color-mix(in oklch, var(--fail) 25%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fail-strong);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.info-panel {
+  background: oklch(from var(--accent) l c h / 0.07);
+  border: 1px solid oklch(from var(--accent) l c h / 0.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  white-space: pre-wrap;
+}
+
+.assertion-row {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.assertion-row .mark { color: var(--pass); margin-top: 1px; }
+.assertion-row.fail .mark { color: var(--fail); }
+.assertion-row.fail { color: var(--fail-strong); }
+
+/* timeline footer */
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.timeline .line { flex: 1; height: 1px; background: var(--border); }
+.timeline .dur { color: var(--fg-muted); }
+
+/* empty state */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--fg-dim);
+  flex-direction: column;
+  gap: 12px;
+  padding: 60px 20px;
+  text-align: center;
+}
+.empty .ico {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-dim);
+}
+
+/* drawer */
+.drawer-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms;
+  z-index: 50;
+}
+.drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(640px, 90vw);
+  background: var(--bg-elev);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  flex-direction: column;
+  z-index: 51;
+}
+.drawer.open { transform: translateX(0); }
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.drawer-title { font-weight: 600; font-size: 14px; }
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+}
+
+/* Tweaks */
+.tweaks {
+  position: fixed;
+  bottom: 16px; right: 16px;
+  width: 280px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.06);
+  font-size: 12px;
+  z-index: 100;
+  display: none;
+}
+.tweaks.open { display: block; }
+.tweaks-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.tweaks-body { padding: 10px 12px; }
+.tweak-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.tweak-row .lbl { color: var(--fg); font-size: 12px; }
+.seg {
+  display: inline-flex;
+  background: var(--bg-hover);
+  border-radius: 6px;
+  padding: 2px;
+}
+.seg button {
+  background: transparent;
+  border: 0;
+  padding: 4px 9px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+}
+.seg button.on { background: var(--bg-elev); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.toggle {
+  width: 32px; height: 18px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  position: relative;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: background 120ms;
+}
+.toggle::after {
+  content: ""; position: absolute;
+  width: 14px; height: 14px;
+  background: white;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: left 120ms;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.toggle.on { background: var(--accent); }
+.toggle.on::after { left: 16px; }
+
+/* scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--fg-dim); }
+::-webkit-scrollbar-track { background: transparent; }
+</style>
 </head>
+<body>
 
-<body class="bg-gray-50 h-screen flex flex-col" x-data="methods">
-  <!-- Fixed Header -->
-  <header class="bg-white shadow-sm border-b px-4 flex-shrink-0" x-data="reportData">
-    <div class="flex justify-between items-center h-16">
-      <div class="flex items-center">
-        <span class="text-2xl mr-3">🐍</span>
-        <h1 class="text-xl font-semibold text-gray-900">Venom Test Results</h1>
-        <div class="flex flex-wrap pl-2">
-          <span :class="`pill-${status.toLowerCase()}`" class="text-lg" x-text="status"></span>
-        </div>
-      </div>
-      <div class="flex items-center space-x-4">
-        <span x-text="formatDuration(duration)"></span>
-
-        <!-- Summary badges -->
-        <div class="flex flex-wrap gap-2">
-          <span class="pill-pass text-xs">
-            <span x-text="nbTestsuitesPass"></span> &nbsp; PASS
-          </span>
-          <span class="pill-fail text-xs">
-            <span x-text="nbTestsuitesFail"></span> &nbsp; FAIL
-          </span>
-          <span class="pill-skip text-xs">
-            <span x-text="nbTestsuitesSkip"></span> &nbsp; SKIP
-          </span>
-        </div>
-      </div>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">🐍</span>
+      <span>Venom</span>
+      <span class="brand-sub" id="topRunDate">—</span>
     </div>
+
+    <div class="summary" id="summary"></div>
+
+    <button class="icon-btn" id="tweaksBtn" title="Tweaks (T)" aria-label="Tweaks">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
   </header>
 
-  <!-- Main Container -->
-  <div class="flex flex-1 overflow-hidden bg-white border-r border-gray-200" x-data="reportData">
-    <!-- Left Sidebar Navigation -->
-    <nav class="w-64 overflow-y-auto">
-      <div class="flex items-center justify-between mb-2 p-4">
-        <h2 class="text-lg font-semibold text-gray-900">Test Suites</h2>
-        <span class="text-xs text-gray-500" x-text="`${test_suites.length} total`"></span>
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <label class="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input id="searchInput" placeholder="Search test suites…" />
+        </label>
+        <div class="filter-row" id="filterRow"></div>
       </div>
+      <div class="suite-list" id="suiteList"></div>
+    </aside>
 
-
-      <ul class="divide-y divide-gray-100">
-        <template x-for="(suite, index) in test_suites" :key="index">
-          <li>
-            <button @click="selectSuite(index)"
-              :class="{'bg-blue-50 border-l-4 border-blue-500': selectedSuite === index}"
-              class="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-150 relative group">
-              <div class="flex items-start justify-between">
-                <div x-text="index + 1" class="text-sm pr-1"></div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 truncate" x-text="suite.name || 'Unnamed Suite'"></p>
-                  <p class="text-xs text-gray-500 mt-1">
-                    <span x-text="formatDuration(suite.duration)"></span>
-                  </p>
-                </div>
-                <div class="ml-2 flex-shrink-0">
-                  <span :class="`pill-${suite.status.toLowerCase()}`" class="text-xs" x-text="suite.status"></span>
-                </div>
-              </div>
-            </button>
-          </li>
-
-          <!-- Summary badges -->
-          <div class="flex flex-wrap gap-2">
-            <span class="pill-pass text-xs">
-              <span x-text="suite.nbTestsuitesPass"></span> &nbsp; PASS
-            </span>
-            <span class="pill-fail text-xs">
-              <span x-text="suite.nbTestsuitesFail"></span> &nbsp; FAIL
-            </span>
-            <span class="pill-skip text-xs">
-              <span x-text="suite.nbTestsuitesSkip"></span> &nbsp; SKIP
-            </span>
-          </div>
-
-          <!-- Overall stats -->
-          <div class="mt-3 text-xs text-gray-600 space-y-1">
-            <div>Duration: <span class="font-mono text-gray-900" x-text="formatDuration(totalDuration)"></span></div>
-            <div>Start: <span class="font-mono text-gray-900" x-text="formatDate(startTime)"></span></div>
-            <div>End: <span class="font-mono text-gray-900" x-text="formatDate(endTime)"></span></div>
-          </div>
-
-        </template>
-      </ul>
-    </nav>
-
-    <!-- Center Content Area -->
-    <main class="flex-1 overflow-y-auto bg-white">
-      <div class="p-6">
-
-        <template x-if="selectedSuite !== null && test_suites[selectedSuite]">
-          <div>
-            <!-- Suite Header -->
-            <div class="bg-white rounded-lg shadow-sm mb-6">
-              <div class="flex items-start justify-between mb-4">
-                <div>
-                  <h2 class="text-2xl font-bold text-gray-900" x-text="test_suites[selectedSuite].name"></h2>
-                  <div class="mt-2 flex items-center gap-4 text-sm text-gray-600">
-                    <span>📁 <span x-text="test_suites[selectedSuite].filepath"></span></span>
-                  </div>
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-                  <span class="pill-pass text-xs">
-                    <span x-text="test_suites[selectedSuite].nbTestcasesPass"></span> &nbsp; PASS
-                  </span>
-                  <span class="pill-fail text-xs">
-                    <span x-text="test_suites[selectedSuite].nbTestcasesFail"></span> &nbsp; FAIL
-                  </span>
-                  <span class="pill-skip text-xs">
-                    <span x-text="test_suites[selectedSuite].nbTestcasesSkip"></span> &nbsp; SKIP
-                  </span>
-                </div>
-              </div>
-
-              <!-- Suite Description -->
-              <div x-show="test_suites[selectedSuite].description"
-                x-html="renderMarkdown(test_suites[selectedSuite].description)" class="prose prose-sm max-w-none mb-4">
-              </div>
-
-              <!-- Suite Info -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div class="bg-gray-50 rounded p-3">
-                  <div class="text-gray-500">Duration</div>
-                  <div class="font-mono font-medium" x-text="formatDuration(test_suites[selectedSuite].duration)">
-                  </div>
-                </div>
-                <div class="bg-gray-50 rounded p-3">
-                  <div class="text-gray-500">Test Cases</div>
-                  <div class="font-mono font-medium" x-text="test_suites[selectedSuite].testcases?.length || 0"></div>
-                </div>
-                <div class="bg-gray-50 rounded p-3">
-                  <div class="text-gray-500">Variables</div>
-                  <div class="font-mono font-medium">
-                    <button @click="toggleModal()" class="text-blue-600 hover:text-blue-800"
-                      x-text="Object.keys(test_suites[selectedSuite].vars || {}).length">
-                    </button>
-                  </div>
-                </div>
-                <div class="bg-gray-50 rounded p-3">
-                  <div class="text-gray-500">Workdir</div>
-                  <div class="font-mono font-medium text-xs truncate" :title="test_suites[selectedSuite].workdir"
-                    x-text="test_suites[selectedSuite].workdir">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Test Cases -->
-            <div class="space-y-4">
-              <template x-for="(testcase, tcIndex) in test_suites[selectedSuite].testcases" :key="tcIndex">
-                <div :class="`border-${testcase.status.toLowerCase()}`"
-                  class="bg-white rounded-lg shadow-sm border-l-4 overflow-hidden">
-                  <div class="p-2 border-b border-gray-200">
-                    <div class="flex items-center justify-between p-1">
-                      <h3 class="text-lg font-medium text-gray-900">
-                        Test Case: <span x-text="testcase.name"></span>
-                      </h3>
-                      <div class="flex flex-wrap pl-2">
-                        <span :class="`pill-${testcase.status.toLowerCase()}`" class="text-lg"
-                          x-text="testcase.status"></span>
-                      </div>
-                    </div>
-
-                    <!-- Test Steps -->
-                    <div class="divide-y divide-gray-200">
-                      <template x-for="(step, stepIndex) in testcase.results" :key="stepIndex">
-                        <div class="p-2" x-data="{ expanded: false }" :class="expanded ? 'bg-gray-50' : 'bg-white'">
-                          <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                              <span class="text-sm text-gray-500">Step <span x-text="step.number + 1"></span><span
-                                  x-show="step.rangedEnable" x-text="`:${step.rangedIndex}`"></span></span>
-                              <span class="font-medium text-gray-900" x-text="step.name"></span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                              <span x-show="step.retries > 0" class="pill-info text-sm"
-                                x-text="`Retries: ${step.retries}`"></span>
-                              <span class="text-sm text-gray-500 font-mono"
-                                x-text="formatDuration(step.duration)"></span>
-                              <span :class="`pill-${step.status.toLowerCase()}`" class="text-xs"
-                                x-text="step.status"></span>
-                              <button @click="expanded = !expanded" class="text-gray-400 hover:text-gray-600">
-                                <svg class="w-5 h-5 transform transition-transform" :class="{'rotate-180': expanded}"
-                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-
-                          <!-- Step Details (Collapsible) -->
-                          <div x-show="expanded" x-collapse>
-                            <div class="mt-4 space-y-2">
-                              <!-- Tab buttons -->
-                              <div class="flex flex-wrap gap-2 mb-4" x-data="{ activeTab: 'info' }">
-                                <button @click="activeTab = activeTab === 'info' ? 'none' : 'info'"
-                                  :class="{'bg-red-100 text-blue-700': activeTab === 'info'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  Info
-                                </button>
-                                <button @click="activeTab = activeTab === 'errors' ? 'none' : 'errors'"
-                                  :class="{'bg-red-100 text-red-700': activeTab === 'errors'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  Errors
-                                </button>
-                                <button @click="activeTab = activeTab === 'raw' ? 'none' : 'raw'"
-                                  :class="{'bg-blue-100 text-blue-700': activeTab === 'raw'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  Raw
-                                </button>
-                                <button @click="activeTab = activeTab === 'interpolated' ? 'none' : 'interpolated'"
-                                  :class="{'bg-blue-100 text-blue-700': activeTab === 'interpolated'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  Raw Interpolated
-                                </button>
-                                <button @click="activeTab = activeTab === 'assertions' ? 'none' : 'assertions'"
-                                  :class="{'bg-green-100 text-green-700': activeTab === 'assertions'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  Assertions
-                                </button>
-                                <button @click="activeTab = activeTab === 'inputvars' ? 'none' : 'inputvars'"
-                                  :class="{'bg-green-100 text-green-700': activeTab === 'inputvars'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  Input Vars
-                                </button>
-                                <button @click="activeTab = activeTab === 'computedvars' ? 'none' : 'computedvars'"
-                                  :class="{'bg-green-100 text-green-700': activeTab === 'computedvars'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  Computed Vars
-                                </button>
-                                <button @click="activeTab = activeTab === 'systemout' ? 'none' : 'systemout'"
-                                  :class="{'bg-green-100 text-green-700': activeTab === 'systemout'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  System Out
-                                </button>
-                                <button @click="activeTab = activeTab === 'systemerr' ? 'none' : 'systemerr'"
-                                  :class="{'bg-green-100 text-green-700': activeTab === 'systemerr'}"
-                                  class="px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                  System Error
-                                </button>
-
-                                <!-- Tab content -->
-                                <div class="w-full mt-4">
-                                  <!-- Info -->
-                                  <div x-show="activeTab === 'info'" class="bg-blue-50 rounded-lg p-4">
-                                    <template x-for="info in step.computedInfos">
-                                      <div class="text-sm text-blue-800 font-mono" x-text="info"></div>
-                                    </template>
-                                  </div>
-
-                                  <!-- Errors -->
-                                  <div x-show="activeTab === 'errors'" class="bg-red-50 rounded-lg p-4">
-                                    <template x-for="error in step.errors">
-                                      <div class="text-sm text-red-700 font-mono" x-text="error.value"></div>
-                                    </template>
-                                  </div>
-
-                                  <!-- Raw -->
-                                  <div x-show="activeTab === 'raw'" class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                                    <pre class="text-sm text-gray-300" x-text="atob(step.raw)"></pre>
-                                  </div>
-
-                                  <!-- Raw Intrerpolated -->
-                                  <div x-show="activeTab === 'interpolated'"
-                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                                    <pre class="text-sm text-gray-300" x-text="atob(step.interpolated)"></pre>
-                                  </div>
-
-                                  <!-- Assertions -->
-                                  <div x-show="activeTab === 'assertions'" class="bg-gray-100 rounded-lg p-4 space-y-2">
-                                    <template x-for="assertion in step.assertionsApplied.assertions">
-                                      <div class="flex items-center space-x-2">
-                                        <span :class="assertion.isOK ? 'text-green-600' : 'text-red-600'">
-                                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                            <path x-show="assertion.isOK" fill-rule="evenodd"
-                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                              clip-rule="evenodd"></path>
-                                            <path x-show="!assertion.isOK" fill-rule="evenodd"
-                                              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                              clip-rule="evenodd"></path>
-                                          </svg>
-                                        </span>
-                                        <span class="text-sm font-mono" x-text="assertion.assertion"></span>
-                                      </div>
-                                    </template>
-                                  </div>
-
-                                  <!-- Input Vars  -->
-                                  <div x-show="activeTab === 'inputvars'"
-                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                                    <pre class="text-sm text-gray-300" x-text="JSON.stringify(step.inputVars, null, 2)">
-                                    </pre>
-                                  </div>
-
-                                  <!-- Computed Vars -->
-                                  <div x-show="activeTab === 'computedvars'"
-                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                                    <pre class="text-sm text-gray-300"
-                                      x-text="JSON.stringify(step.computedVars, null, 2)"></pre>
-                                  </div>
-
-                                  <!-- System Out -->
-                                  <div x-show="activeTab === 'systemout'"
-                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                                    <pre class="text-sm text-gray-300" x-text="step.systemout"></pre>
-                                  </div>
-
-                                  <!-- System Error -->
-                                  <div x-show="activeTab === 'systemerr'"
-                                    class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                                    <pre class="text-sm text-gray-300" x-text="step.systemerr"></pre>
-                                  </div>
-
-                                  <div class="mt-2 p-2 bg-gray-50 text-xs text-gray-600">
-                                    <div class="flex items-center ">
-                                      <span class="font-mono" x-text="formatDate(step.start)"></span>
-                                      <div class="flex-grow mx-2 h-px bg-gray-400"></div>
-                                      <span class="font-mono" x-text="formatDuration(step.duration)"></span>
-                                      <div class="flex-grow mx-2 h-px bg-gray-400"></div>
-                                      <span class="font-mono" x-text="formatDate(step.end)"></span>
-                                    </div>
-                                  </div>
-
-                                </div> <!-- end Tab Content -->
-
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-
-                    <!-- Test Case Footer -->
-                    <div class="p-2 bg-gray-50 text-xs text-gray-600">
-                      <div class="flex items-center ">
-                        <span class="font-mono" x-text="formatDate(testcase.start)"></span>
-                        <div class="flex-grow mx-2 h-px bg-gray-400"></div>
-                        <span class="font-mono" x-text="formatDuration(testcase.duration)"></span>
-                        <div class="flex-grow mx-2 h-px bg-gray-400"></div>
-                        <span class="font-mono" x-text="formatDate(testcase.end)"></span>
-                      </div>
-                    </div>
-
-                  </div>
-              </template>
-            </div>
-          </div>
-        </template>
-
-        <!-- Empty State -->
-        <template x-if="selectedSuite === null">
-          <div class="flex items-center justify-center h-full">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-                </path>
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900">No test suite selected</h3>
-              <p class="mt-1 text-sm text-gray-500">Select a test suite from the sidebar to view details.</p>
-            </div>
-          </div>
-        </template>
-
-      </div>
-    </main>
-
-    <!-- Right Drawer -->
-    <div x-show="isModalOpen" x-on:click.away="toggleModal()" class="relative z-10" aria-labelledby="drawer-title"
-      role="dialog" aria-modal="true" x-transition x-cloak>
-      <!-- Background backdrop, show/hide based on slide-over state. -->
-      <div class="fixed inset-0"></div>
-
-      <div class="fixed inset-0 overflow-hidden">
-        <div class="absolute inset-0 overflow-hidden">
-          <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10 sm:pl-16">
-            <!-- Slide-over
-                panel, show/hide based on slide-over state.
-                Entering: "transform transition ease-in-out duration-500 sm:duration-700" From: "translate-x-full"
-                To: "translate-x-0" Leaving: "transform transition ease-in-out duration-500 sm:duration-700"
-                From: "translate-x-0" To: "translate-x-full" 
-              -->
-            <div class="pointer-events-auto w-screen max-w-3xl">
-              <div class="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
-                <div class="px-4 sm:px-6">
-                  <div class="flex items-start justify-between">
-                    <h2 class="text-base font-semibold text-gray-900" id="drawer-title">Variables</h2>
-                    <div class="ml-3 flex h-7 items-center">
-                      <button type="button" @click="isModalOpen = false"
-                        class="relative rounded-md bg-white text-gray-400 hover:text-gray-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:outline-hidden">
-                        <span class="absolute -inset-2.5"></span>
-                        <span class="sr-only">Close panel</span>
-                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                          aria-hidden="true" data-slot="icon">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div class="relative mt-6 flex-1 px-4 sm:px-6">
-
-                  <!-- Drawer Content -->
-                  <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Test Suite Variables</h3>
-                    <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto max-h-96">
-                      <pre class="text-sm text-gray-300"
-                        x-text="JSON.stringify(test_suites[selectedSuite]?.vars || {}, null, 2)">
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
+    <main class="main" id="main">
+      <div class="empty" id="emptyState">
+        <div class="ico">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+            <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:13px;color:var(--fg);font-weight:500;margin-bottom:2px;">No suite selected</div>
+          <div>Pick one from the sidebar to inspect cases &amp; steps</div>
         </div>
       </div>
+    </main>
+  </div>
+</div>
+
+<!-- Drawer (Variables) -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-title" id="drawerTitle">Variables</div>
+    <button class="icon-btn" id="drawerClose" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
+<!-- Tweaks panel -->
+<div class="tweaks" id="tweaksPanel">
+  <div class="tweaks-head">
+    Tweaks
+    <button class="icon-btn" id="tweaksClose" aria-label="Close">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+    </button>
+  </div>
+  <div class="tweaks-body">
+    <div class="tweak-row">
+      <span class="lbl">Theme</span>
+      <div class="seg" data-tweak="theme">
+        <button data-val="light">Light</button>
+        <button data-val="dark">Dark</button>
+        <button data-val="auto">Auto</button>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <span class="lbl">Density</span>
+      <div class="seg" data-tweak="density">
+        <button data-val="compact">Compact</button>
+        <button data-val="default">Default</button>
+        <button data-val="cozy">Cozy</button>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <span class="lbl">Accent</span>
+      <div class="seg" data-tweak="accent">
+        <button data-val="venom" title="Venom">●</button>
+        <button data-val="indigo" title="Indigo">●</button>
+        <button data-val="amber" title="Amber">●</button>
+        <button data-val="rose" title="Rose">●</button>
+      </div>
+    </div>
+    <div class="tweak-row">
+      <span class="lbl">Auto-expand failures</span>
+      <button class="toggle" id="tweakAutoExpand"></button>
+    </div>
+    <div class="tweak-row">
+      <span class="lbl">Hide passing cases</span>
+      <button class="toggle" id="tweakHidePass"></button>
     </div>
   </div>
-  <script>
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('methods', () => ({
-        isModalOpen: false,
-        toggleModal() {
-          this.isModalOpen = !this.isModalOpen;
-        },
-        selectedSuite: null,
-        selectSuite(index) {
-          this.selectedSuite = index;
-        },
+</div>
 
-        renderMarkdown(text) {
-          if (!text) return '';
-          const converter = new showdown.Converter();
-          return converter.makeHtml(text);
-        },
+<script>
+window.__REPORT_DATA__ = {{.JSONValue}};
+</script>
 
-        formatDuration(seconds) {
-          return `${parseFloat(seconds).toFixed(2)}s`;
-        },
+<script>
+/* Venom Test Report — vanilla JS UI */
+(function () {
+  const data = window.__REPORT_DATA__ || { test_suites: [] };
+  const suites = data.test_suites || [];
 
-        formatDate(dateString) {
-          if (!dateString) return 'N/A';
-          return new Date(dateString).toLocaleString();
-        },
-      }));
+  // ---------- helpers ----------
+  const __q = (s, r=document) => r.querySelector(s);
+  const __qa = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const fmt = {
+    dur(s) {
+      if (s == null || isNaN(s)) return '—';
+      const n = +s;
+      if (n < 0.001) return '<1ms';
+      if (n < 1) return Math.round(n * 1000) + 'ms';
+      if (n < 60) return n.toFixed(2) + 's';
+      const m = Math.floor(n/60), r = n - m*60;
+      return `${m}m ${r.toFixed(1)}s`;
+    },
+    date(s) {
+      if (!s) return '—';
+      try {
+        const d = new Date(s);
+        return d.toLocaleString(undefined, { hour12: false });
+      } catch { return s; }
+    },
+    time(s) {
+      if (!s) return '—';
+      try {
+        const d = new Date(s);
+        const pad = n => String(n).padStart(2, '0');
+        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, '0')}`;
+      } catch { return s; }
+    },
+    decode(v) {
+      if (v == null) return '';
+      if (typeof v !== 'string') {
+        try { return JSON.stringify(v, null, 2); } catch { return String(v); }
+      }
+      // Try base64 first (the Go side encodes raw/interpolated as base64).
+      try { return decodeURIComponent(escape(atob(v))); }
+      catch {
+        try { return atob(v); }
+        catch { return v; }
+      }
+    },
+  };
+  const lc = s => (s || '').toLowerCase();
+  const escapeHtml = s => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-      Alpine.data('reportData', () => ({{.JSONValue}}));
-    })
+  // Render markdown safely (DOMPurify + showdown loaded above).
+  function renderMarkdown(text) {
+    if (!text) return '';
+    if (typeof showdown === 'undefined' || typeof DOMPurify === 'undefined') {
+      return escapeHtml(text);
+    }
+    const converter = new showdown.Converter({ simplifiedAutoLink: true, openLinksInNewWindow: true });
+    return DOMPurify.sanitize(converter.makeHtml(text));
+  }
 
-  </script>
+  // YAML highlighter — tokenize first, then escape & wrap to avoid regex collision with injected markup
+  function highlightYaml(src) {
+    if (!src) return '';
+    const tokens = [];
+    const place = (cls, txt) => { tokens.push({cls, txt}); return `${tokens.length-1}`; };
+    let s = src;
+    s = s.replace(/^(\s*)(#.*)$/gm, (_, sp, c) => sp + place('yc', c));
+    s = s.replace(/('[^']*'|"[^"]*")/g, m => place('ys', m));
+    s = s.replace(/^(\s*)(-)(\s)/gm, (_, sp, d, e) => sp + place('yd', d) + e);
+    s = s.replace(/^(\s*)([A-Za-z0-9_.\-]+)(\s*:)/gm, (_, sp, k, c) => sp + place('yk', k) + c);
+    s = s.replace(/(:\s*)(true|false|null|~)\b/g, (_, c, b) => c + place('yb', b));
+    s = s.replace(/(:\s*)(-?\d+(?:\.\d+)?)\b/g, (_, c, n) => c + place('yn', n));
+    let out = escapeHtml(s);
+    out = out.replace(/(\d+)/g, (_, i) => {
+      const t = tokens[+i];
+      return `<span class="${t.cls}">${escapeHtml(t.txt)}</span>`;
+    });
+    return out;
+  }
+  function highlightJson(src) {
+    if (!src) return '';
+    const tokens = [];
+    const place = (cls, txt) => { tokens.push({cls, txt}); return `${tokens.length-1}`; };
+    let s = src;
+    s = s.replace(/("(?:\\.|[^"\\])*")(\s*:)/g, (_, k, c) => place('yk', k) + c);
+    s = s.replace(/(:\s*)("(?:\\.|[^"\\])*")/g, (_, c, v) => c + place('ys', v));
+    s = s.replace(/(:\s*)(-?\d+(?:\.\d+)?)/g, (_, c, n) => c + place('yn', n));
+    s = s.replace(/(:\s*)(true|false|null)\b/g, (_, c, b) => c + place('yb', b));
+    let out = escapeHtml(s);
+    out = out.replace(/(\d+)/g, (_, i) => {
+      const t = tokens[+i];
+      return `<span class="${t.cls}">${escapeHtml(t.txt)}</span>`;
+    });
+    return out;
+  }
+
+  // ---------- state ----------
+  const state = {
+    selected: null,
+    filter: 'all',
+    query: '',
+    expandedTC: new Set(),
+    expandedSteps: new Set(),
+    activeTabs: new Map(),
+    tweaks: loadTweaks(),
+  };
+
+  function loadTweaks() {
+    let t = {};
+    try { t = JSON.parse(localStorage.getItem('venom.tweaks') || '{}'); } catch {}
+    return Object.assign({
+      theme: 'light',
+      density: 'default',
+      accent: 'venom',
+      autoExpand: true,
+      hidePass: false,
+    }, t);
+  }
+  function saveTweaks() {
+    try { localStorage.setItem('venom.tweaks', JSON.stringify(state.tweaks)); } catch {}
+  }
+
+  // ---------- top summary ----------
+  function renderSummary() {
+    const elTop = __q('#topRunDate');
+    elTop.textContent = data.start ? fmt.date(data.start) : '';
+
+    const totals = { pass: 0, fail: 0, skip: 0, total: 0 };
+    suites.forEach(s => {
+      totals.total++;
+      const k = lc(s.status);
+      if (totals[k] != null) totals[k]++;
+    });
+
+    const root = __q('#summary');
+    root.innerHTML = `
+      <span class="global-status ${lc(data.status)}">${escapeHtml(data.status || '—')}</span>
+      <span class="summary-divider"></span>
+      <span class="summary-stat"><span class="dot pass"></span><span class="num">${totals.pass}</span> <span style="color:var(--fg-dim)">pass</span></span>
+      <span class="summary-stat"><span class="dot fail"></span><span class="num" style="color:${totals.fail>0?'var(--fail-strong)':''}">${totals.fail}</span> <span style="color:var(--fg-dim)">fail</span></span>
+      <span class="summary-stat"><span class="dot skip"></span><span class="num">${totals.skip}</span> <span style="color:var(--fg-dim)">skip</span></span>
+      <span class="summary-divider"></span>
+      <span class="summary-stat"><span style="color:var(--fg-dim)">total</span><span class="num">${totals.total}</span></span>
+      <span class="summary-stat"><span style="color:var(--fg-dim)">duration</span><span class="num">${fmt.dur(data.duration)}</span></span>
+    `;
+  }
+
+  // ---------- filters ----------
+  function renderFilters() {
+    const totals = { all: suites.length, pass: 0, fail: 0, skip: 0 };
+    suites.forEach(s => { const k = lc(s.status); if (totals[k] != null) totals[k]++; });
+    const items = [
+      { id: 'all', label: 'All', n: totals.all },
+      { id: 'fail', label: 'Fail', n: totals.fail, dot: 'fail' },
+      { id: 'pass', label: 'Pass', n: totals.pass, dot: 'pass' },
+      { id: 'skip', label: 'Skip', n: totals.skip, dot: 'skip' },
+    ];
+    __q('#filterRow').innerHTML = items.map(i => `
+      <button class="chip ${state.filter === i.id ? 'active':''}" data-filter="${i.id}">
+        ${i.dot ? `<span class="dot ${i.dot}"></span>` : ''}${i.label}
+        <span style="color:var(--fg-dim)">${i.n}</span>
+      </button>`).join('');
+    __qa('#filterRow .chip').forEach(b => b.onclick = () => {
+      state.filter = b.dataset.filter;
+      renderFilters();
+      renderSuiteList();
+    });
+  }
+
+  // ---------- sidebar ----------
+  function visibleSuites() {
+    const q = state.query.trim().toLowerCase();
+    return suites
+      .map((s, i) => ({ s, i }))
+      .filter(({ s }) => {
+        if (state.filter !== 'all' && lc(s.status) !== state.filter) return false;
+        if (q && !((s.name||'') + ' ' + (s.shortname||'') + ' ' + (s.filepath||'')).toLowerCase().includes(q)) return false;
+        return true;
+      });
+  }
+  function renderSuiteList() {
+    const list = __q('#suiteList');
+    const items = visibleSuites();
+    if (!items.length) {
+      list.innerHTML = `<div style="padding:18px 14px;color:var(--fg-dim);font-size:12px">No suites match.</div>`;
+      return;
+    }
+    list.innerHTML = items.map(({ s, i }) => {
+      const sel = state.selected === i ? 'selected' : '';
+      const stCls = lc(s.status);
+      const tcCount = (s.testcases || []).length;
+      const failed = +s.nbTestcasesFail || 0;
+      return `
+        <div class="suite-row ${sel}" data-i="${i}">
+          <div class="suite-idx">${String(i+1).padStart(3,'0')}</div>
+          <div class="suite-main">
+            <div class="suite-name" title="${escapeHtml(s.name||'')}">${escapeHtml(s.name || s.shortname || 'Unnamed')}</div>
+            <div class="suite-meta">
+              <span>${tcCount} ${tcCount===1?'case':'cases'}</span>
+              ${failed?`<span style="color:var(--fail-strong)">${failed} fail</span>`:''}
+              <span>${fmt.dur(s.duration)}</span>
+            </div>
+          </div>
+          <div class="suite-status ${stCls}" title="${escapeHtml(s.status||'')}"></div>
+        </div>`;
+    }).join('');
+    __qa('#suiteList .suite-row').forEach(r => r.onclick = () => selectSuite(+r.dataset.i));
+  }
+
+  // ---------- main suite view ----------
+  function selectSuite(i) {
+    state.selected = i;
+    state.expandedTC.clear();
+    state.expandedSteps.clear();
+    state.activeTabs.clear();
+    if (state.tweaks.autoExpand && i != null && suites[i]) {
+      const s = suites[i];
+      (s.testcases || []).forEach((tc, ti) => {
+        if (lc(tc.status) === 'fail') state.expandedTC.add(ti);
+      });
+    }
+    renderSuiteList();
+    renderMain();
+    const main = __q('#main');
+    if (main) main.scrollTop = 0;
+  }
+  function renderMain() {
+    const main = __q('#main');
+    if (state.selected == null || !suites[state.selected]) {
+      main.innerHTML = `<div class="empty"><div class="ico">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+          <rect x="9" y="3" width="6" height="4" rx="1"></rect></svg></div>
+        <div><div style="font-size:13px;color:var(--fg);font-weight:500;margin-bottom:2px;">No suite selected</div>
+        <div>Pick one from the sidebar to inspect cases &amp; steps</div></div></div>`;
+      return;
+    }
+    const s = suites[state.selected];
+    const tcs = s.testcases || [];
+    const desc = s.description ? `<div class="suite-description">${renderMarkdown(s.description)}</div>` : '';
+
+    main.innerHTML = `
+      <div class="main-inner">
+        <header class="suite-header">
+          <div class="breadcrumb">
+            <span>${escapeHtml(s.filepath || s.filename || '')}</span>
+          </div>
+          <h1 class="suite-title">
+            <span>${escapeHtml(s.name || 'Unnamed')}</span>
+            <span class="status-tag ${lc(s.status)}">${escapeHtml(s.status||'—')}</span>
+          </h1>
+          <div class="suite-meta-row">
+            <span><span class="label">Cases</span><span class="val">${tcs.length}</span></span>
+            <span><span class="label">Pass</span><span class="val" style="color:var(--pass-strong)">${s.nbTestcasesPass||0}</span></span>
+            <span><span class="label">Fail</span><span class="val" style="color:${(s.nbTestcasesFail||0)>0?'var(--fail-strong)':'var(--fg)'}">${s.nbTestcasesFail||0}</span></span>
+            <span><span class="label">Skip</span><span class="val">${s.nbTestcasesSkip||0}</span></span>
+            <span><span class="label">Duration</span><span class="val">${fmt.dur(s.duration)}</span></span>
+            <span><span class="label">Started</span><span class="val">${fmt.time(s.start)}</span></span>
+            ${s.workdir ? `<span><span class="label">Workdir</span><span class="val" title="${escapeHtml(s.workdir)}">${escapeHtml(s.workdir)}</span></span>` : ''}
+            <span><span class="label">Vars</span><button class="vars-btn" id="varsBtn">${Object.keys(s.vars||{}).length} vars →</button></span>
+          </div>
+          ${desc}
+        </header>
+        <div id="tcList"></div>
+      </div>`;
+
+    const varsBtn = __q('#varsBtn');
+    if (varsBtn) varsBtn.onclick = () => openDrawer('Test suite variables', s.vars || {});
+
+    renderTestcases(s, tcs);
+  }
+
+  function renderTestcases(suite, tcs) {
+    const root = __q('#tcList');
+    if (!tcs.length) {
+      root.innerHTML = `<div style="color:var(--fg-dim);padding:18px 0;">No test cases.</div>`;
+      return;
+    }
+    root.innerHTML = tcs.map((tc, ti) => {
+      if (state.tweaks.hidePass && lc(tc.status) === 'pass') return '';
+      const expanded = state.expandedTC.has(ti);
+      const stCls = lc(tc.status);
+      const steps = tc.results || [];
+      return `
+        <div class="tc ${stCls} ${expanded?'expanded':''}" data-ti="${ti}">
+          <div class="tc-head" data-tc-toggle="${ti}">
+            <span class="tc-toggle">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+            </span>
+            <span class="tc-name"><span class="prefix">case</span>${escapeHtml(tc.name||'')}</span>
+            <span class="tc-dur">${steps.length} ${steps.length===1?'step':'steps'} · ${fmt.dur(tc.duration)}</span>
+            <span class="status-tag ${stCls}">${escapeHtml(tc.status||'—')}</span>
+          </div>
+          <div class="tc-body">${expanded ? renderSteps(ti, steps) : ''}</div>
+        </div>`;
+    }).join('');
+
+    __qa('#tcList [data-tc-toggle]').forEach(h => h.onclick = () => {
+      const ti = +h.dataset.tcToggle;
+      if (state.expandedTC.has(ti)) state.expandedTC.delete(ti);
+      else state.expandedTC.add(ti);
+      renderTestcases(suite, tcs);
+    });
+
+    bindStepHandlers(suite, tcs);
+  }
+
+  function renderSteps(ti, steps) {
+    if (!steps.length) return `<div style="padding:14px;color:var(--fg-dim);font-size:12px">No steps</div>`;
+    return steps.map((step, si) => {
+      const key = `${ti}.${si}`;
+      const expanded = state.expandedSteps.has(key);
+      const stCls = lc(step.status);
+      const num = (step.number != null ? step.number + 1 : si + 1);
+      const stepName = step.name || step.type || 'step';
+      const errs = (step.errors || []).filter(e => e && e.value);
+      return `
+        <div class="step ${stCls} ${expanded?'expanded':''}" data-step-key="${key}">
+          <div class="step-head" data-step-toggle="${key}">
+            <span class="step-num">step ${String(num).padStart(2,'0')}${step.rangedEnable?`:${step.rangedIndex}`:''}</span>
+            <span class="step-name">${escapeHtml(stepName)}</span>
+            ${step.retries>0?`<span class="step-retries">↻ ${step.retries}</span>`:''}
+            <span class="step-dur">${fmt.dur(step.duration)}</span>
+            <span class="step-toggle">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"></path></svg>
+            </span>
+          </div>
+          <div class="step-body">${expanded ? renderStepBody(key, step, errs) : ''}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderStepBody(key, step, errs) {
+    const tabs = [];
+    if (errs.length) tabs.push({ id: 'errors', label: 'Errors', n: errs.length, hasError: true });
+    const assertions = step.assertionsApplied?.assertions || [];
+    if (assertions.length) {
+      const failedN = assertions.filter(a => !a.isOK).length;
+      tabs.push({ id: 'assertions', label: 'Assertions', n: assertions.length, hasError: failedN > 0 });
+    }
+    if (step.computedInfos && step.computedInfos.length) tabs.push({ id: 'info', label: 'Info', n: step.computedInfos.length });
+    if (step.raw) tabs.push({ id: 'raw', label: 'Raw' });
+    if (step.interpolated && step.interpolated !== step.raw) tabs.push({ id: 'interpolated', label: 'Interpolated' });
+    if (step.inputVars && Object.keys(step.inputVars).length) tabs.push({ id: 'inputvars', label: 'Input vars', n: Object.keys(step.inputVars).length });
+    if (step.computedVars && Object.keys(step.computedVars).length) tabs.push({ id: 'computedvars', label: 'Computed vars', n: Object.keys(step.computedVars).length });
+    if (step.systemout && String(step.systemout).trim()) tabs.push({ id: 'systemout', label: 'stdout' });
+    if (step.systemerr && String(step.systemerr).trim()) tabs.push({ id: 'systemerr', label: 'stderr' });
+
+    if (!tabs.length) {
+      return `<div style="color:var(--fg-dim);font-size:12px;padding:8px 0;">No additional output for this step.</div>${renderTimeline(step)}`;
+    }
+
+    let active = state.activeTabs.get(key);
+    if (!tabs.find(t => t.id === active)) {
+      active = tabs.find(t => t.hasError)?.id || tabs[0].id;
+      state.activeTabs.set(key, active);
+    }
+
+    return `
+      <div class="tabs" data-tabs="${key}">
+        ${tabs.map(t => `<button class="tab-btn ${t.id===active?'active':''} ${t.hasError?'has-error':''}" data-tab="${t.id}">${t.label}${t.n!=null?`<span class="badge">${t.n}</span>`:''}</button>`).join('')}
+      </div>
+      <div class="tab-content">${renderTab(active, step, errs, assertions)}</div>
+      ${renderTimeline(step)}
+    `;
+  }
+
+  function renderTab(id, step, errs, assertions) {
+    switch (id) {
+      case 'errors':
+        return `<div class="errors-panel">${errs.map(e => escapeHtml(e.value)).join('\n\n')}</div>`;
+      case 'assertions':
+        if (!assertions.length) return `<div style="color:var(--fg-dim);font-size:12px">No assertions.</div>`;
+        return `<div>${assertions.map(a => `
+          <div class="assertion-row ${a.isOK?'':'fail'}">
+            <span class="mark">${a.isOK?'✓':'✗'}</span>
+            <span>${escapeHtml(a.assertion)}${!a.isOK && a.error?`<div style="color:var(--fail-strong);margin-top:2px;font-size:11.5px">${escapeHtml(a.error.value || a.error)}</div>`:''}</span>
+          </div>`).join('')}</div>`;
+      case 'info':
+        return `<div class="info-panel">${(step.computedInfos||[]).map(escapeHtml).join('\n')}</div>`;
+      case 'raw':
+        return `<pre class="code">${highlightYaml(fmt.decode(step.raw))}</pre>`;
+      case 'interpolated':
+        return `<pre class="code">${highlightYaml(fmt.decode(step.interpolated))}</pre>`;
+      case 'inputvars':
+        return `<pre class="code">${highlightJson(JSON.stringify(step.inputVars, null, 2))}</pre>`;
+      case 'computedvars':
+        return `<pre class="code">${highlightJson(JSON.stringify(step.computedVars, null, 2))}</pre>`;
+      case 'systemout':
+        return `<pre class="code">${escapeHtml(step.systemout)}</pre>`;
+      case 'systemerr':
+        return `<pre class="code">${escapeHtml(step.systemerr)}</pre>`;
+      default:
+        return '';
+    }
+  }
+
+  function renderTimeline(step) {
+    return `
+      <div class="timeline">
+        <span>${fmt.time(step.start)}</span>
+        <span class="line"></span>
+        <span class="dur">${fmt.dur(step.duration)}</span>
+        <span class="line"></span>
+        <span>${fmt.time(step.end)}</span>
+      </div>`;
+  }
+
+  function bindStepHandlers(suite, tcs) {
+    __qa('#tcList [data-step-toggle]').forEach(h => h.onclick = () => {
+      const key = h.dataset.stepToggle;
+      if (state.expandedSteps.has(key)) state.expandedSteps.delete(key);
+      else state.expandedSteps.add(key);
+      renderTestcases(suite, tcs);
+    });
+    __qa('#tcList [data-tabs]').forEach(tabs => {
+      const key = tabs.dataset.tabs;
+      __qa('button.tab-btn', tabs).forEach(b => b.onclick = () => {
+        state.activeTabs.set(key, b.dataset.tab);
+        renderTestcases(suite, tcs);
+      });
+    });
+  }
+
+  // ---------- drawer ----------
+  function openDrawer(title, varsObj) {
+    __q('#drawerTitle').textContent = title;
+    __q('#drawerBody').innerHTML = `<pre class="code">${highlightJson(JSON.stringify(varsObj, null, 2))}</pre>`;
+    __q('#drawer').classList.add('open');
+    __q('#drawerBackdrop').classList.add('open');
+  }
+  function closeDrawer() {
+    __q('#drawer').classList.remove('open');
+    __q('#drawerBackdrop').classList.remove('open');
+  }
+  __q('#drawerClose').onclick = closeDrawer;
+  __q('#drawerBackdrop').onclick = closeDrawer;
+
+  // ---------- search ----------
+  __q('#searchInput').addEventListener('input', e => {
+    state.query = e.target.value;
+    renderSuiteList();
+  });
+
+  // ---------- tweaks ----------
+  const accentMap = {
+    venom: 'oklch(58% 0.13 158)',
+    indigo: 'oklch(55% 0.18 270)',
+    amber: 'oklch(70% 0.16 75)',
+    rose: 'oklch(60% 0.18 18)',
+  };
+  function applyTweaks() {
+    const t = state.tweaks;
+    let theme = t.theme;
+    if (theme === 'auto') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-density', t.density);
+    document.documentElement.style.setProperty('--accent', accentMap[t.accent] || accentMap.venom);
+    if (t.accent !== 'venom') {
+      document.documentElement.style.setProperty('--pass', accentMap[t.accent] || accentMap.venom);
+    } else {
+      document.documentElement.style.removeProperty('--pass');
+    }
+    __qa('.seg').forEach(seg => {
+      const k = seg.dataset.tweak;
+      __qa('button', seg).forEach(b => b.classList.toggle('on', b.dataset.val === t[k]));
+    });
+    __q('#tweakAutoExpand').classList.toggle('on', !!t.autoExpand);
+    __q('#tweakHidePass').classList.toggle('on', !!t.hidePass);
+    saveTweaks();
+  }
+  __qa('.seg').forEach(seg => {
+    const k = seg.dataset.tweak;
+    __qa('button', seg).forEach(b => b.onclick = () => {
+      state.tweaks[k] = b.dataset.val;
+      applyTweaks();
+      if (state.selected != null) renderMain();
+    });
+  });
+  __q('#tweakAutoExpand').onclick = () => { state.tweaks.autoExpand = !state.tweaks.autoExpand; applyTweaks(); };
+  __q('#tweakHidePass').onclick = () => { state.tweaks.hidePass = !state.tweaks.hidePass; applyTweaks(); if (state.selected != null) renderMain(); };
+
+  __q('#tweaksBtn').onclick = () => __q('#tweaksPanel').classList.toggle('open');
+  __q('#tweaksClose').onclick = () => __q('#tweaksPanel').classList.remove('open');
+
+  // keyboard
+  window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 't' || e.key === 'T') __q('#tweaksPanel').classList.toggle('open');
+    if (e.key === 'Escape') { closeDrawer(); __q('#tweaksPanel').classList.remove('open'); }
+    if (e.key === '/' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); __q('#searchInput').focus(); }
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && state.selected != null) {
+      const list = visibleSuites().map(v => v.i);
+      const pos = list.indexOf(state.selected);
+      if (pos >= 0) {
+        const next = e.key === 'ArrowDown' ? Math.min(list.length-1, pos+1) : Math.max(0, pos-1);
+        selectSuite(list[next]);
+        const el = document.querySelector(`.suite-row[data-i="${list[next]}"]`);
+        if (el) el.scrollIntoView({ block: 'nearest' });
+        e.preventDefault();
+      }
+    }
+  });
+
+  // ---------- init ----------
+  applyTweaks();
+  renderSummary();
+  renderFilters();
+  renderSuiteList();
+  // auto-select first failed, or first
+  const firstFail = suites.findIndex(s => lc(s.status) === 'fail');
+  selectSuite(firstFail >= 0 ? firstFail : (suites.length ? 0 : null));
+})();
+</script>
 </body>
-
 </html>

@@ -11,10 +11,99 @@ import (
 
 	"github.com/mattn/go-zglob"
 	"github.com/rockbears/yaml"
+	yamlv3 "gopkg.in/yaml.v3"
 
 	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 )
+
+// testCaseLineInfo holds source line numbers for a single test case.
+type testCaseLineInfo struct {
+	TestCaseLine   int     // line of the testcase mapping node
+	StepLines      []int   // line of each step mapping node
+	AssertionLines [][]int // [stepIdx][assertIdx] line numbers
+}
+
+// extractLineNumbers parses raw YAML bytes using gopkg.in/yaml.v3 to extract
+// source line numbers for testcases, steps, and assertions.
+func extractLineNumbers(content []byte) []testCaseLineInfo {
+	var doc yamlv3.Node
+	if err := yamlv3.Unmarshal(content, &doc); err != nil {
+		return nil
+	}
+
+	// doc is a DocumentNode containing the root MappingNode
+	if doc.Kind != yamlv3.DocumentNode || len(doc.Content) == 0 {
+		return nil
+	}
+	root := doc.Content[0]
+	if root.Kind != yamlv3.MappingNode {
+		return nil
+	}
+
+	// Find "testcases" key in root mapping
+	var testcasesNode *yamlv3.Node
+	for i := 0; i < len(root.Content)-1; i += 2 {
+		if root.Content[i].Value == "testcases" {
+			testcasesNode = root.Content[i+1]
+			break
+		}
+	}
+	if testcasesNode == nil || testcasesNode.Kind != yamlv3.SequenceNode {
+		return nil
+	}
+
+	result := make([]testCaseLineInfo, 0, len(testcasesNode.Content))
+	for _, tcNode := range testcasesNode.Content {
+		if tcNode.Kind != yamlv3.MappingNode {
+			result = append(result, testCaseLineInfo{})
+			continue
+		}
+
+		info := testCaseLineInfo{
+			TestCaseLine: tcNode.Line,
+		}
+
+		// Find "steps" in testcase mapping
+		var stepsNode *yamlv3.Node
+		for i := 0; i < len(tcNode.Content)-1; i += 2 {
+			if tcNode.Content[i].Value == "steps" {
+				stepsNode = tcNode.Content[i+1]
+				break
+			}
+		}
+
+		if stepsNode != nil && stepsNode.Kind == yamlv3.SequenceNode {
+			info.StepLines = make([]int, len(stepsNode.Content))
+			info.AssertionLines = make([][]int, len(stepsNode.Content))
+
+			for stepIdx, stepNode := range stepsNode.Content {
+				info.StepLines[stepIdx] = stepNode.Line
+
+				if stepNode.Kind != yamlv3.MappingNode {
+					continue
+				}
+
+				// Find "assertions" in step mapping
+				for i := 0; i < len(stepNode.Content)-1; i += 2 {
+					if stepNode.Content[i].Value == "assertions" {
+						assertionsNode := stepNode.Content[i+1]
+						if assertionsNode.Kind == yamlv3.SequenceNode {
+							info.AssertionLines[stepIdx] = make([]int, len(assertionsNode.Content))
+							for aIdx, aNode := range assertionsNode.Content {
+								info.AssertionLines[stepIdx][aIdx] = aNode.Line
+							}
+						}
+						break
+					}
+				}
+			}
+		}
+
+		result = append(result, info)
+	}
+	return result
+}
 
 func getFilesPath(path []string) ([]string, error) {
 	filePaths := make([]string, 0)
@@ -125,9 +214,18 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			Vars:        testSuiteInput.Vars,
 			Secrets:     testSuiteInput.Secrets,
 		}
+
+		// Extract source line numbers from original YAML (before interpolation)
+		lineInfos := extractLineNumbers(btes)
+
 		for i := range testSuiteInput.TestCases {
 			ts.TestCases[i] = TestCase{
 				TestCaseInput: testSuiteInput.TestCases[i],
+			}
+			if i < len(lineInfos) {
+				ts.TestCases[i].SourceLine = lineInfos[i].TestCaseLine
+				ts.TestCases[i].StepSourceLines = lineInfos[i].StepLines
+				ts.TestCases[i].AssertionSourceLines = lineInfos[i].AssertionLines
 			}
 		}
 		Info(ctx, "Has %d Secrets", len(ts.Secrets))

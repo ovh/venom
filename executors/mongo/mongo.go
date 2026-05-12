@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -40,7 +40,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 		return nil, err
 	}
 
-	venom.Debug(ctx, "connecting to database: %s\n", e.URI)
+	venom.Debug(ctx, "connecting to database: %s\n", venom.RedactURI(e.URI))
 	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(e.URI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -78,7 +78,11 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 				}
 			}
 
-			dirEntries, err := os.ReadDir(path.Join(venom.StringVarFromCtx(ctx, "venom.testsuite.workdir"), loadFixturesAction.Folder))
+			folderPath, errResolve := venom.ResolveWorkdirPath(venom.StringVarFromCtx(ctx, "venom.testsuite.workdir"), loadFixturesAction.Folder)
+			if errResolve != nil {
+				return nil, errResolve
+			}
+			dirEntries, err := os.ReadDir(folderPath)
 			if err != nil {
 				return nil, err
 			}
@@ -89,7 +93,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 					continue
 				}
 
-				extension := path.Ext(file.Name())
+				extension := filepath.Ext(file.Name())
 				if extension != ".yaml" && extension != ".yml" {
 					continue
 				}
@@ -97,8 +101,8 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 			}
 
 			for _, fixture := range fixtures {
-				collectionName := strings.TrimSuffix(fixture, path.Ext(fixture))
-				filePath := path.Join(venom.StringVarFromCtx(ctx, "venom.testsuite.workdir"), loadFixturesAction.Folder, fixture)
+				collectionName := strings.TrimSuffix(fixture, filepath.Ext(fixture))
+				filePath := filepath.Join(folderPath, fixture)
 
 				file, err := os.Open(filePath)
 				if err != nil {
@@ -159,7 +163,10 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 			var documents []any
 
 			if insertAction.File != "" {
-				filePath := path.Join(venom.StringVarFromCtx(ctx, "venom.testsuite.workdir"), insertAction.File)
+				filePath, errResolve := venom.ResolveWorkdirPath(venom.StringVarFromCtx(ctx, "venom.testsuite.workdir"), insertAction.File)
+				if errResolve != nil {
+					return nil, errResolve
+				}
 				file, err := os.Open(filePath)
 				if err != nil {
 					return nil, err
