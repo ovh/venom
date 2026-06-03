@@ -108,6 +108,9 @@ type TestSuiteInput struct {
 	TestCases   []TestCaseInput `json:"testcases" yaml:"testcases"`
 	Vars        H               `json:"vars" yaml:"vars"`
 	Secrets     []string        `json:"secrets" yaml:"secrets"`
+	// Parallel indicates how many testcases of this testsuite can be
+	// executed in parallel. If omitted or <=1, testcases run sequentially.
+	Parallel    int             `json:"parallel,omitempty" yaml:"parallel,omitempty"`
 }
 
 type TestSuite struct {
@@ -116,6 +119,8 @@ type TestSuite struct {
 	TestCases   []TestCase `json:"testcases" yaml:"testcases"`
 	Vars        H          `json:"vars" yaml:"vars"`
 	Secrets     []string   `json:"secrets" yaml:"secrets"`
+	// Parallel limit for this testsuite (0 or 1 means sequential)
+	Parallel    int        `json:"parallel,omitempty" yaml:"parallel,omitempty"`
 
 	// computed
 	ShortName    string `json:"shortname" yaml:"-"`
