@@ -1,14 +1,14 @@
 # Venom - Executor Redis
 
-Step to execute command into Redis
+Step to execute commands on Redis
 
-Use case: your software need to make call to a Redis.
+Use case: your software needs to make calls to Redis.
 
 ## Input
 
 The following inputs are available:
-- `commands`: an array of Redis command
-- `path`: a file which contains a series of Redis command. If path property is filled, commands property will be ignored.
+- `commands`: an array of Redis commands
+- `path`: a file which contains a series of Redis commands. If path property is filled, commands property will be ignored.
 - `dialURL`: Redis server URL
 
 URL should follow the draft IANA specification for the scheme (https://www.iana.org/assignments/uri-schemes/prov/redis).
@@ -65,9 +65,9 @@ testcases:
 
 The executor returns a result object that contains the executed Redis command.
 
-- result.commands contains the list of executed Redis command
-- result.commands.commandI.response represents the response of Redis command. It can be an array or a string, depends of Redis command
+- result.commands contains the list of executed Redis commands
+- result.commands.commandI.response represents the response of the Redis command. It can be an array or a string, depending on the Redis command
 
 ## Examples
 
-More example can be used in the `tests` folder of this repository.
+More examples can be found in the `tests` folder of this repository.

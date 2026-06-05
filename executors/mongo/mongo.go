@@ -239,7 +239,7 @@ func (e Executor) Run(ctx context.Context, step venom.TestStep) (any, error) {
 				if err := bson.UnmarshalExtJSON([]byte(findAction.Options.Projection), false, &projection); err != nil {
 					return nil, err
 				}
-				findOptions = append(findOptions, options.Find().SetSort(projection))
+				findOptions = append(findOptions, options.Find().SetProjection(projection))
 			}
 
 			cursor, err := mongoClient.Database(e.Database).Collection(e.Collection).Find(ctx, filter, findOptions...)

@@ -1,0 +1,12 @@
+executor: nested_fail_outer
+input:
+  greeting: "hello"
+steps:
+- type: exec
+  script: echo 'outer step 1 ok'
+  assertions:
+  - result.code ShouldEqual 0
+- type: nested_fail_inner
+  message: '{{.input.greeting}}_from_outer'
+output:
+  result: "{{.result.systemout}}"

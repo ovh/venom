@@ -4,7 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"text/template"
+	"html/template"
 
 	"github.com/pkg/errors"
 )
@@ -14,7 +14,7 @@ var templateHTML string
 
 type TestsHTML struct {
 	Tests     Tests  `json:"tests"`
-	JSONValue string `json:"jsonValue"`
+	JSONValue template.JS `json:"jsonValue"`
 }
 
 func outputHTML(testsResult *Tests) ([]byte, error) {
@@ -27,7 +27,7 @@ func outputHTML(testsResult *Tests) ([]byte, error) {
 
 	testsHTML := TestsHTML{
 		Tests:     *testsResult,
-		JSONValue: string(testJSON),
+		JSONValue: template.JS(testJSON),
 	}
 	tmpl := template.Must(template.New("reportHTML").Parse(templateHTML))
 	if err := tmpl.Execute(&buf, testsHTML); err != nil {

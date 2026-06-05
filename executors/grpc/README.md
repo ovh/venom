@@ -1,6 +1,6 @@
 # Venom - Executor Grpc
 
-Step for execute GRPC Request
+Step to execute a gRPC request
 
 Based on `grpcurl`, see [grpcurl](https://github.com/fullstorydev/grpcurl) for more information.
 This executor relies on the gRPC server reflection, which should be enabled on the server as described 
@@ -11,7 +11,7 @@ gRPC server reflection also does not properly work with `gogo/protobuf`: grpc/gr
 
 ## Tests
 
-Results of test are parsed as json and saved in `systemoutjson`. Status codes correspond 
+Results of tests are parsed as JSON and saved in `systemoutjson`. Status codes correspond 
 to the official status codes of gRPC.
 You can find what individual return codes mean [here](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md).
 
@@ -23,14 +23,14 @@ In your yaml file, you can use:
   - url mandatory
   - service mandatory: service to call
   - method mandatory: list, describe, or method of the endpoint
-  - data optional: data to marshal to json and send as a request
+  - data optional: data to marshal to JSON and send as a request
   - headers optional: data to send as additional headers
   - connect_timeout optional: The maximum time, in seconds, to wait for connection to be established. Defaults to 10 seconds
   - default_fields optional: whether json formatter should emit default fields
   - include_text_separator optional: when protobuf string formatter is invoked to format multiple messages, all messages after the first one will be prefixed with character (0x1E)
-  - tls_client_cert optional: a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enable mutual TLS authentication. Set the PEM content or the path to the PEM file.
+  - tls_client_cert optional: a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates. Setting it enables mutual TLS authentication. Set the PEM content or the path to the PEM file.
   - tls_client_key optional: private key corresponding to the certificate. Set the PEM content or the path to the PEM file.
-  - tls_root_ca optional: defines additional root CAs to perform the call. can contains multiple CAs concatenated together. Set the PEM content or the path to the PEM file.
+  - tls_root_ca optional: defines additional root CAs to perform the call. Can contain multiple CAs concatenated together. Set the PEM content or the path to the PEM file.
   - ignore_verify_ssl optional: set to true if you use a self-signed SSL on remote for example
 ```
 
