@@ -88,10 +88,6 @@ $(TESTPKGS_RESULTS): $(GOFILES) $(TESTPKGS_C) $(GO_RICHGO)
 	$(info *** executing tests in $(dir $@))
 	@-cd $(dir $@) && ./bin.test $(TEST_RUN_ARGS) | tee tests.log | richgo testfilter ;
 
-GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
-$(GO_COV_MERGE):
-	go install github.com/wadey/gocovmerge@latest
-
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 $(GO_GOJUNIT):
 	go install github.com/jstemmer/go-junit-report@latest
@@ -108,9 +104,9 @@ GO_GOIMPORTS = ${GOPATH}/bin/goimports
 $(GO_GOIMPORTS):
 	go install golang.org/x/tools/cmd/goimports@latest
 
-mk_go_test: $(GO_COV_MERGE) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS)# Run tests
+mk_go_test: $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS)# Run tests
 	@echo "Generating unit tests coverage..."
-	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_RESULTS)/cover.out
+	@go tool gocovmerge `find ./ -name "*.coverprofile"` > $(TARGET_RESULTS)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_RESULTS)/cover.out > $(TARGET_RESULTS)/coverage.xml
 	@go tool cover -html=$(TARGET_RESULTS)/cover.out -o=$(TARGET_RESULTS)/cover.html
 	@NB=$$(grep "^FAIL" `find . -type f -name "tests.log"`|grep -v ':0'|wc -l); echo "tests failed $$NB" && exit $$NB

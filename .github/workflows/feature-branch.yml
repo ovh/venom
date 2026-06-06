@@ -1,0 +1,33 @@
+name: CI Build and Test
+
+on:
+  push:
+    branches: [ feature/*, fix/* ]
+  pull_request:
+    branches: [ feature/*, fix/* ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Add Go Bin to PATH
+        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Install Dependencies
+        run: go mod download
+
+      - name: Build using Makefile
+        run: make build OS=linux ARCH=amd64
+
+      - name: Test using Makefile
+        run: make test
