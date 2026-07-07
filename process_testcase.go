@@ -154,13 +154,25 @@ func (v *Venom) runTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) {
 
 func (v *Venom) processSecrets(ctx context.Context, ts *TestSuite, tc *TestCase) context.Context {
 	computedSecrets := []string{}
-	for k, v := range tc.Vars {
-		for _, s := range ts.Secrets {
-			if strings.Compare(k, s) == 0 {
-				computedSecrets = append(computedSecrets, fmt.Sprint(v))
+	seen := map[string]struct{}{}
+	collect := func(vars H) {
+		for k, val := range vars {
+			for _, s := range ts.Secrets {
+				if k == s {
+					secretVal := fmt.Sprint(val)
+					if _, ok := seen[secretVal]; !ok {
+						seen[secretVal] = struct{}{}
+						computedSecrets = append(computedSecrets, secretVal)
+					}
+				}
 			}
 		}
 	}
+	collect(ts.Vars)
+	if tc != nil {
+		collect(tc.Vars)
+	}
+	computedSecrets = appendDerivedSecrets(computedSecrets, seen, ts.Vars, ts.Secrets)
 	return context.WithValue(ctx, ContextKey("secrets"), computedSecrets)
 }
 
@@ -259,9 +271,9 @@ loopRawTestSteps:
 			}
 
 			if ranged.Enabled {
-				Info(ctx, "Step #%d-%d content is: %s", stepNumber, rangedIndex, HideSensitive(ctx, content))
+				Info(ctx, "Step #%d-%d content is: %s", stepNumber, rangedIndex, content)
 			} else {
-				Info(ctx, "Step #%d content is: %s", stepNumber, HideSensitive(ctx, content))
+				Info(ctx, "Step #%d content is: %s", stepNumber, content)
 			}
 
 			data, err := yaml.Marshal(rawStep)
@@ -364,11 +376,7 @@ loopRawTestSteps:
 					isRequired = isRequired || e.AssertionRequired || v.StopOnFailure
 				}
 
-				redactedOutputVars := make(map[string]string)
-				for k, v := range tsResult.ComputedVars {
-					redactedOutputVars[k] = HideSensitive(ctx, v)
-				}
-				Error(ctx, "teststep output vars are: %v", redactedOutputVars)
+				Error(ctx, "teststep output vars are: %v", tsResult.ComputedVars)
 
 				if isRequired {
 					failure := newFailure(ctx, *tc, stepNumber, rangedIndex, "", errors.New("At least one required assertion failed, skipping remaining steps"))

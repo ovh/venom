@@ -53,6 +53,7 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	ts.ComputedVars = H{}
 
 	ctx = context.WithValue(ctx, ContextKey("testsuite"), ts.Name)
+	ctx = v.processSecrets(ctx, ts, nil)
 	Info(ctx, "Starting testsuite")
 	defer Info(ctx, "Ending testsuite")
 

@@ -25,28 +25,30 @@ func init() {
 
 // CleanUpSecrets This method tries to hide all the sensitive variables
 func (v *Venom) CleanUpSecrets(testSuite TestSuite) TestSuite {
-	for _, testCase := range testSuite.TestCases {
-		ctx := v.processSecrets(context.Background(), &testSuite, &testCase)
-		for _, result := range testCase.TestStepResults {
-			for k, v := range result.ComputedVars {
-				if !strings.HasPrefix(k, "venom.") {
-					result.ComputedVars[k] = HideSensitive(ctx, v)
-				}
-			}
-			for k, v := range result.InputVars {
-				if !strings.HasPrefix(k, "venom.") {
-					result.InputVars[k] = HideSensitive(ctx, v)
-				}
-			}
-			for k, v := range testCase.TestCaseInput.Vars {
-				if !strings.HasPrefix(k, "venom.") {
-					testCase.TestCaseInput.Vars[k] = HideSensitive(ctx, v)
-				}
-			}
-			result.Raw = HideSensitive(ctx, fmt.Sprint(result.Raw))
-			result.Interpolated = HideSensitive(ctx, fmt.Sprint(result.Interpolated))
+	suiteCtx := v.processSecrets(context.Background(), &testSuite, nil)
+	testcaseCtxs := make([]context.Context, len(testSuite.TestCases))
+	for i := range testSuite.TestCases {
+		testcaseCtxs[i] = v.processSecrets(context.Background(), &testSuite, &testSuite.TestCases[i])
+	}
+
+	redactMapVars(suiteCtx, testSuite.Vars, testSuite.Secrets)
+
+	for i := range testSuite.TestCases {
+		testCase := &testSuite.TestCases[i]
+		ctx := testcaseCtxs[i]
+		redactMapVars(ctx, testCase.Vars, testSuite.Secrets)
+
+		for j := range testCase.TestStepResults {
+			result := &testCase.TestStepResults[j]
+			redactMapVars(ctx, result.ComputedVars, testSuite.Secrets)
+			redactStringMap(ctx, result.InputVars, testSuite.Secrets)
+			result.Raw = hideSensitiveBytes(ctx, result.Raw)
+			result.Interpolated = hideSensitiveBytes(ctx, result.Interpolated)
 			result.Systemout = HideSensitive(ctx, result.Systemout)
 			result.Systemerr = HideSensitive(ctx, result.Systemerr)
+			for k, info := range result.ComputedInfo {
+				result.ComputedInfo[k] = HideSensitive(ctx, info)
+			}
 		}
 	}
 	return testSuite
