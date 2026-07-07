@@ -103,6 +103,30 @@ func TestAppendDerivedSecretsBasicAuth(t *testing.T) {
 	assert.Equal(t, "__hidden__", HideSensitive(ctx, token))
 }
 
+func TestAppendDerivedSecretsFromTestCaseVars(t *testing.T) {
+	v := New()
+	ts := TestSuite{
+		Secrets: []string{"basic_auth_password"},
+		Vars:    H{},
+		TestCases: []TestCase{
+			{
+				TestCaseInput: TestCaseInput{
+					Vars: H{
+						"basic_auth_user":     "testuser",
+						"basic_auth_password": "my_secret",
+					},
+				},
+			},
+		},
+	}
+	ctx := v.processSecrets(context.Background(), &ts, &ts.TestCases[0])
+
+	token := base64.StdEncoding.EncodeToString([]byte("testuser:my_secret"))
+	assert.Equal(t, "__hidden__", HideSensitive(ctx, token))
+	assert.Equal(t, "__hidden__", HideSensitive(ctx, base64.StdEncoding.EncodeToString([]byte("my_secret"))))
+	assert.NotContains(t, HideSensitive(ctx, "Authorization: Basic "+token), token)
+}
+
 func TestHideSensitiveBasicAuthHeaderInCleanupContext(t *testing.T) {
 	v := New()
 	ts := TestSuite{

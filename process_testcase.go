@@ -172,7 +172,17 @@ func (v *Venom) processSecrets(ctx context.Context, ts *TestSuite, tc *TestCase)
 	if tc != nil {
 		collect(tc.Vars)
 	}
-	computedSecrets = appendDerivedSecrets(computedSecrets, seen, ts.Vars, ts.Secrets)
+
+	// Derived secrets (e.g. base64 basic-auth tokens) must be computed from the
+	// effective vars, which may only define the secret at the test case level.
+	derivedVars := ts.Vars.Clone()
+	if derivedVars == nil {
+		derivedVars = H{}
+	}
+	if tc != nil {
+		derivedVars.AddAll(tc.Vars)
+	}
+	computedSecrets = appendDerivedSecrets(computedSecrets, seen, derivedVars, ts.Secrets)
 	return context.WithValue(ctx, ContextKey("secrets"), computedSecrets)
 }
 
