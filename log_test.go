@@ -44,3 +44,24 @@ func TestLogFunctionsRedactSecrets(t *testing.T) {
 	assert.NotContains(t, buf.String(), "my_secret")
 	assert.Contains(t, buf.String(), "__hidden__")
 }
+
+func TestLogFunctionsPreserveNonStringFormatting(t *testing.T) {
+	InitTestLogger(t)
+	ctx := context.WithValue(context.Background(), ContextKey("secrets"), []string{"my_secret"})
+
+	var buf bytes.Buffer
+	logger.Logger.SetOutput(&buf)
+	logger.Logger.SetLevel(logrus.DebugLevel)
+	defer logger.Logger.SetOutput(os.Stdout)
+
+	Info(ctx, "Step #%d-%d content is: %s", 3, 7, "my_secret")
+	out := buf.String()
+	assert.NotContains(t, out, "%!d")
+	assert.Contains(t, out, "Step #3-7 content is: __hidden__")
+
+	buf.Reset()
+	Debug(ctx, "count=%d ratio=%.2f ok=%t", 42, 1.5, true)
+	out = buf.String()
+	assert.NotContains(t, out, "%!")
+	assert.Contains(t, out, "count=42 ratio=1.50 ok=true")
+}

@@ -122,9 +122,24 @@ func redactLogArgs(ctx context.Context, args ...interface{}) []interface{} {
 	}
 	redacted := make([]interface{}, len(args))
 	for i, arg := range args {
-		redacted[i] = HideSensitive(ctx, arg)
+		redacted[i] = redactLogArg(secrets, arg)
 	}
 	return redacted
+}
+
+// redactLogArg redacts a single log argument. It only replaces the argument
+// with a string when a secret was actually found, so non-string arguments keep
+// their original type and format verbs like %d, %f and %t still work.
+func redactLogArg(secrets []string, arg interface{}) interface{} {
+	if arg == nil {
+		return nil
+	}
+	original := fmt.Sprint(arg)
+	cleaned := replaceSecrets(original, secrets)
+	if cleaned == original {
+		return arg
+	}
+	return cleaned
 }
 
 // hideSensitiveBytes redacts secrets in byte-oriented step output while preserving []byte type for JSON encoding.
