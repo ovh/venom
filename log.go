@@ -75,6 +75,14 @@ func secretKeySet(secretKeys []string) map[string]struct{} {
 	return set
 }
 
+// isRedactableSecretValue reports whether a secret value is worth redacting.
+// Empty values would make strings.ReplaceAll insert "__hidden__" between every
+// character, and "<nil>" (from an unset variable) would redact every literal
+// "<nil>" in the output, so both are ignored.
+func isRedactableSecretValue(val string) bool {
+	return val != "" && val != "<nil>"
+}
+
 func redactMapVars(ctx context.Context, vars H, secretKeys []string) {
 	if len(vars) == 0 || len(secretKeys) == 0 {
 		return
@@ -172,7 +180,7 @@ func appendDerivedSecrets(secrets []string, seen map[string]struct{}, vars H, se
 
 	for _, key := range secretKeys {
 		val := fmt.Sprint(vars[key])
-		if val != "" && val != "<nil>" {
+		if isRedactableSecretValue(val) {
 			add(base64.StdEncoding.EncodeToString([]byte(val)))
 		}
 	}
@@ -180,7 +188,7 @@ func appendDerivedSecrets(secrets []string, seen map[string]struct{}, vars H, se
 	if _, ok := secretSet["basic_auth_password"]; ok {
 		user := fmt.Sprint(vars["basic_auth_user"])
 		pass := fmt.Sprint(vars["basic_auth_password"])
-		if pass != "" && pass != "<nil>" {
+		if isRedactableSecretValue(pass) {
 			add(base64.StdEncoding.EncodeToString([]byte(user + ":" + pass)))
 		}
 	}

@@ -160,6 +160,9 @@ func (v *Venom) processSecrets(ctx context.Context, ts *TestSuite, tc *TestCase)
 			for _, s := range ts.Secrets {
 				if k == s {
 					secretVal := fmt.Sprint(val)
+					if !isRedactableSecretValue(secretVal) {
+						continue
+					}
 					if _, ok := seen[secretVal]; !ok {
 						seen[secretVal] = struct{}{}
 						computedSecrets = append(computedSecrets, secretVal)

@@ -156,3 +156,31 @@ func TestProcessSecretsUsesTestSuiteVars(t *testing.T) {
 	ctx := v.processSecrets(context.Background(), &ts, nil)
 	assert.Equal(t, "__hidden__", HideSensitive(ctx, "secret-value"))
 }
+
+// TestProcessSecretsIgnoresEmptyAndNilValues guards against a bug where a secret
+// declared but left unset (nil) or empty was added to the secrets list. An empty
+// value made strings.ReplaceAll insert "__hidden__" between every character, and
+// a "<nil>" value redacted every literal "<nil>" in the output.
+func TestProcessSecretsIgnoresEmptyAndNilValues(t *testing.T) {
+	v := New()
+	ts := TestSuite{
+		Secrets: []string{"client_secret", "empty_secret", "real_secret"},
+		Vars: H{
+			"client_secret": nil,
+			"empty_secret":  "",
+			"real_secret":   "secret-value",
+		},
+	}
+
+	ctx := v.processSecrets(context.Background(), &ts, nil)
+	secrets := ctx.Value(ContextKey("secrets")).([]string)
+	for _, s := range secrets {
+		assert.NotEqual(t, "", s, "empty secret value must not be registered")
+		assert.NotEqual(t, "<nil>", s, "nil secret value must not be registered")
+	}
+
+	content := `{"assertions":["result.statuscode ShouldEqual 200"]}`
+	assert.Equal(t, content, HideSensitive(ctx, content), "no char-by-char redaction should occur")
+	assert.Equal(t, "value is <nil>", HideSensitive(ctx, "value is <nil>"))
+	assert.Equal(t, "__hidden__", HideSensitive(ctx, "secret-value"))
+}
