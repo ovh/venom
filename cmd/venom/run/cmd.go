@@ -25,24 +25,26 @@ var (
 	path []string
 	v    *venom.Venom
 
-	variables     []string
-	secrets       []string
-	format        string = "xml" // Set the default value for formatFlag
-	varFiles      []string
-	outputDir     string
-	libDir        string
-	htmlReport    bool
-	stopOnFailure bool
-	verbose       int = 0 // Set the default value for verboseFlag
+	variables      []string
+	secrets        []string
+	format         string = "xml" // Set the default value for formatFlag
+	varFiles       []string
+	outputDir      string
+	libDir         string
+	htmlReport     bool
+	stopOnFailure  bool
+	verbose        int = 0 // Set the default value for verboseFlag
+	parallelSuites int = 0 // Number of testsuites to run in parallel (0 = sequential)
 
-	variablesFlag     *[]string
-	formatFlag        *string
-	varFilesFlag      *[]string
-	outputDirFlag     *string
-	libDirFlag        *string
-	stopOnFailureFlag *bool
-	htmlReportFlag    *bool
-	verboseFlag       *int
+	variablesFlag      *[]string
+	formatFlag         *string
+	varFilesFlag       *[]string
+	outputDirFlag      *string
+	libDirFlag         *string
+	stopOnFailureFlag  *bool
+	htmlReportFlag     *bool
+	verboseFlag        *int
+	parallelSuitesFlag *int
 )
 
 func init() {
@@ -54,6 +56,7 @@ func init() {
 	variablesFlag = Cmd.Flags().StringArray("var", nil, "--var cds='cds -f config.json' --var cds2='cds -f config.json'")
 	outputDirFlag = Cmd.PersistentFlags().String("output-dir", "", "Output Directory: create tests results file inside this directory")
 	libDirFlag = Cmd.PersistentFlags().String("lib-dir", "", "Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib")
+	parallelSuitesFlag = Cmd.Flags().Int("parallel-suites", 0, "Number of testsuites to run in parallel (0 or 1 = sequential)")
 }
 
 func initArgs(cmd *cobra.Command) {
@@ -115,6 +118,10 @@ func initFromCommandArguments(f *pflag.Flag) {
 				variables = mergeVariables(varFlag, variables)
 			}
 		}
+	case "parallel-suites":
+		if parallelSuitesFlag != nil {
+			parallelSuites = *parallelSuitesFlag
+		}
 	}
 }
 
@@ -161,6 +168,7 @@ type ConfigFileData struct {
 	Secrets        *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
 	VariablesFiles *[]string `json:"variables_files,omitempty" yaml:"variables_files,omitempty"`
 	Verbosity      *int      `json:"verbosity,omitempty" yaml:"verbosity,omitempty"`
+	ParallelSuites *int      `json:"parallel_suites,omitempty" yaml:"parallel_suites,omitempty"`
 }
 
 // Configuration file overrides the environment variables.
@@ -208,6 +216,9 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.Verbosity != nil {
 		verbose = *configFileData.Verbosity
+	}
+	if configFileData.ParallelSuites != nil {
+		parallelSuites = *configFileData.ParallelSuites
 	}
 
 	return nil
@@ -279,6 +290,13 @@ func initFromEnv(environ []string) ([]string, error) {
 		v2 := int(v)
 		verbose = v2
 	}
+	if os.Getenv("VENOM_PARALLEL_SUITES") != "" {
+		v, err := strconv.ParseInt(os.Getenv("VENOM_PARALLEL_SUITES"), 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for VENOM_PARALLEL_SUITES, must be a positive integer")
+		}
+		parallelSuites = int(v)
+	}
 
 	for _, env := range environ {
 		if strings.HasPrefix(env, "VENOM_VAR_") {
@@ -299,6 +317,7 @@ func displayArg(ctx context.Context) {
 	venom.Debug(ctx, "option htmlReport=%v", htmlReport)
 	venom.Debug(ctx, "option varFiles=%v", strings.Join(varFiles, " "))
 	venom.Debug(ctx, "option verbose=%v", verbose)
+	venom.Debug(ctx, "option parallelSuites=%v", parallelSuites)
 }
 
 // Cmd run
@@ -338,6 +357,7 @@ var Cmd = &cobra.Command{
 		v.StopOnFailure = stopOnFailure
 		v.HtmlReport = htmlReport
 		v.Verbose = verbose
+		v.ParallelSuites = parallelSuites
 
 		if err := v.InitLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)

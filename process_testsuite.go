@@ -1,17 +1,59 @@
 package venom
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime/pprof"
+	"sync"
 	"time"
 
 	"github.com/gosimple/slug"
 	"github.com/ovh/venom/interpolate"
 	"github.com/pkg/errors"
 )
+
+// crossTCVarRegex matches references to other testcase variables like {{.testA.something}}
+var crossTCVarRegex = regexp.MustCompile(`\{\{\s*\.([^.\s}]+)\.`)
+
+// hasCrossTestCaseDependencies checks whether any testcase in the suite references
+// variables extracted by another testcase (e.g. {{.testA.myvariable}}).
+// If such dependencies exist, parallel execution would be unsafe because a testcase
+// might run before the testcase it depends on has finished producing its variables.
+// Returns true if dependencies are detected, along with a human-readable description.
+func hasCrossTestCaseDependencies(ts *TestSuite) (bool, string) {
+	// Build a set of testcase names (slug form, as used in variable references)
+	tcNames := make(map[string]struct{}, len(ts.TestCases))
+	for i := range ts.TestCases {
+		tcNames[slug.Make(ts.TestCases[i].Name)] = struct{}{}
+	}
+
+	for i := range ts.TestCases {
+		tc := &ts.TestCases[i]
+		tcSlug := slug.Make(tc.Name)
+		for _, rawStep := range tc.RawTestSteps {
+			matches := crossTCVarRegex.FindAllStringSubmatch(string(rawStep), -1)
+			for _, match := range matches {
+				ref := match[1]
+				// Skip self-references and known built-in prefixes
+				if ref == tcSlug {
+					continue
+				}
+				if ref == "venom" || ref == "value" || ref == "index" || ref == "key" {
+					continue
+				}
+				// If the reference matches another testcase name, we have a dependency
+				if _, ok := tcNames[ref]; ok {
+					return true, fmt.Sprintf("testcase %q references variable from testcase %q", tc.Name, ref)
+				}
+			}
+		}
+	}
+	return false, ""
+}
 
 func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 	if v.Verbose == 3 {
@@ -102,32 +144,194 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 	verboseReport := v.Verbose >= 1
 
 	v.Println(" • %s (%s)", ts.Name, ts.Filepath)
+	// If no parallel configured (or <=1) keep sequential behavior
+	parallel := ts.Parallel
 
-	for i := range ts.TestCases {
-		tc := &ts.TestCases[i]
-		tc.IsEvaluated = true
-		v.Print(" \t• %s", tc.Name)
-		var hasFailure bool
-		var hasRanged bool
-		hasSkipped := len(tc.Skipped) > 0
-		if !hasSkipped {
-			start := time.Now()
-			tc.Start = start
-			ts.Status = StatusRun
-			if verboseReport || hasRanged {
-				v.Print("\n")
+	// Safety check: if parallel is requested, verify there are no cross-testcase
+	// variable dependencies that would make parallel execution unsafe.
+	if parallel > 1 {
+		if hasDeps, desc := hasCrossTestCaseDependencies(ts); hasDeps {
+			Warn(ctx, "Parallel execution disabled for testsuite %q: %s. Falling back to sequential.", ts.Name, desc)
+			v.Println(" \t%s", Yellow(fmt.Sprintf("[warn] parallel disabled: %s", desc)))
+			parallel = 1
+		}
+	}
+
+	if parallel <= 1 {
+		for i := range ts.TestCases {
+			tc := &ts.TestCases[i]
+			tc.IsEvaluated = true
+			v.Print(" \t• %s", tc.Name)
+			var hasFailure bool
+			var hasRanged bool
+			hasSkipped := len(tc.Skipped) > 0
+			if !hasSkipped {
+				start := time.Now()
+				tc.Start = start
+				ts.Status = StatusRun
+				if verboseReport || hasRanged {
+					v.Print("\n")
+				}
+				// ##### RUN Test Case Here
+				v.runTestCase(ctx, ts, tc)
+				tc.End = time.Now()
+				tc.Duration = tc.End.Sub(tc.Start).Seconds()
 			}
-			// ##### RUN Test Case Here
-			v.runTestCase(ctx, ts, tc)
-			tc.End = time.Now()
-			tc.Duration = tc.End.Sub(tc.Start).Seconds()
+
+			skippedSteps := 0
+			for _, testStepResult := range tc.TestStepResults {
+				if testStepResult.RangedEnable {
+					hasRanged = true
+				}
+				if testStepResult.Status == StatusFail {
+					hasFailure = true
+				}
+				if testStepResult.Status == StatusSkip {
+					skippedSteps++
+				}
+			}
+
+			if hasFailure {
+				tc.Status = StatusFail
+			} else if skippedSteps == len(tc.TestStepResults) {
+				// If all test steps were skipped, consider the test case as skipped
+				tc.Status = StatusSkip
+			} else if tc.Status != StatusSkip {
+				tc.Status = StatusPass
+			}
+
+			// Verbose mode already reported tests status, so just print them when non-verbose
+			indent := ""
+			if verboseReport {
+				indent = "\t  "
+				// If the testcase was entirely skipped, then the verbose mode will not have any output
+				// Print something to inform that the testcase was indeed processed although skipped
+				if len(tc.TestStepResults) == 0 {
+					v.Println("\t\t%s", Gray("• (all steps were skipped)"))
+					continue
+				}
+			} else {
+				if hasFailure {
+					v.Println(" %s", Red(StatusFail))
+				} else if tc.Status == StatusSkip {
+					v.Println(" %s", Gray(StatusSkip))
+					continue
+				} else {
+					v.Println(" %s", Green(StatusPass))
+				}
+			}
+
+			for _, i := range tc.computedVerbose {
+				v.PrintlnIndentedTrace(i, indent)
+			}
+
+			// Verbose mode already reported failures, so just print them when non-verbose
+			if !verboseReport && hasFailure {
+				for _, testStepResult := range tc.TestStepResults {
+					if len(testStepResult.ComputedInfo) > 0 || len(testStepResult.Errors) > 0 {
+						v.Println(" \t\t• %s", testStepResult.Name)
+						for _, f := range testStepResult.ComputedInfo {
+							v.Println(" \t\t  %s", Cyan(f))
+						}
+						for _, f := range testStepResult.Errors {
+							v.Println(" \t\t  %s", Yellow(f.Value))
+						}
+					}
+				}
+			}
+
+			if v.StopOnFailure {
+				for _, testStepResult := range tc.TestStepResults {
+					if len(testStepResult.Errors) > 0 {
+						// break TestSuite
+						for i := range ts.TestCases {
+							tc := &ts.TestCases[i]
+							if tc.Status == "" {
+								tc.Status = StatusSkip
+								tc.IsEvaluated = true
+								tc.Skipped = append(tc.Skipped, Skipped{Value: "===== stop-on-failure: enabled ====="})
+							}
+						}
+						return
+					}
+				}
+			}
+			ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
+		}
+		return
+	}
+
+	// Parallel execution path: create worker pool and buffer per-test output
+	type jobResult struct {
+		idx    int
+		tc     *TestCase
+		output string
+	}
+
+	jobs := make(chan *TestCase)
+	results := make(chan jobResult)
+
+	var wg sync.WaitGroup
+	workerCount := parallel
+	if workerCount > len(ts.TestCases) {
+		workerCount = len(ts.TestCases)
+	}
+
+	for w := 0; w < workerCount; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for tc := range jobs {
+				// buffer output per testcase to avoid interleaving
+				var buf bytes.Buffer
+				vv := *v
+				vv.PrintFunc = func(format string, a ...interface{}) (n int, err error) {
+					return fmt.Fprintf(&buf, format, a...)
+				}
+
+				start := time.Now()
+				tc.Start = start
+				ts.Status = StatusRun
+				vv.runTestCase(ctx, ts, tc)
+				tc.End = time.Now()
+				tc.Duration = tc.End.Sub(tc.Start).Seconds()
+
+				results <- jobResult{tc.number - 1, tc, buf.String()}
+			}
+		}()
+	}
+
+	// feeder
+	go func() {
+		for i := range ts.TestCases {
+			tc := &ts.TestCases[i]
+			tc.IsEvaluated = true
+			v.Print(" \t• %s", tc.Name)
+			// skip cases already marked skipped
+			if len(tc.Skipped) == 0 {
+				jobs <- tc
+			} else {
+				// send immediate result for skipped tests
+				results <- jobResult{i, tc, ""}
+			}
+		}
+		close(jobs)
+	}()
+
+	// collector: collect as workers finish and print/aggregate results serially
+	remaining := len(ts.TestCases)
+	for remaining > 0 {
+		res := <-results
+		tc := res.tc
+
+		// write buffered output first if any
+		if res.output != "" {
+			v.Print("%s", res.output)
 		}
 
+		var hasFailure bool
 		skippedSteps := 0
 		for _, testStepResult := range tc.TestStepResults {
-			if testStepResult.RangedEnable {
-				hasRanged = true
-			}
 			if testStepResult.Status == StatusFail {
 				hasFailure = true
 			}
@@ -139,38 +343,26 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 		if hasFailure {
 			tc.Status = StatusFail
 		} else if skippedSteps == len(tc.TestStepResults) {
-			// If all test steps were skipped, consider the test case as skipped
 			tc.Status = StatusSkip
 		} else if tc.Status != StatusSkip {
 			tc.Status = StatusPass
 		}
 
-		// Verbose mode already reported tests status, so just print them when non-verbose
-		indent := ""
-		if verboseReport {
-			indent = "\t  "
-			// If the testcase was entirely skipped, then the verbose mode will not have any output
-			// Print something to inform that the testcase was indeed processed although skipped
-			if len(tc.TestStepResults) == 0 {
-				v.Println("\t\t%s", Gray("• (all steps were skipped)"))
-				continue
-			}
-		} else {
+		// print summarized status (non-verbose)
+		if !verboseReport {
 			if hasFailure {
 				v.Println(" %s", Red(StatusFail))
 			} else if tc.Status == StatusSkip {
 				v.Println(" %s", Gray(StatusSkip))
-				continue
 			} else {
 				v.Println(" %s", Green(StatusPass))
 			}
 		}
 
 		for _, i := range tc.computedVerbose {
-			v.PrintlnIndentedTrace(i, indent)
+			v.PrintlnIndentedTrace(i, "\t  ")
 		}
 
-		// Verbose mode already reported failures, so just print them when non-verbose
 		if !verboseReport && hasFailure {
 			for _, testStepResult := range tc.TestStepResults {
 				if len(testStepResult.ComputedInfo) > 0 || len(testStepResult.Errors) > 0 {
@@ -197,12 +389,19 @@ func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 							tc.Skipped = append(tc.Skipped, Skipped{Value: "===== stop-on-failure: enabled ====="})
 						}
 					}
-					return
+					// drain results and return
+					remaining = 0
+					break
 				}
 			}
 		}
+
 		ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
+		remaining--
 	}
+
+	// wait for workers to finish
+	wg.Wait()
 }
 
 // Parse the suite to find unreplaced and extracted variables

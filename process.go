@@ -1,11 +1,13 @@
 package venom
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
@@ -183,17 +185,25 @@ func (v *Venom) Process(ctx context.Context, path []string) error {
 	v.Tests.Status = StatusRun
 	v.Tests.Start = time.Now()
 	Debug(ctx, "nb testsuites: %d", len(v.Tests.TestSuites))
-	for i := range v.Tests.TestSuites {
 
-		v.Tests.TestSuites[i].Start = time.Now()
-		// ##### RUN Test Suite Here
-		if err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
+	parallelSuites := v.ParallelSuites
+	if parallelSuites <= 1 {
+		// Sequential execution (default)
+		for i := range v.Tests.TestSuites {
+			v.Tests.TestSuites[i].Start = time.Now()
+			if err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
+				return err
+			}
+			v.Tests.TestSuites[i].End = time.Now()
+			v.Tests.TestSuites[i].Duration = v.Tests.TestSuites[i].End.Sub(v.Tests.TestSuites[i].Start).Seconds()
+		}
+	} else {
+		// Parallel execution of testsuites
+		if err := v.processTestSuitesParallel(ctx, parallelSuites); err != nil {
 			return err
 		}
-
-		v.Tests.TestSuites[i].End = time.Now()
-		v.Tests.TestSuites[i].Duration = v.Tests.TestSuites[i].End.Sub(v.Tests.TestSuites[i].Start).Seconds()
 	}
+
 	v.Tests.End = time.Now()
 	v.Tests.Duration = v.Tests.End.Sub(v.Tests.Start).Seconds()
 
@@ -218,4 +228,67 @@ func (v *Venom) Process(ctx context.Context, path []string) error {
 	Debug(ctx, "final status: %s", v.Tests.Status)
 
 	return nil
+}
+
+// processTestSuitesParallel runs testsuites concurrently with a bounded worker pool.
+func (v *Venom) processTestSuitesParallel(ctx context.Context, maxWorkers int) error {
+	type suiteResult struct {
+		idx    int
+		err    error
+		output string
+	}
+
+	jobs := make(chan int, len(v.Tests.TestSuites))
+	results := make(chan suiteResult, len(v.Tests.TestSuites))
+
+	workerCount := maxWorkers
+	if workerCount > len(v.Tests.TestSuites) {
+		workerCount = len(v.Tests.TestSuites)
+	}
+
+	var wg sync.WaitGroup
+	for w := 0; w < workerCount; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for idx := range jobs {
+				ts := &v.Tests.TestSuites[idx]
+
+				// Buffer output to avoid interleaving between suites
+				var buf bytes.Buffer
+				vCopy := *v
+				vCopy.PrintFunc = func(format string, a ...interface{}) (n int, err error) {
+					return fmt.Fprintf(&buf, format, a...)
+				}
+
+				ts.Start = time.Now()
+				err := vCopy.runTestSuite(ctx, ts)
+				ts.End = time.Now()
+				ts.Duration = ts.End.Sub(ts.Start).Seconds()
+
+				results <- suiteResult{idx: idx, err: err, output: buf.String()}
+			}
+		}()
+	}
+
+	// Feed jobs
+	for i := range v.Tests.TestSuites {
+		jobs <- i
+	}
+	close(jobs)
+
+	// Collect results in completion order, print output serially
+	var firstErr error
+	for range v.Tests.TestSuites {
+		res := <-results
+		if res.output != "" {
+			v.Print("%s", res.output)
+		}
+		if res.err != nil && firstErr == nil {
+			firstErr = res.err
+		}
+	}
+
+	wg.Wait()
+	return firstErr
 }
