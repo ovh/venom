@@ -194,7 +194,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			if n > 0 {
 				chunk := buf[:n]
 				sb.Write(chunk)
-				venom.Debug(ctx, venom.HideSensitive(ctx, string(chunk)))
+				venom.Debug(ctx, "%s", string(chunk))
 			}
 			if err != nil {
 				break
