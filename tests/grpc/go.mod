@@ -1,16 +1,16 @@
 module github.com/ovh/venom/grpc-example-server
 
-go 1.26
+go 1.27
 
 require (
-	google.golang.org/grpc v1.80.0
-	google.golang.org/grpc/examples v0.0.0-20260424180040-4ac8a4571ca3
+	google.golang.org/grpc v1.83.2
+	google.golang.org/grpc/examples v0.0.0-20260901070007-9f8027448a64
 )
 
 require (
-	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260831171406-18b4a7587f8a // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
