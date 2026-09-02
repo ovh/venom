@@ -587,6 +587,28 @@ func TestDo(t *testing.T) {
 			want:   "bar",
 			enable: true,
 		},
+		{
+			name: "camelCase variable name",
+			args: args{
+				input: `{"staticVersionLocator":"{{.staticVersionLocator}}"}`,
+				vars: map[string]string{
+					"staticVersionLocator": "0000000000Y009R8NV8RMTH9S4",
+				},
+			},
+			want:   `{"staticVersionLocator":"0000000000Y009R8NV8RMTH9S4"}`,
+			enable: true,
+		},
+		{
+			name: "camelCase variable name with lowercased key in vars map",
+			args: args{
+				input: `{"staticVersionLocator":"{{.staticVersionLocator}}"}`,
+				vars: map[string]string{
+					"staticversionlocator": "0000000000Y009R8NV8RMTH9S4",
+				},
+			},
+			want:   `{"staticVersionLocator":"{{.staticVersionLocator}}"}`,
+			enable: true,
+		},
 	}
 	for _, tt := range tests {
 		if !tt.enable {
