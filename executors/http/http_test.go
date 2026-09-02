@@ -177,3 +177,32 @@ func TestCookieRedirect(t *testing.T) {
 
 	require.Equal(t, int32(1), callCount.Load())
 }
+
+func TestResponseHeaders_MultipleValues(t *testing.T) {
+	ctx := context.Background()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /allow", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Allow", "GET")
+		w.Header().Add("Allow", "POST")
+		w.Header().Add("Allow", "HEAD")
+		w.Header().Add("Allow", "OPTIONS")
+		w.WriteHeader(http.StatusOK)
+	})
+
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	e := &Executor{}
+	res, err := e.Run(ctx, venom.TestStep{
+		"method": http.MethodGet,
+		"url":    srv.URL,
+		"path":   "/allow",
+	})
+	require.NoError(t, err)
+
+	result, ok := res.(Result)
+	require.True(t, ok)
+
+	require.Equal(t, "GET, POST, HEAD, OPTIONS", result.Headers["Allow"])
+}

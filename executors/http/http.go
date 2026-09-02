@@ -246,7 +246,7 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 			if strings.ToLower(k) == "set-cookie" {
 				result.Headers[k] = strings.Join(v, "; ")
 			} else {
-				result.Headers[k] = v[0]
+				result.Headers[k] = strings.Join(v, ", ")
 			}
 		}
 	}
