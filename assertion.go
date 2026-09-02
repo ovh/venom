@@ -1,11 +1,9 @@
 package venom
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -51,8 +49,8 @@ func applyAssertions(ctx context.Context, r interface{}, tc TestCase, stepNumber
 
 	isOK := true
 	assertions := []AssertionApplied{}
-	for _, assertion := range sa.Assertions {
-		errs := check(ctx, tc, stepNumber, rangedIndex, assertion, executorResult)
+	for assertionIndex, assertion := range sa.Assertions {
+		errs := check(ctx, tc, stepNumber, rangedIndex, assertionIndex, assertion, executorResult)
 		isAssertionOK := true
 		if errs != nil {
 			errors = append(errors, *errs)
@@ -128,25 +126,25 @@ func parseAssertions(ctx context.Context, s string, input interface{}) (*asserti
 }
 
 // check selects the correct assertion function to call depending on typing provided by user
-func check(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion Assertion, r interface{}) *Failure {
+func check(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertionIndex int, assertion Assertion, r interface{}) *Failure {
 	var errs *Failure
 	switch t := assertion.(type) {
 	case string:
-		errs = checkString(ctx, tc, stepNumber, rangedIndex, assertion.(string), r)
+		errs = checkString(ctx, tc, stepNumber, rangedIndex, assertionIndex, assertion.(string), r)
 	case map[string]interface{}:
-		errs = checkBranch(ctx, tc, stepNumber, rangedIndex, assertion.(map[string]interface{}), r)
+		errs = checkBranch(ctx, tc, stepNumber, rangedIndex, assertionIndex, assertion.(map[string]interface{}), r)
 	default:
-		errs = newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("unsupported assertion format: %v", t))
+		errs = newFailure(ctx, tc, stepNumber, rangedIndex, assertionIndex, "", fmt.Errorf("unsupported assertion format: %v", t))
 	}
 	return errs
 }
 
 // checkString evaluate a complex assertion containing logical operators
 // it recursively calls checkAssertion for each operand
-func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, branch map[string]interface{}, r interface{}) *Failure {
+func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertionIndex int, branch map[string]interface{}, r interface{}) *Failure {
 	// Extract logical operator
 	if len(branch) != 1 {
-		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch)))
+		return newFailure(ctx, tc, stepNumber, rangedIndex, assertionIndex, "", fmt.Errorf("expected exactly 1 logical operator but %d were provided", len(branch)))
 	}
 	var operator string
 	for k := range branch {
@@ -159,7 +157,7 @@ func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex i
 	case []interface{}:
 		operands = branch[operator].([]interface{})
 	default:
-		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("expected %s operands to be an []interface{}, got %v", operator, t))
+		return newFailure(ctx, tc, stepNumber, rangedIndex, assertionIndex, "", fmt.Errorf("expected %s operands to be an []interface{}, got %v", operator, t))
 	}
 	if len(operands) == 0 {
 		return nil
@@ -170,7 +168,7 @@ func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex i
 	assertionsCount := len(operands)
 	assertionsSuccess := 0
 	for _, assertion := range operands {
-		errs := check(ctx, tc, stepNumber, rangedIndex, assertion, r)
+		errs := check(ctx, tc, stepNumber, rangedIndex, assertionIndex, assertion, r)
 		if errs != nil {
 			results = append(results, fmt.Sprintf("  - fail: %s", assertion))
 		}
@@ -203,23 +201,23 @@ func checkBranch(ctx context.Context, tc TestCase, stepNumber int, rangedIndex i
 			err = fmt.Errorf("some assertions succeeded but expected none to succeed:\n%s\n", strings.Join(results, "\n"))
 		}
 	default:
-		return newFailure(ctx, tc, stepNumber, rangedIndex, "", fmt.Errorf("unsupported assertion operator %s", operator))
+		return newFailure(ctx, tc, stepNumber, rangedIndex, assertionIndex, "", fmt.Errorf("unsupported assertion operator %s", operator))
 	}
 	if err != nil {
-		return newFailure(ctx, tc, stepNumber, rangedIndex, "", err)
+		return newFailure(ctx, tc, stepNumber, rangedIndex, assertionIndex, "", err)
 	}
 	return nil
 }
 
 // checkString evaluate a single string assertion
-func checkString(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertion string, r interface{}) *Failure {
+func checkString(ctx context.Context, tc TestCase, stepNumber int, rangedIndex int, assertionIndex int, assertion string, r interface{}) *Failure {
 	assert, err := parseAssertions(context.Background(), assertion, r)
 	if err != nil {
-		return newFailure(ctx, tc, stepNumber, rangedIndex, assertion, err)
+		return newFailure(ctx, tc, stepNumber, rangedIndex, assertionIndex, assertion, err)
 	}
 
 	if err := assert.Func(assert.Actual, assert.Args...); err != nil {
-		failure := newFailure(ctx, tc, stepNumber, rangedIndex, assertion, err)
+		failure := newFailure(ctx, tc, stepNumber, rangedIndex, assertionIndex, assertion, err)
 		failure.AssertionRequired = assert.Required
 		return failure
 	}
@@ -294,69 +292,6 @@ func stringToType(val string, valType interface{}) (interface{}, error) {
 		return time.ParseDuration(val)
 	}
 	return val, nil
-}
-
-func findLineNumber(filename, testcase string, stepNumber int, assertion string, infoNumber int) int {
-	countLine := 0
-	file, err := os.Open(filename)
-	if err != nil {
-		return countLine
-	}
-	defer file.Close()
-
-	lineFound := false
-	testcaseFound := false
-	commentBlock := false
-	countStep := 0
-	countInfo := 0
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		countLine++
-		line := strings.Trim(scanner.Text(), " ")
-		if strings.HasPrefix(line, "/*") {
-			commentBlock = true
-			continue
-		}
-		if strings.HasPrefix(line, "*/") {
-			commentBlock = false
-			continue
-		}
-		if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") || commentBlock {
-			continue
-		}
-		if !testcaseFound && strings.Contains(line, testcase) {
-			testcaseFound = true
-			continue
-		}
-		if testcaseFound && countStep <= stepNumber && (strings.Contains(line, "type") || strings.Contains(line, "script")) {
-			countStep++
-			continue
-		}
-
-		if testcaseFound && countStep > stepNumber {
-			if strings.Contains(line, assertion) {
-				lineFound = true
-				break
-			} else if strings.Contains(strings.ReplaceAll(line, " ", ""), "info:") {
-				countInfo++
-				if infoNumber == countInfo {
-					lineFound = true
-					break
-				}
-			}
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return countLine
-	}
-
-	if !lineFound {
-		return 0
-	}
-
-	return countLine
 }
 
 // This evaluates a string of assertions with a given vars scope, and returns a slice of failures (i.e. empty slice = all pass)
