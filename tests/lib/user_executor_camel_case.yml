@@ -1,0 +1,15 @@
+executor: userExecutorCamelCase
+input:
+  value: {}
+steps:
+- script: echo "{{.input.value}}"
+  assertions:
+  - result.code ShouldEqual 0
+  vars:
+    camelCaseVar:
+      from: result.systemout
+    snake_case_var:
+      from: result.systemout
+output:
+  camelCaseResult: "{{.camelCaseVar}}"
+  snakeCaseResult: "{{.snake_case_var}}"

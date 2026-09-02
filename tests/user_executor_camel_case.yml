@@ -1,0 +1,13 @@
+name: testsuite with a user executor exposing camelCase vars in its output
+testcases:
+# A camelCase var computed inside a user executor must be interpolated in its output.
+# RunUserExecutor dumps computedVars with DumpStringPreserveCase because interpolate.Do
+# is case-sensitive: with DumpString the key is lowercased and the template is left as
+# the literal "{{.camelCaseVar}}". snake_case worked already, and must keep working.
+- name: camelCase var in user executor output
+  steps:
+  - type: userExecutorCamelCase
+    value: hello
+    assertions:
+    - result.camelCaseResult ShouldEqual hello
+    - result.snakeCaseResult ShouldEqual hello
