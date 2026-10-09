@@ -213,8 +213,8 @@ func (v *Venom) readFiles(ctx context.Context, filesPath []string) (err error) {
 			TestCases:   make([]TestCase, len(testSuiteInput.TestCases)),
 			Vars:        testSuiteInput.Vars,
 			Secrets:     testSuiteInput.Secrets,
+			APICovered:  testSuiteInput.APICovered,
 		}
-
 		// Extract source line numbers from original YAML (before interpolation)
 		lineInfos := extractLineNumbers(btes)
 
