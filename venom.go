@@ -520,9 +520,9 @@ func (v *Venom) GenerateOpenApiReport() error {
 			allCoverages = reporting.CalculateCoverage(combinedOpenAPI, &bigTestSuites)
 
 			for _, testsuite := range testsuites.Testsuites {
-				httpMethod, endpoint := reporting.ExtractHttpEndpoint(testsuite.Name)
-				if httpMethod != "" {
-					key := httpMethod + " " + endpoint
+				// Honour an explicit `api_covered` list (which may declare
+				// several APIs) and fall back to parsing the suite name.
+				for _, key := range reporting.ResolveCoveredKeys(testsuite) {
 					if count, ok := openAPIEndpoints[key]; ok {
 						openAPIEndpoints[key] = count + 1
 					}

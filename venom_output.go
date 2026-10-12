@@ -180,9 +180,10 @@ func outputXMLFormat(tests Tests, verbose int) ([]byte, error) {
 
 	for _, ts := range tests.TestSuites {
 		tsXML := TestSuiteXML{
-			Name:    ts.Name,
-			Package: ts.Filepath,
-			Time:    fmt.Sprintf("%f", ts.Duration),
+			Name:       ts.Name,
+			ApiCovered: ts.ApiCovered,
+			Package:    ts.Filepath,
+			Time:       fmt.Sprintf("%f", ts.Duration),
 		}
 
 		for _, tc := range ts.TestCases {

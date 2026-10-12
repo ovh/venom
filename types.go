@@ -100,6 +100,9 @@ type TestSuiteXML struct {
 	Version   string        `xml:"version,omitempty" json:"version" yaml:"version,omitempty"`
 	Time      string        `xml:"time,attr,omitempty" json:"time" yaml:"-"`
 	Timestamp string        `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
+	// APICovered carries the explicitly declared covered API operations so the
+	// OpenAPI coverage report can read them back from the JUnit XML.
+	APICovered []string     `xml:"api-covered>api,omitempty" json:"api_covered,omitempty" yaml:"api_covered,omitempty"`
 }
 
 type TestSuiteInput struct {
@@ -108,6 +111,11 @@ type TestSuiteInput struct {
 	TestCases   []TestCaseInput `json:"testcases" yaml:"testcases"`
 	Vars        H               `json:"vars" yaml:"vars"`
 	Secrets     []string        `json:"secrets" yaml:"secrets"`
+	// APICovered explicitly declares the API operations this suite covers,
+	// e.g. ["GET /quotes/{locator}/constraints/dependency"]. When set, it is
+	// used for OpenAPI coverage instead of parsing the suite Name. A suite may
+	// cover several operations.
+	APICovered []string          `json:"api_covered,omitempty" yaml:"api_covered"`
 }
 
 type TestSuite struct {
@@ -116,6 +124,9 @@ type TestSuite struct {
 	TestCases   []TestCase `json:"testcases" yaml:"testcases"`
 	Vars        H          `json:"vars" yaml:"vars"`
 	Secrets     []string   `json:"secrets" yaml:"secrets"`
+	// APICovered lists the API operations explicitly declared as covered by
+	// this suite (see TestSuiteInput.APICovered).
+	APICovered []string     `json:"api_covered,omitempty" yaml:"api_covered"`
 
 	// computed
 	ShortName    string `json:"shortname" yaml:"-"`
