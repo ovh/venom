@@ -112,6 +112,49 @@ testcases:
 
 ```
 
+## Custom resolution
+
+`resolve` is a list of `hostname:port:destination` mappings. The source hostname
+(or IPv4 address) and port must match the dialed address exactly. The destination
+can be an IPv4 address, hostname, or IPv6 literal:
+
+```yaml
+resolve:
+  - "ipv4.example:443:127.0.0.1"
+  - "backend.example:443:localhost"
+  - "collector.local:8443:::1"
+  - "ipv6.example:443:2001:db8::1"
+  - "bracketed.example:443:[::1]"
+```
+
+Destinations may be bare or enclosed in one pair of brackets. IPv6 zone
+identifiers are supported, for example `service.local:443:fe80::1%eth0` or
+`service.local:443:[fe80::1%eth0]`. The zone must exist on the machine running Venom.
+Do not include a destination port: the source port is retained. IPv6 literals
+are supported as destinations, not as source fields in mappings. Unmatched dial
+addresses, including IPv6 addresses, are unchanged.
+
+All three fields must be non-empty. Malformed IPv6 destinations produce an error;
+hostname lookup and port validation are performed by Go's network dialer.
+Mappings are applied in order, so a later mapping can match an earlier mapping's
+destination hostname. Only the connection address changes: HTTP Host headers,
+TLS certificate verification, and SNI continue to use the request's hostname
+(or an explicitly configured Host header for HTTP). When using a proxy, mappings
+apply to the address Venom dials, which may be the proxy. `resolve` cannot be
+combined with `unix_sock`.
+
+For example, to reach an HTTPS service on IPv6 loopback with a self-signed certificate:
+
+```yaml
+- type: http
+  url: "https://collector.local:8443/healthz"
+  ignore_verify_ssl: true
+  resolve:
+    - "collector.local:8443:::1"
+  assertions:
+    - result.statuscode ShouldEqual 200
+```
+
 ## Multipart form
 
 `multipart_form` sends the request body as `multipart/form-data`. It cannot be combined with `body` or `bodyFile`.
