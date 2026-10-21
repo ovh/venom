@@ -59,6 +59,36 @@ vars:
     -----END CERTIFICATE-----
 ```
 
+## Custom resolution
+
+`resolve` (or the `ovh.resolve` variable) is a list of
+`hostname:port:destination` mappings. The source hostname (or IPv4 address) and
+port must match the dialed address exactly; the source port is retained:
+
+```yaml
+resolve:
+  - "ipv4.example:443:127.0.0.1"
+  - "backend.example:443:localhost"
+  - "collector.local:8443:::1"
+  - "ipv6.example:443:2001:db8::1"
+  - "bracketed.example:443:[::1]"
+```
+
+Destinations may be bare or enclosed in one pair of brackets. IPv6 zone
+identifiers are supported, for example `service.local:443:fe80::1%eth0` or
+`service.local:443:[fe80::1%eth0]`. The zone must exist on the machine running Venom.
+Do not include a destination port. IPv6 literals are supported as destinations,
+not as source fields in mappings. Unmatched dial addresses, including IPv6
+addresses, are unchanged.
+
+All three fields must be non-empty. Malformed IPv6 destinations produce an error;
+hostname lookup and port validation are performed by Go's network dialer.
+Mappings are applied in order, so a later mapping can match an earlier mapping's
+destination hostname. Only the connection address changes: HTTP Host headers,
+TLS certificate verification, and SNI continue to use the request's hostname
+(or an explicitly configured Host header for HTTP). When using a proxy, mappings
+apply to the address Venom dials, which may be the proxy.
+
 ## Example of an __ovhapi__ TestSuite
 
 ### Using App Keys authentication
