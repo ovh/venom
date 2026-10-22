@@ -59,6 +59,23 @@ vars:
     -----END CERTIFICATE-----
 ```
 
+## Custom resolution
+
+`resolve` (or the `ovh.resolve` variable) uses the same
+[`hostname:port:destination` format as HTTP](../http/README.md#custom-resolution):
+
+```yaml
+resolve:
+  - "eu.api.ovh.com:443:127.0.0.1"
+  - "ca.api.ovh.com:443:::1" # Alternative: "ca.api.ovh.com:443:[::1]"
+```
+
+Hostname and port matching is exact; the source port is retained.
+IPv6 destinations may be bare or bracketed,
+including a zone identifier. Only the dial address changes: HTTP Host overrides
+still apply, while TLS verification and SNI use the endpoint hostname. With a
+proxy, mappings apply to the address Venom dials, which may be the proxy.
+
 ## Example of an __ovhapi__ TestSuite
 
 ### Using App Keys authentication
