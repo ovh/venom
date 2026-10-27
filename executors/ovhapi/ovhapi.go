@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,6 +18,7 @@ import (
 	"github.com/ovh/go-ovh/ovh"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/internal/resolve"
 )
 
 // Name of executor
@@ -178,15 +178,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 		}
 
 		tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-			// resolve can contains foo.com:443:127.0.0.1
-			for _, r := range e.Resolve {
-				tuple := strings.Split(r, ":")
-				if len(tuple) != 3 {
-					return nil, fmt.Errorf("invalid value for resolve attribute: %v", e.Resolve)
-				}
-				if addr == tuple[0]+":"+tuple[1] {
-					addr = tuple[2] + ":" + tuple[1]
-				}
+			addr, err := resolve.Address(addr, e.Resolve)
+			if err != nil {
+				return nil, err
 			}
 
 			dialer := &net.Dialer{
