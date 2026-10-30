@@ -10,7 +10,6 @@ endef
 
 docker-network := venom-test-net
 
-COVER_FILES = $(shell find . -name "*.coverprofile")
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/venom | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
 venom-postgres.cid:
@@ -103,10 +102,10 @@ wait-for-kafka:
 
 clean:
 	@rm -f *.prof *.html *.xml *.log *.dump.json *.args.file *.error.out *.out *.test.out *.coverprofile
+	@rm -rf covdata
 
 merge-coverage:
 	@docker run -v `pwd`:/workspace golang:1.27 sh -c "\
-			go install github.com/wadey/gocovmerge@latest && \
 			cd /workspace && \
-    gocovmerge $(COVER_FILES) > /workspace/venom.cover.out \
+			go tool covdata textfmt -i=covdata -o venom.cover.out \
 		"
