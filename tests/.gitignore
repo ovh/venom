@@ -5,6 +5,7 @@ venom.test
 *.cover.out
 *.error.out
 *.coverprofile
+covdata
 *.out
 *.test.out
 test_results.*

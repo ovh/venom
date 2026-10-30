@@ -11,7 +11,8 @@ do
 done
 
 # Exec venom test binary, capture logs and exit code
-$DIR/venom.test -test.coverprofile=$DIR/$NANO_TIMESTAMP.coverprofile -test.run="^TestBincoverRunMain$" -args-file=$DIR/$NANO_TIMESTAMP.args.file 1> $DIR/$NANO_TIMESTAMP.out 2> $DIR/$NANO_TIMESTAMP.error.out
+mkdir -p $DIR/covdata
+$DIR/venom.test -test.gocoverdir=$DIR/covdata -test.run="^TestBincoverRunMain$" -args-file=$DIR/$NANO_TIMESTAMP.args.file 1> $DIR/$NANO_TIMESTAMP.out 2> $DIR/$NANO_TIMESTAMP.error.out
 EXI=$?
 
 # Print venom log on stdout and go test log in a dedicated file
