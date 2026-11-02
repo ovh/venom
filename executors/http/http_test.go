@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,11 +14,37 @@ import (
 	"path/filepath"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/venom"
 )
+
+func TestExecutor_ResolveUnixSocket(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "http.sock")
+	listener, err := net.Listen("unix", path)
+	if err != nil {
+		t.Skipf("Unix sockets unavailable: %v", err)
+	}
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, r.Host)
+	}))
+	require.NoError(t, srv.Listener.Close())
+	srv.Listener = listener
+	srv.Start()
+	t.Cleanup(srv.Close)
+	step := venom.TestStep{"url": "http://localhost/healthz", "unix_sock": path}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := (Executor{}).Run(ctx, step)
+	require.NoError(t, err)
+	require.Equal(t, "localhost", res.(Result).Body)
+
+	step["resolve"] = []string{"localhost:80:::1"}
+	_, err = (Executor{}).Run(ctx, step)
+	require.ErrorContains(t, err, "you can't use resolve and unix_sock attributes")
+}
 
 func generateClientFile(t *testing.T) (string, string) {
 	TLSClientKey, err := os.CreateTemp(os.TempDir(), "TLSClientKey.*.key")
