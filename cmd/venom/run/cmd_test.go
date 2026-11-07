@@ -108,3 +108,21 @@ func Test_initFromEnv(t *testing.T) {
 		}
 	}
 }
+
+func Test_initFromEnvParallel(t *testing.T) {
+	defer func() { parallel = 1 }()
+	t.Setenv("VENOM_PARALLEL", "4")
+	_, err := initFromEnv(nil)
+	require.NoError(t, err)
+	require.Equal(t, 4, parallel)
+
+	t.Setenv("VENOM_PARALLEL", "four")
+	_, err = initFromEnv(nil)
+	require.Error(t, err)
+}
+
+func Test_initFromReaderConfigFileParallel(t *testing.T) {
+	defer func() { parallel = 1 }()
+	require.NoError(t, initFromReaderConfigFile(strings.NewReader("parallel: 3\n")))
+	require.Equal(t, 3, parallel)
+}
