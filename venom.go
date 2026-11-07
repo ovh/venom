@@ -141,11 +141,11 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	if err != nil {
 		return nil, nil, err
 	}
-	delay, err := ts.IntValue("delay")
+	delay, err := ts.DurationValue("delay")
 	if err != nil {
 		return nil, nil, err
 	}
-	timeout, err := ts.IntValue("timeout")
+	timeout, err := ts.DurationValue("timeout")
 	if err != nil {
 		return nil, nil, err
 	}

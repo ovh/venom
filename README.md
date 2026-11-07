@@ -352,6 +352,10 @@ testcases:
 
 ```
 
+`timeout` and `delay` take a number of seconds. An integer means whole seconds, a decimal number
+means a fraction of a second (`delay: 0.2` is 200ms), and a Go duration string is also accepted
+(`timeout: 1500ms`, `delay: 250ms`, `timeout: 2m`).
+
 ### HTTP multipart form
 
 `multipart_form` sends the request body as `multipart/form-data`. It cannot be combined with `body` or `bodyFile`. See the [HTTP executor](https://github.com/ovh/venom/tree/master/executors/http) for the full field list.

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gosimple/slug"
 	"github.com/ovh/venom/interpolate"
@@ -30,6 +31,10 @@ type ExecutorRunner interface {
 	RetryIf() []string
 	Delay() int
 	Timeout() int
+	// DelayDuration is the wait between two retries, sub-second precision.
+	DelayDuration() time.Duration
+	// TimeoutDuration is the step timeout, sub-second precision.
+	TimeoutDuration() time.Duration
 	Info() []string
 	Type() string
 	GetExecutor() Executor
@@ -41,12 +46,12 @@ var _ Executor = new(executor)
 type executor struct {
 	Executor
 	name    string
-	retry   int      // nb retry a test case if it is in failure.
-	retryIf []string // retry conditions to check before performing any retries
-	delay   int      // delay between two retries
-	timeout int      // timeout on executor
-	info    []string // info to display after the run and before the assertion
-	stype   string   // builtin, plugin, user
+	retry   int           // nb retry a test case if it is in failure.
+	retryIf []string      // retry conditions to check before performing any retries
+	delay   time.Duration // delay between two retries
+	timeout time.Duration // timeout on executor
+	info    []string      // info to display after the run and before the assertion
+	stype   string        // builtin, plugin, user
 }
 
 func (e executor) Name() string {
@@ -65,11 +70,21 @@ func (e executor) RetryIf() []string {
 	return e.retryIf
 }
 
+// Delay is the retry delay in whole seconds, kept for backward compatibility.
 func (e executor) Delay() int {
+	return int(e.delay / time.Second)
+}
+
+// Timeout is the step timeout in whole seconds, kept for backward compatibility.
+func (e executor) Timeout() int {
+	return int(e.timeout / time.Second)
+}
+
+func (e executor) DelayDuration() time.Duration {
 	return e.delay
 }
 
-func (e executor) Timeout() int {
+func (e executor) TimeoutDuration() time.Duration {
 	return e.timeout
 }
 
@@ -132,7 +147,7 @@ func (e executor) Run(ctx context.Context, step TestStep) (interface{}, error) {
 	return e.Executor.Run(ctx, step)
 }
 
-func newExecutorRunner(e Executor, name, stype string, retry int, retryIf []string, delay, timeout int, info []string) ExecutorRunner {
+func newExecutorRunner(e Executor, name, stype string, retry int, retryIf []string, delay, timeout time.Duration, info []string) ExecutorRunner {
 	return &executor{
 		Executor: e,
 		name:     name,
