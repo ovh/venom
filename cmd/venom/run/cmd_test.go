@@ -126,3 +126,21 @@ func Test_initFromReaderConfigFileParallel(t *testing.T) {
 	require.NoError(t, initFromReaderConfigFile(strings.NewReader("parallel: 3\n")))
 	require.Equal(t, 3, parallel)
 }
+
+func Test_initFromEnvParallelSuites(t *testing.T) {
+	defer func() { parallelSuites = 1 }()
+	t.Setenv("VENOM_PARALLEL_SUITES", "2")
+	_, err := initFromEnv(nil)
+	require.NoError(t, err)
+	require.Equal(t, 2, parallelSuites)
+
+	t.Setenv("VENOM_PARALLEL_SUITES", "two")
+	_, err = initFromEnv(nil)
+	require.Error(t, err)
+}
+
+func Test_initFromReaderConfigFileParallelSuites(t *testing.T) {
+	defer func() { parallelSuites = 1 }()
+	require.NoError(t, initFromReaderConfigFile(strings.NewReader("parallel_suites: 3\n")))
+	require.Equal(t, 3, parallelSuites)
+}

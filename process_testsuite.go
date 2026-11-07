@@ -85,17 +85,27 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 		}
 	}
 
+	// the run counters (v.Tests.NbTestsuites*) are added by Process, see countTestSuite
 	if isFailed {
 		ts.Status = StatusFail
-		v.Tests.NbTestsuitesFail++
 	} else if nSkip > 0 && nSkip == len(ts.TestCases) {
 		ts.Status = StatusSkip
-		v.Tests.NbTestsuitesSkip++
 	} else {
 		ts.Status = StatusPass
-		v.Tests.NbTestsuitesPass++
 	}
 	return nil
+}
+
+// countTestSuite adds the status of a finished testsuite to the run counters.
+func (v *Venom) countTestSuite(ts *TestSuite) {
+	switch ts.Status {
+	case StatusFail:
+		v.Tests.NbTestsuitesFail++
+	case StatusSkip:
+		v.Tests.NbTestsuitesSkip++
+	case StatusPass:
+		v.Tests.NbTestsuitesPass++
+	}
 }
 
 func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {

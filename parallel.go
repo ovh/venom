@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 )
 
 // pluginMu serializes plugin loading and the plugin map when testcases run in parallel.
@@ -95,4 +96,105 @@ func (v *Venom) runTestCasesParallel(ctx context.Context, ts *TestSuite, n int) 
 			ts.ComputedVars.AddAllWithPrefix(ts.TestCases[i].Name, ts.TestCases[i].computedVars)
 		}
 	}
+}
+
+// runTimedTestSuite runs one testsuite and records its start, end and duration.
+func (v *Venom) runTimedTestSuite(ctx context.Context, ts *TestSuite) error {
+	ts.Start = time.Now()
+	// ##### RUN Test Suite Here
+	if err := v.runTestSuite(ctx, ts); err != nil {
+		return err
+	}
+	ts.End = time.Now()
+	ts.Duration = ts.End.Sub(ts.Start).Seconds()
+	return nil
+}
+
+// parallelSuitesFor returns how many testsuites of the run may go at once.
+//
+// The run is sequential (1) when ParallelSuites <= 1, when --stop-on-failure is set,
+// with -vvv (CPU profiling is process-wide), with a single testsuite, or when a
+// testsuite references a var named after a testcase of another testsuite
+// ("{{.<testcase name>.<var>}}").
+func (v *Venom) parallelSuitesFor() int {
+	suites := v.Tests.TestSuites
+	if v.ParallelSuites <= 1 || v.StopOnFailure || v.Verbose >= 3 || len(suites) < 2 {
+		return 1
+	}
+	if suitesShareVars(suites) {
+		return 1
+	}
+	if v.ParallelSuites > len(suites) {
+		return len(suites)
+	}
+	return v.ParallelSuites
+}
+
+// suitesShareVars reports whether a testsuite reads a var exported by a testcase
+// of another testsuite: its text holds ".<testcase name of the other suite>.".
+func suitesShareVars(suites []TestSuite) bool {
+	for i := range suites {
+		var text strings.Builder
+		for k := range suites[i].TestCases {
+			text.WriteString(testCaseText(&suites[i].TestCases[k]))
+		}
+		s := text.String()
+		for j := range suites {
+			if j == i {
+				continue
+			}
+			for k := range suites[j].TestCases {
+				name := suites[j].TestCases[k].Name
+				if name != "" && strings.Contains(s, "."+name+".") {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// runTestSuitesParallel runs the testsuites n at a time. Each testsuite prints into
+// its own buffer, written out whole and in file order; results stay at their index
+// in v.Tests.TestSuites, so the reports keep the file order. The first error in file
+// order is returned, as the sequential run would have returned it.
+func (v *Venom) runTestSuitesParallel(ctx context.Context, n int) error {
+	suites := v.Tests.TestSuites
+	outputs := make([]bytes.Buffer, len(suites))
+	errs := make([]error, len(suites))
+	done := make([]chan struct{}, len(suites))
+	for i := range done {
+		done[i] = make(chan struct{})
+	}
+
+	sem := make(chan struct{}, n)
+	go func() {
+		for i := range suites {
+			sem <- struct{}{}
+			go func(i int) {
+				defer func() { <-sem }()
+				defer close(done[i])
+				vc := *v
+				buf := &outputs[i]
+				vc.PrintFunc = func(format string, a ...interface{}) (int, error) {
+					return fmt.Fprintf(buf, format, a...)
+				}
+				errs[i] = vc.runTimedTestSuite(ctx, &suites[i])
+			}(i)
+		}
+	}()
+
+	var first error
+	for i := range suites {
+		<-done[i]
+		v.Print("%s", outputs[i].String())
+		if errs[i] != nil {
+			if first == nil {
+				first = errs[i]
+			}
+			continue
+		}
+		v.countTestSuite(&suites[i])
+	}
+	return first
 }

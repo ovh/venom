@@ -74,6 +74,8 @@ type Venom struct {
 	Verbose       int
 	// Parallel is the number of testcases of one testsuite run at once; 0 or 1 is sequential.
 	Parallel int
+	// ParallelSuites is the number of testsuites run at once; 0 or 1 is sequential.
+	ParallelSuites int
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()

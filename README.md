@@ -20,6 +20,7 @@ Venom is a CLI (Command Line Interface) that aims to create, manage and run your
 - [CLI Usage](#cli-usage)
   - [Run test suites in a specific order](#run-test-suites-in-a-specific-order)
   - [Run testcases in parallel](#run-testcases-in-parallel)
+  - [Run testsuites in parallel](#run-testsuites-in-parallel)
   - [Globstar support](#globstar-support)
   - [Variables](#variables)
     - [Variable Definitions Files](#variable-definitions-files)
@@ -172,6 +173,7 @@ Flags:
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
       --parallel int            Run up to N testcases of one testsuite at once, 1 is sequential (default 1)
+      --parallel-suites int     Run up to N testsuites at once, 1 is sequential (default 1)
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
@@ -206,6 +208,22 @@ venom run --parallel=4 tests/*.yml
 - `--stop-on-failure` keeps the sequential run.
 - Testcases that share an external resource (a file, a database row, a port) are not detected:
   keep them in their own testsuite or run with `--parallel=1`.
+
+## Run testsuites in parallel
+
+By default the testsuites of a run are executed one after another. `--parallel-suites=N` runs up to
+N testsuites (files) at once.
+
+```bash
+venom run --parallel-suites=4 tests/*.yml
+venom run --parallel-suites=2 --parallel=4 tests/*.yml  # at most 2 x 4 testcases at once
+```
+
+- Each testsuite keeps its own vars, results and output files. Reports list the testsuites in file
+  order and the console output of each testsuite is printed whole, in file order.
+- The run stays sequential with `--stop-on-failure`, with `-vvv` (CPU profiling is process wide), or
+  when a testsuite contains `.<testcase name of another testsuite>.`, as in `{{.create-user.id}}`.
+- The first error that stops a testsuite is returned in file order, as in a sequential run.
 
 ## Globstar support
 
@@ -266,6 +284,7 @@ Flags:
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
       --parallel int            Run up to N testcases of one testsuite at once, 1 is sequential (default 1)
+      --parallel-suites int     Run up to N testsuites at once, 1 is sequential (default 1)
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
@@ -290,6 +309,7 @@ Flags and their equivalent with environment variables usage:
 - `--lib-dir="/etc/venom/lib:$HOME/venom.d/lib"` flag is equivalent to `VENOM_LIB_DIR="/etc/venom/lib"` environment variable
 - `--output-dir="test-results"` flag is equivalent to `VENOM_OUTPUT_DIR="test-results"` environment variable
 - `--parallel=4` flag is equivalent to `VENOM_PARALLEL=4` environment variable
+- `--parallel-suites=4` flag is equivalent to `VENOM_PARALLEL_SUITES=4` environment variable
 - `--stop-on-failure` flag is equivalent to `VENOM_STOP_ON_FAILURE=true` environment variable
 - `--var foo=bar` flag is equivalent to `VENOM_VAR_foo='bar'` environment variable
 - `--var-from-file fileA.yml fileB.yml` flag is equivalent to `VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"` environment variable
@@ -313,6 +333,7 @@ output_dir: output
 lib_dir: lib
 verbosity: 3
 parallel: 4
+parallel_suites: 2
 ```
 
 Please note that the command line flags override the configuration file. The configuration file overrides the environment variables.

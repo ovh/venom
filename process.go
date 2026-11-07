@@ -183,16 +183,17 @@ func (v *Venom) Process(ctx context.Context, path []string) error {
 	v.Tests.Status = StatusRun
 	v.Tests.Start = time.Now()
 	Debug(ctx, "nb testsuites: %d", len(v.Tests.TestSuites))
-	for i := range v.Tests.TestSuites {
-
-		v.Tests.TestSuites[i].Start = time.Now()
-		// ##### RUN Test Suite Here
-		if err := v.runTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
+	if n := v.parallelSuitesFor(); n > 1 {
+		if err := v.runTestSuitesParallel(ctx, n); err != nil {
 			return err
 		}
-
-		v.Tests.TestSuites[i].End = time.Now()
-		v.Tests.TestSuites[i].Duration = v.Tests.TestSuites[i].End.Sub(v.Tests.TestSuites[i].Start).Seconds()
+	} else {
+		for i := range v.Tests.TestSuites {
+			if err := v.runTimedTestSuite(ctx, &v.Tests.TestSuites[i]); err != nil {
+				return err
+			}
+			v.countTestSuite(&v.Tests.TestSuites[i])
+		}
 	}
 	v.Tests.End = time.Now()
 	v.Tests.Duration = v.Tests.End.Sub(v.Tests.Start).Seconds()
