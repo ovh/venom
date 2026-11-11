@@ -1,0 +1,28 @@
+name: testsuite with sub-second delay and timeout
+testcases:
+- name: sub-second delay between retries
+  steps:
+  # we use a tmp file as "memory" to know whether we're on first attempt or a later one
+  - type: exec
+    script: |
+      test -f /tmp/subsecond-delay-first-attempt
+      RC=$?
+      touch /tmp/subsecond-delay-first-attempt
+      exit $RC
+    retry: 3
+    delay: 0.2
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: sub-second timeout as a duration string
+  steps:
+  - type: exec
+    script: 'sleep 0.1'
+    timeout: 500ms
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: clean
+  steps:
+  - type: exec
+    script: rm -f /tmp/subsecond-delay-first-attempt

@@ -27,8 +27,8 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 
 	for tsResult.Retries = 0; tsResult.Retries <= e.Retry() && !assertRes.OK; tsResult.Retries++ {
 		if tsResult.Retries >= 1 && !assertRes.OK {
-			Debug(ctx, "Sleep %d, it's %d attempt", e.Delay(), tsResult.Retries)
-			time.Sleep(time.Duration(e.Delay()) * time.Second)
+			Debug(ctx, "Sleep %s, it's %d attempt", e.DelayDuration(), tsResult.Retries)
+			time.Sleep(e.DelayDuration())
 		}
 
 		var err error
@@ -128,14 +128,14 @@ func (v *Venom) RunTestStep(ctx context.Context, e ExecutorRunner, tc *TestCase,
 func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, tc *TestCase, ts *TestStepResult, step TestStep) (interface{}, error) {
 	ctx = context.WithValue(ctx, ContextKey("executor"), e.Name())
 
-	if e.Timeout() == 0 {
+	if e.TimeoutDuration() == 0 {
 		if e.Type() == "user" {
 			return v.RunUserExecutor(ctx, e, tc, ts, step)
 		}
 		return e.Run(ctx, step)
 	}
 
-	ctxTimeout, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout())*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(ctx, e.TimeoutDuration())
 	defer cancel()
 
 	ch := make(chan interface{})
@@ -161,6 +161,6 @@ func (v *Venom) runTestStepExecutor(ctx context.Context, e ExecutorRunner, tc *T
 	case result := <-ch:
 		return result, nil
 	case <-ctxTimeout.Done():
-		return nil, fmt.Errorf("Timeout after %d second(s)", e.Timeout())
+		return nil, fmt.Errorf("Timeout after %s", formatWait(e.TimeoutDuration()))
 	}
 }

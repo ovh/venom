@@ -25,29 +25,40 @@ var (
 	path []string
 	v    *venom.Venom
 
-	variables     []string
-	secrets       []string
-	format        string = "xml" // Set the default value for formatFlag
-	varFiles      []string
-	outputDir     string
-	libDir        string
-	htmlReport    bool
-	stopOnFailure bool
-	verbose       int = 0 // Set the default value for verboseFlag
+	variables      []string
+	secrets        []string
+	format         string = "xml" // Set the default value for formatFlag
+	varFiles       []string
+	outputDir      string
+	libDir         string
+	htmlReport     bool
+	stopOnFailure  bool
+	parallel       int = 1
+	parallelSuites int = 1
+	verbose        int = 0 // Set the default value for verboseFlag
 
-	variablesFlag     *[]string
-	formatFlag        *string
-	varFilesFlag      *[]string
-	outputDirFlag     *string
-	libDirFlag        *string
-	stopOnFailureFlag *bool
-	htmlReportFlag    *bool
-	verboseFlag       *int
+	variablesFlag      *[]string
+	formatFlag         *string
+	varFilesFlag       *[]string
+	outputDirFlag      *string
+	libDirFlag         *string
+	stopOnFailureFlag  *bool
+	parallelFlag       *int
+	parallelSuitesFlag *int
+	htmlReportFlag     *bool
+	verboseFlag        *int
 )
 
 func init() {
 	formatFlag = Cmd.Flags().String("format", "xml", "--format:json, tap, xml, yaml")
 	stopOnFailureFlag = Cmd.Flags().Bool("stop-on-failure", false, "Stop running Test Suite on first Test Case failure")
+	parallelFlag = Cmd.Flags().Int("parallel", 1, "Run up to N testcases of one testsuite at once, 1 is sequential. "+
+		"A testsuite runs sequentially when --stop-on-failure is set or when a testcase references a var exported by an earlier testcase "+
+		"of the same testsuite ({{.<testcase name>.<var>}}). Console output of each testcase is printed whole and in testcase order. Env: VENOM_PARALLEL")
+	parallelSuitesFlag = Cmd.Flags().Int("parallel-suites", 1, "Run up to N testsuites (files) at once, 1 is sequential. "+
+		"The run stays sequential with --stop-on-failure, with -vvv, or when a testsuite references a var named after a testcase of another testsuite "+
+		"({{.<testcase name>.<var>}}). Console output of each testsuite is printed whole and in file order. "+
+		"Combined with --parallel, at most parallel-suites x parallel testcases run at once. Env: VENOM_PARALLEL_SUITES")
 	htmlReportFlag = Cmd.Flags().Bool("html-report", false, "Generate HTML Report")
 	verboseFlag = Cmd.Flags().CountP("verbose", "v", "verbose. -v (INFO level in venom.log file), -vv to very verbose (DEBUG level) and -vvv to very verbose with CPU Profiling")
 	varFilesFlag = Cmd.Flags().StringSlice("var-from-file", []string{""}, "--var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary")
@@ -84,6 +95,14 @@ func initFromCommandArguments(f *pflag.Flag) {
 	case "stop-on-failure":
 		if stopOnFailureFlag != nil {
 			stopOnFailure = *stopOnFailureFlag
+		}
+	case "parallel":
+		if parallelFlag != nil {
+			parallel = *parallelFlag
+		}
+	case "parallel-suites":
+		if parallelSuitesFlag != nil {
+			parallelSuites = *parallelSuitesFlag
 		}
 	case "html-report":
 		if htmlReportFlag != nil {
@@ -156,6 +175,8 @@ type ConfigFileData struct {
 	LibDir         *string   `json:"lib_dir,omitempty" yaml:"lib_dir,omitempty"`
 	OutputDir      *string   `json:"output_dir,omitempty" yaml:"output_dir,omitempty"`
 	StopOnFailure  *bool     `json:"stop_on_failure,omitempty" yaml:"stop_on_failure,omitempty"`
+	Parallel       *int      `json:"parallel,omitempty" yaml:"parallel,omitempty"`
+	ParallelSuites *int      `json:"parallel_suites,omitempty" yaml:"parallel_suites,omitempty"`
 	HtmlReport     *bool     `json:"html_report,omitempty" yaml:"html_report,omitempty"`
 	Variables      *[]string `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Secrets        *[]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
@@ -187,6 +208,12 @@ func initFromReaderConfigFile(reader io.Reader) error {
 	}
 	if configFileData.StopOnFailure != nil {
 		stopOnFailure = *configFileData.StopOnFailure
+	}
+	if configFileData.Parallel != nil {
+		parallel = *configFileData.Parallel
+	}
+	if configFileData.ParallelSuites != nil {
+		parallelSuites = *configFileData.ParallelSuites
 	}
 	if configFileData.HtmlReport != nil {
 		htmlReport = *configFileData.HtmlReport
@@ -250,6 +277,20 @@ func initFromEnv(environ []string) ([]string, error) {
 	}
 	if os.Getenv("VENOM_FORMAT") != "" {
 		format = os.Getenv("VENOM_FORMAT")
+	}
+	if os.Getenv("VENOM_PARALLEL") != "" {
+		var err error
+		parallel, err = strconv.Atoi(os.Getenv("VENOM_PARALLEL"))
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for VENOM_PARALLEL")
+		}
+	}
+	if os.Getenv("VENOM_PARALLEL_SUITES") != "" {
+		var err error
+		parallelSuites, err = strconv.Atoi(os.Getenv("VENOM_PARALLEL_SUITES"))
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for VENOM_PARALLEL_SUITES")
+		}
 	}
 	if os.Getenv("VENOM_STOP_ON_FAILURE") != "" {
 		var err error
@@ -336,6 +377,8 @@ var Cmd = &cobra.Command{
 		v.LibDir = libDir
 		v.OutputFormat = format
 		v.StopOnFailure = stopOnFailure
+		v.Parallel = parallel
+		v.ParallelSuites = parallelSuites
 		v.HtmlReport = htmlReport
 		v.Verbose = verbose
 

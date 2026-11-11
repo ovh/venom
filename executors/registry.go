@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/venom/executors/smtp"
 	"github.com/ovh/venom/executors/sql"
 	"github.com/ovh/venom/executors/ssh"
+	"github.com/ovh/venom/executors/tempo"
 	"github.com/ovh/venom/executors/web"
 )
 
@@ -41,6 +42,7 @@ var Registry map[string]Constructor = map[string]Constructor{
 	smtp.Name:       smtp.New,
 	sql.Name:        sql.New,
 	ssh.Name:        ssh.New,
+	tempo.Name:      tempo.New,
 	mongo.Name:      mongo.New,
 	web.Name:        web.New,
 	couchbase.Name:  couchbase.New,

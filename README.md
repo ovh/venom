@@ -19,6 +19,8 @@ Venom is a CLI (Command Line Interface) that aims to create, manage and run your
 - [Docker image](#docker-image)
 - [CLI Usage](#cli-usage)
   - [Run test suites in a specific order](#run-test-suites-in-a-specific-order)
+  - [Run testcases in parallel](#run-testcases-in-parallel)
+  - [Run testsuites in parallel](#run-testsuites-in-parallel)
   - [Globstar support](#globstar-support)
   - [Variables](#variables)
     - [Variable Definitions Files](#variable-definitions-files)
@@ -170,6 +172,8 @@ Flags:
       --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
+      --parallel int            Run up to N testcases of one testsuite at once, 1 is sequential (default 1)
+      --parallel-suites int     Run up to N testsuites at once, 1 is sequential (default 1)
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
@@ -186,6 +190,40 @@ If you want to sort many testsuite files, you can use standard commands, example
 ```bash
 venom run `find . -type f -name "*.yml"|sort`
 ```
+
+## Run testcases in parallel
+
+By default the testcases of a testsuite run one after another. `--parallel=N` runs up to N testcases
+of a testsuite at once; testsuites still run one after another.
+
+```bash
+venom run --parallel=4 tests/*.yml
+```
+
+- Each testcase keeps its own vars and results. Reports (xml, json, yaml, tap, html) list the testcases
+  in file order, and the console output of each testcase is printed whole, in file order.
+- A testsuite runs sequentially when one of its testcases uses a var exported by an earlier testcase
+  of the same testsuite, that is when its steps or `skip` conditions contain `.<name of an earlier testcase>.`
+  as in `{{.create-user.id}}`. A false match only costs parallelism.
+- `--stop-on-failure` keeps the sequential run.
+- Testcases that share an external resource (a file, a database row, a port) are not detected:
+  keep them in their own testsuite or run with `--parallel=1`.
+
+## Run testsuites in parallel
+
+By default the testsuites of a run are executed one after another. `--parallel-suites=N` runs up to
+N testsuites (files) at once.
+
+```bash
+venom run --parallel-suites=4 tests/*.yml
+venom run --parallel-suites=2 --parallel=4 tests/*.yml  # at most 2 x 4 testcases at once
+```
+
+- Each testsuite keeps its own vars, results and output files. Reports list the testsuites in file
+  order and the console output of each testsuite is printed whole, in file order.
+- The run stays sequential with `--stop-on-failure`, with `-vvv` (CPU profiling is process wide), or
+  when a testsuite contains `.<testcase name of another testsuite>.`, as in `{{.create-user.id}}`.
+- The first error that stops a testsuite is returned in file order, as in a sequential run.
 
 ## Globstar support
 
@@ -245,6 +283,8 @@ Flags:
       --html-report             Generate HTML Report
       --lib-dir string          Lib Directory: can contain user executors. example:/etc/venom/lib:$HOME/venom.d/lib
       --output-dir string       Output Directory: create tests results file inside this directory
+      --parallel int            Run up to N testcases of one testsuite at once, 1 is sequential (default 1)
+      --parallel-suites int     Run up to N testsuites at once, 1 is sequential (default 1)
       --stop-on-failure         Stop running Test Suite on first Test Case failure
       --var stringArray         --var cds='cds -f config.json' --var cds2='cds -f config.json'
       --var-from-file strings   --var-from-file filename.yaml --var-from-file filename2.yaml: yaml, must contains a dictionary
@@ -268,6 +308,8 @@ Flags and their equivalent with environment variables usage:
 - `--format="json"` flag is equivalent to `VENOM_FORMAT="json"` environment variable
 - `--lib-dir="/etc/venom/lib:$HOME/venom.d/lib"` flag is equivalent to `VENOM_LIB_DIR="/etc/venom/lib"` environment variable
 - `--output-dir="test-results"` flag is equivalent to `VENOM_OUTPUT_DIR="test-results"` environment variable
+- `--parallel=4` flag is equivalent to `VENOM_PARALLEL=4` environment variable
+- `--parallel-suites=4` flag is equivalent to `VENOM_PARALLEL_SUITES=4` environment variable
 - `--stop-on-failure` flag is equivalent to `VENOM_STOP_ON_FAILURE=true` environment variable
 - `--var foo=bar` flag is equivalent to `VENOM_VAR_foo='bar'` environment variable
 - `--var-from-file fileA.yml fileB.yml` flag is equivalent to `VENOM_VAR_FROM_FILE="fileA.yml fileB.yml"` environment variable
@@ -290,6 +332,8 @@ format: xml
 output_dir: output
 lib_dir: lib
 verbosity: 3
+parallel: 4
+parallel_suites: 2
 ```
 
 Please note that the command line flags override the configuration file. The configuration file overrides the environment variables.
@@ -302,7 +346,7 @@ Please note that the command line flags override the configuration file. The con
 A test suite is a collection of test cases that are intended to be used to test a software program to show that it has a specified set of behaviors.
 A test case is a specification of the inputs, execution conditions, testing procedure, and expected results that define a single test to be executed to achieve a particular software testing objective, such as to exercise a particular program path or to verify compliance with a specific requirement.
 
-In `venom` the testcases are executed sequentially within a testsuite. Each testcase is an ordered set of steps. Each step is based on an `executor` that enables some specific kind of behavior.
+In `venom` the testcases are executed sequentially within a testsuite, unless `--parallel` is set (see [Run testcases in parallel](#run-testcases-in-parallel)). Each testcase is an ordered set of steps. Each step is based on an `executor` that enables some specific kind of behavior.
 
 In `venom` a testsuite is written in one `YAML` file respecting the following structure:
 
@@ -351,6 +395,10 @@ testcases:
     - result.statuscode ShouldEqual 200
 
 ```
+
+`timeout` and `delay` take a number of seconds. An integer means whole seconds, a decimal number
+means a fraction of a second (`delay: 0.2` is 200ms), and a Go duration string is also accepted
+(`timeout: 1500ms`, `delay: 250ms`, `timeout: 2m`).
 
 ### HTTP multipart form
 

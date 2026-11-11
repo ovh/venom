@@ -85,124 +85,155 @@ func (v *Venom) runTestSuite(ctx context.Context, ts *TestSuite) error {
 		}
 	}
 
+	// the run counters (v.Tests.NbTestsuites*) are added by Process, see countTestSuite
 	if isFailed {
 		ts.Status = StatusFail
-		v.Tests.NbTestsuitesFail++
 	} else if nSkip > 0 && nSkip == len(ts.TestCases) {
 		ts.Status = StatusSkip
-		v.Tests.NbTestsuitesSkip++
 	} else {
 		ts.Status = StatusPass
-		v.Tests.NbTestsuitesPass++
 	}
 	return nil
 }
 
-func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
-	verboseReport := v.Verbose >= 1
+// countTestSuite adds the status of a finished testsuite to the run counters.
+func (v *Venom) countTestSuite(ts *TestSuite) {
+	switch ts.Status {
+	case StatusFail:
+		v.Tests.NbTestsuitesFail++
+	case StatusSkip:
+		v.Tests.NbTestsuitesSkip++
+	case StatusPass:
+		v.Tests.NbTestsuitesPass++
+	}
+}
 
+func (v *Venom) runTestCases(ctx context.Context, ts *TestSuite) {
 	v.Println(" • %s (%s)", ts.Name, ts.Filepath)
+
+	if n := v.parallelFor(ts); n > 1 {
+		v.runTestCasesParallel(ctx, ts, n)
+		return
+	}
 
 	for i := range ts.TestCases {
 		tc := &ts.TestCases[i]
-		tc.IsEvaluated = true
-		v.Print(" \t• %s", tc.Name)
-		var hasFailure bool
-		var hasRanged bool
-		hasSkipped := len(tc.Skipped) > 0
-		if !hasSkipped {
-			start := time.Now()
-			tc.Start = start
-			ts.Status = StatusRun
-			if verboseReport || hasRanged {
-				v.Print("\n")
-			}
-			// ##### RUN Test Case Here
-			v.runTestCase(ctx, ts, tc)
-			tc.End = time.Now()
-			tc.Duration = tc.End.Sub(tc.Start).Seconds()
+		stop, export := v.runOneTestCase(ctx, ts, tc)
+		if stop {
+			markRemainingSkipped(ts)
+			return
 		}
-
-		skippedSteps := 0
-		for _, testStepResult := range tc.TestStepResults {
-			if testStepResult.RangedEnable {
-				hasRanged = true
-			}
-			if testStepResult.Status == StatusFail {
-				hasFailure = true
-			}
-			if testStepResult.Status == StatusSkip {
-				skippedSteps++
-			}
+		if export {
+			ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 		}
-
-		if hasFailure {
-			tc.Status = StatusFail
-		} else if skippedSteps == len(tc.TestStepResults) {
-			// If all test steps were skipped, consider the test case as skipped
-			tc.Status = StatusSkip
-		} else if tc.Status != StatusSkip {
-			tc.Status = StatusPass
-		}
-
-		// Verbose mode already reported tests status, so just print them when non-verbose
-		indent := ""
-		if verboseReport {
-			indent = "\t  "
-			// If the testcase was entirely skipped, then the verbose mode will not have any output
-			// Print something to inform that the testcase was indeed processed although skipped
-			if len(tc.TestStepResults) == 0 {
-				v.Println("\t\t%s", Gray("• (all steps were skipped)"))
-				continue
-			}
-		} else {
-			if hasFailure {
-				v.Println(" %s", Red(StatusFail))
-			} else if tc.Status == StatusSkip {
-				v.Println(" %s", Gray(StatusSkip))
-				continue
-			} else {
-				v.Println(" %s", Green(StatusPass))
-			}
-		}
-
-		for _, i := range tc.computedVerbose {
-			v.PrintlnIndentedTrace(i, indent)
-		}
-
-		// Verbose mode already reported failures, so just print them when non-verbose
-		if !verboseReport && hasFailure {
-			for _, testStepResult := range tc.TestStepResults {
-				if len(testStepResult.ComputedInfo) > 0 || len(testStepResult.Errors) > 0 {
-					v.Println(" \t\t• %s", testStepResult.Name)
-					for _, f := range testStepResult.ComputedInfo {
-						v.Println(" \t\t  %s", Cyan(f))
-					}
-					for _, f := range testStepResult.Errors {
-						v.Println(" \t\t  %s", Yellow(f.Value))
-					}
-				}
-			}
-		}
-
-		if v.StopOnFailure {
-			for _, testStepResult := range tc.TestStepResults {
-				if len(testStepResult.Errors) > 0 {
-					// break TestSuite
-					for i := range ts.TestCases {
-						tc := &ts.TestCases[i]
-						if tc.Status == "" {
-							tc.Status = StatusSkip
-							tc.IsEvaluated = true
-							tc.Skipped = append(tc.Skipped, Skipped{Value: "===== stop-on-failure: enabled ====="})
-						}
-					}
-					return
-				}
-			}
-		}
-		ts.ComputedVars.AddAllWithPrefix(tc.Name, tc.computedVars)
 	}
+}
+
+// markRemainingSkipped implements --stop-on-failure: every testcase not run yet is skipped.
+func markRemainingSkipped(ts *TestSuite) {
+	for i := range ts.TestCases {
+		tc := &ts.TestCases[i]
+		if tc.Status == "" {
+			tc.Status = StatusSkip
+			tc.IsEvaluated = true
+			tc.Skipped = append(tc.Skipped, Skipped{Value: "===== stop-on-failure: enabled ====="})
+		}
+	}
+}
+
+// runOneTestCase runs one testcase and prints its report through v.
+// stop is true when the testsuite must stop (--stop-on-failure);
+// export is true when the testcase vars go to the testsuite, as in a sequential run.
+func (v *Venom) runOneTestCase(ctx context.Context, ts *TestSuite, tc *TestCase) (stop bool, export bool) {
+	verboseReport := v.Verbose >= 1
+
+	tc.IsEvaluated = true
+	v.Print(" \t• %s", tc.Name)
+	var hasFailure bool
+	var hasRanged bool
+	hasSkipped := len(tc.Skipped) > 0
+	if !hasSkipped {
+		start := time.Now()
+		tc.Start = start
+		if verboseReport || hasRanged {
+			v.Print("\n")
+		}
+		// ##### RUN Test Case Here
+		v.runTestCase(ctx, ts, tc)
+		tc.End = time.Now()
+		tc.Duration = tc.End.Sub(tc.Start).Seconds()
+	}
+
+	skippedSteps := 0
+	for _, testStepResult := range tc.TestStepResults {
+		if testStepResult.RangedEnable {
+			hasRanged = true
+		}
+		if testStepResult.Status == StatusFail {
+			hasFailure = true
+		}
+		if testStepResult.Status == StatusSkip {
+			skippedSteps++
+		}
+	}
+
+	if hasFailure {
+		tc.Status = StatusFail
+	} else if skippedSteps == len(tc.TestStepResults) {
+		// If all test steps were skipped, consider the test case as skipped
+		tc.Status = StatusSkip
+	} else if tc.Status != StatusSkip {
+		tc.Status = StatusPass
+	}
+
+	// Verbose mode already reported tests status, so just print them when non-verbose
+	indent := ""
+	if verboseReport {
+		indent = "\t  "
+		// If the testcase was entirely skipped, then the verbose mode will not have any output
+		// Print something to inform that the testcase was indeed processed although skipped
+		if len(tc.TestStepResults) == 0 {
+			v.Println("\t\t%s", Gray("• (all steps were skipped)"))
+			return false, false
+		}
+	} else {
+		if hasFailure {
+			v.Println(" %s", Red(StatusFail))
+		} else if tc.Status == StatusSkip {
+			v.Println(" %s", Gray(StatusSkip))
+			return false, false
+		} else {
+			v.Println(" %s", Green(StatusPass))
+		}
+	}
+
+	for _, i := range tc.computedVerbose {
+		v.PrintlnIndentedTrace(i, indent)
+	}
+
+	// Verbose mode already reported failures, so just print them when non-verbose
+	if !verboseReport && hasFailure {
+		for _, testStepResult := range tc.TestStepResults {
+			if len(testStepResult.ComputedInfo) > 0 || len(testStepResult.Errors) > 0 {
+				v.Println(" \t\t• %s", testStepResult.Name)
+				for _, f := range testStepResult.ComputedInfo {
+					v.Println(" \t\t  %s", Cyan(f))
+				}
+				for _, f := range testStepResult.Errors {
+					v.Println(" \t\t  %s", Yellow(f.Value))
+				}
+			}
+		}
+	}
+
+	if v.StopOnFailure {
+		for _, testStepResult := range tc.TestStepResults {
+			if len(testStepResult.Errors) > 0 {
+				return true, false
+			}
+		}
+	}
+	return false, true
 }
 
 // Parse the suite to find unreplaced and extracted variables

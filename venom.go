@@ -72,6 +72,10 @@ type Venom struct {
 	StopOnFailure bool
 	HtmlReport    bool
 	Verbose       int
+	// Parallel is the number of testcases of one testsuite run at once; 0 or 1 is sequential.
+	Parallel int
+	// ParallelSuites is the number of testsuites run at once; 0 or 1 is sequential.
+	ParallelSuites int
 }
 
 var trace = color.New(color.Attribute(90)).SprintFunc()
@@ -141,11 +145,11 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 	if err != nil {
 		return nil, nil, err
 	}
-	delay, err := ts.IntValue("delay")
+	delay, err := ts.DurationValue("delay")
 	if err != nil {
 		return nil, nil, err
 	}
-	timeout, err := ts.IntValue("timeout")
+	timeout, err := ts.DurationValue("timeout")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -175,12 +179,16 @@ func (v *Venom) GetExecutorRunner(ctx context.Context, ts TestStep, h H) (contex
 		return ctx, newExecutorRunner(ex, name, "user", retry, retryIf, delay, timeout, info), nil
 	}
 
+	// testcases may run in parallel (--parallel): plugin loading and the plugin map are serialized
+	pluginMu.Lock()
 	if err := v.registerPlugin(ctx, name, vars); err != nil {
 		Debug(ctx, "executor %q is not implemented as plugin - err:%v", name, err)
 	}
 
 	// then add the executor plugin to the map to not have to load it on each step
-	if ex, ok := v.executorsPlugin[name]; ok {
+	ex, ok := v.executorsPlugin[name]
+	pluginMu.Unlock()
+	if ok {
 		return ctx, newExecutorRunner(ex, name, "plugin", retry, retryIf, delay, timeout, info), nil
 	}
 	return ctx, nil, fmt.Errorf("user executor %q not found - loaded executors are: %v", name, reflect.ValueOf(v.executorsUser).MapKeys())
