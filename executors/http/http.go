@@ -22,6 +22,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/internal/resolve"
 	"github.com/ovh/venom/interpolate"
 )
 
@@ -139,15 +140,9 @@ func (Executor) Run(ctx context.Context, step venom.TestStep) (interface{}, erro
 
 	if len(e.Resolve) > 0 {
 		tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-			// resolve can contains foo.com:443:127.0.0.1
-			for _, r := range e.Resolve {
-				tuple := strings.Split(r, ":")
-				if len(tuple) != 3 {
-					return nil, fmt.Errorf("invalid value for resolve attribute: %v", e.Resolve)
-				}
-				if addr == tuple[0]+":"+tuple[1] {
-					addr = tuple[2] + ":" + tuple[1]
-				}
+			addr, err := resolve.Address(addr, e.Resolve)
+			if err != nil {
+				return nil, err
 			}
 
 			dialer := &net.Dialer{
