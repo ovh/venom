@@ -318,15 +318,25 @@ func (v *Venom) RunUserExecutor(ctx context.Context, runner ExecutorRunner, tcIn
 		return nil, err
 	}
 
-	// the value of each var can contains a double-quote -> "
-	// if the value is not escaped, it will be used as is, and the json sent to unmarshall will be incorrect.
-	// This also avoids injections into the json structure of a user executor
-	// Use strconv.Quote for proper escaping to avoid double-escaping issues
-	for i := range computedVars {
-		computedVars[i] = escapeQuotes(computedVars[i])
-	}
-
-	outputS, err := interpolate.Do(string(outputString), computedVars)
+	// Evaluate each JSON string with raw variables, then encode the result so
+	// helpers run before newlines and other special characters are escaped.
+	jsonString := regexp.MustCompile(`"(?:[^"\\]|\\.)*"`)
+	outputS := jsonString.ReplaceAllStringFunc(string(outputString), func(quoted string) string {
+		if err != nil {
+			return quoted
+		}
+		var value string
+		if err = json.Unmarshal([]byte(quoted), &value); err != nil {
+			return quoted
+		}
+		value, err = interpolate.Do(value, computedVars)
+		if err != nil {
+			return quoted
+		}
+		var encoded []byte
+		encoded, err = json.Marshal(value)
+		return string(encoded)
+	})
 	if err != nil {
 		return nil, err
 	}
